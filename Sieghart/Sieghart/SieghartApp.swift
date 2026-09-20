@@ -2,17 +2,31 @@ import SwiftUI
 
 @main
 struct SieghartApp: App {
-    @StateObject private var sensor = SensorViewModel()
+    @StateObject private var sensor: SensorViewModel
+    @StateObject private var assistant: AssistantViewModel
+
+    init() {
+        let assistant = AssistantViewModel()
+        let sensor = SensorViewModel()
+        sensor.onImpact = { impact in
+            assistant.handle(impact: impact)
+        }
+
+        _sensor = StateObject(wrappedValue: sensor)
+        _assistant = StateObject(wrappedValue: assistant)
+    }
 
     var body: some Scene {
         WindowGroup("Sieghart") {
             ContentView()
                 .environmentObject(sensor)
+                .environmentObject(assistant)
         }
 
         MenuBarExtra("Sieghart", systemImage: "sparkles") {
             MenuBarView()
                 .environmentObject(sensor)
+                .environmentObject(assistant)
         }
         .menuBarExtraStyle(.window)
     }
@@ -20,6 +34,7 @@ struct SieghartApp: App {
 
 private struct ContentView: View {
     @EnvironmentObject private var sensor: SensorViewModel
+    @EnvironmentObject private var assistant: AssistantViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -28,19 +43,19 @@ private struct ContentView: View {
                     .font(.system(size: 30, weight: .semibold))
                     .foregroundStyle(.purple)
 
-                VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 4) {
                     Text("Sieghart")
                         .font(.largeTitle.weight(.semibold))
-                    Text("Seu parceiro de contexto para o Mac")
+                    Text("Your context partner for Mac")
                         .foregroundStyle(.secondary)
                 }
             }
 
             Divider()
 
-            Text("O núcleo do projeto começa aqui.")
+            Text("The project core starts here.")
                 .font(.title3)
-            Text("Primeiro teste: transformar um impacto físico em uma ação útil.")
+            Text("First test: turn a physical impact into a useful action.")
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 10) {
@@ -48,25 +63,67 @@ private struct ContentView: View {
                     .foregroundStyle(sensor.isRunning ? .green : .secondary)
 
                 if let sample = sensor.lastSample {
-                    Text("Aceleração: x \(sample.x.formatted(.number.precision(.fractionLength(2))))g · y \(sample.y.formatted(.number.precision(.fractionLength(2))))g · z \(sample.z.formatted(.number.precision(.fractionLength(2))))g")
+                    Text("Acceleration: x \(sample.x.formatted(.number.precision(.fractionLength(2))))g · y \(sample.y.formatted(.number.precision(.fractionLength(2))))g · z \(sample.z.formatted(.number.precision(.fractionLength(2))))g")
                         .font(.caption.monospaced())
                         .foregroundStyle(.secondary)
                 }
 
+                Text("Reports received: \(sensor.sampleCount)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+
                 if let impact = sensor.lastImpact {
-                    Text("Último impacto: \(impact.timestamp.formatted(date: .omitted, time: .standard))")
+                    Text("Last impact: \(impact.timestamp.formatted(date: .omitted, time: .standard))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Button(sensor.isRunning ? "Parar sensor" : "Iniciar sensor") {
+                Button(sensor.isRunning ? "Stop sensor" : "Start sensor") {
                     sensor.toggle()
                 }
                 .buttonStyle(.borderedProminent)
             }
 
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Label("Pomodoro", systemImage: "timer")
+                        .font(.headline)
+                    Spacer()
+                    Text(assistant.pomodoroPhase.title)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(assistant.pomodoroTimeLabel)
+                    .font(.system(size: 38, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+
+                Text(assistant.lastAction)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Button(assistant.pomodoroButtonLabel) {
+                        assistant.togglePomodoro()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("Reset") {
+                        assistant.resetPomodoro()
+                    }
+                    .buttonStyle(.borderless)
+
+                    Spacer()
+
+                    Text("Impacts: \(assistant.impactCount)")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .padding(16)
+            .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 12))
+
             HStack {
-                Label("Leitor experimental AppleSPUHIDDevice", systemImage: "exclamationmark.triangle")
+                    Label("Experimental AppleSPUHIDDevice reader", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(.orange)
                 Spacer()
                 Text("v0.1.0")
@@ -81,6 +138,7 @@ private struct ContentView: View {
 
 private struct MenuBarView: View {
     @EnvironmentObject private var sensor: SensorViewModel
+    @EnvironmentObject private var assistant: AssistantViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -88,15 +146,22 @@ private struct MenuBarView: View {
                 .font(.headline)
             Text(sensor.status)
                 .foregroundStyle(.secondary)
+            Label("Pomodoro: \(assistant.pomodoroTimeLabel)", systemImage: "timer")
+            Text(assistant.lastAction)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Divider()
-            Button(sensor.isRunning ? "Parar sensor" : "Iniciar sensor") {
+            Button(sensor.isRunning ? "Stop sensor" : "Start sensor") {
                 sensor.toggle()
             }
-            Button("Abrir Sieghart") {
+            Button(assistant.pomodoroButtonLabel) {
+                assistant.togglePomodoro()
+            }
+            Button("Open Sieghart") {
                 NSApp.activate(ignoringOtherApps: true)
                 NSApp.windows.first?.makeKeyAndOrderFront(nil)
             }
-            Button("Sair") {
+            Button("Quit") {
                 NSApp.terminate(nil)
             }
         }

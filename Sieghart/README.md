@@ -1,21 +1,21 @@
 # Sieghart
 
-Projeto macOS nativo em SwiftUI para o assistente pessoal anteriormente chamado de MyDude.
+Native macOS SwiftUI project for the personal assistant previously referred to as MyDude.
 
-O Sieghart vai reunir contexto do dia, calendário, lembretes, pomodoro, voz, integrações de IA e um acionamento físico por impacto detectado no acelerômetro do Mac.
+Sieghart will bring together daily context, calendar, reminders, Pomodoro sessions, voice, AI integrations, and a physical trigger driven by impact detection from the Mac accelerometer.
 
-## Estado atual
+## Current state
 
-O projeto tem janela principal, entrada na barra de menus e um leitor experimental do acelerômetro AppleSPUHIDDevice. O detector usa amostras dos três eixos, remoção simples da gravidade por baseline e cooldown para evitar disparos repetidos.
+The project has a main window, a menu bar entry, an experimental AppleSPUHIDDevice accelerometer reader, and a first local Pomodoro action. The detector uses all three axes, a simple gravity baseline, and a cooldown to reduce repeated triggers.
 
-O ambiente de desenvolvimento confirmou um Mac15,7 com Apple M3 Pro e um serviço AppleSPUHIDDevice de uso 3 com relatórios de 22 bytes. A leitura pelo aplicativo ainda precisa ser executada no hardware com a permissão adequada.
+The development environment confirmed a Mac15,7 with an Apple M3 Pro and an AppleSPUHIDDevice service using usage 3 with 22-byte reports. The app still needs to be run on the hardware to confirm actual sensor access, sampling behavior, and permission requirements.
 
-O projeto também compila para `x86_64`, mas isso só comprova compatibilidade do binário. Não significa que o Intel possua o acelerômetro necessário.
+The project also builds for `x86_64`, but that only confirms binary compatibility. It does not mean that the Intel Mac has the required accelerometer.
 
-## Primeiro marco técnico
+## Current technical milestone
 
-Executar o Sieghart no MacBook Pro M3 Pro, pressionar “Iniciar sensor” e documentar se o dispositivo abre, a taxa de amostragem, o consumo e os falsos positivos antes de conectar o sensor a ações do assistente.
+Run Sieghart on the MacBook Pro M3 Pro, press **Start sensor**, and document whether the device opens, the observed sampling rate, resource use, and false positives before connecting the sensor to more assistant actions.
 
-## Nome
+## Name
 
-`Sieghart` é o nome técnico atual do projeto. `MyDude` permanece como nome do conceito nas notas do vault até que a identidade do produto seja definida.
+`Sieghart` is the current technical project name. `MyDude` remains the product concept name in the vault until the product identity is finalized.

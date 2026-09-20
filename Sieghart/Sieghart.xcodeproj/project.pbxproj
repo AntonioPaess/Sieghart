@@ -9,12 +9,14 @@
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* SieghartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* SieghartApp.swift */; };
 		A10000000000000000000013 /* SensorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* SensorEngine.swift */; };
+		A10000000000000000000015 /* AssistantCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* AssistantCore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000003 /* Sieghart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sieghart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* SieghartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SieghartApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* SensorEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorEngine.swift; sourceTree = "<group>"; };
+		A10000000000000000000016 /* AssistantCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantCore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +43,7 @@
 			children = (
 				A10000000000000000000005 /* SieghartApp.swift */,
 				A10000000000000000000014 /* SensorEngine.swift */,
+				A10000000000000000000016 /* AssistantCore.swift */,
 			);
 			path = Sieghart;
 			sourceTree = "<group>";
@@ -118,6 +121,7 @@
 			files = (
 				A10000000000000000000001 /* SieghartApp.swift in Sources */,
 				A10000000000000000000013 /* SensorEngine.swift in Sources */,
+				A10000000000000000000015 /* AssistantCore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
