@@ -38,6 +38,10 @@ final class AssistantViewModel: ObservableObject {
         return String(format: "%02d:%02d", totalSeconds / 60, totalSeconds % 60)
     }
 
+    var pomodoroProgress: Double {
+        min(max(remainingSeconds / Self.focusDuration, 0), 1)
+    }
+
     var pomodoroButtonLabel: String {
         switch pomodoroPhase {
         case .focusing:
@@ -47,6 +51,11 @@ final class AssistantViewModel: ObservableObject {
         case .idle, .completed:
             return "Start Pomodoro"
         }
+    }
+
+    func registerImpact(_ impact: ImpactEvent) {
+        impactCount += 1
+        lastAction = "Impact detected — intensity \(impact.intensity.formatted(.number.precision(.fractionLength(2))))g"
     }
 
     func handle(impact: ImpactEvent) {
@@ -72,6 +81,21 @@ final class AssistantViewModel: ObservableObject {
         }
     }
 
+    func startPomodoroFromGesture() {
+        startPomodoro()
+        lastAction = "Pomodoro started by gesture"
+    }
+
+    func pausePomodoroFromGesture() {
+        guard pomodoroPhase == .focusing else {
+            lastAction = "Pomodoro is not running"
+            return
+        }
+
+        pausePomodoro()
+        lastAction = "Pomodoro paused by gesture"
+    }
+
     func resetPomodoro() {
         refreshTimer?.invalidate()
         refreshTimer = nil
@@ -79,6 +103,17 @@ final class AssistantViewModel: ObservableObject {
         pomodoroPhase = .idle
         remainingSeconds = Self.focusDuration
         lastAction = "Pomodoro reset"
+    }
+
+    func finishPomodoroFromWidget() {
+        guard pomodoroPhase == .focusing || pomodoroPhase == .paused else { return }
+
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+        endDate = nil
+        remainingSeconds = 0
+        pomodoroPhase = .completed
+        lastAction = "Pomodoro finished from widget"
     }
 
     private func startPomodoro() {

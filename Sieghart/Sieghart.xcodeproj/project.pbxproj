@@ -10,6 +10,9 @@
 		A10000000000000000000001 /* SieghartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* SieghartApp.swift */; };
 		A10000000000000000000013 /* SensorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* SensorEngine.swift */; };
 		A10000000000000000000015 /* AssistantCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* AssistantCore.swift */; };
+		A10000000000000000000017 /* CalendarContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* CalendarContext.swift */; };
+		A10000000000000000000019 /* NotchWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000020 /* NotchWidget.swift */; };
+		A10000000000000000000021 /* ImpactGestures.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000022 /* ImpactGestures.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -17,6 +20,9 @@
 		A10000000000000000000005 /* SieghartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SieghartApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* SensorEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorEngine.swift; sourceTree = "<group>"; };
 		A10000000000000000000016 /* AssistantCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantCore.swift; sourceTree = "<group>"; };
+		A10000000000000000000018 /* CalendarContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarContext.swift; sourceTree = "<group>"; };
+		A10000000000000000000020 /* NotchWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchWidget.swift; sourceTree = "<group>"; };
+		A10000000000000000000022 /* ImpactGestures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImpactGestures.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +50,9 @@
 				A10000000000000000000005 /* SieghartApp.swift */,
 				A10000000000000000000014 /* SensorEngine.swift */,
 				A10000000000000000000016 /* AssistantCore.swift */,
+				A10000000000000000000018 /* CalendarContext.swift */,
+				A10000000000000000000020 /* NotchWidget.swift */,
+				A10000000000000000000022 /* ImpactGestures.swift */,
 			);
 			path = Sieghart;
 			sourceTree = "<group>";
@@ -122,6 +131,9 @@
 				A10000000000000000000001 /* SieghartApp.swift in Sources */,
 				A10000000000000000000013 /* SensorEngine.swift in Sources */,
 				A10000000000000000000015 /* AssistantCore.swift in Sources */,
+				A10000000000000000000017 /* CalendarContext.swift in Sources */,
+				A10000000000000000000019 /* NotchWidget.swift in Sources */,
+				A10000000000000000000021 /* ImpactGestures.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,6 +153,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 0.1.0;
@@ -165,6 +179,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				MARKETING_VERSION = 0.1.0;
@@ -186,6 +202,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sieghart.app;
@@ -204,6 +222,8 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "Sieghart uses your calendar to show upcoming events and meeting links.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				MACOSX_DEPLOYMENT_TARGET = 14.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sieghart.app;

@@ -246,7 +246,8 @@ final class IOKitAccelerometerReader: AccelerometerProviding, @unchecked Sendabl
 
 struct ImpactDetector {
     var sensitivity: Double = 0.08
-    var cooldown: TimeInterval = 0.75
+    // Keep the cooldown short enough to recognize deliberate double impacts.
+    var cooldown: TimeInterval = 0.22
 
     private var baseline = 1.0
     private var lastImpactAt: Date?
@@ -294,6 +295,11 @@ final class SensorViewModel: ObservableObject {
 
     func toggle() {
         isRunning ? stop() : start()
+    }
+
+    func startIfNeeded() {
+        guard !isRunning else { return }
+        start()
     }
 
     func start() {
