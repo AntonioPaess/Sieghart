@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-enum PomodoroPhase: Equatable {
+enum PomodoroPhase: String, Equatable {
     case idle
     case focusing
     case paused
@@ -25,6 +25,12 @@ enum PomodoroPhase: Equatable {
 final class AssistantViewModel: ObservableObject {
     static let focusDuration: TimeInterval = 25 * 60
 
+    private enum StorageKey {
+        static let phase = "pomodoro.phase"
+        static let remaining = "pomodoro.remainingSeconds"
+        static let endDate = "pomodoro.endDate"
+    }
+
     @Published private(set) var pomodoroPhase: PomodoroPhase = .idle
     @Published private(set) var remainingSeconds = AssistantViewModel.focusDuration
     @Published private(set) var lastAction = "Waiting for an action"
@@ -32,6 +38,10 @@ final class AssistantViewModel: ObservableObject {
 
     private var endDate: Date?
     private var refreshTimer: Timer?
+
+    init() {
+        restorePomodoro()
+    }
 
     var pomodoroTimeLabel: String {
         let totalSeconds = max(0, Int(remainingSeconds.rounded(.up)))
@@ -103,6 +113,7 @@ final class AssistantViewModel: ObservableObject {
         pomodoroPhase = .idle
         remainingSeconds = Self.focusDuration
         lastAction = "Pomodoro reset"
+        persistPomodoro()
     }
 
     func finishPomodoroFromWidget() {
@@ -114,6 +125,7 @@ final class AssistantViewModel: ObservableObject {
         remainingSeconds = 0
         pomodoroPhase = .completed
         lastAction = "Pomodoro finished from widget"
+        persistPomodoro()
     }
 
     private func startPomodoro() {
@@ -123,15 +135,18 @@ final class AssistantViewModel: ObservableObject {
 
         endDate = Date().addingTimeInterval(remainingSeconds)
         pomodoroPhase = .focusing
+        persistPomodoro()
         scheduleRefresh()
     }
 
     private func pausePomodoro() {
         refresh()
+        guard pomodoroPhase == .focusing else { return }
         refreshTimer?.invalidate()
         refreshTimer = nil
         endDate = nil
         pomodoroPhase = .paused
+        persistPomodoro()
     }
 
     private func scheduleRefresh() {
@@ -154,5 +169,48 @@ final class AssistantViewModel: ObservableObject {
         self.endDate = nil
         pomodoroPhase = .completed
         lastAction = "Pomodoro completed"
+        persistPomodoro()
+    }
+
+    private func restorePomodoro() {
+        let defaults = UserDefaults.standard
+        guard let raw = defaults.string(forKey: StorageKey.phase),
+              let storedPhase = PomodoroPhase(rawValue: raw) else { return }
+
+        switch storedPhase {
+        case .focusing:
+            guard let storedEnd = defaults.object(forKey: StorageKey.endDate) as? Date else { return }
+            remainingSeconds = max(0, storedEnd.timeIntervalSinceNow)
+            if remainingSeconds > 0 {
+                endDate = storedEnd
+                pomodoroPhase = .focusing
+                lastAction = "Pomodoro restored"
+                scheduleRefresh()
+            } else {
+                pomodoroPhase = .completed
+                lastAction = "Pomodoro completed while Sieghart was closed"
+                persistPomodoro()
+            }
+        case .paused:
+            remainingSeconds = min(max(defaults.double(forKey: StorageKey.remaining), 0), Self.focusDuration)
+            pomodoroPhase = .paused
+            lastAction = "Paused Pomodoro restored"
+        case .completed:
+            remainingSeconds = 0
+            pomodoroPhase = .completed
+        case .idle:
+            break
+        }
+    }
+
+    private func persistPomodoro() {
+        let defaults = UserDefaults.standard
+        defaults.set(pomodoroPhase.rawValue, forKey: StorageKey.phase)
+        defaults.set(remainingSeconds, forKey: StorageKey.remaining)
+        if let endDate {
+            defaults.set(endDate, forKey: StorageKey.endDate)
+        } else {
+            defaults.removeObject(forKey: StorageKey.endDate)
+        }
     }
 }

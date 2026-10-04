@@ -2,32 +2,22 @@ import AppKit
 import Combine
 import EventKit
 import Foundation
-import SwiftUI
 
 enum CalendarAccessState: Equatable {
-    case notDetermined
-    case writeOnly
-    case fullAccess
-    case denied
-    case restricted
+    case notDetermined, writeOnly, fullAccess, denied, restricted
 
     var title: String {
         switch self {
-        case .notDetermined:
-            return "Calendar access not requested"
-        case .writeOnly:
-            return "Calendar read access required"
-        case .fullAccess:
-            return "Calendar connected"
-        case .denied:
-            return "Calendar access denied"
-        case .restricted:
-            return "Calendar access restricted"
+        case .notDetermined: "Calendar access not requested"
+        case .writeOnly: "Calendar read access required"
+        case .fullAccess: "Calendar access granted"
+        case .denied: "Calendar access denied"
+        case .restricted: "Calendar access restricted"
         }
     }
 }
 
-struct CalendarEventSummary: Identifiable, Equatable {
+struct CalendarEventSummary: Identifiable, Equatable, Sendable {
     let id: String
     let title: String
     let startDate: Date
@@ -38,22 +28,35 @@ struct CalendarEventSummary: Identifiable, Equatable {
 
     var relativeStart: String {
         let minutes = Int(ceil(startDate.timeIntervalSinceNow / 60))
-        if minutes <= 0 {
-            return "Now"
-        }
-        if minutes == 1 {
-            return "In 1 minute"
-        }
-        if minutes < 60 {
-            return "In \(minutes) minutes"
-        }
-
+        if minutes <= 0 { return "Now" }
+        if minutes == 1 { return "In 1 minute" }
+        if minutes < 60 { return "In \(minutes) minutes" }
         let hours = minutes / 60
         return hours == 1 ? "In 1 hour" : "In \(hours) hours"
     }
 
-    var hasLink: Bool {
-        url != nil
+    var hasLink: Bool { url != nil }
+}
+
+private struct CalendarSnapshot: Sendable {
+    let events: [CalendarEventSummary]
+    let calendarCount: Int
+    let fetchedAt: Date
+
+    static func load() -> CalendarSnapshot {
+        // The store and its EKEvent objects stay on this background task.
+        // Only value summaries cross back to the main actor.
+        let store = EKEventStore()
+        let now = Date()
+        let end = Calendar.current.date(byAdding: .day, value: 7, to: now) ?? now.addingTimeInterval(7 * 86_400)
+        let calendars = store.calendars(for: .event)
+        let predicate = store.predicateForEvents(withStart: now, end: end, calendars: nil)
+        let events = store.events(matching: predicate)
+            .filter { $0.endDate > now && $0.startDate < end }
+            .sorted { $0.startDate < $1.startDate }
+            .prefix(5)
+            .map(CalendarEventSummary.init)
+        return CalendarSnapshot(events: events, calendarCount: calendars.count, fetchedAt: now)
     }
 }
 
@@ -63,217 +66,157 @@ final class CalendarViewModel: ObservableObject {
     @Published private(set) var upcomingEvents: [CalendarEventSummary] = []
     @Published private(set) var status = "Calendar access not requested"
     @Published private(set) var isRequestingAccess = false
+    @Published private(set) var isLoading = false
     @Published private(set) var lastUpdated: Date?
-    @Published private(set) var permissionSheetDidNotAppear = false
+    @Published private(set) var availableCalendarCount: Int?
 
-    private var eventStore: EKEventStore
     private var requestTask: Task<Void, Never>?
+    private var refreshTask: Task<Void, Never>?
+    private var refreshGeneration = 0
     private var activationObserver: AnyCancellable?
+    private var storeChangeObserver: AnyCancellable?
 
-    init(eventStore: EKEventStore = EKEventStore()) {
-        self.eventStore = eventStore
-        activationObserver = NotificationCenter.default.publisher(
-            for: NSApplication.didBecomeActiveNotification
-        )
-        .receive(on: RunLoop.main)
-        .sink { [weak self] _ in
-            self?.prepare()
-        }
-        refreshAuthorizationState()
+    init() {
+        activationObserver = NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.prepare() }
+        storeChangeObserver = NotificationCenter.default.publisher(for: .EKEventStoreChanged)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.prepare() }
+        updateAuthorizationState()
     }
 
-    var nextEvent: CalendarEventSummary? {
-        upcomingEvents.first
-    }
+    var nextEvent: CalendarEventSummary? { upcomingEvents.first }
 
     var accessButtonLabel: String {
-        if permissionSheetDidNotAppear {
-            return "Open calendar settings"
-        }
-
         switch accessState {
-        case .notDetermined, .writeOnly:
-            return "Connect calendar"
-        case .fullAccess:
-            return "Refresh calendar"
-        case .denied, .restricted:
-            return "Open calendar settings"
+        case .notDetermined, .writeOnly: "Connect calendar"
+        case .fullAccess: "Refresh calendar"
+        case .denied, .restricted: "Open calendar settings"
         }
     }
 
     func prepare() {
         guard !isRequestingAccess else { return }
-
-        // TCC applies Calendar changes when the app returns from System
-        // Settings (and sometimes only after the app is relaunched). Reusing
-        // the original store can keep the old authorization snapshot alive,
-        // so create a fresh store before reading the state again.
-        eventStore = EKEventStore()
-        refreshAuthorizationState()
-        if accessState == .fullAccess {
-            permissionSheetDidNotAppear = false
-            refresh()
-        }
+        updateAuthorizationState()
+        if accessState == .fullAccess { refresh() }
     }
 
     func requestAccessAndRefresh() {
         guard !isRequestingAccess else { return }
-        refreshAuthorizationState()
+        updateAuthorizationState()
 
-        guard accessState != .fullAccess else {
-            permissionSheetDidNotAppear = false
+        switch accessState {
+        case .fullAccess:
             refresh()
-            return
-        }
-
-        if permissionSheetDidNotAppear {
+        case .denied, .restricted:
             openCalendarSettings()
-            return
-        }
-
-        guard accessState == .notDetermined || accessState == .writeOnly else {
-            openCalendarSettings()
-            return
-        }
-
-        isRequestingAccess = true
-        status = "Preparing calendar permission..."
-
-        // EventKit presents the system permission sheet more reliably when the
-        // app is active, especially when the request starts from a sensor event
-        // or the non-activating notch panel. Waiting for activation to settle
-        // prevents a false completion before the sheet can be displayed.
-        NSApp.activate(ignoringOtherApps: true)
-        requestTask?.cancel()
-        requestTask = Task { @MainActor [weak self] in
-            guard let self else { return }
-            try? await Task.sleep(for: .milliseconds(180))
-            guard !Task.isCancelled else { return }
-
-            status = "Requesting calendar access..."
-            eventStore.requestFullAccessToEvents { [weak self] granted, error in
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-
-                    if let error {
-                        isRequestingAccess = false
-                        permissionSheetDidNotAppear = true
-                        status = "Calendar permission request failed: \(error.localizedDescription)"
-                        requestTask = nil
-                        return
-                    }
-
-                    eventStore.reset()
-                    // The permission sheet can finish in System Settings. A
-                    // new store is required to observe the resulting TCC
-                    // decision instead of displaying the pre-request state.
-                    eventStore = EKEventStore()
-                    refreshAuthorizationState()
-
+        case .notDetermined, .writeOnly:
+            isRequestingAccess = true
+            status = "Waiting for Calendar permission..."
+            // The explicit Connect action may come from a nonactivating panel.
+            // Activate the app before asking macOS to present permission UI.
+            NSApp.activate(ignoringOtherApps: true)
+            requestTask = Task { [weak self] in
+                guard let self else { return }
+                do {
+                    // Only an explicit Connect action requests access.
+                    // The result cannot prove whether a system sheet appeared.
+                    try await Task.sleep(for: .milliseconds(150))
+                    let granted = try await EKEventStore().requestFullAccessToEvents()
+                    updateAuthorizationState()
                     if granted && accessState == .fullAccess {
-                        permissionSheetDidNotAppear = false
                         refresh()
-                    } else if accessState == .notDetermined {
-                        // A false result while the authorization state is still
-                        // notDetermined does not prove that the person dismissed
-                        // anything. Keep the message factual and offer settings.
-                        permissionSheetDidNotAppear = true
-                        status = "The calendar permission sheet did not appear. Open calendar settings."
                     } else {
-                        permissionSheetDidNotAppear = false
-                        status = accessState.title
+                        status = accessState == .notDetermined
+                            ? "Calendar permission is still undecided. Check System Settings if no prompt appeared."
+                            : accessState.title
                     }
-                    isRequestingAccess = false
-                    requestTask = nil
+                } catch {
+                    updateAuthorizationState()
+                    status = "Calendar permission request failed: \(error.localizedDescription)"
                 }
+                isRequestingAccess = false
+                requestTask = nil
             }
         }
     }
 
     func refresh() {
-        refreshAuthorizationState()
-        guard accessState == .fullAccess else {
-            upcomingEvents = []
-            status = accessState.title
-            return
+        updateAuthorizationState()
+        guard accessState == .fullAccess else { return }
+
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        refreshTask?.cancel()
+        isLoading = true
+        status = "Loading events from Calendar..."
+        refreshTask = Task { [weak self] in
+            let snapshot = await Task.detached(priority: .utility) {
+                CalendarSnapshot.load()
+            }.value
+            guard let self, !Task.isCancelled, generation == refreshGeneration else { return }
+
+            upcomingEvents = snapshot.events
+            availableCalendarCount = snapshot.calendarCount
+            lastUpdated = snapshot.fetchedAt
+            isLoading = false
+            if snapshot.calendarCount == 0 {
+                status = "Access granted, but EventKit found no calendars. Check Calendar accounts and visibility."
+            } else if snapshot.events.isEmpty {
+                status = "No current or upcoming events in the next 7 days across \(snapshot.calendarCount) calendars."
+            } else {
+                status = "Loaded \(snapshot.events.count) upcoming events from \(snapshot.calendarCount) calendars."
+            }
+            refreshTask = nil
         }
-
-        let now = Date()
-        let end = now.addingTimeInterval(24 * 60 * 60)
-        let predicate = eventStore.predicateForEvents(
-            withStart: now,
-            end: end,
-            calendars: nil
-        )
-
-        upcomingEvents = eventStore
-            .events(matching: predicate)
-            .filter { !$0.isAllDay || $0.startDate >= now }
-            .sorted { $0.startDate < $1.startDate }
-            .prefix(5)
-            .map { CalendarEventSummary(event: $0) }
-
-        lastUpdated = now
-        status = upcomingEvents.isEmpty
-            ? "No events in the next 24 hours"
-            : "Calendar updated"
     }
 
     func openNextEventLink() {
         guard let url = nextEvent?.url else {
-            status = "The next event has no link"
+            status = "The next event has no meeting link"
             return
         }
-
-        guard NSWorkspace.shared.open(url) else {
-            status = "The event link could not be opened"
-            return
-        }
-
-        status = "Opened the next event link"
+        status = NSWorkspace.shared.open(url)
+            ? "Opened the next event link"
+            : "The event link could not be opened"
     }
 
     func openCalendarSettings() {
-        permissionSheetDidNotAppear = false
-        guard let settingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars") else {
-            status = "Open System Settings to allow calendar access"
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars"),
+              NSWorkspace.shared.open(url) else {
+            status = "Open System Settings → Privacy & Security → Calendars"
             return
         }
-
-        guard NSWorkspace.shared.open(settingsURL) else {
-            status = "Open System Settings to allow calendar access"
-            return
-        }
-
-        status = "Enable Calendar access, then press Refresh calendar"
+        status = "Check Calendar access in System Settings, then refresh here."
     }
 
-    private func refreshAuthorizationState() {
+    private func updateAuthorizationState() {
+        let previous = accessState
         switch EKEventStore.authorizationStatus(for: .event) {
-        case .notDetermined:
-            accessState = .notDetermined
-        case .writeOnly:
-            accessState = .writeOnly
-        case .fullAccess:
-            accessState = .fullAccess
-        case .denied:
-            accessState = .denied
-        case .restricted:
-            accessState = .restricted
-        @unknown default:
-            accessState = .restricted
+        case .notDetermined: accessState = .notDetermined
+        case .writeOnly: accessState = .writeOnly
+        case .fullAccess: accessState = .fullAccess
+        case .denied: accessState = .denied
+        case .restricted: accessState = .restricted
+        @unknown default: accessState = .restricted
         }
 
-        if !isRequestingAccess && !permissionSheetDidNotAppear {
-            status = accessState.title
+        if accessState != .fullAccess {
+            refreshGeneration += 1
+            refreshTask?.cancel()
+            refreshTask = nil
+            isLoading = false
+            upcomingEvents = []
+            availableCalendarCount = nil
+            lastUpdated = nil
+            if !isRequestingAccess || previous != accessState { status = accessState.title }
         }
     }
 }
 
 private extension CalendarEventSummary {
     init(event: EKEvent) {
-        let notesURL = CalendarEventSummary.firstURL(in: event.notes)
-
         self.init(
             id: event.eventIdentifier ?? UUID().uuidString,
             title: event.title.isEmpty ? "Untitled event" : event.title,
@@ -281,24 +224,21 @@ private extension CalendarEventSummary {
             endDate: event.endDate,
             calendarTitle: event.calendar?.title ?? "Calendar",
             isAllDay: event.isAllDay,
-            url: event.url ?? notesURL
+            url: Self.webURL(event.url) ?? Self.firstURL(in: event.location) ?? Self.firstURL(in: event.notes)
         )
+    }
+
+    static func webURL(_ url: URL?) -> URL? {
+        guard let url, let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else { return nil }
+        return url
     }
 
     static func firstURL(in text: String?) -> URL? {
         guard let text else { return nil }
-
         for token in text.split(whereSeparator: { $0.isWhitespace }) {
             let candidate = token.trimmingCharacters(in: .punctuationCharacters)
-            guard let url = URL(string: candidate),
-                  let scheme = url.scheme?.lowercased(),
-                  scheme == "http" || scheme == "https"
-            else {
-                continue
-            }
-            return url
+            if let url = webURL(URL(string: candidate)) { return url }
         }
-
         return nil
     }
 }

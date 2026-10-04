@@ -7,16 +7,48 @@ enum NotchWidgetMode: Equatable {
     case calendar
 }
 
-private enum NotchLayout {
-    static let width: CGFloat = 300
-    static let height: CGFloat = 196
+struct NotchGeometry: Equatable {
+    let width: CGFloat
+    let neckWidth: CGFloat
+    let neckHeight: CGFloat
+
+    static let bodyHeight: CGFloat = 166
     static let cornerRadius: CGFloat = 28
+
+    var shoulderHeight: CGFloat { neckHeight > 0 ? 24 : 0 }
+    var contentTop: CGFloat { neckHeight + shoulderHeight }
+    var height: CGFloat { contentTop + Self.bodyHeight }
+    var size: CGSize { CGSize(width: width, height: height) }
+
+    static let fallback = NotchGeometry(width: 300, neckWidth: 300, neckHeight: 0)
+
+    init(width: CGFloat, neckWidth: CGFloat, neckHeight: CGFloat) {
+        self.width = width
+        self.neckWidth = neckWidth
+        self.neckHeight = neckHeight
+    }
+
+    init(screen: NSScreen) {
+        guard let left = screen.auxiliaryTopLeftArea,
+              let right = screen.auxiliaryTopRightArea,
+              right.minX > left.maxX else {
+            self = .fallback
+            return
+        }
+
+        let cutoutWidth = right.minX - left.maxX
+        let panelWidth = min(max(300, cutoutWidth + 96), screen.frame.width - 24)
+        width = panelWidth
+        neckWidth = min(cutoutWidth + 2, panelWidth - 32)
+        neckHeight = max(screen.safeAreaInsets.top, min(left.height, right.height))
+    }
 }
 
 @MainActor
 final class NotchWidgetController: ObservableObject {
     @Published private(set) var isVisible = false
     @Published private(set) var mode: NotchWidgetMode = .character
+    @Published private(set) var geometry: NotchGeometry = .fallback
 
     private let assistant: AssistantViewModel
     private let calendar: CalendarViewModel
@@ -25,12 +57,9 @@ final class NotchWidgetController: ObservableObject {
     private var isPointerInsidePanel = false
     private var isImpactRevealed = false
     private var hideTask: Task<Void, Never>?
+    private var collapseTask: Task<Void, Never>?
     private var pomodoroObservation: AnyCancellable?
-
-    private let widgetSize = CGSize(
-        width: NotchLayout.width,
-        height: NotchLayout.height
-    )
+    private var screenChangeObserver: AnyCancellable?
     private let overlayLevel = NSWindow.Level(
         rawValue: NSWindow.Level.mainMenu.rawValue + 3
     )
@@ -38,7 +67,11 @@ final class NotchWidgetController: ObservableObject {
     init(assistant: AssistantViewModel, calendar: CalendarViewModel) {
         self.assistant = assistant
         self.calendar = calendar
+        if let screen = Self.selectedScreen() { geometry = NotchGeometry(screen: screen) }
         configureHoverZone()
+        screenChangeObserver = NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.screenDidChange() }
         pomodoroObservation = assistant.$pomodoroPhase
             .sink { [weak self] phase in
                 self?.handlePomodoroPhaseChange(phase)
@@ -56,7 +89,9 @@ final class NotchWidgetController: ObservableObject {
 
     func showCalendar() {
         mode = .calendar
-        calendar.requestAccessAndRefresh()
+        // A sensor gesture may reveal Calendar, but only an explicit button
+        // press may initiate the system permission request.
+        calendar.prepare()
         reveal(stickyUntilImpact: true)
     }
 
@@ -81,10 +116,28 @@ final class NotchWidgetController: ObservableObject {
     func hide() {
         hideTask?.cancel()
         hideTask = nil
-        panel?.orderOut(nil)
         isVisible = false
         isImpactRevealed = false
         mode = .character
+        guard let panel, panel.isVisible else { return }
+        collapseTask?.cancel()
+        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            panel.orderOut(nil)
+            return
+        }
+
+        let collapsed = collapsedFrame(for: panel.frame)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.24
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            panel.animator().setFrame(collapsed, display: true)
+            panel.animator().alphaValue = 0
+        }
+        collapseTask = Task { @MainActor [weak self, weak panel] in
+            try? await Task.sleep(for: .milliseconds(250))
+            guard !Task.isCancelled, let self, !self.isVisible else { return }
+            panel?.orderOut(nil)
+        }
     }
 
     private func handlePomodoroPhaseChange(_ phase: PomodoroPhase) {
@@ -113,29 +166,32 @@ final class NotchWidgetController: ObservableObject {
     private func reveal(stickyUntilImpact: Bool) {
         hideTask?.cancel()
         hideTask = nil
+        collapseTask?.cancel()
+        collapseTask = nil
         isImpactRevealed = stickyUntilImpact
         makePanelIfNeeded()
-        positionPanel()
+        screenDidChange()
 
         guard let panel else { return }
-
-        // The panel is already positioned at the top edge of the display. A
-        // short opacity animation combined with the SwiftUI scale animation
-        // makes it grow out of the notch instead of appearing as a separate
-        // window below it.
-        let shouldAnimate = !panel.isVisible
-        if shouldAnimate {
-            panel.alphaValue = 0
-            panel.orderFrontRegardless()
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.26
-                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-                panel.animator().alphaValue = 1
-            }
-        } else {
-            panel.orderFrontRegardless()
-        }
+        let expanded = panel.frame
+        let wasVisible = panel.isVisible
         isVisible = true
+        if !wasVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
+            panel.setFrame(collapsedFrame(for: expanded), display: false)
+            panel.alphaValue = 0
+        }
+        panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.28
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().setFrame(expanded, display: true)
+            panel.animator().alphaValue = 1
+        }
+    }
+
+    private func collapsedFrame(for expanded: NSRect) -> NSRect {
+        let height = max(geometry.neckHeight, 1)
+        return NSRect(x: expanded.minX, y: expanded.maxY - height, width: expanded.width, height: height)
     }
 
     private func makePanelIfNeeded() {
@@ -145,8 +201,8 @@ final class NotchWidgetController: ObservableObject {
             contentRect: NSRect(
                 x: 0,
                 y: 0,
-                width: widgetSize.width,
-                height: widgetSize.height
+                width: geometry.width,
+                height: geometry.height
             ),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -185,7 +241,7 @@ final class NotchWidgetController: ObservableObject {
         guard let panel else { return }
         guard let screen = notchScreen else { return }
 
-        let size = widgetSize
+        let size = geometry.size
         let centerX = notchCenterX(on: screen)
         panel.setFrame(
             NSRect(
@@ -200,7 +256,7 @@ final class NotchWidgetController: ObservableObject {
 
     private func configureHoverZone() {
         let hover = HoverZonePanel(
-            contentRect: NSRect(x: 0, y: 0, width: 380, height: 44),
+            contentRect: NSRect(x: 0, y: 0, width: geometry.neckWidth + 12, height: max(geometry.neckHeight, 30)),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -242,7 +298,7 @@ final class NotchWidgetController: ObservableObject {
         guard let hoverPanel else { return }
         guard let screen = notchScreen else { return }
 
-        let size = hoverPanel.frame.size
+        let size = CGSize(width: geometry.neckWidth + 12, height: max(geometry.neckHeight, 30))
         let centerX = notchCenterX(on: screen)
         hoverPanel.setFrame(
             NSRect(
@@ -255,10 +311,18 @@ final class NotchWidgetController: ObservableObject {
         )
     }
 
-    private var notchScreen: NSScreen? {
+    private static func selectedScreen() -> NSScreen? {
         NSScreen.screens.first(where: { screen in
             screen.auxiliaryTopLeftArea != nil && screen.auxiliaryTopRightArea != nil
         }) ?? NSScreen.main ?? NSScreen.screens.first
+    }
+
+    private var notchScreen: NSScreen? { Self.selectedScreen() }
+
+    private func screenDidChange() {
+        if let screen = notchScreen { geometry = NotchGeometry(screen: screen) }
+        positionHoverPanel()
+        positionPanel()
     }
 
     private func notchCenterX(on screen: NSScreen) -> CGFloat {
@@ -324,94 +388,109 @@ private struct NotchWidgetView: View {
     @EnvironmentObject private var notch: NotchWidgetController
     @EnvironmentObject private var assistant: AssistantViewModel
     @EnvironmentObject private var calendar: CalendarViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 0.08)) { context in
             let time = context.date.timeIntervalSinceReferenceDate
             let blinkPhase = time.truncatingRemainder(dividingBy: 5.0)
             let isBlinking = blinkPhase < 0.16
-            let breathing = sin(time * 1.4) * 0.012
-            let focusMotion = sin(time * 2.2)
+            let breathing = reduceMotion ? 0 : sin(time * 1.4) * 0.012
+            let focusMotion = reduceMotion ? 0 : sin(time * 2.2)
             let isFocusing = assistant.pomodoroPhase == .focusing
             let showsPomodoro = isFocusing || assistant.pomodoroPhase == .paused
 
-            ZStack {
-                if notch.mode == .calendar {
-                    CalendarWidgetView(calendar: calendar, time: time)
+            VStack(spacing: 0) {
+                Color.clear
+                    .frame(height: notch.geometry.contentTop)
+                    .allowsHitTesting(false)
+
+                ZStack {
+                    if notch.mode == .calendar {
+                        CalendarWidgetView(calendar: calendar, time: time, width: notch.geometry.width)
                         .transition(
                             .asymmetric(
                                 insertion: .move(edge: .trailing).combined(with: .opacity),
                                 removal: .move(edge: .leading).combined(with: .opacity)
                             )
                         )
-                } else {
-                    HStack(spacing: 12) {
-                        NotchFaceView(
-                            isFocusing: isFocusing,
-                            isBlinking: isBlinking,
-                            focusMotion: focusMotion
-                        )
-                        .scaleEffect(1 + breathing)
-
-                        if showsPomodoro {
-                            VStack(spacing: 7) {
-                                PomodoroOrbView(
-                                    timeLabel: assistant.pomodoroTimeLabel,
-                                    progress: assistant.pomodoroProgress,
-                                    isPaused: assistant.pomodoroPhase == .paused,
-                                    pulse: sin(time * 2.0) * 0.018
+                    } else {
+                        HStack(spacing: 12) {
+                            Button {
+                                notch.focusMainWindow()
+                            } label: {
+                                NotchFaceView(
+                                    isFocusing: isFocusing,
+                                    isBlinking: isBlinking,
+                                    focusMotion: focusMotion
                                 )
+                                .scaleEffect(1 + breathing)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Open Sieghart")
 
-                                Button("Finish") {
-                                    assistant.finishPomodoroFromWidget()
+                            if showsPomodoro {
+                                VStack(spacing: 7) {
+                                    PomodoroOrbView(
+                                        timeLabel: assistant.pomodoroTimeLabel,
+                                        progress: assistant.pomodoroProgress,
+                                        isPaused: assistant.pomodoroPhase == .paused,
+                                        pulse: reduceMotion ? 0 : sin(time * 2.0) * 0.018
+                                    )
+
+                                    Button("Finish") {
+                                        assistant.finishPomodoroFromWidget()
+                                    }
+                                    .font(.caption2.weight(.semibold))
+                                    .buttonStyle(.plain)
+                                    .foregroundStyle(.white.opacity(0.86))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(.white.opacity(0.12), in: Capsule())
+                                    .accessibilityLabel("Finish Pomodoro")
                                 }
-                                .font(.caption2.weight(.semibold))
-                                .buttonStyle(.plain)
-                                .foregroundStyle(.white.opacity(0.86))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(.white.opacity(0.12), in: Capsule())
-                                .accessibilityLabel("Finish Pomodoro")
                             }
                         }
-                    }
-                    .transition(
-                        .asymmetric(
-                            insertion: .move(edge: .leading).combined(with: .opacity),
-                            removal: .move(edge: .trailing).combined(with: .opacity)
+                        .transition(
+                            .asymmetric(
+                                insertion: .move(edge: .leading).combined(with: .opacity),
+                                removal: .move(edge: .trailing).combined(with: .opacity)
+                            )
                         )
-                    )
+                    }
                 }
+                .frame(width: notch.geometry.width, height: NotchGeometry.bodyHeight)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.30), value: notch.mode)
             }
-            .frame(width: NotchLayout.width, height: NotchLayout.height)
-            .animation(.easeInOut(duration: 0.35), value: notch.mode)
         }
-        .frame(width: NotchLayout.width, height: NotchLayout.height)
-        .background(.black, in: NotchPanelShape(cornerRadius: NotchLayout.cornerRadius))
-        .clipShape(NotchPanelShape(cornerRadius: NotchLayout.cornerRadius))
-        .contentShape(NotchPanelShape(cornerRadius: NotchLayout.cornerRadius))
-        .scaleEffect(notch.isVisible ? 1 : 0.94, anchor: .top)
-        .opacity(notch.isVisible ? 1 : 0)
-        .animation(
-            .spring(response: 0.34, dampingFraction: 0.86),
-            value: notch.isVisible
-        )
+        .frame(width: notch.geometry.width, height: notch.geometry.height)
+        .background(.black, in: NotchPanelShape(geometry: notch.geometry))
+        .clipShape(NotchPanelShape(geometry: notch.geometry))
+        .contentShape(NotchPanelShape(geometry: notch.geometry))
         .onHover { notch.setPointerInsidePanel($0) }
-        .onTapGesture {
-            notch.focusMainWindow()
-        }
-        .accessibilityLabel("Sieghart character and Pomodoro status")
     }
 }
 
 private struct NotchPanelShape: Shape {
-    let cornerRadius: CGFloat
+    let geometry: NotchGeometry
 
     func path(in rect: CGRect) -> Path {
-        let radius = min(cornerRadius, min(rect.width, rect.height) / 2)
+        let radius = min(NotchGeometry.cornerRadius, min(rect.width, rect.height) / 2)
+        let leftNeck = rect.midX - geometry.neckWidth / 2
+        let rightNeck = rect.midX + geometry.neckWidth / 2
+        let shoulderBottom = rect.minY + geometry.contentTop
+        let neckBottom = rect.minY + geometry.neckHeight
         var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.move(to: CGPoint(x: leftNeck, y: rect.minY))
+        path.addLine(to: CGPoint(x: rightNeck, y: rect.minY))
+        if geometry.shoulderHeight > 0 {
+            path.addLine(to: CGPoint(x: rightNeck, y: neckBottom))
+            path.addCurve(
+                to: CGPoint(x: rect.maxX, y: shoulderBottom),
+                control1: CGPoint(x: rightNeck, y: shoulderBottom),
+                control2: CGPoint(x: rect.maxX, y: neckBottom)
+            )
+        }
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
         path.addQuadCurve(
             to: CGPoint(x: rect.maxX - radius, y: rect.maxY),
@@ -422,6 +501,14 @@ private struct NotchPanelShape: Shape {
             to: CGPoint(x: rect.minX, y: rect.maxY - radius),
             control: CGPoint(x: rect.minX, y: rect.maxY)
         )
+        if geometry.shoulderHeight > 0 {
+            path.addLine(to: CGPoint(x: rect.minX, y: shoulderBottom))
+            path.addCurve(
+                to: CGPoint(x: leftNeck, y: neckBottom),
+                control1: CGPoint(x: rect.minX, y: neckBottom),
+                control2: CGPoint(x: leftNeck, y: shoulderBottom)
+            )
+        }
         path.closeSubpath()
         return path
     }
@@ -474,14 +561,25 @@ private struct PomodoroOrbView: View {
 }
 
 private struct CalendarWidgetView: View {
+    @EnvironmentObject private var notch: NotchWidgetController
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let calendar: CalendarViewModel
     let time: TimeInterval
+    let width: CGFloat
 
     var body: some View {
-        let pulse = 1 + sin(time * 1.6) * 0.025
+        let pulse = reduceMotion ? 1 : 1 + sin(time * 1.6) * 0.025
 
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
+                Button {
+                    notch.show()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back to character")
                 Image(systemName: "calendar")
                     .font(.system(size: 18, weight: .semibold))
                     .scaleEffect(pulse)
@@ -489,9 +587,25 @@ private struct CalendarWidgetView: View {
                 Text("Calendar")
                     .font(.headline)
                 Spacer()
+                Button {
+                    calendar.refresh()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .disabled(calendar.accessState != .fullAccess || calendar.isLoading)
+                .accessibilityLabel("Refresh calendar")
                 if calendar.nextEvent?.hasLink == true {
-                    Image(systemName: "link")
-                        .foregroundStyle(.secondary)
+                    Button {
+                        calendar.openNextEventLink()
+                    } label: {
+                        Label("Join", systemImage: "link")
+                    }
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.cyan)
+                    .accessibilityLabel("Open next event meeting link")
                 }
             }
 
@@ -502,7 +616,7 @@ private struct CalendarWidgetView: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
 
-                    if calendar.accessState != .fullAccess {
+                    if !calendar.isLoading {
                         Button(calendar.accessButtonLabel) {
                             calendar.requestAccessAndRefresh()
                         }
@@ -527,16 +641,14 @@ private struct CalendarWidgetView: View {
                             .lineLimit(1)
                     }
                 }
+                Text(calendar.status)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
         }
         .padding(.horizontal, 22)
-        .frame(
-            width: NotchLayout.width,
-            height: NotchLayout.height,
-            alignment: .leading
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(calendar.nextEvent.map { "Calendar, \($0.title), \($0.relativeStart)" } ?? "Calendar, \(calendar.status)")
+        .frame(width: width, height: NotchGeometry.bodyHeight, alignment: .leading)
     }
 }
 
