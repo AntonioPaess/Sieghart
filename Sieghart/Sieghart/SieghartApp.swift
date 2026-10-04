@@ -155,6 +155,11 @@ private struct ContentView: View {
                     .buttonStyle(.bordered)
                     .disabled(calendar.isRequestingAccess)
 
+                    Button("Show in notch") {
+                        notch.showCalendar()
+                    }
+                    .buttonStyle(.borderless)
+
                     if calendar.nextEvent?.hasLink == true {
                         Button("Open meeting link") {
                             calendar.openNextEventLink()
@@ -277,6 +282,9 @@ private struct MenuBarView: View {
             }
             Button(calendar.accessButtonLabel) {
                 calendar.requestAccessAndRefresh()
+            }
+            Button("Show calendar in notch") {
+                notch.showCalendar()
             }
             if calendar.nextEvent?.hasLink == true {
                 Button("Open meeting link") {
