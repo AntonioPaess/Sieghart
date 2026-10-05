@@ -70,6 +70,7 @@ struct ShortcutRecorder: View {
             }
         }
         .accessibilityLabel(action == .voice ? "Voice shortcut" : "Companion shortcut")
+        .onDisappear { activation.cancelShortcutRecording(for: action) }
     }
 }
 

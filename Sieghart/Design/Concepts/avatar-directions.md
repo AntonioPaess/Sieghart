@@ -1,14 +1,14 @@
 # Sieghart — Six companions
 
-![Six implemented SwiftUI companions](avatar-gallery-preview.png)
+![Six implemented companions and reactions](avatar-reactions-preview.png)
 
-The six characters above are implemented in `CompanionAvatars.swift` and selectable in Appearance. The saved choice follows the user throughout the app and widget. These stills render the actual vector artwork; motion respects both the app setting and macOS Reduce Motion.
+The six characters above are implemented in `CompanionAvatars.swift` and selectable in Appearance. The saved choice follows the user throughout the app, widget, menu header, and menu-bar icon. These stills render the bundled artwork; motion respects both the app setting and macOS Reduce Motion. See [the pose assets and generation prompts](avatar-reactions.md).
 
 ## Original five-direction concept board
 
 ![Five character directions](avatar-directions.png)
 
-Concept comparison for choosing the companion’s visual identity. The first option uses the [current SwiftUI character](../Prototype/avatar-preview.png) as a reference. The other four explore distinct silhouettes. The concept image records the initial five-direction exploration. It is concept artwork; the native gallery above shows the implemented versions, including the new sixth companion.
+This is the approved five-direction board, preserved unchanged. Each original neutral character is extracted directly from this board for the native app, with its backdrop removed at runtime. Additional sprite poses express new moods and body postures. Star Sprout is the only new character added to the five.
 
 | Option | Direction | Suggested motion |
 | --- | --- | --- |

@@ -16,7 +16,9 @@ struct NotchGeometry: Equatable {
 
     init(width: CGFloat, cutoutWidth: CGFloat, cutoutHeight: CGFloat, bodyHeight: CGFloat = 192, compact: Bool = false) {
         self.width = width; self.cutoutWidth = cutoutWidth; self.cutoutHeight = cutoutHeight
-        self.bodyHeight = compact ? max(cutoutHeight, 36) + 6 : bodyHeight
+        // The compact island grows sideways around the camera, never below
+        // its physical cutout. Displays without a notch use a 36-point pill.
+        self.bodyHeight = compact ? (cutoutHeight > 0 ? cutoutHeight : 36) : bodyHeight
         self.compact = compact
     }
 
@@ -55,7 +57,6 @@ final class NotchWidgetController: ObservableObject {
     private var isPointerInsidePanel = false
     private var isImpactRevealed = false
     private var hideTask: Task<Void, Never>?
-    private var collapseTask: Task<Void, Never>?
     private var pomodoroObservation: AnyCancellable?
     private var preferencesObservation: AnyCancellable?
     private var screenChangeObserver: AnyCancellable?
@@ -178,22 +179,7 @@ final class NotchWidgetController: ObservableObject {
         isVisible = false
         isImpactRevealed = false
         guard let panel, panel.isVisible else { return }
-        collapseTask?.cancel()
-        if preferences.usesReducedMotion {
-            panel.orderOut(nil)
-            return
-        }
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.20
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            panel.animator().alphaValue = 0
-        }
-        collapseTask = Task { @MainActor [weak self, weak panel] in
-            try? await Task.sleep(for: .milliseconds(250))
-            guard !Task.isCancelled, let self, !self.isVisible else { return }
-            panel?.orderOut(nil)
-        }
+        panel.orderOut(nil)
     }
 
     private func handlePomodoroPhaseChange(_ phase: PomodoroPhase) {
@@ -234,8 +220,6 @@ final class NotchWidgetController: ObservableObject {
     private func reveal(stickyUntilImpact: Bool) {
         hideTask?.cancel()
         hideTask = nil
-        collapseTask?.cancel()
-        collapseTask = nil
         isImpactRevealed = stickyUntilImpact
         isVisible = true
         screenDidChange()
@@ -249,19 +233,15 @@ final class NotchWidgetController: ObservableObject {
         guard let screen = notchScreen else { return }
         let size = geometry.size
         let expanded = NSRect(x: notchCenterX(on: screen) - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height)
-        let wasVisible = panel.isVisible
         isVisible = true
         // Resize the native panel immediately. Animating a window smaller than
         // its fixed SwiftUI content centers and crops that content mid-reveal.
         panel.setFrame(expanded, display: true)
         panel.contentView?.frame = NSRect(origin: .zero, size: expanded.size)
-        if !wasVisible { panel.alphaValue = preferences.usesReducedMotion ? 1 : 0 }
+        // Keep the black backplate opaque. Fading the entire window mixes in
+        // the bright app underneath and makes the notch appear gray.
+        panel.alphaValue = 1
         panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = preferences.usesReducedMotion ? 0 : 0.24
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            panel.animator().alphaValue = 1
-        }
     }
 
     private func makePanelIfNeeded() {
@@ -281,6 +261,7 @@ final class NotchWidgetController: ObservableObject {
         )
         widgetPanel.isOpaque = false
         widgetPanel.backgroundColor = .clear
+        widgetPanel.colorSpace = .sRGB
         // The panel must visually merge with the physical notch. A shadow and a
         // translucent fill make the content underneath look like it is showing
         // through the widget.
@@ -482,14 +463,17 @@ private final class HoverZoneView: NSView {
     }
 }
 
-private struct NotchWidgetView: View {
+struct NotchWidgetView: View {
     @EnvironmentObject private var notch: NotchWidgetController
     @EnvironmentObject private var assistant: AssistantViewModel
     @EnvironmentObject private var activation: ActivationController
     @EnvironmentObject private var preferences: CompanionPreferences
-    @State private var avatarJoyful = false
-    @State private var reactionTask: Task<Void, Never>?
+    @StateObject private var reactions = CompanionReactions()
     @State private var avatarPointer = CGSize.zero
+
+    init(reactions: CompanionReactions = CompanionReactions()) {
+        _reactions = StateObject(wrappedValue: reactions)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -513,7 +497,7 @@ private struct NotchWidgetView: View {
             .frame(width: notch.geometry.width, height: notch.geometry.bodyHeight, alignment: .top)
         }
         .frame(width: notch.geometry.width, height: notch.geometry.height, alignment: .top)
-        .background(.black, in: NotchPanelShape())
+        .background(CompanionStyle.notchBlack, in: NotchPanelShape())
         .clipShape(NotchPanelShape())
         .contentShape(NotchPanelShape())
         .foregroundStyle(.white)
@@ -522,32 +506,52 @@ private struct NotchWidgetView: View {
         .onHover { notch.setPointerInsidePanel($0) }
         .focusEffectDisabled()
         .onExitCommand { notch.hide() }
+        .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
+        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset() } }
     }
 
     private var animates: Bool { preferences.characterMotion && !preferences.usesReducedMotion && notch.isVisible }
     private var face: some View {
         CompanionInteraction(action: { notch.show() }) {
-            CompanionCharacter(avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening)
+            CompanionCharacter(avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening, mood: activation.commandAcknowledged ? .understood : .idle)
         }.accessibilityLabel("Show companion")
     }
 
     private var home: some View {
         VStack(spacing: 12) {
-            CompanionInteraction(action: reactToTouch) {
-                CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, joyful: avatarJoyful, gaze: avatarPointer)
-            }
-            .accessibilityLabel("Interact with Sieghart").help("Say hello to Sieghart")
-            .onContinuousHover { phase in
-                switch phase {
-                case .active(let location): avatarPointer = animates ? CGSize(width: min(3, max(-3, (location.x - 48) / 16)), height: min(2, max(-2, (location.y - 48) / 24))) : .zero
-                case .ended: avatarPointer = .zero
+            HStack(spacing: 18) {
+                CompanionInteraction(action: reactToTouch) {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
+                        let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
+                        let walking = animates && reactions.mood == .idle && !activation.commandAcknowledged && phase < 4
+                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : reactions.mood, strolling: walking)
+                            .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
+                    }.frame(width: 124, height: 96)
                 }
+                .accessibilityLabel("Interact with Sieghart")
+                .accessibilityValue(reactionDescription)
+                .help("Say hello. Repeated taps make Sieghart grumpy, then sleepy. Tap again to wake.")
+                .onContinuousHover { phase in
+                    switch phase {
+                    case .active(let location): avatarPointer = animates ? CGSize(width: min(3, max(-3, (location.x - 62) / 16)), height: min(2, max(-2, (location.y - 48) / 24))) : .zero
+                    case .ended: avatarPointer = .zero
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(assistant.hasActiveSession ? assistant.activityTitle.uppercased() : "YOUR COMPANION")
+                        .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
+                    Text(homeHeadline).font(.system(size: 18, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.85)
+                    Text(homeMessage).font(.callout).foregroundStyle(CompanionStyle.muted).lineLimit(2)
+                    HStack(spacing: 12) {
+                        Label(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "\(assistant.focusMinutes) min focus", systemImage: "timer").monospacedDigit()
+                        Text("\(assistant.completedSessions) done")
+                    }.font(.caption.weight(.medium)).foregroundStyle(CompanionStyle.accent)
+                }.frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity)
             HStack(spacing: 10) {
                 Button("Focus") { notch.showFocusSetup() }.buttonStyle(CompanionButtonStyle(primary: true)).focusEffectDisabled()
                 if assistant.hasActiveSession {
-                    Button { notch.showCurrentTask() } label: { Label(assistant.pomodoroTimeLabel, systemImage: "timer").monospacedDigit() }
+                    Button { notch.showCurrentTask() } label: { Label("Controls", systemImage: "timer") }
                         .buttonStyle(.plain).focusEffectDisabled().font(.callout).help("Open current timer")
                 } else if assistant.pomodoroPhase == .completed && assistant.interval == .focus {
                     Button("Break") { notch.showCurrentTask() }.buttonStyle(.plain).focusEffectDisabled().font(.callout)
@@ -561,12 +565,48 @@ private struct NotchWidgetView: View {
     }
 
     private func reactToTouch() {
-        avatarJoyful = true
-        reactionTask?.cancel()
-        reactionTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
-            avatarJoyful = false
+        reactions.touch()
+    }
+
+    private var homeHeadline: String {
+        if activation.commandAcknowledged { return "Got it." }
+        switch reactions.mood {
+        case .happy: return "Hey, that tickles!"
+        case .annoyed: return "Okay, okay — I’m here!"
+        case .asleep: return "Tiny nap. Be right back."
+        case .waking: return "I’m awake! What’s next?"
+        case .startled: return "Oh! You surprised me."
+        case .understood: return "Got it."
+        case .celebrating: return "One thing done!"
+        case .idle:
+            if assistant.pomodoroPhase == .paused { return "Paused. Take your time." }
+            return assistant.hasActiveSession ? (assistant.interval == .focus ? "One thing at a time." : "A little room to breathe.") : "Ready when you are."
+        }
+    }
+
+    private var homeMessage: String {
+        if activation.commandAcknowledged { return activation.voiceStatus }
+        switch reactions.mood {
+        case .happy: return "Nice to see you. Easy on the pokes."
+        case .annoyed: return "Give me a second to catch my breath."
+        case .asleep: return "Tap once to wake me up."
+        case .waking: return "That was a very short nap."
+        default:
+            if assistant.pomodoroPhase == .paused { return "Resume whenever you’re ready." }
+            return assistant.hasActiveSession ? "\(assistant.pomodoroTimeLabel) left. \(assistant.interval == .focus ? "I’ll let you know when it’s time to rest." : "Enjoy your break — I’ll keep the time.")" : "Your \(assistant.focusMinutes)-minute focus session is one tap away."
+        }
+    }
+
+    private var reactionDescription: String {
+        switch reactions.mood {
+        case .idle: "Ready to say hello"
+        case .happy: "Happy"
+        case .annoyed: "A little grumpy"
+        case .asleep: "Sleeping. Tap to wake"
+        case .waking: "Waking up"
+        case .startled: "Surprised"
+        case .understood: "Command understood"
+        case .celebrating: "Celebrating a completed session"
         }
     }
 
@@ -584,25 +624,60 @@ private struct NotchWidgetView: View {
 
     private var island: some View {
         Button { notch.showCurrentTask() } label: {
-            HStack(spacing: 0) {
-                CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus)
-                    .frame(maxWidth: .infinity)
-                Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 40))
-                VStack(spacing: 3) {
-                    Text(assistant.pomodoroTimeLabel).font(.system(size: 12, weight: .semibold, design: .rounded)).monospacedDigit()
-                    Capsule().fill(assistant.isRunning ? CompanionStyle.accent : .orange)
-                        .frame(width: max(3, 48 * assistant.pomodoroProgress), height: 2)
-                }.frame(maxWidth: .infinity)
-            }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight)
+            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
+                let time = animates ? context.date.timeIntervalSinceReferenceDate : 0
+                let phase = time.truncatingRemainder(dividingBy: 60)
+                let finishing = assistant.isRunning && assistant.remainingSeconds <= 30
+                let walking = animates && assistant.isRunning && !finishing && phase < 4
+                let nudge = finishing && animates ? max(0, sin(time * 3)) : 0
+                HStack(spacing: 0) {
+                    Group {
+                        if finishing {
+                            VStack(spacing: 3) {
+                                Text("Almost!").font(.system(size: 10, weight: .medium, design: .rounded))
+                                islandProgress
+                            }.foregroundStyle(CompanionStyle.accent)
+                        } else {
+                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, strolling: walking)
+                                .offset(x: walking ? sin(phase / 4 * .pi * 2) * 12 : 0)
+                        }
+                    }.frame(maxWidth: .infinity)
+                    Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 40))
+                    HStack(spacing: 2) {
+                        if finishing {
+                            // On the timer side, the companion nudges the digits.
+                            // Both poses remain outside the physical camera gap.
+                            CompanionCharacter(size: 20, avatar: preferences.avatar, animates: animates, gaze: CGSize(width: 3, height: 0), mood: .startled, strolling: animates)
+                                .rotationEffect(.degrees(nudge * 8))
+                                .offset(x: nudge * 2)
+                        }
+                        VStack(spacing: 3) {
+                            Text(assistant.pomodoroTimeLabel)
+                                .font(.system(size: finishing ? 10 : 12, weight: .semibold, design: .rounded)).monospacedDigit()
+                                .foregroundStyle(finishing ? CompanionStyle.accent : .white)
+                                .contentTransition(.numericText(countsDown: true))
+                                .offset(x: nudge * 2, y: -nudge)
+                                .animation(animates ? .easeOut(duration: 0.2) : nil, value: assistant.pomodoroTimeLabel)
+                            if !finishing { islandProgress }
+                        }
+                    }.frame(maxWidth: .infinity)
+                }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight)
+                    .animation(animates ? .easeInOut(duration: 0.35) : nil, value: finishing)
+            }
         }
         .buttonStyle(.plain).focusEffectDisabled()
         .accessibilityLabel("\(assistant.activityTitle), \(assistant.pomodoroTimeLabel) remaining. Open timer controls.")
         .help("Open timer controls")
     }
 
+    private var islandProgress: some View {
+        Capsule().fill(assistant.isRunning ? CompanionStyle.accent : .orange)
+            .frame(width: max(3, 48 * assistant.pomodoroProgress), height: 2)
+    }
+
     private var celebration: some View {
         HStack(spacing: 22) {
-            CompanionCharacter(size: 92, avatar: preferences.avatar, animates: animates, joyful: true)
+            CompanionCharacter(size: 92, avatar: preferences.avatar, animates: animates, mood: .celebrating)
             VStack(alignment: .leading, spacing: 12) {
                 Text(notch.latestCompletion?.interval == .focus ? "Focus complete!" : "Break complete!").font(.title3.weight(.semibold))
                 Text(completionMessage).font(.callout).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
@@ -682,7 +757,7 @@ private struct NotchWidgetView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 10) {
                 face
-                title(activation.isListening ? "Listening…" : activation.isPreparing ? "Getting ready…" : "Voice", caption: activation.voiceStatus)
+                title(activation.commandAcknowledged ? "Got it." : activation.isListening ? "Listening…" : activation.isPreparing ? "Getting ready…" : "Voice", caption: activation.voiceStatus)
                 Spacer()
                 iconButton("xmark", label: "Cancel voice command") { activation.cancelVoiceCommand() }
             }

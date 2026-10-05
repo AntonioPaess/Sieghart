@@ -3,6 +3,7 @@ import SwiftUI
 
 // Shared palette from the approved local prototype.
 enum CompanionStyle {
+    static let notchBlack = Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 1)
     static let background = Color(red: 23 / 255, green: 23 / 255, blue: 28 / 255)
     static let surface = Color(red: 38 / 255, green: 38 / 255, blue: 45 / 255)
     static let separator = Color(red: 60 / 255, green: 60 / 255, blue: 69 / 255)

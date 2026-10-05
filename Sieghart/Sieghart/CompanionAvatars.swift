@@ -1,3 +1,6 @@
+import AppKit
+import CoreImage.CIFilterBuiltins
+import ImageIO
 import SwiftUI
 
 // Stable identifiers keep the selection independent of display names.
@@ -49,9 +52,9 @@ enum CompanionAvatar: String, CaseIterable, Identifiable {
     }
 }
 
-// Every character is local vector artwork. The same expression parameters
-// drive the full-size companion, voice state, celebration, and tiny island.
-struct CompanionFace: View, Animatable {
+// Vector fallback for a missing resource; production characters use the
+// approved illustrated sprite designs below.
+private struct CompanionVectorFace: View, Animatable {
     var avatar: CompanionAvatar
     var eyeOpen: CGFloat
     var smile: CGFloat
@@ -232,6 +235,217 @@ struct CompanionFace: View, Animatable {
     }
 }
 
+enum CompanionMood: Equatable {
+    case idle, happy, annoyed, asleep, waking, startled, understood, celebrating
+}
+
+enum CompanionPose: Int, CaseIterable {
+    case idle, blink, happy, annoyed, asleep, listening, focused, waking, startled
+}
+
+@MainActor
+enum CompanionSprites {
+    static var directory: URL? = Bundle.main.resourceURL?.appendingPathComponent("AvatarSprites")
+    private static var sheets: [CompanionAvatar: CGImage] = [:]
+    private static var frames: [String: NSImage] = [:]
+    private static var originalBoard: CGImage?
+    private static let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
+    private static let renderer = CIContext(options: [.workingColorSpace: colorSpace, .outputColorSpace: colorSpace])
+    private static let blackMatte: Data = {
+        let dimension = 64
+        var values: [Float] = []
+        values.reserveCapacity(dimension * dimension * dimension * 4)
+        for b in 0..<dimension {
+            for g in 0..<dimension {
+                for r in 0..<dimension {
+                    // Remove the board's near-black backdrop at rendering time;
+                    // the approved source PNG and colored artwork stay intact.
+                    let peak = max(r, max(g, b))
+                    let alpha: Float = peak <= 3 ? 0 : min(1, Float(peak) / 63 / 0.35)
+                    // The board already has black-matted glow: preserve that
+                    // emitted light while making the outer glow translucent.
+                    values += alpha == 0 ? [0, 0, 0, 0] : [Float(r) / 63, Float(g) / 63, Float(b) / 63, alpha]
+                }
+            }
+        }
+        return values.withUnsafeBytes { Data($0) }
+    }()
+
+    static func image(for avatar: CompanionAvatar, pose: CompanionPose) -> NSImage? {
+        let key = "\(avatar.rawValue).\(pose.rawValue)"
+        if let image = frames[key] { return image }
+        if pose == .idle, let approved = approvedIdle(for: avatar) {
+            frames[key] = approved
+            return approved
+        }
+        if sheets[avatar] == nil, let url = directory?.appendingPathComponent("\(avatar.rawValue).png"),
+           let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+           let sheet = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+            sheets[avatar] = sheet
+        }
+        guard let sheet = sheets[avatar] else { return nil }
+        let width = CGFloat(sheet.width) / 3, height = CGFloat(sheet.height) / 3
+        let crop = CGRect(x: CGFloat(pose.rawValue % 3) * width, y: CGFloat(pose.rawValue / 3) * height, width: width, height: height)
+        guard let frame = sheet.cropping(to: crop) else { return nil }
+        let image = NSImage(cgImage: frame, size: CGSize(width: 42, height: 42))
+        image.isTemplate = false
+        frames[key] = image
+        return image
+    }
+
+    private static func approvedIdle(for avatar: CompanionAvatar) -> NSImage? {
+        // Neutral poses come directly from the first approved board, rather
+        // than a recreation. Only the sixth character uses its new artwork.
+        let crop: CGRect
+        switch avatar {
+        case .crtBuddy: crop = CGRect(x: 60, y: 170, width: 390, height: 390)
+        case .arcade1984: crop = CGRect(x: 435, y: 168, width: 395, height: 395)
+        case .minimalSpirit: crop = CGRect(x: 880, y: 230, width: 286, height: 286)
+        case .softOrbit: crop = CGRect(x: 1220, y: 166, width: 404, height: 404)
+        case .paperPal: crop = CGRect(x: 1643, y: 180, width: 385, height: 385)
+        case .starSprout: return nil
+        }
+        if originalBoard == nil, let url = directory?.appendingPathComponent("approved-directions.png"),
+           let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
+            originalBoard = CGImageSourceCreateImageAtIndex(source, 0, nil)
+        }
+        guard let original = originalBoard?.cropping(to: crop) else { return nil }
+        let input = CIImage(cgImage: original)
+        let matte = CIFilter.colorCubeWithColorSpace()
+        matte.inputImage = input; matte.cubeDimension = 64
+        matte.cubeData = blackMatte; matte.colorSpace = colorSpace
+        guard let glow = matte.outputImage,
+              let mask = bodyMask(for: avatar, size: crop.size) else { return nil }
+        let blend = CIFilter.blendWithMask()
+        blend.inputImage = input; blend.backgroundImage = glow
+        blend.maskImage = CIImage(cgImage: mask)
+        guard let output = blend.outputImage,
+              let rendered = renderer.createCGImage(output, from: input.extent, format: .RGBA8, colorSpace: colorSpace) else { return nil }
+        let image = NSImage(cgImage: rendered, size: NSSize(width: 42, height: 42))
+        image.isTemplate = false
+        return image
+    }
+
+    private static func bodyMask(for avatar: CompanionAvatar, size: CGSize) -> CGImage? {
+        guard let context = CGContext(data: nil, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return nil }
+        context.setFillColor(gray: 0, alpha: 1); context.fill(CGRect(origin: .zero, size: size))
+        context.translateBy(x: 0, y: size.height); context.scaleBy(x: 1, y: -1)
+        context.setFillColor(gray: 1, alpha: 1)
+        switch avatar {
+        case .crtBuddy:
+            context.addPath(CGPath(roundedRect: CGRect(x: 45, y: 96, width: 291, height: 222), cornerWidth: 50, cornerHeight: 50, transform: nil)); context.fillPath()
+        case .arcade1984: context.fill(CGRect(x: 108, y: 153, width: 205, height: 153))
+        case .softOrbit: context.fillEllipse(in: CGRect(x: 42, y: 101, width: 285, height: 270))
+        case .paperPal: context.fill(CGRect(x: 110, y: 155, width: 175, height: 112))
+        case .minimalSpirit, .starSprout: break
+        }
+        return context.makeImage()
+    }
+
+    static func menuBarImage(for avatar: CompanionAvatar) -> NSImage? {
+        guard let image = image(for: avatar, pose: .idle)?.copy() as? NSImage else { return nil }
+        image.size = NSSize(width: 22, height: 22)
+        image.isTemplate = false
+        return image
+    }
+}
+
+struct CompanionFace: View {
+    var avatar: CompanionAvatar = .crtBuddy
+    var blinking = false
+    var focusing = false
+    var joyful = false
+    var gaze = CGSize.zero
+    var eyeOpen: CGFloat? = nil
+    var listening = false
+    var motionTime: Double = 0
+    var mood: CompanionMood = .idle
+    var animates = false
+
+    private var pose: CompanionPose {
+        switch mood {
+        case .annoyed: return .annoyed
+        case .asleep: return .asleep
+        case .waking: return .waking
+        case .startled: return .startled
+        case .happy: return .happy
+        case .understood: return .focused
+        case .celebrating: return .happy
+        case .idle: break
+        }
+        if joyful { return .happy }
+        if listening { return .listening }
+        if blinking || (eyeOpen ?? 1) < 0.5 { return .blink }
+        return focusing ? .focused : .idle
+    }
+
+    var body: some View {
+        Group {
+            if let image = CompanionSprites.image(for: avatar, pose: pose) {
+                Image(nsImage: image).resizable()
+                    .interpolation(avatar == .arcade1984 ? .none : .high)
+                    .scaledToFit()
+                    .scaleEffect(1.1)
+                    .offset(x: gaze.width * 0.2, y: gaze.height * 0.2)
+                    .id(pose)
+                    .transition(.opacity)
+            } else {
+                CompanionVectorFace(avatar: avatar, blinking: blinking, focusing: focusing, joyful: joyful || mood == .happy, gaze: gaze, eyeOpen: mood == .asleep ? 0.08 : eyeOpen, listening: listening, motionTime: motionTime)
+            }
+        }
+        .frame(width: 42, height: 42)
+        .animation(animates && pose != .blink ? .easeInOut(duration: 0.12) : nil, value: pose)
+        .accessibilityHidden(true)
+    }
+}
+
+@MainActor
+final class CompanionReactions: ObservableObject {
+    @Published private(set) var mood: CompanionMood = .idle
+    private var touchCount = 0
+    private var lastTouch: Date?
+    private var recovery: Task<Void, Never>?
+    private let now: () -> Date
+    private let recoveryDelay: Duration
+    private let wakeDelay: Duration
+
+    init(now: @escaping () -> Date = Date.init, recoveryDelay: Duration = .seconds(2), wakeDelay: Duration = .milliseconds(1100)) {
+        self.now = now; self.recoveryDelay = recoveryDelay; self.wakeDelay = wakeDelay
+    }
+
+    func touch() {
+        recovery?.cancel()
+        if mood == .asleep {
+            touchCount = 0; lastTouch = nil
+            mood = .waking
+            recover(after: wakeDelay)
+            return
+        }
+        let instant = now()
+        if lastTouch == nil || instant.timeIntervalSince(lastTouch!) > 3 { touchCount = 0 }
+        lastTouch = instant
+        touchCount += 1
+        switch touchCount {
+        case 1...3: mood = .happy; recover(after: recoveryDelay)
+        case 4: mood = .annoyed; recover(after: recoveryDelay)
+        default: mood = .asleep
+        }
+    }
+
+    func reset() {
+        recovery?.cancel(); recovery = nil
+        touchCount = 0; lastTouch = nil; mood = .idle
+    }
+
+    private func recover(after delay: Duration) {
+        recovery = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: delay)
+            guard !Task.isCancelled, let self else { return }
+            self.mood = .idle
+        }
+    }
+}
+
 struct CompanionCharacter: View {
     var size: CGFloat = 42
     var avatar: CompanionAvatar = .crtBuddy
@@ -240,6 +454,8 @@ struct CompanionCharacter: View {
     var joyful = false
     var listening = false
     var gaze = CGSize.zero
+    var mood: CompanionMood = .idle
+    var strolling = false
 
     var body: some View {
         TimelineView(.animation(minimumInterval: avatar == .arcade1984 ? 1.0 / 12 : 1.0 / 60, paused: !animates)) { context in
@@ -249,20 +465,41 @@ struct CompanionCharacter: View {
             let amplitude = avatar == .minimalSpirit ? 0.7 : 2.0
             let float = avatar == .arcade1984 ? (sin(time * 2) * 2).rounded() : sin(time * 1.8) * amplitude
             let sway = avatar == .starSprout ? 3.0 : avatar == .minimalSpirit ? 0.3 : 1.2
-            CompanionFace(avatar: avatar, focusing: focusing, joyful: joyful, gaze: gaze, eyeOpen: eye, listening: listening, motionTime: time)
-                .scaleEffect(size / 42 * (animates && avatar != .arcade1984 ? 1 + sin(time * 1.8) * 0.018 : 1))
-                .rotationEffect(.degrees(animates && joyful ? sin(time * 6) * 5 : sin(time * 0.9) * sway))
-                .offset(y: float)
+            let reaction = joyful ? CompanionMood.happy : mood
+            let hop = (reaction == .happy || reaction == .celebrating) && animates ? -abs(sin(time * 6)) * size * (reaction == .celebrating ? 0.085 : 0.065) : strolling && animates ? -abs(sin(time * 6)) * 2 : float
+            let shake = reaction == .annoyed && animates ? sin(time * 18) * size * 0.025 : 0
+            let stretch: CGFloat = reaction == .waking ? 1.08 : reaction == .asleep ? 0.96 : 1
+            let breath = animates && reaction == .asleep ? 1 + sin(time * 1.5) * 0.02 : 1
+            let nod = reaction == .understood && animates ? abs(sin(time * 5)) * 6 : 0
+            CompanionFace(avatar: avatar, focusing: focusing, joyful: joyful, gaze: gaze, eyeOpen: eye, listening: listening, motionTime: time, mood: reaction, animates: animates)
+                .scaleEffect(x: size / 42 * breath, y: size / 42 * stretch * breath)
+                .rotationEffect(.degrees(strolling && animates ? sin(time * 6) * 4 : reaction == .understood ? nod : reaction == .celebrating && animates ? sin(time * 7) * 9 : reaction == .asleep ? 6 : reaction == .annoyed && animates ? sin(time * 12) * 4 : animates && joyful ? sin(time * 6) * 5 : sin(time * 0.9) * sway))
+                .offset(x: shake, y: reaction == .asleep ? size * 0.035 : hop)
                 .frame(width: size, height: size)
                 .overlay(alignment: .topTrailing) {
-                    if joyful {
+                    if reaction == .happy {
                         Image(systemName: "sparkle").font(.system(size: size * 0.20)).foregroundStyle(avatar.tint)
                             .scaleEffect(animates ? 0.85 + sin(time * 5) * 0.15 : 1)
                             .offset(x: 6, y: -2)
+                    } else if reaction == .asleep {
+                        Text("z").font(.system(size: size * 0.18, weight: .medium, design: .rounded)).foregroundStyle(avatar.tint.opacity(0.7))
+                            .offset(x: 3, y: animates ? -3 - sin(time * 1.5) * 3 : -3)
+                    } else if reaction == .understood {
+                        Image(systemName: "checkmark.circle.fill").font(.system(size: size * 0.22)).foregroundStyle(.mint)
+                            .offset(x: 4, y: 0)
+                    } else if reaction == .celebrating {
+                        ForEach(0..<6) { index in
+                            let angle = Double(index) * .pi / 3 + (animates ? time * 0.5 : 0)
+                            Image(systemName: index.isMultiple(of: 2) ? "sparkle" : "circle.fill")
+                                .font(.system(size: size * 0.08))
+                                .foregroundStyle(index.isMultiple(of: 2) ? avatar.tint : .mint)
+                                .offset(x: cos(angle) * size * 0.34 - size * 0.4, y: sin(angle) * size * 0.32 + size * 0.4)
+                        }
                     }
                 }
                 .animation(animates ? .spring(response: 0.4, dampingFraction: 0.7) : nil, value: joyful)
                 .animation(animates ? .spring(response: 0.45, dampingFraction: 0.78) : nil, value: gaze)
+                .animation(animates ? .spring(response: 0.45, dampingFraction: 0.72) : nil, value: mood)
         }
         .frame(width: size, height: size)
     }

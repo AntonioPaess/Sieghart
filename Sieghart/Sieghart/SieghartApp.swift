@@ -45,11 +45,18 @@ struct SieghartApp: App {
         .defaultSize(width: 1000, height: 680)
         .windowToolbarStyle(.unifiedCompact)
 
-        MenuBarExtra("Sieghart", systemImage: "sparkles") {
+        MenuBarExtra {
             MenuBarView()
                 .environmentObject(assistant)
                 .environmentObject(notch)
                 .environmentObject(activation)
+                .environmentObject(preferences)
+        } label: {
+            if let image = CompanionSprites.menuBarImage(for: preferences.avatar) {
+                Image(nsImage: image).accessibilityLabel("Sieghart — \(preferences.avatar.name)")
+            } else {
+                Image(systemName: "face.smiling").accessibilityLabel("Sieghart")
+            }
         }
         .menuBarExtraStyle(.window)
     }
@@ -332,28 +339,5 @@ private struct ImpactActionPicker: View {
         Picker(title, selection: $selection) {
             ForEach(ImpactAction.allCases) { action in Text(action.title).tag(action) }
         }.pickerStyle(.menu)
-    }
-}
-
-private struct MenuBarView: View {
-    @EnvironmentObject private var assistant: AssistantViewModel
-    @EnvironmentObject private var notch: NotchWidgetController
-    @EnvironmentObject private var activation: ActivationController
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Sieghart", systemImage: "sparkles").font(.headline)
-            Label("\(assistant.activityTitle) · \(assistant.pomodoroTimeLabel)", systemImage: "timer")
-            Divider()
-            Button("Choose focus session") { notch.showFocusSetup() }
-            if assistant.hasActiveSession { Button(assistant.pomodoroButtonLabel) { assistant.togglePomodoro() } }
-            Button(notch.presentation == .island ? "Show companion" : notch.isVisible ? "Tuck away widget" : "Show widget") { notch.toggle() }
-            Button(activation.isListening ? "Stop listening" : "Speak a command") { activation.toggleListening() }
-            Button("Open Sieghart") { openWindow(id: "main"); notch.focusMainWindow() }
-            Button("Quit") { NSApp.terminate(nil) }
-        }
-        .padding(16).frame(minWidth: 260)
-        .tint(CompanionStyle.accent).preferredColorScheme(.dark)
     }
 }

@@ -20,6 +20,8 @@
 		A10000000000000000000032 /* VoiceCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000033 /* VoiceCommands.swift */; };
 		A10000000000000000000034 /* FocusSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* FocusSessionView.swift */; };
 		A10000000000000000000036 /* CompanionAvatars.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* CompanionAvatars.swift */; };
+		A10000000000000000000038 /* AvatarSprites in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* AvatarSprites */; };
+		A10000000000000000000040 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* MenuBarView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -38,6 +40,8 @@
 		A10000000000000000000033 /* VoiceCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommands.swift; sourceTree = "<group>"; };
 		A10000000000000000000035 /* FocusSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusSessionView.swift; sourceTree = "<group>"; };
 		A10000000000000000000037 /* CompanionAvatars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAvatars.swift; sourceTree = "<group>"; };
+		A10000000000000000000039 /* AvatarSprites */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AvatarSprites; sourceTree = "<group>"; };
+		A10000000000000000000041 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +79,8 @@
 				A10000000000000000000033 /* VoiceCommands.swift */,
 				A10000000000000000000035 /* FocusSessionView.swift */,
 				A10000000000000000000037 /* CompanionAvatars.swift */,
+				A10000000000000000000041 /* MenuBarView.swift */,
+				A10000000000000000000039 /* AvatarSprites */,
 				A10000000000000000000029 /* Sieghart.entitlements */,
 			);
 			path = Sieghart;
@@ -141,6 +147,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000000000000000000038 /* AvatarSprites in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -163,6 +170,7 @@
 				A10000000000000000000032 /* VoiceCommands.swift in Sources */,
 				A10000000000000000000034 /* FocusSessionView.swift in Sources */,
 				A10000000000000000000036 /* CompanionAvatars.swift in Sources */,
+				A10000000000000000000040 /* MenuBarView.swift in Sources */,
 				A10000000000000000000027 /* VoiceCallbacks.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

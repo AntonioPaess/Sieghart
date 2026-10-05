@@ -19,22 +19,31 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 | Feature | What it does |
 | --- | --- |
-| **Six companions** | Choose CRT Buddy, Arcade 1984, Minimal Spirit, Soft Orbit, Paper Pal, or Star Sprout in Appearance. Each has its own silhouette and motion. |
+| **Six companions** | The original five designs are preserved, with Star Sprout added as the sixth. Choose one in Appearance; it also becomes your menu-bar icon. |
+| **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Body motion and short messages explain each response. |
 | **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
-| **Dynamic island** | Sessions tuck into a quiet countdown; hovering or clicking expands the timer controls. The overlay follows desktop and full-screen Spaces. |
+| **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover or click for controls. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
 | **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
-| **Voice on demand** | Activate, speak, and finish. Supported local commands execute automatically in English or Portuguese. |
+| **Voice on demand** | Supported commands execute automatically in English or Portuguese. A nod, checkmark, and message acknowledge an understood command. |
 | **Motion preferences** | Choose compact mode and character motion; macOS Reduce Motion is always respected. |
 
 ### Meet the companion
 
-![The six native Sieghart companions](Sieghart/Design/Concepts/avatar-gallery-preview.png)
+![The six Sieghart companions and their reactions](Sieghart/Design/Concepts/avatar-reactions-preview.png)
 
-*Rendered from the app’s SwiftUI artwork, including focus, voice, and joyful expressions at island size. These are still previews, not screenshots of a running app.*
+*Rendered from the app’s bundled artwork. The original five neutral designs are taken directly from the approved concept board; the sixth and additional poses use local transparent sprite sheets.*
 
-Open **Appearance** and select a companion in the three-column gallery. The choice saves immediately and appears throughout the main app, widget, compact island, voice, and completion celebrations. All six are drawn locally with SwiftUI and work offline. CRT Buddy remains the default.
+Open **Appearance** and select a companion in the three-column gallery. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is bundled and works offline. CRT Buddy remains the default.
+
+### A companion with context
+
+![Widget context, repeated-touch feedback, and the updated menu](Sieghart/Design/Concepts/widget-menu-preview.png)
+
+*Static renders of the production views, without opening app windows. The widget shows the session, time, completed count, and a companion message as soon as it opens. The menu shares the app’s palette and selected avatar.*
+
+The widget backplate is opaque sRGB black (`#000000`), including during reveal. Its rendered pixels are verified; the physical camera glass can still look darker than a screen displaying black.
 
 ### Design reference
 
@@ -82,6 +91,8 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 The menu bar also provides access to the widget and app. In Activation, press a shortcut recorder and enter any key combination; release modifier-only keys to save. Companion and voice bindings can be disabled separately. Impact gestures are off by default.
 
+An intermittent shortcut interruption is tracked in [SG-001](Sieghart/BUGS.md). Abandoned recording now restores activation, and registrations recover after app/Space changes and wake. The reported intermittent case still needs a physical Mac check.
+
 ## Voice and local data
 
 Voice starts with its configured shortcut, **Speak**, or the widget microphone. The default voice shortcut is **Option + Command**, pressed and released. Modifier-only shortcuts need Accessibility permission to work in other apps; Activation provides the permission button. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
@@ -108,13 +119,14 @@ Run all deterministic checks:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice intents and execution, shortcut persistence, modifier gestures, island collapse, and completion announcements during automatic breaks.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, and completion announcements during automatic breaks.
 
 ## Project map
 
 | Location | Responsibility |
 | --- | --- |
-| [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) | Main window, navigation, preferences, and menu-bar controls. |
+| [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) | Main window, navigation, preferences, and selected menu-bar icon. |
+| [`MenuBarView.swift`](Sieghart/Sieghart/MenuBarView.swift) | Companion header, session card, and quick controls. |
 | [`NotchWidget.swift`](Sieghart/Sieghart/NotchWidget.swift) | Notch panel, companion, focus configuration, and timer views. |
 | [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro intervals, deadlines, rounds, and persistence. |
 | [`ActivationCore.swift`](Sieghart/Sieghart/ActivationCore.swift) | Global keyboard shortcut and explicit voice commands. |
@@ -123,7 +135,7 @@ These checks do not open the app, activate the sensor, register system shortcuts
 | [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Shared configuration editor for the app and widget. |
 | [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
 | [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
-| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) | Six vector companions, expressions, motion, and the Appearance gallery. |
+| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) / [`AvatarSprites`](Sieghart/Sieghart/AvatarSprites) | Original artwork, six sprite libraries, body motion, touch reactions, and the Appearance gallery. |
 | [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
 | [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
 
@@ -132,6 +144,7 @@ These checks do not open the app, activate the sensor, register system shortcuts
 - Validate the new widget layout and voice flow on the physical Mac.
 - Validate real sensor interaction in the accepted Challenge submission environment.
 - Refine a three-minute, offline story with expressive interactions and accessible controls.
+- Give future document interactions their own receive-and-carry animation when that feature is introduced.
 - Prepare and verify the submission adaptation against the target edition’s rules.
 - Continue Calendar, reminders, and conversational AI as later macOS milestones; Calendar is currently hidden.
 

@@ -18,6 +18,7 @@ final class ActivationController: ObservableObject {
     @Published private(set) var transcript = ""
     @Published private(set) var isListening = false
     @Published private(set) var isPreparing = false
+    @Published private(set) var commandAcknowledged = false
     @Published var voiceLanguage: String {
         didSet { defaults.set(voiceLanguage, forKey: "activation.voiceLanguage"); cancelVoiceCommand() }
     }
@@ -30,7 +31,13 @@ final class ActivationController: ObservableObject {
     private var handler: EventHandlerRef?
     private var globalMonitor: Any?
     private var localMonitor: Any?
-    private var permissionObserver: NSObjectProtocol?
+    private var appObservers: [NSObjectProtocol] = []
+    private var workspaceObservers: [NSObjectProtocol] = []
+    private var shortcutRecoveryTask: Task<Void, Never>?
+    private var shortcutHealthTask: Task<Void, Never>?
+    private var lastShortcutTrust = false
+    private var lastSecureInput = false
+    private var registrationNeedsRetry = false
     private var modifierTracker = ModifierShortcutTracker()
     private let audioEngine = AVAudioEngine()
     private var speechRequest: SFSpeechAudioBufferRecognitionRequest?
@@ -60,9 +67,64 @@ final class ActivationController: ObservableObject {
         voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
         if registersShortcuts {
             registerHotkeys()
-            permissionObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.registerHotkeys() }
+            observeShortcutLifecycle()
+        }
+    }
+
+    func cancelShortcutRecording(for action: ShortcutAction) {
+        guard recordingShortcut == action else { return }
+        recordingShortcut = nil
+    }
+
+    // Leaving a recorder must restore activation even if no chord was captured.
+    func recoverShortcuts() {
+        modifierTracker.reset()
+        if recordingShortcut != nil { recordingShortcut = nil }
+        else if registersShortcuts { registerHotkeys() }
+    }
+
+    private func observeShortcutLifecycle() {
+        for name in [NSApplication.didBecomeActiveNotification, NSApplication.didResignActiveNotification] {
+            appObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.scheduleShortcutRecovery() }
+            })
+        }
+        let workspace = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
+                     NSWorkspace.sessionDidBecomeActiveNotification, NSWorkspace.activeSpaceDidChangeNotification,
+                     NSWorkspace.didActivateApplicationNotification] {
+            workspaceObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.scheduleShortcutRecovery() }
+            })
+        }
+        shortcutHealthTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled, let self else { return }
+                self.checkShortcutHealth()
             }
+        }
+    }
+
+    private func scheduleShortcutRecovery() {
+        modifierTracker.reset()
+        if recordingShortcut != nil { recordingShortcut = nil }
+        shortcutRecoveryTask?.cancel()
+        shortcutRecoveryTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled, let self, self.recordingShortcut == nil else { return }
+            self.recoverShortcuts()
+        }
+    }
+
+    private func checkShortcutHealth() {
+        guard recordingShortcut == nil else { return }
+        let trusted = AXIsProcessTrusted()
+        let secureInput = IsSecureEventInputEnabled()
+        // A release can be lost while the system protects keyboard input.
+        if NSEvent.modifierFlags.intersection(ShortcutChord.allowedModifiers).isEmpty { modifierTracker.reset() }
+        if trusted != lastShortcutTrust || secureInput != lastSecureInput || registrationNeedsRetry {
+            registerHotkeys()
         }
     }
 
@@ -95,6 +157,7 @@ final class ActivationController: ObservableObject {
         if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }; globalMonitor = nil
         if let localMonitor { NSEvent.removeMonitor(localMonitor) }; localMonitor = nil
         modifierTracker.reset()
+        registrationNeedsRetry = false
         guard recordingShortcut == nil else { return }
         Self.activeHotkeyOwner = self
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
@@ -103,10 +166,14 @@ final class ActivationController: ObservableObject {
             var identifier = EventHotKeyID()
             let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &identifier)
             let id = identifier.id
-            if status == noErr { Task { @MainActor in ActivationController.activeHotkeyOwner?.performShortcut(id == 2 ? .voice : .companion) } }
+            if status == noErr, identifier.signature == 0x53494748, id == 1 || id == 2 {
+                Task { @MainActor in ActivationController.activeHotkeyOwner?.performShortcut(id == 2 ? .voice : .companion) }
+            }
             return noErr
         }, 1, &eventType, nil, &handler)
         let trusted = AXIsProcessTrusted()
+        lastShortcutTrust = trusted
+        lastSecureInput = IsSecureEventInputEnabled()
         needsShortcutPermission = !trusted && (voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true)
         for (action, id) in [(ShortcutAction.companion, UInt32(1)), (.voice, UInt32(2))] {
             var statusText = "Shortcut off"
@@ -115,9 +182,9 @@ final class ActivationController: ObservableObject {
                     var reference: EventHotKeyRef?
                     let status = installed == noErr ? RegisterEventHotKey(code, chord.carbonModifiers, EventHotKeyID(signature: 0x53494748, id: id), GetApplicationEventTarget(), 0, &reference) : installed
                     if status == noErr, let reference { hotkeys.append(reference); statusText = "\(chord.label) · Works in other apps" }
-                    else { statusText = "Shortcut unavailable; record another combination" }
+                    else { registrationNeedsRetry = true; statusText = "Shortcut unavailable; record another combination" }
                 } else {
-                    statusText = trusted ? "\(chord.label) · Press and release to activate" : "\(chord.label) · Allow Accessibility to use in other apps"
+                    statusText = !trusted ? "\(chord.label) · Allow Accessibility to use in other apps" : lastSecureInput ? "\(chord.label) · Secure keyboard input is active" : "\(chord.label) · Press and release to activate"
                 }
             }
             if action == .voice { voiceShortcutStatus = statusText } else { shortcutStatus = statusText }
@@ -132,6 +199,12 @@ final class ActivationController: ObservableObject {
                 MainActor.assumeIsolated { self?.observeModifiers(event) }
             }
         }
+        if localMonitor == nil || (trusted && globalMonitor == nil) {
+            registrationNeedsRetry = true
+            let status = "Keyboard monitoring unavailable; retrying automatically"
+            if companionShortcut?.isModifierOnly == true { shortcutStatus = status }
+            if voiceShortcut?.isModifierOnly == true { voiceShortcutStatus = status }
+        }
     }
 
     private func observeModifiers(_ event: NSEvent) {
@@ -144,7 +217,7 @@ final class ActivationController: ObservableObject {
         }
     }
 
-    private func performShortcut(_ action: ShortcutAction) {
+    func performShortcut(_ action: ShortcutAction) {
         guard recordingShortcut == nil else { return }
         if action == .voice { toggleListening() } else { notch.toggle() }
     }
@@ -156,6 +229,7 @@ final class ActivationController: ObservableObject {
         voiceRequestGeneration += 1
         let generation = voiceRequestGeneration
         isPreparing = true
+        commandAcknowledged = false
         transcript = ""
         voiceStatus = "Checking microphone and speech access…"
         notch.showVoice()
@@ -235,6 +309,7 @@ final class ActivationController: ObservableObject {
     func cancelVoiceCommand() {
         voiceRequestGeneration += 1
         isPreparing = false
+        commandAcknowledged = false
         feedbackTask?.cancel()
         stopListening()
         voiceStatus = "Voice is off"
@@ -256,11 +331,13 @@ final class ActivationController: ObservableObject {
     // Recognition text is never evaluated as code or an external instruction.
     func executeVoiceCommand(_ text: String) {
         feedbackTask?.cancel()
+        commandAcknowledged = false
         guard let command = FocusVoiceParser.parse(text) else {
             voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try one focus command, such as “start focus for 25 minutes”."
             notch.showVoice()
             return
         }
+        var succeeded = true
         switch command {
         case .start(let minutes):
             if let minutes { assistant.startFocusSession(minutes: minutes) }
@@ -269,30 +346,39 @@ final class ActivationController: ObservableObject {
             voiceStatus = "Focus started · \(assistant.focusMinutes) minutes"
         case .resume:
             if assistant.hasActiveSession { assistant.startPomodoroFromGesture(); voiceStatus = "Timer resumed" }
-            else { voiceStatus = "No paused session to resume" }
+            else { voiceStatus = "No paused session to resume"; succeeded = false }
         case .pause:
             assistant.pausePomodoroFromGesture(); voiceStatus = assistant.hasActiveSession ? "Timer paused" : "No active timer to pause"
+            succeeded = assistant.hasActiveSession
         case .finish:
-            if assistant.hasActiveSession { assistant.finishPomodoroFromWidget(); voiceStatus = "Session finished"; return }
+            if assistant.hasActiveSession { assistant.finishPomodoroFromWidget(); voiceStatus = "Session finished"; commandAcknowledged = true; scheduleFeedback(closeWidget: false); return }
             voiceStatus = "No active session to finish"
+            succeeded = false
         case .reset:
             assistant.resetPomodoro(); voiceStatus = "Timer reset"
         case .startBreak:
             assistant.startBreak(); voiceStatus = assistant.interval == .focus ? "Finish a focus session before starting its break" : "Break started"
+            succeeded = assistant.interval != .focus
         case .show:
-            voiceStatus = "Sieghart shown"; notch.show(); return
+            voiceStatus = "Sieghart shown"; commandAcknowledged = true; notch.show(); scheduleFeedback(closeWidget: false); return
         case .hide:
             voiceStatus = "Sieghart tucked away"; notch.hide(); return
         case .configure:
-            voiceStatus = "Choose your focus settings"; notch.showFocusSetup(); return
+            voiceStatus = "Choose your focus settings"; commandAcknowledged = true; notch.showFocusSetup(); scheduleFeedback(closeWidget: false); return
         }
+        commandAcknowledged = succeeded
         notch.showVoice()
+        scheduleFeedback(closeWidget: true)
+    }
+
+    private func scheduleFeedback(closeWidget: Bool) {
         let generation = voiceRequestGeneration
         feedbackTask?.cancel()
         feedbackTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(1500))
             guard !Task.isCancelled, let self, generation == self.voiceRequestGeneration else { return }
-            self.notch.hide()
+            self.commandAcknowledged = false
+            if closeWidget { self.notch.hide() }
         }
     }
 }
