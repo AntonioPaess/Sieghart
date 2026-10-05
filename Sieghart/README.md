@@ -9,11 +9,13 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 - **Overview** shows the current session and completed count.
 - **Focus** opens a dedicated tab in the app. It uses the same configuration editor as the widget: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
 - **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
-- **Appearance** controls expanded timer density, character motion, and reduced motion. macOS Reduce Motion is always respected.
+- **Appearance** offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Soft Orbit, Paper Pal, and Star Sprout. Selection saves immediately and applies throughout the app and notch. Expanded timer density, character motion, and reduced motion are configurable. macOS Reduce Motion is always respected.
 
-Normal reveal opens the interactive CRT avatar. Phosphor eyes blink smoothly, its body floats gently, and pupils follow the pointer. Touch produces a happy expression and sparkle. Custom interactions preserve keyboard and VoiceOver actions with a rounded focus indicator, avoiding the native rectangular mouse focus ring.
+Normal reveal opens the selected interactive avatar. All six use local SwiftUI vector artwork with shared blinking, gaze, focus, listening, and joyful expressions. The arcade character moves in discrete steps, the minimal face stays restrained, the orb has a moving satellite, paper ears flex, and the golden star sways. Touch produces a happy expression and sparkle. Custom interactions preserve keyboard and VoiceOver actions with a rounded focus indicator, avoiding the native rectangular mouse focus ring.
 
 Starting a session tucks the widget into a small island. The character and countdown sit beside the physical camera cutout, leaving the camera area clear. Hover or click expands timer controls; leaving or closing the controls returns to the island. Impact reveal also opens the companion from the compact state. Native panel bounds are controlled explicitly; the hosting view cannot retain an earlier view’s size constraints.
+
+The widget and hover zone are nonactivating floating panels with the cross-app `canJoinAllApplications` policy. They restore ordering when the active Space or application changes, including full-screen apps, without activating Sieghart or reopening a dismissed companion. This follows [Apple’s overlay collection behavior](https://developer.apple.com/documentation/appkit/nswindow/collectionbehavior-swift.struct/canjoinallapplications). Full-screen transitions and hover behavior still need a physical Mac check.
 
 Every completed interval emits a separate completion event. The widget expands with a joyful avatar and a clear message, including when a break starts automatically. After five seconds it tucks away if the pointer is outside; hovering keeps the message available. The break countdown continues during this announcement. Manual Finish offers a break action. Completed breaks invite the next focus session.
 

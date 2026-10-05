@@ -111,7 +111,7 @@ private struct ContentView: View {
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
-                CompanionFace().scaleEffect(0.72).frame(width: 30, height: 30)
+                CompanionFace(avatar: preferences.avatar).scaleEffect(0.72).frame(width: 30, height: 30)
                 Text("Sieghart").font(.title3.weight(.semibold))
             }
             .padding(.bottom, 20)
@@ -173,7 +173,7 @@ private struct ContentView: View {
         .companionCard()
         HStack(alignment: .top, spacing: 16) {
             quickCard("Activation", value: activation.companionShortcut?.label ?? "Shortcut off", detail: "Choose how Sieghart appears.") { section = .activation }
-            quickCard("Appearance", value: preferences.compactTimer ? "Compact while you focus" : "More room while you focus", detail: "Tune reveal and character motion.") { section = .appearance }
+            quickCard("Appearance", value: preferences.avatar.name, detail: "Choose your companion and tune its motion.") { section = .appearance }
         }
         HStack {
             Text("Completed")
@@ -187,7 +187,7 @@ private struct ContentView: View {
         heading("Make time for one thing.", subtitle: "Configure your session here. The notch keeps a quiet countdown while you work.")
         if assistant.hasActiveSession {
             HStack(spacing: 20) {
-                CompanionCharacter(size: 64, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: assistant.interval == .focus)
+                CompanionCharacter(size: 64, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: assistant.interval == .focus)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(assistant.activityTitle).font(.headline)
                     Text(assistant.pomodoroTimeLabel).font(.system(size: 40, weight: .medium)).monospacedDigit()
@@ -254,17 +254,20 @@ private struct ContentView: View {
     }
 
     @ViewBuilder private var appearanceSettings: some View {
-        heading("Quiet, until you need it.", subtitle: "A compact companion that belongs at the top of your screen.")
+        heading("A little more you.", subtitle: "Six personalities. Choose the companion that feels at home on your Mac.")
         HStack(spacing: 18) {
-            CompanionCharacter(size: 80, animates: preferences.characterMotion && !preferences.usesReducedMotion)
+            CompanionCharacter(size: 80, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Sieghart").font(.headline)
-                Text("A little CRT soul, with phosphor eyes and an arcade glow.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                Text(preferences.avatar.name).font(.headline)
+                Text(preferences.avatar.detail).font(.caption).foregroundStyle(CompanionStyle.muted)
             }
             Spacer()
             Button("Preview") { notch.show() }.buttonStyle(CompanionButtonStyle())
         }
         .padding(24).background(.black, in: RoundedRectangle(cornerRadius: 17))
+        CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
+        Text("Your choice is saved automatically and follows you into the island, voice, and celebrations.")
+            .font(.caption).foregroundStyle(CompanionStyle.muted)
         VStack(spacing: 20) {
             PreferenceRow("Compact active timer", detail: "Keep remaining time and controls close together.") {
                 Toggle("Compact active timer", isOn: $preferences.compactTimer).labelsHidden().toggleStyle(.switch)

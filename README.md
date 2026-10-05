@@ -19,9 +19,9 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 | Feature | What it does |
 | --- | --- |
-| **Interactive companion** | A retro CRT character with phosphor eyes, fluid blinking, gentle movement, and a happy touch reaction. |
+| **Six companions** | Choose CRT Buddy, Arcade 1984, Minimal Spirit, Soft Orbit, Paper Pal, or Star Sprout in Appearance. Each has its own silhouette and motion. |
 | **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
-| **Dynamic island** | Sessions tuck into a quiet countdown; hovering or clicking expands the timer controls. |
+| **Dynamic island** | Sessions tuck into a quiet countdown; hovering or clicking expands the timer controls. The overlay follows desktop and full-screen Spaces. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
 | **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
@@ -30,9 +30,11 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 ### Meet the companion
 
-![Sieghart CRT character expressions](Sieghart/Design/Prototype/avatar-preview.png)
+![The six native Sieghart companions](Sieghart/Design/Concepts/avatar-gallery-preview.png)
 
-*Rendered from the app’s SwiftUI character. Motion is represented here by still expressions.*
+*Rendered from the app’s SwiftUI artwork, including focus, voice, and joyful expressions at island size. These are still previews, not screenshots of a running app.*
+
+Open **Appearance** and select a companion in the three-column gallery. The choice saves immediately and appears throughout the main app, widget, compact island, voice, and completion celebrations. All six are drawn locally with SwiftUI and work offline. CRT Buddy remains the default.
 
 ### Design reference
 
@@ -120,7 +122,8 @@ These checks do not open the app, activate the sensor, register system shortcuts
 | [`VoiceCommands.swift`](Sieghart/Sieghart/VoiceCommands.swift) | Supported local voice intents and duration validation. |
 | [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Shared configuration editor for the app and widget. |
 | [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
-| [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, avatar, controls, and appearance preferences. |
+| [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
+| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) | Six vector companions, expressions, motion, and the Appearance gallery. |
 | [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
 | [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
 

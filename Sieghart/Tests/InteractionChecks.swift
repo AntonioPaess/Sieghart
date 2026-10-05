@@ -43,6 +43,14 @@ struct InteractionChecks {
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
         let assistant = AssistantViewModel(defaults: defaults, now: { clock }, schedulesTimer: false)
         let preferences = CompanionPreferences(defaults: defaults)
+        precondition(preferences.avatar == .crtBuddy)
+        for avatar in CompanionAvatar.allCases {
+            preferences.avatar = avatar
+            precondition(CompanionPreferences(defaults: defaults).avatar == avatar)
+        }
+        defaults.set("retired-avatar", forKey: "appearance.avatar")
+        precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
+        preferences.avatar = .crtBuddy
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90))
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
         notch.activation = activation
@@ -95,6 +103,6 @@ struct InteractionChecks {
         precondition(notch.presentation == .island) // Leaving expanded controls tucks them away.
         assistant.resetPomodoro(); drainEvents(); notch.hide()
         precondition(!notch.isVisible)
-        print("PASS: voice intents and execution, shortcut recording persistence, modifier gestures, compact island, completion announcement, and automatic collapse")
+        print("PASS: avatar persistence and fallback, voice intents and execution, shortcut recording persistence, modifier gestures, compact island, completion announcement, and automatic collapse")
     }
 }

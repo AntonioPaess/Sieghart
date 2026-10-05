@@ -59,6 +59,7 @@ final class NotchWidgetController: ObservableObject {
     private var pomodoroObservation: AnyCancellable?
     private var preferencesObservation: AnyCancellable?
     private var screenChangeObserver: AnyCancellable?
+    private var workspaceObservation: AnyCancellable?
     private let overlayLevel = NSWindow.Level(
         rawValue: NSWindow.Level.mainMenu.rawValue + 3
     )
@@ -74,6 +75,13 @@ final class NotchWidgetController: ObservableObject {
             screenChangeObserver = NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
                 .receive(on: RunLoop.main)
                 .sink { [weak self] _ in self?.screenDidChange() }
+            let workspace = NSWorkspace.shared.notificationCenter
+            workspaceObservation = Publishers.Merge(
+                workspace.publisher(for: NSWorkspace.activeSpaceDidChangeNotification),
+                workspace.publisher(for: NSWorkspace.didActivateApplicationNotification)
+            )
+            .debounce(for: .milliseconds(150), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.refreshWorkspacePresence() }
             preferencesObservation = preferences.objectWillChange
                 .receive(on: RunLoop.main)
                 .sink { [weak self] _ in
@@ -280,16 +288,8 @@ final class NotchWidgetController: ObservableObject {
         // The notch is composited with the menu bar. A level above the main
         // menu keeps the widget in the same visual plane as the notch instead
         // of leaving it underneath the menu bar surface.
-        widgetPanel.level = overlayLevel
-        widgetPanel.hidesOnDeactivate = false
+        configureOverlay(widgetPanel)
         widgetPanel.isMovableByWindowBackground = false
-        widgetPanel.collectionBehavior = [
-            .canJoinAllApplications,
-            .canJoinAllSpaces,
-            .fullScreenAuxiliary,
-            .stationary,
-            .ignoresCycle
-        ]
         let hosting = NSHostingView(
             rootView: NotchWidgetView()
                 .environmentObject(self)
@@ -332,15 +332,7 @@ final class NotchWidgetController: ObservableObject {
         hover.backgroundColor = .clear
         hover.alphaValue = 0.01
         hover.hasShadow = false
-        hover.level = overlayLevel
-        hover.hidesOnDeactivate = false
-        hover.collectionBehavior = [
-            .canJoinAllApplications,
-            .canJoinAllSpaces,
-            .fullScreenAuxiliary,
-            .stationary,
-            .ignoresCycle
-        ]
+        configureOverlay(hover)
 
         let view = HoverZoneView()
         view.onEnter = { [weak self] in
@@ -386,6 +378,27 @@ final class NotchWidgetController: ObservableObject {
     }
 
     private var notchScreen: NSScreen? { Self.selectedScreen() }
+
+    private func configureOverlay(_ panel: NSPanel) {
+        panel.isFloatingPanel = true
+        panel.level = overlayLevel
+        panel.hidesOnDeactivate = false
+        // canJoinAllApplications is the cross-app full-screen policy on our
+        // macOS 14.6+ target. A specific fullScreenAuxiliary policy overrides
+        // that classification; let the overlay join other apps directly.
+        panel.collectionBehavior = [
+            .canJoinAllApplications, .canJoinAllSpaces,
+            .fullScreenDisallowsTiling, .stationary, .ignoresCycle
+        ]
+    }
+
+    private func refreshWorkspacePresence() {
+        // A Space transition doesn't change the timer or reopen a dismissed
+        // companion. Restore ordering only for surfaces that should be visible.
+        screenDidChange()
+        if preferences.hoverEnabled { hoverPanel?.orderFrontRegardless() }
+        if isVisible { panel?.orderFrontRegardless() }
+    }
 
     private func screenDidChange() {
         let height: CGFloat
@@ -514,14 +527,14 @@ private struct NotchWidgetView: View {
     private var animates: Bool { preferences.characterMotion && !preferences.usesReducedMotion && notch.isVisible }
     private var face: some View {
         CompanionInteraction(action: { notch.show() }) {
-            CompanionCharacter(animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening)
+            CompanionCharacter(avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening)
         }.accessibilityLabel("Show companion")
     }
 
     private var home: some View {
         VStack(spacing: 12) {
             CompanionInteraction(action: reactToTouch) {
-                CompanionCharacter(size: 96, animates: animates, joyful: avatarJoyful, gaze: avatarPointer)
+                CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, joyful: avatarJoyful, gaze: avatarPointer)
             }
             .accessibilityLabel("Interact with Sieghart").help("Say hello to Sieghart")
             .onContinuousHover { phase in
@@ -572,7 +585,7 @@ private struct NotchWidgetView: View {
     private var island: some View {
         Button { notch.showCurrentTask() } label: {
             HStack(spacing: 0) {
-                CompanionCharacter(size: 26, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus)
+                CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus)
                     .frame(maxWidth: .infinity)
                 Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 40))
                 VStack(spacing: 3) {
@@ -589,7 +602,7 @@ private struct NotchWidgetView: View {
 
     private var celebration: some View {
         HStack(spacing: 22) {
-            CompanionCharacter(size: 92, animates: animates, joyful: true)
+            CompanionCharacter(size: 92, avatar: preferences.avatar, animates: animates, joyful: true)
             VStack(alignment: .leading, spacing: 12) {
                 Text(notch.latestCompletion?.interval == .focus ? "Focus complete!" : "Break complete!").font(.title3.weight(.semibold))
                 Text(completionMessage).font(.callout).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)

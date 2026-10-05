@@ -19,6 +19,7 @@
 		A10000000000000000000030 /* KeyboardShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000031 /* KeyboardShortcuts.swift */; };
 		A10000000000000000000032 /* VoiceCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000033 /* VoiceCommands.swift */; };
 		A10000000000000000000034 /* FocusSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* FocusSessionView.swift */; };
+		A10000000000000000000036 /* CompanionAvatars.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* CompanionAvatars.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 		A10000000000000000000031 /* KeyboardShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcuts.swift; sourceTree = "<group>"; };
 		A10000000000000000000033 /* VoiceCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommands.swift; sourceTree = "<group>"; };
 		A10000000000000000000035 /* FocusSessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusSessionView.swift; sourceTree = "<group>"; };
+		A10000000000000000000037 /* CompanionAvatars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAvatars.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +74,7 @@
 				A10000000000000000000031 /* KeyboardShortcuts.swift */,
 				A10000000000000000000033 /* VoiceCommands.swift */,
 				A10000000000000000000035 /* FocusSessionView.swift */,
+				A10000000000000000000037 /* CompanionAvatars.swift */,
 				A10000000000000000000029 /* Sieghart.entitlements */,
 			);
 			path = Sieghart;
@@ -159,6 +162,7 @@
 				A10000000000000000000030 /* KeyboardShortcuts.swift in Sources */,
 				A10000000000000000000032 /* VoiceCommands.swift in Sources */,
 				A10000000000000000000034 /* FocusSessionView.swift in Sources */,
+				A10000000000000000000036 /* CompanionAvatars.swift in Sources */,
 				A10000000000000000000027 /* VoiceCallbacks.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
