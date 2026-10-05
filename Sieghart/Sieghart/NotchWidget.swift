@@ -392,7 +392,7 @@ final class NotchWidgetController: ObservableObject {
         switch presentation {
         case .home: height = 192
         case .focusSetup: height = 390
-        case .timer: height = preferences.compactTimer ? 138 : 190
+        case .timer: height = preferences.compactTimer ? 150 : 220
         case .completion: height = 148
         case .voice: height = 208
         case .island: height = 42
