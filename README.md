@@ -9,23 +9,30 @@
 
 Sieghart is a native macOS companion that lives near the camera notch. An animated avatar reacts to your touch and pointer, while focus sessions and quick controls stay close to the top of your screen.
 
-Configure your Pomodoro **inside the widget**, choose how to bring Sieghart into view, and keep the main window for your overview and preferences.
+Configure your Pomodoro in the app’s **Focus tab** or directly inside the widget. When a session starts, Sieghart tucks into a small island around the notch, keeping its countdown nearby while you work.
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
-> **In development.** The app compiles and its timer and speech-callback checks pass. Physical notch layout, microphone permissions, and hardware gestures are being validated on the Mac. Conversational AI is planned.
+> **In development.** The app compiles and its timer, voice-intent, shortcut, and presentation checks pass. Physical notch layout, microphone permissions, and hardware gestures still need validation on the Mac. Conversational AI is planned.
 
 ## The experience
 
 | Feature | What it does |
 | --- | --- |
-| **Interactive companion** | Opens on the avatar, with blinking, breathing, pointer movement, and a reaction when clicked. |
-| **Focus from the widget** | Choose 5–60 minutes, short and long breaks, rounds, and automatic break start in one surface. |
-| **Compact timer** | Remaining time, progress, pause/resume, finish, and adjustments during a session. |
+| **Interactive companion** | A retro CRT character with phosphor eyes, fluid blinking, gentle movement, and a happy touch reaction. |
+| **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
+| **Dynamic island** | Sessions tuck into a quiet countdown; hovering or clicking expands the timer controls. |
+| **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
-| **Configurable activation** | A global Control + Option shortcut, optional hover, and configurable impact gestures. |
-| **Voice on demand** | Press to speak, review the transcript, then confirm the command. |
+| **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
+| **Voice on demand** | Activate, speak, and finish. Supported local commands execute automatically in English or Portuguese. |
 | **Motion preferences** | Choose compact mode and character motion; macOS Reduce Motion is always respected. |
+
+### Meet the companion
+
+![Sieghart CRT character expressions](Sieghart/Design/Prototype/avatar-preview.png)
+
+*Rendered from the app’s SwiftUI character. Motion is represented here by still expressions.*
 
 ### Design reference
 
@@ -67,15 +74,17 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 ### Start your first session
 
 1. Hover at the notch or press **Control + Option + S** to reveal the companion.
-2. Click **Focus** and choose your duration, break lengths, and rounds.
-3. Press **Start focus**. Use the timer controls to pause, resume, or finish.
+2. Open the app’s **Focus tab**, or click **Focus** in the widget, and choose your duration, breaks, and rounds.
+3. Press **Start focus**. The widget tucks into the island; hover or click it to pause, resume, or finish.
 4. Open **Activation** or **Appearance** in the main window to customize the experience.
 
-The menu-bar menu also provides access to the widget and app. The shortcut key can be changed or disabled. Impact gestures are off by default.
+The menu bar also provides access to the widget and app. In Activation, press a shortcut recorder and enter any key combination; release modifier-only keys to save. Companion and voice bindings can be disabled separately. Impact gestures are off by default.
 
 ## Voice and local data
 
-Voice starts only after pressing **Speak** or the widget’s microphone button. It listens for up to ten seconds, shows the transcript, and waits for **Run command** before acting. Try “start focus”, “resume”, “pause timer”, “show”, or “hide”. Commands currently use English speech recognition.
+Voice starts with its configured shortcut, **Speak**, or the widget microphone. The default voice shortcut is **Option + Command**, pressed and released. Modifier-only shortcuts need Accessibility permission to work in other apps; Activation provides the permission button. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
+
+Speak a supported command and finish naturally. Recognition completion or a short pause executes it automatically; capture stops after at most ten seconds. Choose English or Portuguese in Activation. Try “start focus for 25 minutes”, “pause timer”, “resume”, “finish”, “show”, or “hide”. Unsupported, negated, or conflicting commands leave the timer unchanged. This is a local focus-command interface; open-ended AI conversation remains planned.
 
 Timers and preferences are stored locally in `UserDefaults`. The microphone is off while idle. Speech recognition uses Apple’s Speech framework; service availability and on-device processing depend on the language and system. See [Apple’s Speech documentation](https://developer.apple.com/documentation/speech/sfspeechrecognizer).
 
@@ -91,28 +100,13 @@ xcodebuild \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-Run the deterministic timer checks:
+Run all deterministic checks:
 
 ```sh
-xcrun swiftc -swift-version 6 \
-  Sieghart/Sieghart/AssistantCore.swift \
-  Sieghart/Sieghart/SensorEngine.swift \
-  Sieghart/Tests/PomodoroChecks.swift \
-  -o /tmp/sieghart-pomodoro-checks
-/tmp/sieghart-pomodoro-checks
+bash Sieghart/Tests/run-checks.sh
 ```
 
-Run the background speech-callback checks:
-
-```sh
-xcrun swiftc -swift-version 6 \
-  Sieghart/Sieghart/VoiceCallbacks.swift \
-  Sieghart/Tests/VoiceCallbackChecks.swift \
-  -o /tmp/sieghart-voice-callback-checks
-/tmp/sieghart-voice-callback-checks
-```
-
-These checks do not open the app, activate the sensor, request permissions, or record audio. They cover timer configuration, pause/resume, short and long breaks, rounds, restoration, completion counting, and speech authorization arriving from a background queue.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice intents and execution, shortcut persistence, modifier gestures, island collapse, and completion announcements during automatic breaks.
 
 ## Project map
 
@@ -122,6 +116,9 @@ These checks do not open the app, activate the sensor, request permissions, or r
 | [`NotchWidget.swift`](Sieghart/Sieghart/NotchWidget.swift) | Notch panel, companion, focus configuration, and timer views. |
 | [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro intervals, deadlines, rounds, and persistence. |
 | [`ActivationCore.swift`](Sieghart/Sieghart/ActivationCore.swift) | Global keyboard shortcut and explicit voice commands. |
+| [`KeyboardShortcuts.swift`](Sieghart/Sieghart/KeyboardShortcuts.swift) | Shortcut capture, persistence format, and modifier gestures. |
+| [`VoiceCommands.swift`](Sieghart/Sieghart/VoiceCommands.swift) | Supported local voice intents and duration validation. |
+| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Shared configuration editor for the app and widget. |
 | [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
 | [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, avatar, controls, and appearance preferences. |
 | [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |

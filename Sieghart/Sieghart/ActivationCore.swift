@@ -6,70 +6,156 @@ import Speech
 @MainActor
 final class ActivationController: ObservableObject {
     static var activeHotkeyOwner: ActivationController?
-    static let keys: [(label: String, code: UInt32)] = [
-        ("Off", 0), ("S", 1), ("D", 2), ("F", 3), ("G", 5), ("H", 4),
-        ("J", 38), ("K", 40), ("L", 37), ("P", 35), ("V", 9), ("Space", 49)
-    ]
-
-    @Published var selectedKey: String {
-        didSet { UserDefaults.standard.set(selectedKey, forKey: "activation.hotkey") ; registerHotkey() }
+    @Published private(set) var companionShortcut: ShortcutChord?
+    @Published private(set) var voiceShortcut: ShortcutChord?
+    @Published var recordingShortcut: ShortcutAction? {
+        didSet { modifierTracker.reset(); if registersShortcuts { registerHotkeys() } }
     }
     @Published private(set) var shortcutStatus = ""
+    @Published private(set) var voiceShortcutStatus = ""
+    @Published private(set) var needsShortcutPermission = false
     @Published private(set) var voiceStatus = "Voice is off"
     @Published private(set) var transcript = ""
     @Published private(set) var isListening = false
     @Published private(set) var isPreparing = false
-    @Published private(set) var awaitingVoiceConfirmation = false
+    @Published var voiceLanguage: String {
+        didSet { defaults.set(voiceLanguage, forKey: "activation.voiceLanguage"); cancelVoiceCommand() }
+    }
     private var voiceRequestGeneration = 0
-
+    private let defaults: UserDefaults
+    private let registersShortcuts: Bool
     private let assistant: AssistantViewModel
     private let notch: NotchWidgetController
-    private var hotkey: EventHotKeyRef?
+    private var hotkeys: [EventHotKeyRef] = []
     private var handler: EventHandlerRef?
-    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en_US"))
+    private var globalMonitor: Any?
+    private var localMonitor: Any?
+    private var permissionObserver: NSObjectProtocol?
+    private var modifierTracker = ModifierShortcutTracker()
     private let audioEngine = AVAudioEngine()
     private var speechRequest: SFSpeechAudioBufferRecognitionRequest?
+    private var audioFeed: SpeechAudioFeed?
     private var speechTask: SFSpeechRecognitionTask?
     private var stopTask: Task<Void, Never>?
+    private var settleTask: Task<Void, Never>?
+    private var feedbackTask: Task<Void, Never>?
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetController) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true) {
         self.assistant = assistant
         self.notch = notch
-        selectedKey = UserDefaults.standard.string(forKey: "activation.hotkey") ?? "S"
-        registerHotkey()
+        self.defaults = defaults
+        self.registersShortcuts = registersShortcuts
+        func saved(_ action: ShortcutAction, fallback: ShortcutChord) -> ShortcutChord? {
+            if defaults.bool(forKey: "activation.\(action.rawValue).disabled") { return nil }
+            if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { return chord }
+            if action == .companion, defaults.string(forKey: "activation.hotkey") == "Off" { return nil }
+            if action == .companion, let legacy = defaults.string(forKey: "activation.hotkey") {
+                let codes: [String: UInt32] = ["S": 1, "D": 2, "F": 3, "G": 5, "H": 4, "J": 38, "K": 40, "L": 37, "P": 35, "V": 9, "Space": 49]
+                if let code = codes[legacy] { return ShortcutChord(keyCode: code, modifiers: ShortcutChord.companion.modifiers, keyLabel: legacy) }
+            }
+            return fallback
+        }
+        companionShortcut = saved(.companion, fallback: .companion)
+        voiceShortcut = saved(.voice, fallback: .voice)
+        voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
+        if registersShortcuts {
+            registerHotkeys()
+            permissionObserver = NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.registerHotkeys() }
+            }
+        }
     }
 
-    private func registerHotkey() {
-        if let hotkey { UnregisterEventHotKey(hotkey) }
-        hotkey = nil
-        if let handler { RemoveEventHandler(handler) }
-        handler = nil
-        guard let key = Self.keys.first(where: { $0.label == selectedKey }), key.label != "Off" else {
-            shortcutStatus = "Shortcut off"
+    func shortcut(for action: ShortcutAction) -> ShortcutChord? { action == .voice ? voiceShortcut : companionShortcut }
+
+    func setShortcut(_ chord: ShortcutChord?, for action: ShortcutAction) {
+        recordingShortcut = nil
+        if let chord, let other = shortcut(for: action == .voice ? .companion : .voice), chord.keyCode == other.keyCode, chord.modifiers == other.modifiers {
+            if action == .voice { voiceShortcutStatus = "Already used to reveal the companion" }
+            else { shortcutStatus = "Already used for voice" }
             return
         }
+        if action == .voice { voiceShortcut = chord } else { companionShortcut = chord }
+        defaults.set(chord == nil, forKey: "activation.\(action.rawValue).disabled")
+        if let chord, let data = try? JSONEncoder().encode(chord) { defaults.set(data, forKey: "activation.\(action.rawValue).chord") }
+        else { defaults.removeObject(forKey: "activation.\(action.rawValue).chord") }
+        if registersShortcuts { registerHotkeys() }
+    }
+
+    func enableModifierShortcuts() {
+        // The C framework exports this immutable key as a mutable global.
+        let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
+        _ = AXIsProcessTrustedWithOptions(options)
+        registerHotkeys()
+    }
+
+    private func registerHotkeys() {
+        hotkeys.forEach { UnregisterEventHotKey($0) }; hotkeys = []
+        if let handler { RemoveEventHandler(handler) }; handler = nil
+        if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }; globalMonitor = nil
+        if let localMonitor { NSEvent.removeMonitor(localMonitor) }; localMonitor = nil
+        modifierTracker.reset()
+        guard recordingShortcut == nil else { return }
         Self.activeHotkeyOwner = self
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let installStatus = InstallEventHandler(GetApplicationEventTarget(), { _, _, _ in
-            Task { @MainActor in ActivationController.activeHotkeyOwner?.notch.toggle() }
+        let installed = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
+            guard let event else { return noErr }
+            var identifier = EventHotKeyID()
+            let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &identifier)
+            let id = identifier.id
+            if status == noErr { Task { @MainActor in ActivationController.activeHotkeyOwner?.performShortcut(id == 2 ? .voice : .companion) } }
             return noErr
         }, 1, &eventType, nil, &handler)
-        guard installStatus == noErr else {
-            shortcutStatus = "Could not install keyboard shortcut"
-            return
+        let trusted = AXIsProcessTrusted()
+        needsShortcutPermission = !trusted && (voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true)
+        for (action, id) in [(ShortcutAction.companion, UInt32(1)), (.voice, UInt32(2))] {
+            var statusText = "Shortcut off"
+            if let chord = shortcut(for: action) {
+                if let code = chord.keyCode {
+                    var reference: EventHotKeyRef?
+                    let status = installed == noErr ? RegisterEventHotKey(code, chord.carbonModifiers, EventHotKeyID(signature: 0x53494748, id: id), GetApplicationEventTarget(), 0, &reference) : installed
+                    if status == noErr, let reference { hotkeys.append(reference); statusText = "\(chord.label) · Works in other apps" }
+                    else { statusText = "Shortcut unavailable; record another combination" }
+                } else {
+                    statusText = trusted ? "\(chord.label) · Press and release to activate" : "\(chord.label) · Allow Accessibility to use in other apps"
+                }
+            }
+            if action == .voice { voiceShortcutStatus = statusText } else { shortcutStatus = statusText }
         }
-        let identifier = EventHotKeyID(signature: 0x53494748, id: 1)
-        let status = RegisterEventHotKey(key.code, UInt32(controlKey | optionKey), identifier, GetApplicationEventTarget(), 0, &hotkey)
-        shortcutStatus = status == noErr ? "Control + Option + \(key.label)" : "Shortcut unavailable; choose another key"
+        guard voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true else { return }
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
+            MainActor.assumeIsolated { self?.observeModifiers(event) }
+            return event
+        }
+        if trusted {
+            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
+                MainActor.assumeIsolated { self?.observeModifiers(event) }
+            }
+        }
+    }
+
+    private func observeModifiers(_ event: NSEvent) {
+        guard recordingShortcut == nil else { modifierTracker.reset(); return }
+        if event.type == .keyDown { modifierTracker.keyPressed(); return }
+        if let modifiers = modifierTracker.update(event.modifierFlags) {
+            for action in ShortcutAction.allCases {
+                if let chord = shortcut(for: action), chord.isModifierOnly, chord.modifiers == modifiers { performShortcut(action) }
+            }
+        }
+    }
+
+    private func performShortcut(_ action: ShortcutAction) {
+        guard recordingShortcut == nil else { return }
+        if action == .voice { toggleListening() } else { notch.toggle() }
     }
 
     func toggleListening() {
         if isListening { finishListening(); return }
         if isPreparing { cancelVoiceCommand(); return }
+        feedbackTask?.cancel()
         voiceRequestGeneration += 1
         let generation = voiceRequestGeneration
         isPreparing = true
-        awaitingVoiceConfirmation = false
         transcript = ""
         voiceStatus = "Checking microphone and speech access…"
         notch.showVoice()
@@ -81,127 +167,132 @@ final class ActivationController: ObservableObject {
         defer { if generation == voiceRequestGeneration { isPreparing = false } }
         let speechAccess = await SpeechAuthorizationBridge.request()
         guard generation == voiceRequestGeneration else { return }
-        guard speechAccess == .authorized else {
-            voiceStatus = "Speech recognition access is needed in System Settings"
-            return
-        }
+        guard speechAccess == .authorized else { voiceStatus = "Allow speech recognition in System Settings"; return }
         let microphoneAccess = await AVCaptureDevice.requestAccess(for: .audio)
         guard generation == voiceRequestGeneration else { return }
-        guard microphoneAccess else {
-            voiceStatus = "Microphone access is needed in System Settings"
-            return
-        }
-        guard let speechRecognizer, speechRecognizer.isAvailable else {
-            voiceStatus = "Speech recognition is unavailable"
-            return
-        }
+        guard microphoneAccess else { voiceStatus = "Allow microphone access in System Settings"; return }
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: voiceLanguage)), recognizer.isAvailable else { voiceStatus = "Speech recognition is unavailable"; return }
         speechTask?.cancel()
         let request = SFSpeechAudioBufferRecognitionRequest()
         request.shouldReportPartialResults = true
+        // Prefer the local recognizer where supported, keeping the core timer independent of speech availability.
+        if recognizer.supportsOnDeviceRecognition { request.requiresOnDeviceRecognition = true }
         speechRequest = request
         let format = audioEngine.inputNode.outputFormat(forBus: 0)
-        guard format.sampleRate > 0, format.channelCount > 0 else {
-            speechRequest = nil
-            voiceStatus = "No microphone input is available"
-            return
-        }
-        audioEngine.inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { @Sendable buffer, _ in
-            request.append(buffer)
-        }
-        do {
-            audioEngine.prepare()
-            try audioEngine.start()
-        } catch {
-            audioEngine.inputNode.removeTap(onBus: 0)
-            speechRequest = nil
+        guard format.sampleRate > 0, format.channelCount > 0 else { speechRequest = nil; voiceStatus = "No microphone input is available"; return }
+        let feed = SpeechAudioFeed(request)
+        audioFeed = feed
+        audioEngine.inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { @Sendable buffer, _ in feed.append(buffer) }
+        do { audioEngine.prepare(); try audioEngine.start() }
+        catch {
+            audioEngine.inputNode.removeTap(onBus: 0); feed.finish(); audioFeed = nil; speechRequest = nil
             voiceStatus = "Could not start microphone: \(error.localizedDescription)"
             return
         }
-        transcript = ""
         isListening = true
-        voiceStatus = "Listening — say a focus command"
+        voiceStatus = "Listening — your command runs when you finish speaking"
         notch.showVoice()
-        speechTask = speechRecognizer.recognitionTask(with: request) { @Sendable [weak self] result, error in
+        speechTask = recognizer.recognitionTask(with: request) { @Sendable [weak self] result, error in
             let text = result?.bestTranscription.formattedString
             let isFinal = result?.isFinal ?? false
             let errorMessage = error?.localizedDescription
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                guard self.isListening, generation == self.voiceRequestGeneration else { return }
+                guard let self, self.isListening, generation == self.voiceRequestGeneration else { return }
                 if let text {
+                    let changed = text != self.transcript
                     self.transcript = text
-                    if isFinal {
-                        self.finishListening()
-                    }
+                    if isFinal { self.finishListening() }
+                    else if changed { self.scheduleSpeechEnd(generation: generation) }
                 } else if let errorMessage {
-                    self.stopListening()
-                    self.voiceStatus = "Speech recognition stopped: \(errorMessage)"
+                    if !self.transcript.isEmpty { self.finishListening() }
+                    else { self.stopListening(); self.voiceStatus = "Speech recognition stopped: \(errorMessage)" }
                 }
             }
         }
-        stopTask?.cancel()
         stopTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(10))
-            guard !Task.isCancelled, let self, self.isListening else { return }
+            guard !Task.isCancelled, let self, self.isListening, generation == self.voiceRequestGeneration else { return }
+            self.finishListening()
+        }
+    }
+
+    private func scheduleSpeechEnd(generation: Int) {
+        settleTask?.cancel()
+        settleTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(1200))
+            guard !Task.isCancelled, let self, self.isListening, generation == self.voiceRequestGeneration else { return }
             self.finishListening()
         }
     }
 
     func finishListening() {
         guard isListening else { return }
+        let text = transcript
         stopListening()
-        awaitingVoiceConfirmation = !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        voiceStatus = awaitingVoiceConfirmation ? "Review your spoken command." : "No speech heard. Try again when you’re ready."
-        notch.showVoice()
+        executeVoiceCommand(text)
     }
 
     func cancelVoiceCommand() {
         voiceRequestGeneration += 1
         isPreparing = false
+        feedbackTask?.cancel()
         stopListening()
-        awaitingVoiceConfirmation = false
         voiceStatus = "Voice is off"
-        notch.show()
-    }
-
-    func confirmVoiceCommand() {
-        guard awaitingVoiceConfirmation else { return }
-        awaitingVoiceConfirmation = false
-        applyVoiceCommand(transcript)
+        notch.hide()
     }
 
     func stopListening() {
+        settleTask?.cancel(); settleTask = nil
+        stopTask?.cancel(); stopTask = nil
         guard isListening else { return }
         isListening = false
-        stopTask?.cancel()
-        stopTask = nil
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
-        speechRequest?.endAudio()
-        speechRequest = nil
-        speechTask?.cancel()
-        speechTask = nil
-        voiceStatus = "Voice is off"
+        audioFeed?.finish(); audioFeed = nil; speechRequest = nil
+        speechTask?.cancel(); speechTask = nil
     }
 
-    private func applyVoiceCommand(_ text: String) {
-        let command = text.lowercased()
-        if command.contains("pause") || command.contains("stop timer") {
-            assistant.pausePomodoroFromGesture()
-            voiceStatus = "Timer paused"
-            notch.showCurrentTask()
-        } else if command.contains("start") || command.contains("resume") || command.contains("focus") {
-            assistant.startPomodoroFromGesture()
-            voiceStatus = "Timer started"
-            notch.showCurrentTask()
-        } else if command.contains("show") || command.contains("open") {
-            notch.show()
-            voiceStatus = "Sieghart shown"
-        } else if command.contains("hide") || command.contains("close") {
-            notch.hide()
-            voiceStatus = "Sieghart hidden"
-        } else {
-            voiceStatus = text.isEmpty ? "No speech heard" : "Command not recognized. Try “start focus” or “pause timer”."
+    // Only local, reversible commands are executed by this intent parser.
+    // Recognition text is never evaluated as code or an external instruction.
+    func executeVoiceCommand(_ text: String) {
+        feedbackTask?.cancel()
+        guard let command = FocusVoiceParser.parse(text) else {
+            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try one focus command, such as “start focus for 25 minutes”."
+            notch.showVoice()
+            return
+        }
+        switch command {
+        case .start(let minutes):
+            if let minutes { assistant.startFocusSession(minutes: minutes) }
+            else if assistant.interval != .focus { assistant.startFocusSession() }
+            else { assistant.startPomodoroFromGesture() }
+            voiceStatus = "Focus started · \(assistant.focusMinutes) minutes"
+        case .resume:
+            if assistant.hasActiveSession { assistant.startPomodoroFromGesture(); voiceStatus = "Timer resumed" }
+            else { voiceStatus = "No paused session to resume" }
+        case .pause:
+            assistant.pausePomodoroFromGesture(); voiceStatus = assistant.hasActiveSession ? "Timer paused" : "No active timer to pause"
+        case .finish:
+            if assistant.hasActiveSession { assistant.finishPomodoroFromWidget(); voiceStatus = "Session finished"; return }
+            voiceStatus = "No active session to finish"
+        case .reset:
+            assistant.resetPomodoro(); voiceStatus = "Timer reset"
+        case .startBreak:
+            assistant.startBreak(); voiceStatus = assistant.interval == .focus ? "Finish a focus session before starting its break" : "Break started"
+        case .show:
+            voiceStatus = "Sieghart shown"; notch.show(); return
+        case .hide:
+            voiceStatus = "Sieghart tucked away"; notch.hide(); return
+        case .configure:
+            voiceStatus = "Choose your focus settings"; notch.showFocusSetup(); return
+        }
+        notch.showVoice()
+        let generation = voiceRequestGeneration
+        feedbackTask?.cancel()
+        feedbackTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(1500))
+            guard !Task.isCancelled, let self, generation == self.voiceRequestGeneration else { return }
+            self.notch.hide()
         }
     }
 }

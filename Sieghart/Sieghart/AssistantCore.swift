@@ -14,7 +14,7 @@ enum PomodoroPhase: String, Equatable {
     }
 }
 
-enum PomodoroInterval: String {
+enum PomodoroInterval: String, Equatable {
     case focus, shortBreak, longBreak
 
     var title: String {
@@ -24,6 +24,13 @@ enum PomodoroInterval: String {
         case .longBreak: "Long break"
         }
     }
+}
+
+struct SessionCompletion: Equatable {
+    let id = UUID()
+    let interval: PomodoroInterval
+    let completedSessions: Int
+    let automaticBreakMinutes: Int?
 }
 
 @MainActor
@@ -46,6 +53,7 @@ final class AssistantViewModel: ObservableObject {
     @Published private(set) var cycleSessions = 0
     @Published private(set) var lastAction = "Ready when you are"
     @Published private(set) var impactCount = 0
+    @Published private(set) var completionNotice: SessionCompletion?
 
     private let defaults: UserDefaults
     private let now: () -> Date
@@ -202,6 +210,7 @@ final class AssistantViewModel: ObservableObject {
         pomodoroPhase = .completed
         lastAction = "\(interval.title) completed"
         persistPomodoro()
+        completionNotice = SessionCompletion(interval: interval, completedSessions: completedSessions, automaticBreakMinutes: interval == .focus && allowAutomaticBreak && autoStartBreaks ? nextBreakMinutes : nil)
         if interval == .focus, allowAutomaticBreak, autoStartBreaks { startBreak() }
     }
 

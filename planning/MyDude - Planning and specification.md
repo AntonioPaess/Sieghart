@@ -366,3 +366,8 @@ The three-impact calendar action requests EventKit access on first use, then swi
 **Follow-up validation:** the universal arm64 and `x86_64` Debug build completed successfully after these changes. Runtime validation still belongs on the user's M3 Pro: use the three-impact calendar action, click the widget's **Connect calendar** button, and confirm the macOS permission sheet and the final panel geometry.
 
 **Commit:** pending runtime validation.
+
+
+### Interaction feedback — 2026-10-05
+
+Use neutral feature branch names and omit tool branding from published names and commit trailers. Focus navigation in the main window must open an app tab. The notch opens on the character; active sessions tuck into a compact island. Finishing an interval must announce completion through the avatar even when the break starts automatically. Explicitly activated voice commands execute supported local actions after speech ends, with configurable independent shortcuts including modifier-only combinations. The character’s current direction is an original retro CRT identity with fluid motion and accessible controls.

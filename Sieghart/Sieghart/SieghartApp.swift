@@ -17,6 +17,7 @@ struct SieghartApp: App {
         let gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)
         let activation = ActivationController(assistant: assistant, notch: notch)
         notch.activation = activation
+        notch.restoreSessionPresence()
         sensor.onImpact = { impact in
             guard preferences.impactsEnabled else { return }
             assistant.registerImpact(impact)
@@ -55,11 +56,12 @@ struct SieghartApp: App {
 }
 
 private enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", activation = "Activation", appearance = "Appearance"
+    case overview = "Overview", focus = "Focus", activation = "Activation", appearance = "Appearance"
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .overview: "square.grid.2x2"
+        case .focus: "timer"
         case .activation: "keyboard"
         case .appearance: "slider.horizontal.3"
         }
@@ -82,6 +84,7 @@ private struct ContentView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     switch section {
                     case .overview: overview
+                    case .focus: focusSettings
                     case .activation: activationSettings
                     case .appearance: appearanceSettings
                     }
@@ -94,6 +97,7 @@ private struct ContentView: View {
         .background(CompanionStyle.background)
         .tint(CompanionStyle.accent)
         .preferredColorScheme(.dark)
+        .focusEffectDisabled()
         .toolbar {
             Button { section = .activation } label: { Image(systemName: "gearshape") }
                 .help("Activation preferences")
@@ -112,7 +116,7 @@ private struct ContentView: View {
             }
             .padding(.bottom, 20)
             sidebarButton("Overview", symbol: "square.grid.2x2", selected: section == .overview) { section = .overview }
-            sidebarButton("Focus", symbol: "timer", selected: false) { notch.showFocusSetup() }
+            sidebarButton("Focus", symbol: "timer", selected: section == .focus) { section = .focus }
             sidebarButton("Activation", symbol: "keyboard", selected: section == .activation) { section = .activation }
             sidebarButton("Appearance", symbol: "slider.horizontal.3", selected: section == .appearance) { section = .appearance }
             Spacer()
@@ -125,7 +129,7 @@ private struct ContentView: View {
     }
 
     private func sidebarButton(_ title: String, symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        CompanionInteraction(action: action) {
             Label(title, systemImage: symbol)
                 .font(.callout.weight(selected ? .semibold : .regular))
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -133,7 +137,8 @@ private struct ContentView: View {
                 .foregroundStyle(selected ? Color.white : CompanionStyle.muted)
                 .background(selected ? CompanionStyle.separator : .clear, in: RoundedRectangle(cornerRadius: 10))
         }
-        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityValue(selected ? "Selected" : "")
     }
 
     @ViewBuilder private var overview: some View {
@@ -152,12 +157,12 @@ private struct ContentView: View {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(assistant.hasActiveSession ? assistant.activityTitle : "Make room for one thing.")
                         .font(.title3.weight(.semibold))
-                    Text("Choose duration and break settings directly in the widget.")
+                    Text("Choose your rhythm in Focus or use the notch for quick access.")
                         .font(.callout).foregroundStyle(CompanionStyle.muted)
                 }
             }
             HStack(spacing: 8) {
-                Button("Open focus widget") { notch.showFocusSetup() }.buttonStyle(CompanionButtonStyle(primary: true))
+                Button("Configure focus") { section = .focus }.buttonStyle(CompanionButtonStyle(primary: true))
                 if assistant.hasActiveSession {
                     Button(assistant.pomodoroButtonLabel) { assistant.togglePomodoro() }.buttonStyle(CompanionButtonStyle())
                 } else {
@@ -167,7 +172,7 @@ private struct ContentView: View {
         }
         .companionCard()
         HStack(alignment: .top, spacing: 16) {
-            quickCard("Activation", value: activation.selectedKey == "Off" ? "Shortcut off" : "Control + Option + \(activation.selectedKey)", detail: "Choose how Sieghart appears.") { section = .activation }
+            quickCard("Activation", value: activation.companionShortcut?.label ?? "Shortcut off", detail: "Choose how Sieghart appears.") { section = .activation }
             quickCard("Appearance", value: preferences.compactTimer ? "Compact while you focus" : "More room while you focus", detail: "Tune reveal and character motion.") { section = .appearance }
         }
         HStack {
@@ -178,35 +183,59 @@ private struct ContentView: View {
         .font(.callout).foregroundStyle(CompanionStyle.muted)
     }
 
+    @ViewBuilder private var focusSettings: some View {
+        heading("Make time for one thing.", subtitle: "Configure your session here. The notch keeps a quiet countdown while you work.")
+        if assistant.hasActiveSession {
+            HStack(spacing: 20) {
+                CompanionCharacter(size: 64, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: assistant.interval == .focus)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(assistant.activityTitle).font(.headline)
+                    Text(assistant.pomodoroTimeLabel).font(.system(size: 40, weight: .medium)).monospacedDigit()
+                    Text(assistant.sessionCaption).font(.caption).foregroundStyle(CompanionStyle.muted)
+                }
+                Spacer()
+                Button(assistant.pomodoroButtonLabel) { assistant.togglePomodoro() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
+                Button("Finish") { assistant.finishPomodoroFromWidget() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
+            }.companionCard()
+        }
+        FocusSessionEditor(onStart: { notch.showIsland() }).companionCard()
+        Text("A finished session brings Sieghart down to celebrate and announce your break.").font(.caption).foregroundStyle(CompanionStyle.muted)
+    }
+
     @ViewBuilder private var activationSettings: some View {
         heading("Bring Sieghart into view.", subtitle: "Choose the inputs that fit your day.")
         VStack(spacing: 18) {
-            PreferenceRow("Keyboard shortcut", detail: "Works while another app is in front.") {
-                HStack {
-                    Text("Control + Option +").font(.caption)
-                    Picker("Shortcut key", selection: $activation.selectedKey) {
-                        ForEach(ActivationController.keys, id: \.label) { key in Text(key.label).tag(key.label) }
-                    }.labelsHidden().frame(width: 80)
-                }
-            }
+            PreferenceRow("Companion shortcut", detail: "Record any key combination to reveal Sieghart.") { ShortcutRecorder(action: .companion) }
             Text(activation.shortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+            Divider()
+            PreferenceRow("Voice shortcut", detail: "Record keys, or press and release only modifiers such as Option + Command.") { ShortcutRecorder(action: .voice) }
+            Text(activation.voiceShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+            if activation.recordingShortcut != nil {
+                Text("Press your combination. Release modifier-only keys to save. Escape cancels.").font(.caption).foregroundStyle(CompanionStyle.accent)
+            }
+            if activation.needsShortcutPermission {
+                Button("Allow modifier shortcuts in other apps") { activation.enableModifierShortcuts() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
+            }
             Divider()
             PreferenceRow("Hover at the notch", detail: "A quiet peek when your pointer reaches the notch.") {
                 Toggle("Hover at the notch", isOn: $preferences.hoverEnabled).labelsHidden().toggleStyle(.switch)
             }
             Divider()
-            PreferenceRow("Voice", detail: "Press to speak. The microphone stays off while idle.") {
-                Button(activation.isListening ? "Stop" : "Speak") { activation.toggleListening() }.buttonStyle(CompanionButtonStyle())
+            PreferenceRow("Voice", detail: "Use your shortcut and speak naturally. Focus commands run when you finish.") {
+                Button(activation.isListening || activation.isPreparing ? "Cancel" : "Speak") {
+                    if activation.isListening || activation.isPreparing { activation.cancelVoiceCommand() }
+                    else { activation.toggleListening() }
+                }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
+            }
+            PreferenceRow("Speech language", detail: "Choose the language you use for commands.") {
+                Picker("Speech language", selection: $activation.voiceLanguage) {
+                    Text("English").tag("en_US")
+                    Text("Português").tag("pt_BR")
+                }.labelsHidden().frame(width: 140)
             }
             Text(activation.voiceStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
             if !activation.transcript.isEmpty {
                 Text("“\(activation.transcript)”").frame(maxWidth: .infinity, alignment: .leading)
-            }
-            if activation.awaitingVoiceConfirmation {
-                HStack {
-                    Button("Cancel") { activation.cancelVoiceCommand() }.buttonStyle(CompanionButtonStyle())
-                    Button("Run command") { activation.confirmVoiceCommand() }.buttonStyle(CompanionButtonStyle(primary: true))
-                }
             }
             Divider()
             PreferenceRow("Impact gestures", detail: "An optional physical way to open or control focus.") {
@@ -227,10 +256,10 @@ private struct ContentView: View {
     @ViewBuilder private var appearanceSettings: some View {
         heading("Quiet, until you need it.", subtitle: "A compact companion that belongs at the top of your screen.")
         HStack(spacing: 18) {
-            CompanionFace()
+            CompanionCharacter(size: 80, animates: preferences.characterMotion && !preferences.usesReducedMotion)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Sieghart").font(.headline)
-                Text("Small character. Clear task. One surface.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                Text("A little CRT soul, with phosphor eyes and an arcade glow.").font(.caption).foregroundStyle(CompanionStyle.muted)
             }
             Spacer()
             Button("Preview") { notch.show() }.buttonStyle(CompanionButtonStyle())
@@ -316,7 +345,7 @@ private struct MenuBarView: View {
             Divider()
             Button("Choose focus session") { notch.showFocusSetup() }
             if assistant.hasActiveSession { Button(assistant.pomodoroButtonLabel) { assistant.togglePomodoro() } }
-            Button(notch.isVisible ? "Hide widget" : "Show widget") { notch.toggle() }
+            Button(notch.presentation == .island ? "Show companion" : notch.isVisible ? "Tuck away widget" : "Show widget") { notch.toggle() }
             Button(activation.isListening ? "Stop listening" : "Speak a command") { activation.toggleListening() }
             Button("Open Sieghart") { openWindow(id: "main"); notch.focusMainWindow() }
             Button("Quit") { NSApp.terminate(nil) }
