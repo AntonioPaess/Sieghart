@@ -2,6 +2,8 @@
 
 Native macOS SwiftUI companion with a configurable notch widget and local Pomodoro timer.
 
+The **Swift Student Challenge** is the primary product goal. This `.xcodeproj` is the macOS development base. The [repository overview](../README.md#swift-student-challenge) records the offline, three-minute experience and the separate submission milestone. Real accelerometer interaction remains a Challenge goal; compatibility with the accepted playground destination is still unverified.
+
 ## App and widget
 
 The main window follows the approved [medium fidelity prototype](Design/Prototype/index.html): a dark sidebar with Overview, Focus, Activation, and Appearance. Overview shows the current timer and completed-session count. Focus opens the widget configuration.

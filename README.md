@@ -11,6 +11,8 @@ Sieghart is a native macOS companion that lives near the camera notch. An animat
 
 Configure your Pomodoro **inside the widget**, choose how to bring Sieghart into view, and keep the main window for your overview and preferences.
 
+**Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
+
 > **In development.** The app compiles and its timer and speech-callback checks pass. Physical notch layout, microphone permissions, and hardware gestures are being validated on the Mac. Conversational AI is planned.
 
 ## The experience
@@ -32,6 +34,14 @@ Configure your Pomodoro **inside the widget**, choose how to bring Sieghart into
 *Medium fidelity prototype of the main window. This image is a design reference, not a capture of the running app. The native widget has since been updated to open on the interactive avatar.*
 
 [Explore the design prototype](Sieghart/Design/Prototype) · [Read the implementation notes](Sieghart/README.md)
+
+## Swift Student Challenge
+
+The [currently published Apple requirements](https://developer.apple.com/swift-student-challenge/eligibility/), checked on October 5, 2026, call for an individual app playground (`.swiftpm`) submitted as a ZIP of up to 25 MB. The experience must work offline, include its resources locally, use English, and be experienced within three minutes. The playground must build and run with Swift Playground 4.6 or Xcode 26 or later. Requirements must be checked again for the target edition.
+
+The main development project remains the macOS `.xcodeproj`. A submission adaptation is a separate milestone. Real accelerometer interaction remains a goal for the Challenge experience; its compatibility with an accepted playground destination still needs validation.
+
+The judging experience should tell one clear story: meet the companion, reveal it through physical interaction, configure a focus session, and see its response. Keyboard controls and reduced motion keep the experience accessible. The core journey must work without network services, an account, or speech recognition. Voice and future integrations need a separate offline compatibility review.
 
 ## Get started
 
@@ -120,9 +130,10 @@ These checks do not open the app, activate the sensor, request permissions, or r
 ## Next steps
 
 - Validate the new widget layout and voice flow on the physical Mac.
-- Improve the companion’s expressions and interactions.
-- Restore Calendar after its data and permission flow are repaired; Calendar is currently hidden.
-- Add reminders and conversational AI.
+- Validate real sensor interaction in the accepted Challenge submission environment.
+- Refine a three-minute, offline story with expressive interactions and accessible controls.
+- Prepare and verify the submission adaptation against the target edition’s rules.
+- Continue Calendar, reminders, and conversational AI as later macOS milestones; Calendar is currently hidden.
 
 ## License
 
