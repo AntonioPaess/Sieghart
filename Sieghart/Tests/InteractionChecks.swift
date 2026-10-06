@@ -52,13 +52,21 @@ struct InteractionChecks {
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
         let assistant = AssistantViewModel(defaults: defaults, now: { clock }, schedulesTimer: false)
         let preferences = CompanionPreferences(defaults: defaults)
-        CompanionSprites.directory = URL(fileURLWithPath: "Sieghart/Sieghart/AvatarSprites", isDirectory: true)
         for avatar in CompanionAvatar.allCases {
-            for pose in CompanionPose.allCases {
-                precondition(CompanionSprites.image(for: avatar, pose: pose) != nil)
+            guard let icon = CompanionArtwork.menuBarImage(for: avatar) else { fatalError("Missing vector menu image") }
+            precondition(icon.size == NSSize(width: 22, height: 22))
+            precondition(icon.isTemplate == (avatar == .minimalSpirit))
+            for mood: CompanionMood in [.idle, .happy, .annoyed, .asleep, .waking, .startled, .understood, .celebrating] {
+                let still = CompanionMotion.sample(time: 0, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
+                let later = CompanionMotion.sample(time: 100, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
+                precondition(still == later) // Motion disabled never depends on the clock.
+                let moving = CompanionMotion.sample(time: 0.14, size: 24, avatar: avatar, mood: mood, listening: false, strolling: false, animates: true)
+                precondition(moving.eyeOpen.isFinite && moving.scaleX > 0 && moving.scaleY > 0)
             }
-            precondition(CompanionSprites.menuBarImage(for: avatar)?.isTemplate == false)
         }
+        let blinkClosed = CompanionMotion.sample(time: 0.14, size: 42, avatar: .crtBuddy, mood: .idle, listening: false, strolling: false, animates: true)
+        let blinkOpen = CompanionMotion.sample(time: 0.28, size: 42, avatar: .crtBuddy, mood: .idle, listening: false, strolling: false, animates: true)
+        precondition(blinkClosed.eyeOpen < 0.05 && blinkOpen.eyeOpen == 1)
         let compactNotch = NotchGeometry(width: 328, cutoutWidth: 180, cutoutHeight: 32, compact: true)
         precondition(compactNotch.height == 32 && compactNotch.contentTop == 0)
         precondition(compactNotch.width > compactNotch.cutoutWidth)
@@ -88,7 +96,7 @@ struct InteractionChecks {
         defaults.set("retired-avatar", forKey: "appearance.avatar")
         precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
         preferences.avatar = .crtBuddy
-        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90))
+        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle)
         notch.activation = activation
@@ -97,6 +105,10 @@ struct InteractionChecks {
         let hitZone = HoverZoneView(frame: NSRect(x: 0, y: 0, width: 240, height: 36))
         let hosted = IslandHostingView(rootView: Text("Offscreen check"))
         precondition(hitZone.acceptsFirstMouse(for: nil) && hosted.acceptsFirstMouse(for: nil))
+        precondition(hitZone.hitTest(NSPoint(x: 120, y: 18)) === hitZone)
+        precondition(hitZone.hitTest(NSPoint(x: 1, y: 18)) === hitZone)
+        precondition(hitZone.hitTest(NSPoint(x: 239, y: 18)) === hitZone)
+        precondition(hitZone.hitTest(NSPoint(x: 241, y: 18)) == nil)
         hitZone.onClick = { notch.clickIsland() }
         let click = NSEvent.mouseEvent(with: .leftMouseDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil, eventNumber: 1, clickCount: 1, pressure: 1)!
         hitZone.mouseDown(with: click)
@@ -269,8 +281,38 @@ struct InteractionChecks {
         activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .shift])
         activation.receiveShortcutEvent(keyCode: nil, flags: [])
         precondition(!notch.isVisible) // A regular key suppresses modifier-only capture.
+        activation.setShortcut(.companion, for: .companion)
+        activation.receiveHotkey(.companion, eventTime: 100)
+        activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .option], eventTime: 100.01)
+        precondition(notch.isVisible) // Two backends must not toggle the island twice.
+        activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .option], eventTime: 101)
+        precondition(!notch.isVisible) // Session input works even with successful Carbon setup.
+        activation.receiveHotkey(.companion, eventTime: 101.01)
+        precondition(!notch.isVisible)
+        var gate = ShortcutDeliveryGate()
+        precondition(gate.accept(.voice, source: .monitor, at: 1))
+        precondition(!gate.accept(.voice, source: .carbon, at: 1.01))
+        precondition(gate.accept(.voice, source: .monitor, at: 1.1))
+        precondition(gate.accept(.companion, source: .carbon, at: 1.1))
+
+        let grace = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
+        grace.show()
+        grace.setPointerInsidePanel(false) // A layout/Space exit cannot cut short a keyboard reveal.
+        try await Task.sleep(for: .milliseconds(150))
+        precondition(grace.isVisible)
+        grace.setPointerInsidePanel(true) // Reaching a control cancels the reveal timeout.
+        try await Task.sleep(for: .milliseconds(170))
+        precondition(grace.isVisible)
+        grace.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(50))
+        grace.setPointerInsideHoverZone(true) // Crossing back into the header cancels collapse.
+        try await Task.sleep(for: .milliseconds(80))
+        precondition(grace.isVisible)
+        grace.setPointerInsideHoverZone(false)
+        try await Task.sleep(for: .milliseconds(140))
+        precondition(!grace.isVisible)
         precondition(ShortcutChord.companion.matches(keyCode: 1, flags: [.control, .option]))
         precondition(!ShortcutChord.companion.matches(keyCode: 1, flags: [.control, .option, .command]))
-        print("PASS: repeated touch moods and wake, exact notch height, avatar resources and persistence, voice intents and acknowledgement, abandoned shortcut recording and recovery, compact island, completion announcement, and automatic collapse")
+        print("PASS: repeated touch moods and wake, exact notch height, simple vector icons, reduced-motion determinism and avatar persistence, voice intents and acknowledgement, abandoned shortcut recording and recovery, compact island, completion announcement, and automatic collapse")
     }
 }

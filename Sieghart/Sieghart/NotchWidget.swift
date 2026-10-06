@@ -12,6 +12,9 @@ struct NotchGeometry: Equatable {
     var contentTop: CGFloat { compact ? 0 : cutoutHeight + 6 }
     var height: CGFloat { contentTop + bodyHeight }
     var size: CGSize { CGSize(width: width, height: height) }
+    // The camera gap is part of the activation target, just like both wings.
+    // Expanded targets occupy the header only, leaving the controls accessible.
+    var activationSize: CGSize { CGSize(width: width, height: compact ? height : max(6, cutoutHeight)) }
     static let fallback = NotchGeometry(width: 480, cutoutWidth: 180, cutoutHeight: 0)
 
     init(width: CGFloat, cutoutWidth: CGFloat, cutoutHeight: CGFloat, bodyHeight: CGFloat = 192, compact: Bool = false) {
@@ -47,6 +50,11 @@ final class NotchWidgetController: ObservableObject {
     private var shownCompletionID: UUID?
     private let managesWindows: Bool
     private let announcementDelay: Duration
+    static let pointerExitDelay: Duration = .milliseconds(800)
+    static let keyboardRevealDelay: Duration = .seconds(4)
+    private let pointerExitDelay: Duration
+    private let keyboardRevealDelay: Duration
+    private var revealGraceDeadline: ContinuousClock.Instant?
     private var completionTask: Task<Void, Never>?
     private var completionObservation: AnyCancellable?
     private let preferences: CompanionPreferences
@@ -60,7 +68,14 @@ final class NotchWidgetController: ObservableObject {
     private var hoverPanel: HoverZonePanel?
     private var isPointerInsidePanel = false
     private var isPointerInsideHoverZone = false
-    private var pointerInsideInteractiveArea: Bool { isPointerInsidePanel || isPointerInsideHoverZone }
+    private var pointerInsideInteractiveArea: Bool {
+        guard managesWindows else { return isPointerInsidePanel || isPointerInsideHoverZone }
+        let point = NSEvent.mouseLocation
+        return (hoverPanel?.frame.contains(point) ?? false) || (isVisible && (panel?.frame.contains(point) ?? false))
+    }
+    private var lastPointerInside = false
+    private var pointerPresenceTask: Task<Void, Never>?
+    private var cameraClickMonitor: Any?
     private var hideTask: Task<Void, Never>?
     private var pomodoroObservation: AnyCancellable?
     private var clockObservation: AnyCancellable?
@@ -71,11 +86,13 @@ final class NotchWidgetController: ObservableObject {
         rawValue: NSWindow.Level.mainMenu.rawValue + 3
     )
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5)) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetController.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetController.keyboardRevealDelay) {
         self.assistant = assistant
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay
+        self.pointerExitDelay = pointerExitDelay
+        self.keyboardRevealDelay = keyboardRevealDelay
         if managesWindows {
             if let screen = Self.selectedScreen() { geometry = NotchGeometry(screen: screen) }
             configureHoverZone()
@@ -115,7 +132,7 @@ final class NotchWidgetController: ObservableObject {
             if phase == .completed && self.presentation == .island {
                 self.assistant.selectTimerMode(.timer)
                 self.presentation = .timer
-                self.reveal()
+                self.reveal(approachGrace: false)
                 self.scheduleHide(delay: self.announcementDelay)
             } else if !self.isVisible && self.assistant.hasTimerActivity { self.showIsland() }
             else if self.presentation == .island && !self.assistant.hasTimerActivity && (self.aiUsage?.analytics.work.isEmpty ?? true) { self.dismissPanel() }
@@ -206,9 +223,11 @@ final class NotchWidgetController: ObservableObject {
     }
 
     private func updatePointerPresence() {
-        isPointerHovering = pointerInsideInteractiveArea && preferences.hoverEnabled
-        if pointerInsideInteractiveArea { hideTask?.cancel() }
-        else if isVisible { scheduleHide(delay: .milliseconds(250)) }
+        let inside = pointerInsideInteractiveArea
+        isPointerHovering = inside && preferences.hoverEnabled
+        lastPointerInside = inside
+        if inside { revealGraceDeadline = nil; hideTask?.cancel() }
+        else if isVisible { scheduleHide(delay: pointerExitDelay) }
     }
 
     private func showHoverFeedback() {
@@ -229,6 +248,8 @@ final class NotchWidgetController: ObservableObject {
         hideTask?.cancel()
         hideTask = nil
         isVisible = false
+        revealGraceDeadline = nil
+        pointerPresenceTask?.cancel(); pointerPresenceTask = nil
         guard let panel, panel.isVisible else { return }
         guard let canvas, let screen = notchScreen, !preferences.usesReducedMotion else { panel.orderOut(nil); return }
         let compact = NotchGeometry(screen: screen, compact: true)
@@ -275,13 +296,15 @@ final class NotchWidgetController: ObservableObject {
         mainWindow.makeKeyAndOrderFront(nil)
     }
 
-    private func reveal() {
+    private func reveal(approachGrace: Bool = true) {
         hideTask?.cancel()
         hideTask = nil
+        revealGraceDeadline = nil
         isVisible = true
         screenDidChange()
-        if presentation == .home || presentation == .timer {
-            if !pointerInsideInteractiveArea { scheduleHide() }
+        if approachGrace && !pointerInsideInteractiveArea && presentation != .island && presentation != .voice && presentation != .celebration {
+            revealGraceDeadline = .now.advanced(by: keyboardRevealDelay)
+            scheduleHide(delay: keyboardRevealDelay)
         }
         guard managesWindows else { return }
         makePanelIfNeeded()
@@ -294,6 +317,7 @@ final class NotchWidgetController: ObservableObject {
         // Keep the activation strip available when expanded, without covering
         // any controls below the camera. A second strip click tucks it away.
         hoverPanel?.orderFrontRegardless()
+        trackPointerPresence()
     }
 
     private func makePanelIfNeeded() {
@@ -391,6 +415,15 @@ final class NotchWidgetController: ObservableObject {
         hoverPanel = hover
         positionHoverPanel()
         hover.orderFrontRegardless()
+        // The WindowServer can route an event over the physical camera gap to
+        // another app. Observe that click only within our activation rectangle.
+        // Global monitors exclude our own events, so native clicks fire once.
+        cameraClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.hoverPanel?.frame.contains(NSEvent.mouseLocation) == true else { return }
+                self.clickIsland()
+            }
+        }
     }
 
     private func positionHoverPanel() {
@@ -398,7 +431,7 @@ final class NotchWidgetController: ObservableObject {
         guard let screen = notchScreen else { return }
 
         let compact = NotchGeometry(screen: screen, compact: true)
-        let size = compact.size
+        let size = isVisible ? geometry.activationSize : compact.size
         let centerX = notchCenterX(on: screen)
         hoverPanel.setFrame(
             NSRect(
@@ -423,13 +456,13 @@ final class NotchWidgetController: ObservableObject {
         panel.isFloatingPanel = true
         panel.level = overlayLevel
         panel.hidesOnDeactivate = false
-        // canJoinAllApplications is the cross-app full-screen policy on our
-        // macOS 14.6+ target. A specific fullScreenAuxiliary policy overrides
-        // that classification; let the overlay join other apps directly.
+        // Cross-app overlay classification and full-screen capability are
+        // separate option groups in AppKit. Both panels need both policies.
         panel.collectionBehavior = [
             .canJoinAllApplications, .canJoinAllSpaces,
-            .fullScreenDisallowsTiling, .stationary, .ignoresCycle
+            .fullScreenAuxiliary, .fullScreenDisallowsTiling, .stationary, .ignoresCycle
         ]
+        panel.ignoresMouseEvents = false
     }
 
     private func refreshWorkspacePresence() {
@@ -477,8 +510,24 @@ final class NotchWidgetController: ObservableObject {
         return leftArea.maxX + ((rightArea.minX - leftArea.maxX) / 2)
     }
 
-    private func scheduleHide(delay: Duration = .milliseconds(1100)) {
+    private func trackPointerPresence() {
+        guard pointerPresenceTask == nil else { return }
+        lastPointerInside = pointerInsideInteractiveArea
+        pointerPresenceTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled, let self, self.isVisible else { return }
+                // Read a single pointer point; no global movement hook or input
+                // stream. This also covers a camera click without tracking events.
+                if self.pointerInsideInteractiveArea != self.lastPointerInside { self.updatePointerPresence() }
+            }
+        }
+    }
+
+    private func scheduleHide(delay: Duration) {
         hideTask?.cancel()
+        let grace = revealGraceDeadline.map { ContinuousClock.now.duration(to: $0) } ?? .zero
+        let delay = max(delay, grace)
         hideTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled, let self else { return }
@@ -492,11 +541,13 @@ final class NotchWidgetController: ObservableObject {
 private final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
 private final class HoverZonePanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
 final class HoverZoneView: NSView {
@@ -505,6 +556,7 @@ final class HoverZoneView: NSView {
     var onClick: (() -> Void)?
 
     private var trackingArea: NSTrackingArea?
+    override func hitTest(_ point: NSPoint) -> NSView? { bounds.contains(convert(point, from: superview)) ? self : nil }
 
     override func updateTrackingAreas() {
         if let trackingArea {
@@ -604,9 +656,6 @@ struct NotchWidgetView: View {
         }
         .clipShape(NotchPanelShape())
         .contentShape(NotchPanelShape())
-        .overlay {
-            NotchPanelShape().stroke(CompanionStyle.accent.opacity(compact && notch.isPointerHovering ? 0.65 : 0), lineWidth: 1).allowsHitTesting(false)
-        }
         .animation(preferences.usesReducedMotion ? nil : .easeOut(duration: 0.15), value: notch.isPointerHovering)
     }
 
@@ -816,7 +865,7 @@ struct NotchWidgetView: View {
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         HStack(spacing: 0) {
                             HStack(spacing: 3) {
-                                CompanionCharacter(size: 21, avatar: preferences.avatar, animates: animates, focusing: true)
+                                CompanionCharacter(size: 21, avatar: preferences.avatar, animates: animates, focusing: true, mood: notch.isPointerHovering ? .happy : .idle)
                                 ProviderMark(provider: work.provider, size: 20)
                             }.frame(maxWidth: .infinity)
                             Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
@@ -847,7 +896,7 @@ struct NotchWidgetView: View {
     private var utilityIsland: some View {
         Button { notch.clickIsland() } label: {
             HStack(spacing: 0) {
-                CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates).frame(maxWidth: .infinity)
+                CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, mood: notch.isPointerHovering ? .happy : .idle).frame(maxWidth: .infinity)
                 Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
                 VStack(spacing: 1) {
                     Text(assistant.utilityClock.timeLabel).font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
@@ -873,7 +922,7 @@ struct NotchWidgetView: View {
                                 islandProgress
                             }.foregroundStyle(CompanionStyle.accent)
                         } else {
-                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, strolling: walking)
+                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, mood: notch.isPointerHovering ? .happy : .idle, strolling: walking)
                                 .offset(x: walking ? sin(phase / 4 * .pi * 2) * 12 : 0)
                         }
                     }.frame(maxWidth: .infinity)

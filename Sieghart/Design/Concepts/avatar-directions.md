@@ -2,13 +2,13 @@
 
 ![Six implemented companions and reactions](avatar-reactions-preview.png)
 
-The six characters above are implemented in `CompanionAvatars.swift` and selectable in Appearance. The saved choice follows the user throughout the app, widget, menu header, and menu-bar icon. These stills render the bundled artwork; motion respects both the app setting and macOS Reduce Motion. See [the pose assets and generation prompts](avatar-reactions.md).
+The six characters above are implemented in `CompanionAvatars.swift` and selectable in Appearance. The saved choice follows the user throughout the app, widget, menu header, and menu-bar icon. These stills render the current native Simple Companions; motion respects both the app setting and macOS Reduce Motion. See [current artwork and the historical generation archive](avatar-reactions.md).
 
 ## Original five-direction concept board
 
 ![Five character directions](avatar-directions.png)
 
-This is the approved five-direction board, preserved unchanged. Each original neutral character is extracted directly from this board for the native app, with its backdrop removed at runtime. Additional sprite poses express new moods and body postures. Star Sprout is the only new character added to the five.
+This is the approved five-direction board, preserved unchanged. This historical board and the old pose sheets remain an archive. They are excluded from the app bundle; the approved Simple Companions family now supplies production artwork.
 
 | Option | Direction | Suggested motion |
 | --- | --- | --- |
@@ -40,4 +40,9 @@ The original board above remains preserved. The current six are CRT Buddy, Arcad
 
 ## Latest art direction — October 6, 2026
 
-The user rejected a detailed 3D bot proposal and clarified a much simpler eye/dot/visor style. See [the new minimal studies](avatar-simple-studies.md). Those studies are a proposal; they do not replace the current six bundled avatars or imply completed animation. Prefer fluid native eye/shape interpolation with very few details. Visual utility references are selective, not a requirement for complete design duplication.
+The user rejected a detailed 3D bot proposal and clarified a much simpler eye/dot/visor style. See [the new minimal studies](avatar-simple-studies.md). The user approved those studies; all six are now native minimal eye/shape companions with continuous expression and movement. Saved selections persist. Visual utility references are selective, not a requirement for complete design duplication.
+
+
+## Latest production depth
+
+The supplied Simple Companions board now defines the minimal silhouettes and palette with matte gradients, soft layered shadows, a recessed visor and a curved coral fold. This 2.5D treatment follows the user correction; it does not introduce a 3D rig. [Production depth preview](simple-companions-depth-preview.png) · [Main app](app-appearance-preview.png).

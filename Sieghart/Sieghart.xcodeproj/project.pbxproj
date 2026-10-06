@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000072 /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000073 /* WorkspaceView.swift */; };
 		A10000000000000000000070 /* IslandChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000071 /* IslandChrome.swift */; };
 		A10000000000000000000001 /* SieghartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* SieghartApp.swift */; };
 		A10000000000000000000013 /* SensorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* SensorEngine.swift */; };
@@ -21,7 +22,6 @@
 		A10000000000000000000032 /* VoiceCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000033 /* VoiceCommands.swift */; };
 		A10000000000000000000034 /* FocusSessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000035 /* FocusSessionView.swift */; };
 		A10000000000000000000036 /* CompanionAvatars.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* CompanionAvatars.swift */; };
-		A10000000000000000000038 /* AvatarSprites in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* AvatarSprites */; };
 		A10000000000000000000040 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* MenuBarView.swift */; };
 		A10000000000000000000042 /* CodexUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000043 /* CodexUsage.swift */; };
 		A10000000000000000000044 /* CodexUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000045 /* CodexUsageView.swift */; };
@@ -36,6 +36,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000073 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
 		A10000000000000000000071 /* IslandChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandChrome.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* Sieghart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sieghart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* SieghartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SieghartApp.swift; sourceTree = "<group>"; };
@@ -89,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000005 /* SieghartApp.swift */,
+				A10000000000000000000073 /* WorkspaceView.swift */,
 				A10000000000000000000014 /* SensorEngine.swift */,
 				A10000000000000000000016 /* AssistantCore.swift */,
 				A10000000000000000000018 /* CalendarContext.swift */,
@@ -180,7 +182,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A10000000000000000000038 /* AvatarSprites in Resources */,
 				A10000000000000000000050 /* ProviderAssets.xcassets in Resources */,
 				A10000000000000000000060 /* ModelTokenPrices.json in Resources */,
 			);
@@ -194,6 +195,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* SieghartApp.swift in Sources */,
+				A10000000000000000000072 /* WorkspaceView.swift in Sources */,
 				A10000000000000000000013 /* SensorEngine.swift in Sources */,
 				A10000000000000000000015 /* AssistantCore.swift in Sources */,
 				A10000000000000000000017 /* CalendarContext.swift in Sources */,

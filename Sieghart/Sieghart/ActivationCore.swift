@@ -43,6 +43,7 @@ final class ActivationController: ObservableObject {
     private var lastSecureInput = false
     private var registrationNeedsRetry = false
     private var modifierTracker = ModifierShortcutTracker()
+    private var deliveryGate = ShortcutDeliveryGate()
     private let audioEngine = AVAudioEngine()
     private var speechRequest: SFSpeechAudioBufferRecognitionRequest?
     private var audioFeed: SpeechAudioFeed?
@@ -118,7 +119,7 @@ final class ActivationController: ObservableObject {
         shortcutRecoveryTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(150))
             guard !Task.isCancelled, let self, self.recordingShortcut == nil else { return }
-            self.recoverShortcuts()
+            if self.registersShortcuts { self.checkShortcutHealth() }
         }
     }
 
@@ -165,19 +166,22 @@ final class ActivationController: ObservableObject {
         eventTap?.stop(); eventTap = nil
         fallbackActions = []
         modifierTracker.reset()
+        deliveryGate = ShortcutDeliveryGate()
         registrationNeedsRetry = false
         guard recordingShortcut == nil else { return }
         Self.activeHotkeyOwner = self
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let installed = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
-            guard let event else { return noErr }
+        let target = GetEventDispatcherTarget()
+        let installed = InstallEventHandler(target, { _, event, _ in
+            guard let event else { return OSStatus(eventNotHandledErr) }
             var identifier = EventHotKeyID()
             let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &identifier)
             let id = identifier.id
             if status == noErr, identifier.signature == 0x53494748, id == 1 || id == 2 {
-                Task { @MainActor in ActivationController.activeHotkeyOwner?.performShortcut(id == 2 ? .voice : .companion) }
+                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(id == 2 ? .voice : .companion) }
+                return noErr
             }
-            return noErr
+            return OSStatus(eventNotHandledErr)
         }, 1, &eventType, nil, &handler)
         let trusted = AXIsProcessTrusted()
         lastInputTrust = CGPreflightListenEventAccess()
@@ -189,7 +193,7 @@ final class ActivationController: ObservableObject {
             if let chord = shortcut(for: action) {
                 if let code = chord.keyCode {
                     var reference: EventHotKeyRef?
-                    let status = installed == noErr ? RegisterEventHotKey(code, chord.carbonModifiers, EventHotKeyID(signature: 0x53494748, id: id), GetApplicationEventTarget(), 0, &reference) : installed
+                    let status = installed == noErr ? RegisterEventHotKey(code, chord.carbonModifiers, EventHotKeyID(signature: 0x53494748, id: id), target, 0, &reference) : installed
                     if status == noErr, let reference { hotkeys.append(reference); statusText = "\(chord.label) · Works in other apps" }
                     else { fallbackActions.insert(action); registrationNeedsRetry = true; statusText = "Shortcut unavailable; record another combination" }
                 } else {
@@ -198,7 +202,8 @@ final class ActivationController: ObservableObject {
             }
             if action == .voice { voiceShortcutStatus = statusText } else { shortcutStatus = statusText }
         }
-        guard voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true || !fallbackActions.isEmpty else { return }
+        guard companionShortcut != nil || voiceShortcut != nil else { return }
+        guard lastInputTrust || trusted || voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true || !fallbackActions.isEmpty else { return }
         if lastInputTrust {
             let tap = ShortcutEventTap { [weak self] key, flags, repeated in
                 self?.receiveShortcutEvent(keyCode: key, flags: flags, isRepeat: repeated)
@@ -236,17 +241,32 @@ final class ActivationController: ObservableObject {
 
     // The same routing handles foreground, background and headless fixtures.
     // It consumes key codes/modifiers only, never typed text.
-    func receiveShortcutEvent(keyCode: UInt32?, flags: NSEvent.ModifierFlags, isRepeat: Bool = false) {
+    func receiveShortcutEvent(keyCode: UInt32?, flags: NSEvent.ModifierFlags, isRepeat: Bool = false, eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
         guard recordingShortcut == nil else { modifierTracker.reset(); return }
         if let keyCode {
             modifierTracker.keyPressed()
             guard !isRepeat else { return }
-            for action in fallbackActions where shortcut(for: action)?.matches(keyCode: keyCode, flags: flags) == true { performShortcut(action) }
+            // When a keyboard grant exists, the session monitor is a live
+            // fallback even when Carbon registered successfully. Some Space
+            // transitions can interrupt one delivery path without unregistering it.
+            for action in ShortcutAction.allCases where shortcut(for: action)?.matches(keyCode: keyCode, flags: flags) == true {
+                deliverShortcut(action, source: .monitor, eventTime: eventTime)
+            }
         } else if let modifiers = modifierTracker.update(flags) {
             for action in ShortcutAction.allCases {
-                if let chord = shortcut(for: action), chord.isModifierOnly, chord.modifiers == modifiers { performShortcut(action) }
+                if let chord = shortcut(for: action), chord.isModifierOnly, chord.modifiers == modifiers { deliverShortcut(action, source: .monitor, eventTime: eventTime) }
             }
         }
+    }
+
+    func receiveHotkey(_ action: ShortcutAction, eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        guard shortcut(for: action)?.keyCode != nil else { return }
+        deliverShortcut(action, source: .carbon, eventTime: eventTime)
+    }
+
+    private func deliverShortcut(_ action: ShortcutAction, source: ShortcutDeliverySource, eventTime: TimeInterval) {
+        guard recordingShortcut == nil, deliveryGate.accept(action, source: source, at: eventTime) else { return }
+        performShortcut(action)
     }
 
     func performShortcut(_ action: ShortcutAction) {

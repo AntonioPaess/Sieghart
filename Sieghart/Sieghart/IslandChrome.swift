@@ -147,6 +147,7 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
         isDeparting = closing
         let previous = surface == .zero ? CGSize(width: max(180, target.cutoutWidth), height: max(1, target.cutoutHeight)) : surface
         surface = target.size
+        outline.isHidden = target.compact || closing
         let gutter: CGFloat = target.compact ? 0 : 72
         let extra: CGFloat = target.compact ? 0 : 64
         let previousCanvasWidth = bounds.width

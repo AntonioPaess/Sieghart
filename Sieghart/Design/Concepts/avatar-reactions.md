@@ -1,12 +1,14 @@
 # Companion artwork and reactions
 
-The approved five-character board remains unchanged in `avatar-directions.png` and is bundled as `AvatarSprites/approved-directions.png`. The first five neutral poses are cropped directly from this board; runtime backdrop removal keeps their original shapes, textures, and glow. Star Sprout is the sixth character.
+## Current production — Simple Companions
 
-Six local transparent sprite sheets provide nine poses: idle, blink, happy, annoyed, asleep, listening, focused, waking, surprised. The original board supplies the neutral pose for CRT Buddy, Arcade 1984, Minimal Spirit and Paper Pal. Coast Buddy and Ink Buddy use their own sheets. Soft Orbit and Star Sprout below are archived generation notes; they are retired from the current six. Body bounces, shakes, sleep, stretching, acknowledgement nods, and celebration particles add motion around the artwork.
+The user-approved [minimal board](avatar-simple-studies.md) is implemented in native paths with interpolated eye openness, smile, tilt and gaze. All six appear in onboarding, Appearance, island, voice, completion and menu. Runtime motion updates at 60 Hz with gentle breathing and squash/stretch; Reduce Motion preserves readable static states. Stable avatar IDs keep existing choices intact.
 
-The widget also gives each touch reaction a written response. A stroll stays within its stage; in the compact island the companion nudges the digits during the final 30 seconds without covering the camera or increasing the island’s height.
+[Production reaction stills](avatar-reactions-preview.png) · [Native motion preview](simple-companions-motion.gif). The stills and 20 fps GIF render production views offscreen without launching an app window.
 
-Method: built-in image generation using the approved board as the reference. No image or generation service is needed at runtime. Original generation outputs are retained separately; the app bundles the PNGs in `AvatarSprites`.
+## Historical sprite generation archive
+
+The following prompts describe the retired detailed artwork. Original boards and `AvatarSprites` files remain preserved in the repository, but are excluded from the app resources and Challenge package. They do not define the current visual direction.
 
 ## crt-buddy
 
@@ -71,3 +73,8 @@ The user rejected humanoid office and beach robots. The replacements belong to t
 - **Ink Buddy:** rounded charcoal clock-shaped object, ivory face, oval eyes, tiny bow tie, rubber-hose arms, mittens and short shoes. Restrained work companion with classic cartoon gestures. Final bundled sheet: `AvatarSprites/ink-buddy.png`.
 
 Both were produced with the built-in image generator as transparent 3 × 3 sheets of nine consistent poses: idle, blink, happy, annoyed, asleep, listening, focused, waking, startled. Each silhouette fits within its cell; no labels, grid, scene background or human anatomy. These are original characters, with no borrowed cartoon character identity. The approved five-character board remains unchanged as historical reference. Rejected humanoid sheets are not bundled.
+
+
+## Latest production depth
+
+The supplied Simple Companions board now defines the minimal silhouettes and palette with matte gradients, soft layered shadows, a recessed visor and a curved coral fold. This 2.5D treatment follows the user correction; it does not introduce a 3D rig. [Production depth preview](simple-companions-depth-preview.png) · [Main app](app-appearance-preview.png).

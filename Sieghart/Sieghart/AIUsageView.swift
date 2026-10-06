@@ -16,6 +16,7 @@ struct ProviderMark: View {
 }
 
 struct AIUsageSummary: View {
+    @Environment(\.workspaceGlass) private var workspace
     @EnvironmentObject private var usage: AIUsageModel
     @EnvironmentObject private var codex: CodexUsageModel
     @EnvironmentObject private var notch: NotchWidgetController
@@ -53,9 +54,17 @@ struct AIUsageSummary: View {
             }
             Button("View AI limits") { if let onOpen { onOpen() } else { notch.showAILimits() } }
                 .buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
-        }.padding(compact ? 14 : 20)
-            .background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        }.modifier(AISummarySurface(workspace: workspace, compact: compact))
             .task(id: codex.enabled) { await codex.refreshWhileVisible() }
+    }
+}
+
+private struct AISummarySurface: ViewModifier {
+    let workspace: Bool
+    let compact: Bool
+    func body(content: Content) -> some View {
+        if workspace { content.companionCard() }
+        else { content.padding(compact ? 14 : 20).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16)) }
     }
 }
 

@@ -38,8 +38,10 @@ struct CompanionOnboardingView: View {
                     }
                 }.buttonStyle(CompanionButtonStyle(primary: true))
             }
-        }.padding(32).frame(maxWidth: 820, maxHeight: .infinity, alignment: .topLeading)
-            .foregroundStyle(.white).background(CompanionStyle.background)
+        }.padding(32).frame(maxWidth: 860, maxHeight: .infinity, alignment: .topLeading)
+            .foregroundStyle(.white).background { WorkspaceBackdrop() }
+            .environment(\.workspaceGlass, true)
+            .environment(\.islandReduceMotion, preferences.usesReducedMotion)
             .onAppear { selection = preferences.avatar; detected = InstalledAIProviders.detect() }
     }
 
@@ -65,7 +67,7 @@ struct CompanionOnboardingView: View {
                         }
                     }
                     Divider()
-                    Toggle("Automatically follow local AI usage", isOn: $allowUsage).toggleStyle(.switch)
+                    Toggle("Automatically follow local AI usage", isOn: $allowUsage).toggleStyle(WorkspaceSwitchStyle())
                     Text("With your permission, Sieghart reads local token counts, model and project names, and work status. Codex limits use your existing sign-in. Conversation text is not saved. Your focus companion works with this switched off.")
                         .font(.callout).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
                     Text("No extra API key. No permission prompt each time you open the island. You can turn monitoring off in AI limits.")

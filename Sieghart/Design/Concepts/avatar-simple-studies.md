@@ -4,9 +4,19 @@
 
 ## Direction
 
-October 6, 2026: the user rejected the detailed 3D robot board and requested simple characters in the spirit of a minimal bot or expressive dots. Use small silhouettes, readable eyes, and very few details. This board preserves the six character identities while exploring that direction. It is generated concept art, not production sprites, an animation, or an approved replacement.
+October 6, 2026: the user rejected the detailed 3D robot board and requested simple characters in the spirit of a minimal bot or expressive dots. Use small silhouettes, readable eyes, and very few details. This board preserves the six character identities while exploring that direction. The user approved this direction with “Siga por esse simple companions gostei deles.” This generated board is the visual source; the production implementation is independently drawn native paths in `CompanionAvatars.swift`. It replaces the former detailed sprite family while keeping all six stable IDs and saved choices.
 
-For the motion pass, prioritize smooth gaze, eased blinking, subtle breathing and squash/stretch for listening, acknowledgement and joy. Avoid turning a static bitmap into a rigid bouncing object. Native vector eyes and shapes can interpolate their expressions directly. Reduce Motion must preserve readable states with no continuous movement. The next art implementation should keep the user’s choice consistent throughout onboarding, the island and settings.
+Production motion uses 60 Hz sampled breathing, eased blinks, gaze and gentle squash/stretch for listening, acknowledgement and joy. Numeric eye parameters interpolate on the same path topology; the artwork does not swap bitmap poses. Reduce Motion preserves readable static states. The same native family appears in onboarding, island, settings, voice, celebration and menu icon. Legacy sprite files remain a repository archive and are excluded from the app resources.
+
+[Native reactions](avatar-reactions-preview.png) · [Native movement preview](simple-companions-motion.gif). Both render offscreen without launching Sieghart; the GIF samples at 20 fps.
+
+## Latest depth correction
+
+The user supplied [this board](simple-companions-depth-reference.png) and explicitly requested depth while keeping the simple silhouettes and palette. This supersedes the flat/no-shading wording in the historical generation prompt below. Production artwork uses matte light gradients, soft layered shadows, a recessed CRT visor, a curved Paper Pal front/fold and restrained pointer perspective. Minimal Spirit remains just eyes and a small smile. No elaborate body, accessories or 3D rig is introduced.
+
+![Native depth preview](simple-companions-depth-preview.png)
+
+The same artwork appears in the refreshed [main app](app-appearance-preview.png) and onboarding, alongside the native motion preview above.
 
 ## Generation record
 

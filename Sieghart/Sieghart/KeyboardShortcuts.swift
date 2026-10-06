@@ -7,6 +7,19 @@ enum ShortcutAction: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum ShortcutDeliverySource { case carbon, monitor }
+
+// One physical gesture may arrive through both global backends. Suppress the
+// duplicate backend delivery, while retaining successive gestures on one path.
+struct ShortcutDeliveryGate {
+    private var previous: [ShortcutAction: (source: ShortcutDeliverySource, time: TimeInterval)] = [:]
+    mutating func accept(_ action: ShortcutAction, source: ShortcutDeliverySource, at time: TimeInterval) -> Bool {
+        if let last = previous[action], last.source != source, time >= last.time, time - last.time < 0.15 { return false }
+        previous[action] = (source, time)
+        return true
+    }
+}
+
 struct ShortcutChord: Codable, Equatable {
     static let allowedModifiers: NSEvent.ModifierFlags = [.command, .option, .control, .shift]
     var keyCode: UInt32?
