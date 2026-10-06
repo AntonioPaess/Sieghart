@@ -9,7 +9,7 @@
 
 Sieghart is a native macOS companion that lives near the camera notch. An animated avatar reacts to your touch and pointer, while focus sessions and quick controls stay close to the top of your screen.
 
-Configure your Pomodoro in the app’s **Focus tab** or directly inside the widget. When a session starts, Sieghart tucks into a small island around the notch, keeping its countdown nearby while you work.
+Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab** or directly inside the widget. Starting is explicit; the compact island keeps the countdown or elapsed time nearby while you work.
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
@@ -19,23 +19,28 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 | Feature | What it does |
 | --- | --- |
-| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose a companion in Appearance; it also becomes your menu-bar icon. |
-| **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Body motion and short messages explain each response. |
-| **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
-| **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover or click for controls. |
+| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance. It also becomes your menu-bar icon. |
+| **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Native eye expressions, smooth blinking, gaze and gentle shape motion and short messages explain each response. |
+| **Three timer modes** | The app and notch share a standalone countdown, Pomodoro with breaks/rounds, and stopwatch. Each supports pause, resume and reset; choosing a mode never starts a session. |
+| **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover for a visual highlight; the first click opens controls even with another app active. The full activation strip, including the camera gap, toggles controls. Pointer exit allows 800 ms to cross between controls; keyboard reveal allows four seconds to reach them. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
 | **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
 | **Voice on demand** | Supported commands execute automatically in English or Portuguese. A nod, checkmark, and message acknowledge an understood command. |
-| **Motion preferences** | Choose compact mode and character motion; macOS Reduce Motion is always respected. |
+| **AI work nearby** | With one local-monitoring consent, follow Codex/Claude Code activity automatically, see limits and charts, and keep the active provider beside your avatar. |
+| **Size and motion** | Choose Small, Medium or Large expanded widgets, compact timer density and character motion; macOS Reduce Motion is always respected. |
 
 ### Meet the companion
 
 ![The six Sieghart companions and their reactions](Sieghart/Design/Concepts/avatar-reactions-preview.png)
 
-*Rendered from the app’s bundled artwork. Four original neutral designs come from the preserved concept board. Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout; all six use bundled reaction sheets.*
+*Production native shapes based on the user-approved Simple Companions board, with matte light, soft shadow and a curved coral paper fold. Eyes and expressions interpolate directly; no bitmap pose swapping.*
 
-Open **Appearance** and select a companion in the three-column gallery. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is bundled and works offline. CRT Buddy remains the default.
+![Simple companions in motion](Sieghart/Design/Concepts/simple-companions-motion.gif)
+
+*Offscreen 20 fps preview of native gaze, blinking and breathing. The app’s motion updates at 60 Hz and respects Reduce Motion.*
+
+First launch presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
 
 ### A companion with context
 
@@ -43,13 +48,21 @@ Open **Appearance** and select a companion in the three-column gallery. The choi
 
 *Static renders of the production views, without opening app windows. The widget shows the session, time, completed count, and a companion message as soon as it opens. The menu shares the app’s palette and selected avatar.*
 
-The widget backplate is opaque sRGB black (`#000000`), including during reveal. Its rendered pixels are verified; the physical camera glass can still look darker than a screen displaying black.
+The compact island and camera strip stay sRGB black (`#000000`). Expanded pages use glass with dark translucent cards, an attached shoulder contour and circular quick controls around the surface. macOS 26 uses Liquid Glass; older supported systems use behind-window blur. Reduce Transparency keeps an opaque surface. Native transitions reserve their full bounds so the moving silhouette does not resize or crop its content.
 
-### Design reference
+![Glass island with the selected companion](Sieghart/Design/Concepts/glass-island-preview.png)
 
-![Sieghart main-window design reference](Sieghart/Design/Prototype/app-preview.png)
+*Offscreen production-view render; glass translucency is illustrated against a sample background. Native desktop refraction and movement still require a Mac run.*
 
-*Medium fidelity prototype of the main window. This image is a design reference, not a capture of the running app. The native widget has since been updated to open on the interactive avatar.*
+### Main app
+
+![Sieghart main window](Sieghart/Design/Concepts/app-overview-preview.png)
+
+*Offscreen render of the production main window with illustrative AI data. Overview, Timers, Activation, Appearance, AI limits and onboarding share the same glass surfaces, palette and companions. Native desktop refraction remains a Mac acceptance check.*
+
+[Appearance](Sieghart/Design/Concepts/app-appearance-preview.png) · [Timers](Sieghart/Design/Concepts/app-timers-preview.png) · [Activation](Sieghart/Design/Concepts/app-activation-preview.png) · [AI dashboard](Sieghart/Design/Concepts/app-ai-preview.png)
+
+[Companion depth](Sieghart/Design/Concepts/simple-companions-depth-preview.png) · [Compact hover without an outline](Sieghart/Design/Concepts/compact-hover-preview.png)
 
 [Explore the design prototype](Sieghart/Design/Prototype) · [Read the implementation notes](Sieghart/README.md)
 
@@ -84,18 +97,19 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 ### Start your first session
 
-1. Hover at the notch or press **Control + Option + S** to reveal the companion.
-2. Open the app’s **Focus tab**, or click **Focus** in the widget, and choose your duration, breaks, and rounds.
-3. Press **Start focus**. The widget tucks into the island; hover or click it to pause, resume, or finish.
-4. Open **Activation** or **Appearance** in the main window to customize the experience.
+1. Complete the two-step onboarding: choose one of six avatars, then decide whether to follow local AI usage automatically. Focus works with monitoring off.
+2. Click the compact island or press **Control + Option + S** to reveal the companion. Hover gives a subtle companion reaction without outlining or opening the island.
+3. Open **Timers** in the app or widget. Choose Timer for a countdown, Pomodoro for focus/break rounds, or Stopwatch for elapsed time.
+4. Press **Start** for the selected mode. The widget tucks into the island; click it for pause/resume/reset controls. Pomodoro also offers Finish.
+5. Open **Activation** or **Appearance** in the main window to customize the experience.
 
 The menu bar also provides access to the widget and app. In Activation, press a shortcut recorder and enter any key combination; release modifier-only keys to save. Companion and voice bindings can be disabled separately. Impact gestures are off by default.
 
-An intermittent shortcut interruption is tracked in [SG-001](Sieghart/BUGS.md). Abandoned recording now restores activation, and registrations recover after app/Space changes and wake. The reported intermittent case still needs a physical Mac check.
+The main window can be closed while Sieghart remains in the menu bar. A listen-only session event tap now handles modifier gestures across apps and restarts after interruption; regular-key hotkeys keep the system global registration. An intermittent shortcut interruption is tracked in [SG-001](Sieghart/BUGS.md). Abandoned recording restores activation. Healthy global registrations stay active across app/Space changes; permission changes or failed delivery setup trigger recovery. With an existing keyboard grant, both global delivery paths work with duplicate suppression. The reported intermittent case still needs a physical Mac check.
 
 ## Voice and local data
 
-Voice starts with its configured shortcut, **Speak**, or the widget microphone. The default voice shortcut is **Option + Command**, pressed and released. Modifier-only shortcuts need Accessibility permission to work in other apps; Activation provides the permission button. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
+Voice starts with its configured shortcut, **Speak**, or the widget microphone. The default voice shortcut is **Option + Command**, pressed and released. Modifier-only shortcuts use a listen-only session event tap with Input Monitoring access, or the AppKit global monitor with existing Accessibility access. Activation provides an explicit permission button; one of those grants is sufficient. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
 
 Speak a supported command and finish naturally. Recognition completion or a short pause executes it automatically; capture stops after at most ten seconds. Choose English or Portuguese in Activation. Try “start focus for 25 minutes”, “pause timer”, “resume”, “finish”, “show”, or “hide”. Unsupported, negated, or conflicting commands leave the timer unchanged. This is a local focus-command interface; open-ended AI conversation remains planned.
 
@@ -119,41 +133,62 @@ Run all deterministic checks:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover all three timer modes, countdown/stopwatch pause and restoration, explicit mode selection, interval counting, native first-click acceptance, activation-strip toggle, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six native menu icons, continuous eye/shape motion and Reduce Motion, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence, AI lifecycle completion, long-turn metadata recovery, graph deduplication, first-run avatar persistence, click-only expansion, collapse of every panel, old-completion suppression, widget sizes, automatic price/tier/cache arithmetic, unpriced lower bounds and usage-based provider logos.
 
 ## Project map
 
 | Location | Responsibility |
 | --- | --- |
-| [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) | Main window, navigation, preferences, and selected menu-bar icon. |
+| [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) / [`WorkspaceView.swift`](Sieghart/Sieghart/WorkspaceView.swift) | App composition, main-window navigation, glass settings and selected companion. |
 | [`MenuBarView.swift`](Sieghart/Sieghart/MenuBarView.swift) | Companion header, session card, and quick controls. |
 | [`NotchWidget.swift`](Sieghart/Sieghart/NotchWidget.swift) | Notch panel, companion, focus configuration, and timer views. |
-| [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro intervals, deadlines, rounds, and persistence. |
+| [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro, countdown/stopwatch dates, rounds, and persistence. |
 | [`ActivationCore.swift`](Sieghart/Sieghart/ActivationCore.swift) | Global keyboard shortcut and explicit voice commands. |
 | [`KeyboardShortcuts.swift`](Sieghart/Sieghart/KeyboardShortcuts.swift) | Shortcut capture, persistence format, and modifier gestures. |
 | [`VoiceCommands.swift`](Sieghart/Sieghart/VoiceCommands.swift) | Supported local voice intents and duration validation. |
-| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Shared configuration editor for the app and widget. |
+| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Three-mode timer surface and shared focus configuration editor. |
 | [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
 | [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
-| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) / [`AvatarSprites`](Sieghart/Sieghart/AvatarSprites) | Original artwork, six sprite libraries, body motion, touch reactions, and the Appearance gallery. |
+| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) | Six native companions, interpolated eye expressions, body motion, touch reactions and the Appearance gallery. |
 | [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
-| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) | Local token counters, spending ledger and shared provider panels. |
+| [`OnboardingView.swift`](Sieghart/Sieghart/OnboardingView.swift) | Initial six-avatar choice and local AI monitoring consent. |
+| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIActivity.swift`](Sieghart/Sieghart/AIActivity.swift) | Background provider monitoring, local lifecycle/counters and spending ledger. |
+| [`AIActivityView.swift`](Sieghart/Sieghart/AIActivityView.swift) | Quotas, spending, live work, hourly/model/project charts and activity heatmap. |
+| [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) | Detailed counters, recorded charges and source settings. |
 | [`CodexUsage.swift`](Sieghart/Sieghart/CodexUsage.swift) | Read-only Codex quota adapter, reset windows and timeouts. |
 | [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
 
 ## AI usage
 
-Open **AI limits** from Overview, the menu or widget tools; say “What is my AI limits” to open the same panel. Codex reads the locally signed-in account through its app server: real 5-hour and weekly remaining percentages, reset dates and countdowns. Local Codex and Claude Code logs supply input, output and cache counters, with a clearly marked partial-history scope.
+Onboarding asks once whether to follow local AI usage. When enabled, Sieghart detects installed Codex/Claude Code and refreshes in the background using existing provider sign-in. Open **AI limits** from the sidebar, Overview, menu or widget tools; say “What is my AI limits” to open the same panel. No extra API key is required for this local adapter.
 
-Recorded subscription/API charges remain separate from token estimates. Custom USD prices and a dated USD-to-BRL rate calculate estimates without representing them as bills. Claude quotas can use a dated imported report; automatic individual Claude quota access remains an adapter milestone. Provider symbols are bundled vector assets; see [third-party notices](Sieghart/THIRD_PARTY_NOTICES.md).
+The dashboard follows the reference screenshots: quota and spending cards, current project/model/output/elapsed work beside your avatar, a 24-hour chart, model/project rankings, and a 13-week activity heatmap with streak, active days and busiest day. Reliable active work also appears automatically in the compact island. Completion clears the work indicator; a focus timer remains available.
 
-![Example Codex panel, rendered from production views](Sieghart/Design/Concepts/codex-usage-preview.png)
+Codex supplies real 5-hour and weekly remaining percentages, resets and dated account activity. Hourly/model/project charts use deduplicated local logs and are marked **partial local history**. Missing readings remain unavailable. Disconnect stops provider reads and automatic reconnection.
+
+Token value is automatic: bundled model prices work immediately, then the app refreshes public [OpenAI](https://developers.openai.com/api/docs/pricing) and [Claude](https://platform.claude.com/docs/en/about-claude/pricing) tables daily and keeps the last successful reading offline. It prices each known model's input, output and cache; documented OpenAI tiers and per-request long context are considered when recorded. Internal/unidentified models keep their tokens and show an unpriced amount; a partial value uses ≥. The value is an API-equivalent estimate, not a subscription charge. [Frankfurter](https://frankfurter.dev) supplies an automatic dated USD/BRL reference rate. These public requests send no account or usage data. Custom average prices/rates remain optional overrides; actual charges remain separate. Automatic invoice imports are still planned.
+
+Provider logos appear only when readings or usage show that provider was used. Model and project rows expose full integer totals. Hover or select an hourly bar for its range, input/output/cache tokens and value; select a heatmap day for its date and exact usage. Historical model context is recovered before the bounded log tail, including completed tasks. Absent metadata stays explicitly unattributed. Claude quotas can use a dated imported report; automatic individual Claude quota access remains an adapter milestone. Provider emblems are bundled vector assets, including the corrected OpenAI emblem for Codex; see [third-party notices](Sieghart/THIRD_PARTY_NOTICES.md).
+
+![Complete AI dashboard rendered from production views](Sieghart/Design/Concepts/ai-dashboard-preview.png)
+
+*Offscreen production-view render with labeled example data; no live app window was opened. [Six-avatar onboarding preview](Sieghart/Design/Concepts/onboarding-preview.png).*
 
 ## Roadmap and references
 
-[Full roadmap](ROADMAP.md) · [39 reference screenshots](Sieghart/Design/References/Vorssaint/README.md). The roadmap covers all 77 modules in the current reference catalog, foundational onboarding/settings, and companion interactions. Planned modules are not claims of shipped functionality.
+[Full roadmap](ROADMAP.md) · [39 reference screenshots](Sieghart/Design/References/Widget/README.md). The roadmap covers all 77 modules in the current reference catalog, foundational onboarding/settings, and companion interactions. Planned modules are not claims of shipped functionality.
+
+### Timer previews
+
+[Countdown](Sieghart/Design/Concepts/timer-timer-preview.png) · [Pomodoro](Sieghart/Design/Concepts/timer-pomodoro-preview.png) · [Stopwatch](Sieghart/Design/Concepts/timer-stopwatch-preview.png). Rendered from production SwiftUI views offscreen; native desktop glass and cross-app click delivery remain Mac acceptance checks.
+
+### Simpler companion direction
+
+[The approved Simple Companions board](Sieghart/Design/Concepts/avatar-simple-studies.png) is now implemented as native shapes across onboarding, Appearance, island and menu. All six preserve their saved identities. Expressions, gaze and blinking interpolate continuously; breathing, listening and acknowledgement use gentle shape movement. Legacy detailed artwork is archived and excluded from app resources. See [the design brief](Sieghart/Design/Concepts/avatar-simple-studies.md).
 
 ## Next steps
+
+Sprint 3 is in progress: onboarding and the live AI dashboard are implemented. Automatic model pricing/FX, the first-click/toggle corrections, three timer modes and glass island are implemented. Visual reference influence is selective; Sieghart retains its palette, avatar role and control layout. Voice opening apps/browser search and invoice imports are the next slices.
 
 - Validate the new widget layout and voice flow on the physical Mac.
 - Validate real sensor interaction in the accepted Challenge submission environment.

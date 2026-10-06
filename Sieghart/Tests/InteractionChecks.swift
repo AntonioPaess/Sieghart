@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 
 @main
 struct InteractionChecks {
@@ -51,13 +52,21 @@ struct InteractionChecks {
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
         let assistant = AssistantViewModel(defaults: defaults, now: { clock }, schedulesTimer: false)
         let preferences = CompanionPreferences(defaults: defaults)
-        CompanionSprites.directory = URL(fileURLWithPath: "Sieghart/Sieghart/AvatarSprites", isDirectory: true)
         for avatar in CompanionAvatar.allCases {
-            for pose in CompanionPose.allCases {
-                precondition(CompanionSprites.image(for: avatar, pose: pose) != nil)
+            guard let icon = CompanionArtwork.menuBarImage(for: avatar) else { fatalError("Missing vector menu image") }
+            precondition(icon.size == NSSize(width: 22, height: 22))
+            precondition(icon.isTemplate == (avatar == .minimalSpirit))
+            for mood: CompanionMood in [.idle, .happy, .annoyed, .asleep, .waking, .startled, .understood, .celebrating] {
+                let still = CompanionMotion.sample(time: 0, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
+                let later = CompanionMotion.sample(time: 100, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
+                precondition(still == later) // Motion disabled never depends on the clock.
+                let moving = CompanionMotion.sample(time: 0.14, size: 24, avatar: avatar, mood: mood, listening: false, strolling: false, animates: true)
+                precondition(moving.eyeOpen.isFinite && moving.scaleX > 0 && moving.scaleY > 0)
             }
-            precondition(CompanionSprites.menuBarImage(for: avatar)?.isTemplate == false)
         }
+        let blinkClosed = CompanionMotion.sample(time: 0.14, size: 42, avatar: .crtBuddy, mood: .idle, listening: false, strolling: false, animates: true)
+        let blinkOpen = CompanionMotion.sample(time: 0.28, size: 42, avatar: .crtBuddy, mood: .idle, listening: false, strolling: false, animates: true)
+        precondition(blinkClosed.eyeOpen < 0.05 && blinkOpen.eyeOpen == 1)
         let compactNotch = NotchGeometry(width: 328, cutoutWidth: 180, cutoutHeight: 32, compact: true)
         precondition(compactNotch.height == 32 && compactNotch.contentTop == 0)
         precondition(compactNotch.width > compactNotch.cutoutWidth)
@@ -87,10 +96,83 @@ struct InteractionChecks {
         defaults.set("retired-avatar", forKey: "appearance.avatar")
         precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
         preferences.avatar = .crtBuddy
-        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90))
+        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle)
         notch.activation = activation
+        // A first click from another app must reach both native activation and
+        // the SwiftUI controls. These views stay offscreen; no window is opened.
+        let hitZone = HoverZoneView(frame: NSRect(x: 0, y: 0, width: 240, height: 36))
+        let hosted = IslandHostingView(rootView: Text("Offscreen check"))
+        precondition(hitZone.acceptsFirstMouse(for: nil) && hosted.acceptsFirstMouse(for: nil))
+        precondition(hitZone.hitTest(NSPoint(x: 120, y: 18)) === hitZone)
+        precondition(hitZone.hitTest(NSPoint(x: 1, y: 18)) === hitZone)
+        precondition(hitZone.hitTest(NSPoint(x: 239, y: 18)) === hitZone)
+        precondition(hitZone.hitTest(NSPoint(x: 241, y: 18)) == nil)
+        hitZone.onClick = { notch.clickIsland() }
+        let click = NSEvent.mouseEvent(with: .leftMouseDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil, eventNumber: 1, clickCount: 1, pressure: 1)!
+        hitZone.mouseDown(with: click)
+        precondition(notch.isVisible && notch.presentation == .home)
+        hitZone.mouseDown(with: click)
+        precondition(!notch.isVisible) // Second activation click closes, rather than reopening.
+
+        let liveTask = AIWork(id: "fixture", provider: .codex, model: "fixture-model", project: "Fixture project", startedAt: .now.addingTimeInterval(-20), lastSeen: .now, output: 100)
+        let liveUsage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
+        notch.aiUsage = liveUsage
+        notch.showIsland()
+        precondition(notch.isVisible && notch.presentation == .island && notch.geometry.height == 36)
+        hitZone.mouseDown(with: click)
+        precondition(notch.presentation == .aiLimits)
+        hitZone.mouseDown(with: click)
+        precondition(notch.presentation == .island)
+        notch.setPointerInsidePanel(true)
+        try await Task.sleep(for: .milliseconds(300))
+        precondition(notch.presentation == .island && notch.isPointerHovering) // Hover highlights; it never expands.
+        notch.setPointerInsidePanel(false)
+        notch.showCurrentTask()
+        precondition(notch.presentation == .aiLimits) // No focus timer needed for live AI.
+        notch.hide()
+        precondition(notch.presentation == .island)
+        let disconnected = CodexUsageModel(defaults: defaults, load: { throw CodexUsageError.unavailable })
+        liveUsage.disable(.codex, codex: disconnected)
+        notch.showIsland()
+        precondition(!notch.isVisible)
+        notch.aiUsage = nil
+        assistant.selectTimerMode(.timer)
+        notch.showTimer()
+        precondition(assistant.selectedTimerMode == .timer && !assistant.utilityClock.hasSession)
+        assistant.utilityClock.start(.stopwatch)
+        drainEvents(); notch.hide()
+        precondition(notch.presentation == .island)
+        hitZone.mouseDown(with: click)
+        precondition(notch.presentation == .timer && assistant.selectedTimerMode == .stopwatch)
+        notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(notch.presentation == .island && assistant.utilityClock.isRunning)
+        assistant.utilityClock.reset(); drainEvents(); notch.hide()
+        assistant.utilityClock.start(.timer, minutes: 1); drainEvents()
+        clock = clock.addingTimeInterval(61); assistant.utilityClock.refresh(); drainEvents()
+        precondition(notch.presentation == .timer && assistant.utilityClock.phase == .completed && assistant.completedSessions == 0)
+        try await Task.sleep(for: .milliseconds(170))
+        precondition(!notch.isVisible) // The explicit countdown announces once, then closes.
+        assistant.utilityClock.reset(); drainEvents()
+        var widths: [CGFloat] = []
+        for size in WidgetSize.allCases {
+            preferences.widgetSize = size
+            precondition(CompanionPreferences(defaults: defaults).widgetSize == size)
+            notch.show(); widths.append(notch.geometry.width); notch.hide()
+        }
+        precondition(widths[0] < widths[1] && widths[1] < widths[2])
+        preferences.widgetSize = .medium
+        notch.setPointerInsideHoverZone(true)
+        precondition(notch.presentation == .island && notch.isPointerHovering)
+        notch.setPointerInsidePanel(true)
+        notch.setPointerInsideHoverZone(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(notch.isVisible && notch.presentation == .island) // Crossing between native and SwiftUI hover regions is stable.
+        notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(!notch.isVisible)
 
         // Abandoning a recorder or changing apps cannot leave activation locked.
         activation.recordingShortcut = .voice
@@ -172,8 +254,65 @@ struct InteractionChecks {
         notch.showCurrentTask(); notch.setPointerInsidePanel(false)
         try await Task.sleep(for: .milliseconds(1200))
         precondition(notch.presentation == .island) // Leaving expanded controls tucks them away.
+        // Every expanded page obeys pointer exit, including former sticky pages.
+        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, notch.showVoice] {
+            open(); notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
+            try await Task.sleep(for: .milliseconds(320))
+            precondition(notch.presentation == .island && assistant.hasActiveSession)
+        }
         assistant.resetPomodoro(); drainEvents(); notch.hide()
         precondition(!notch.isVisible)
-        print("PASS: repeated touch moods and wake, exact notch height, avatar resources and persistence, voice intents and acknowledgement, abandoned shortcut recording and recovery, compact island, completion announcement, and automatic collapse")
+        assistant.startFocusSession(minutes: 5, autoBreak: false)
+        assistant.finishPomodoroFromWidget(); drainEvents()
+        try await Task.sleep(for: .milliseconds(170))
+        precondition(!notch.isVisible)
+        notch.showCurrentTask()
+        precondition(notch.presentation == .home) // Completed focus cannot hijack a reveal.
+        let relaunched = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false)
+        drainEvents()
+        precondition(!relaunched.isVisible) // Published saved completion is not replayed.
+        notch.hide()
+        activation.setShortcut(ShortcutChord(keyCode: nil, modifiers: NSEvent.ModifierFlags([.control, .shift]).rawValue, keyLabel: ""), for: .companion)
+        activation.receiveShortcutEvent(keyCode: nil, flags: [.control, .shift])
+        activation.receiveShortcutEvent(keyCode: nil, flags: [])
+        precondition(notch.isVisible)
+        notch.hide()
+        activation.receiveShortcutEvent(keyCode: nil, flags: [.control, .shift])
+        activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .shift])
+        activation.receiveShortcutEvent(keyCode: nil, flags: [])
+        precondition(!notch.isVisible) // A regular key suppresses modifier-only capture.
+        activation.setShortcut(.companion, for: .companion)
+        activation.receiveHotkey(.companion, eventTime: 100)
+        activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .option], eventTime: 100.01)
+        precondition(notch.isVisible) // Two backends must not toggle the island twice.
+        activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .option], eventTime: 101)
+        precondition(!notch.isVisible) // Session input works even with successful Carbon setup.
+        activation.receiveHotkey(.companion, eventTime: 101.01)
+        precondition(!notch.isVisible)
+        var gate = ShortcutDeliveryGate()
+        precondition(gate.accept(.voice, source: .monitor, at: 1))
+        precondition(!gate.accept(.voice, source: .carbon, at: 1.01))
+        precondition(gate.accept(.voice, source: .monitor, at: 1.1))
+        precondition(gate.accept(.companion, source: .carbon, at: 1.1))
+
+        let grace = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
+        grace.show()
+        grace.setPointerInsidePanel(false) // A layout/Space exit cannot cut short a keyboard reveal.
+        try await Task.sleep(for: .milliseconds(150))
+        precondition(grace.isVisible)
+        grace.setPointerInsidePanel(true) // Reaching a control cancels the reveal timeout.
+        try await Task.sleep(for: .milliseconds(170))
+        precondition(grace.isVisible)
+        grace.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(50))
+        grace.setPointerInsideHoverZone(true) // Crossing back into the header cancels collapse.
+        try await Task.sleep(for: .milliseconds(80))
+        precondition(grace.isVisible)
+        grace.setPointerInsideHoverZone(false)
+        try await Task.sleep(for: .milliseconds(140))
+        precondition(!grace.isVisible)
+        precondition(ShortcutChord.companion.matches(keyCode: 1, flags: [.control, .option]))
+        precondition(!ShortcutChord.companion.matches(keyCode: 1, flags: [.control, .option, .command]))
+        print("PASS: repeated touch moods and wake, exact notch height, simple vector icons, reduced-motion determinism and avatar persistence, voice intents and acknowledgement, abandoned shortcut recording and recovery, compact island, completion announcement, and automatic collapse")
     }
 }

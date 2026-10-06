@@ -8,7 +8,7 @@ struct ProviderMark: View {
     var size: CGFloat = 30
     var body: some View {
         Image(provider.assetName, bundle: AIProviderResources.bundle).resizable().renderingMode(.template).scaledToFit()
-            .foregroundStyle(provider == .codex ? Color.mint : Color(red: 0.85, green: 0.53, blue: 0.39))
+            .foregroundStyle(provider == .codex ? CompanionStyle.accent : Color(red: 0.85, green: 0.53, blue: 0.39))
             .padding(size * 0.18).frame(width: size, height: size)
             .background(CompanionStyle.background, in: RoundedRectangle(cornerRadius: size * 0.27))
             .accessibilityHidden(true)
@@ -16,6 +16,8 @@ struct ProviderMark: View {
 }
 
 struct AIUsageSummary: View {
+    @Environment(\.workspaceGlass) private var workspace
+    @EnvironmentObject private var usage: AIUsageModel
     @EnvironmentObject private var codex: CodexUsageModel
     @EnvironmentObject private var notch: NotchWidgetController
     var compact = false
@@ -23,13 +25,14 @@ struct AIUsageSummary: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                ProviderMark(provider: .codex)
+                if let provider = usage.usedProviders(codex: codex).first { ProviderMark(provider: provider) }
+                else { Image(systemName: "chart.bar.xaxis").font(.title3).foregroundStyle(CompanionStyle.accent) }
                 VStack(alignment: .leading, spacing: 3) {
                     Text("AI limits").font(.headline)
                     Text("Usage, resets & spending").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }
                 Spacer()
-                ProviderMark(provider: .claude, size: 24)
+                ForEach(usage.usedProviders(codex: codex).dropFirst()) { ProviderMark(provider: $0, size: 24) }
             }
             if codex.enabled, let bucket = codex.bucket {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
@@ -51,13 +54,21 @@ struct AIUsageSummary: View {
             }
             Button("View AI limits") { if let onOpen { onOpen() } else { notch.showAILimits() } }
                 .buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
-        }.padding(compact ? 14 : 20)
-            .background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        }.modifier(AISummarySurface(workspace: workspace, compact: compact))
             .task(id: codex.enabled) { await codex.refreshWhileVisible() }
     }
 }
 
-struct AIUsageView: View {
+private struct AISummarySurface: ViewModifier {
+    let workspace: Bool
+    let compact: Bool
+    func body(content: Content) -> some View {
+        if workspace { content.companionCard() }
+        else { content.padding(compact ? 14 : 20).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16)) }
+    }
+}
+
+struct AIUsageDetailsView: View {
     @EnvironmentObject private var codex: CodexUsageModel
     @EnvironmentObject private var usage: AIUsageModel
     @State private var editingProvider: AIProvider?
@@ -72,7 +83,10 @@ struct AIUsageView: View {
             Text("Quota percentages describe your subscription limits. Token estimates and recorded charges are separate amounts.")
                 .font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
         }
-        .task(id: "\(codex.enabled)-\(usage.claudeEnabled)") { await usage.refresh(codexEnabled: codex.enabled) }
+        .task(id: "\(codex.enabled)-\(usage.claudeEnabled)") {
+            await usage.refresh(codexEnabled: codex.enabled)
+            await usage.refreshPricing(providers: AIProvider.allCases.filter { $0 == .codex ? codex.enabled : usage.claudeEnabled })
+        }
         .sheet(item: $editingProvider) { provider in UsageSettingsView(provider: provider).environmentObject(usage) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
             do {
@@ -92,7 +106,7 @@ struct AIUsageView: View {
                 Text("Claude Code limits").font(.headline)
                 Spacer()
                 if usage.claudeEnabled {
-                    Button { usage.claudeEnabled = false } label: { Image(systemName: "xmark") }
+                    Button { usage.disable(.claude, codex: codex) } label: { Image(systemName: "xmark") }
                         .buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("Disconnect Claude usage")
                 }
             }
@@ -161,12 +175,10 @@ struct AIUsageView: View {
                 Spacer()
                 Text(estimateMoney(provider)).font(.callout.weight(.semibold)).monospacedDigit().foregroundStyle(.mint)
             }
-            Text(usage.ledger.prices[provider]?.estimate(usage.tokens[provider]) == nil
-                 ? "Add your average USD prices per million tokens to calculate an estimate."
-                 : "Custom average prices · Recent local counters · Not a bill")
+            Text(usage.pricingDescription(provider) + " · Partial local history · Not a bill")
                 .font(.caption2).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
-            if let date = usage.ledger.exchangeRateDate {
-                Text("BRL conversion uses your rate from \(date.formatted(date: .abbreviated, time: .omitted)).")
+            if let date = usage.conversionDate {
+                Text("BRL reference rate: \(date.formatted(date: .abbreviated, time: .omitted)) · \(usage.ledger.customExchangeRate == true ? "Custom rate" : "Frankfurter")")
                     .font(.caption2).foregroundStyle(CompanionStyle.muted)
             }
             Button("Prices & recorded charges") { editingProvider = provider }
@@ -176,7 +188,7 @@ struct AIUsageView: View {
     private func tokenValue(_ label: String, _ value: Int64) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(.caption).foregroundStyle(CompanionStyle.muted)
-            Text(value.formatted(.number.notation(.compactName))).font(.title3.weight(.medium)).monospacedDigit()
+            Text(value.formatted()).font(.title3.weight(.medium)).monospacedDigit()
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
     private func recordedMoney(_ provider: AIProvider) -> String {
@@ -186,9 +198,10 @@ struct AIUsageView: View {
         return values.isEmpty ? "Not recorded" : values.joined(separator: " · ")
     }
     private func estimateMoney(_ provider: AIProvider) -> String {
-        guard let usd = usage.ledger.prices[provider]?.estimate(usage.tokens[provider]) else { return "—" }
-        if let rate = usage.ledger.usdToBRL { return money(usd, .USD) + " · " + money(usd * rate, .BRL) }
-        return money(usd, .USD)
+        let estimate = usage.estimate(usage.analytics.points, provider: provider)
+        guard estimate.hasValue else { return "—" }
+        if let rate = usage.conversionRate { return estimate.label + " · " + (estimate.isLowerBound ? "≥ " : "") + money(estimate.usd * rate, .BRL) }
+        return estimate.label
     }
 }
 
@@ -217,14 +230,18 @@ private struct UsageSettingsView: View {
             HStack { ProviderMark(provider: provider); Text("\(provider.title) spending").font(.title3.weight(.semibold)); Spacer(); Button("Done") { dismiss() }.buttonStyle(CompanionButtonStyle()) }
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Average USD price per 1M tokens").font(.headline)
+                    Text("Automatic model prices").font(.headline)
+                    Text(usage.pricingDescription(provider)).font(.caption).foregroundStyle(CompanionStyle.muted)
+                    Link("Official price source", destination: PricingSource.page(provider)).font(.caption)
+                    Button("Use automatic prices & exchange rate") { usage.useAutomaticPrices(provider) }.buttonStyle(CompanionButtonStyle())
+                    Text("Optional custom average USD prices per 1M tokens").font(.headline)
                     rateField("Input", text: $input); rateField("Output", text: $output)
                     rateField("Cache read", text: $cacheRead); rateField("Cache write", text: $cacheWrite)
                     Text("Optional cache prices fall back to the input price. Use an average for your models; this remains an estimate.")
                         .font(.caption).foregroundStyle(CompanionStyle.muted)
                     rateField("1 USD in BRL", text: $exchange)
-                    Text("Enter your exchange rate; its save date is shown with the conversion.").font(.caption).foregroundStyle(CompanionStyle.muted)
-                    Button("Save prices") { savePrices() }.buttonStyle(CompanionButtonStyle(primary: true))
+                    Text("Leave empty to use the automatic dated USD/BRL reference rate.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    Button("Save custom prices") { savePrices() }.buttonStyle(CompanionButtonStyle(primary: true))
                     Divider()
                     Text("Record an actual charge").font(.headline)
                     HStack { TextField("Amount", text: $amount); Picker("Currency", selection: $currency) { ForEach(SpendCurrency.allCases, id: \.self) { Text($0.rawValue).tag($0) } }.frame(width: 130) }
@@ -248,7 +265,7 @@ private struct UsageSettingsView: View {
                 let prices = usage.ledger.prices[provider]
                 input = prices?.inputUSD.map { "\($0)" } ?? ""; output = prices?.outputUSD.map { "\($0)" } ?? ""
                 cacheRead = prices?.cachedInputUSD.map { "\($0)" } ?? ""; cacheWrite = prices?.cacheCreationUSD.map { "\($0)" } ?? ""
-                exchange = usage.ledger.usdToBRL.map { "\($0)" } ?? ""
+                exchange = usage.ledger.customExchangeRate == true ? usage.ledger.usdToBRL.map { "\($0)" } ?? "" : ""
             }
     }
     private func rateField(_ name: String, text: Binding<String>) -> some View { HStack { Text(name).font(.callout); Spacer(); TextField("Optional", text: text).frame(width: 160) } }

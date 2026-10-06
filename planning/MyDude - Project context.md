@@ -58,4 +58,31 @@ The Challenge is the first target, followed by a broader macOS product. The sens
 
 ## Current execution checkpoint — October 5, 2026
 
-The current plan is [ROADMAP.md](../ROADMAP.md), mirrored to the Obsidian Sieghart project. It includes all 77 modules from the user-authorized Vorssaint reference, 39 archived screenshots, six object companions (Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout), and explicit implementation/real-Mac acceptance status. Sprint 3 begins with a six-avatar onboarding choice, one-time local AI consent, automatic detection/refresh and live AI island. Challenge remains the first delivery; Calendar stays temporarily hidden. Neutral branch: `feature/companion-island`.
+The current plan is [ROADMAP.md](../ROADMAP.md), mirrored to the Obsidian Sieghart project. It includes all 77 modules from the user-authorized widget reference, 39 archived screenshots, six object companions (Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout), and explicit implementation/real-Mac acceptance status. Sprint 2 was published as `db2ea4f`. Sprint 3 is in progress: six-avatar onboarding, one-time local AI consent, automatic detection/refresh, the live AI island and the complete quota/spending/Now/hourly/model/project/13-week activity dashboard are implemented. Automatic model prices and dated FX are implemented; voice app launch/search and billing imports remain next. Challenge remains the first delivery; Calendar stays temporarily hidden. Neutral branch: `feature/companion-island`.
+
+## Current interaction override — October 6, 2026
+
+Click opens the island; hover gives visual feedback only. Every expanded page closes on pointer exit. Saved focus completion does not reopen itself. Small/Medium/Large sizes persist. Expanded glass, translucent cards, external circular quick controls and fluid six-avatar motion replace the earlier fully opaque expanded treatment. Compact/camera pixels stay black. The app and Challenge materials carry only Sieghart branding; research screenshots are excluded from the bundle.
+
+
+## Current correction — October 6, 2026
+
+The latest user direction overrides the earlier full-copy brief: visual reference influence is selective. Timer, Pomodoro and Stopwatch are implemented in one shared app/widget surface. Native first-mouse acceptance, a synchronous activation-strip toggle, full compact-wing targeting and strip ordering address the renewed click report (SG-002); physical Mac acceptance stays open. Mode selection never starts a clock, and pause/reset leave controls available.
+
+The detailed 3D bot concept was rejected. New companion art should be simple eye/dot/visor forms with expression through fluid gaze, blink and gentle shape motion. The user approved [the Simple Companions board](../Sieghart/Design/Concepts/avatar-simple-studies.png). Native minimal paths, interpolated eyes and 60 Hz movement now supply all six throughout onboarding, Appearance, island and menu. IDs/selections persist; legacy sprites are archived and excluded from the app bundle. All app/Challenge product text uses Sieghart branding.
+
+
+## Current activation follow-up — October 6, 2026
+
+The whole camera-band target, including its center, toggles expansion. Native hit tests and a bounded camera-click fallback cover both wings and gap; overlay frame constraints preserve placement. Mouse exit grants 800 ms; keyboard reveal grants four seconds to approach controls, cancelled upon entry. The island still closes on exit regardless of its page.
+
+Healthy global shortcuts stay registered across app/Space changes. Existing permitted monitors also route ordinary key combinations, suppressing duplicate Carbon/monitor delivery. Both overlays declare full-screen auxiliary capability. SG-001 and SG-002 remain open for physical Mac acceptance; offscreen checks cannot prove actual full-screen input delivery. Simple Companions are the current approved implementation, not a pending proposal.
+
+
+## October 6 — Companion depth and main-window design
+
+The latest user reference retains minimal shapes while requiring visible depth. Matte gradients, soft layered shadows, a recessed CRT face and a curved ivory/coral Paper Pal fold now give the six native characters volume. Subtle gaze perspective respects Reduce Motion; this is 2.5D artwork, not a 3D character rig. The original palette and stable saved identities remain.
+
+The main app now shares the glass treatment across Overview, Timers, grouped Activation preferences, Appearance, AI limits and onboarding. Overview reflects the active clock and keeps focus explicit. The compact island no longer draws its colored hover contour or native edge: feedback is a small character reaction on the unchanged black shell.
+
+[Main-window preview](../Sieghart/Design/Concepts/app-overview-preview.png) · [Appearance](../Sieghart/Design/Concepts/app-appearance-preview.png) · [Depth](../Sieghart/Design/Concepts/simple-companions-depth-preview.png) · [Borderless compact hover](../Sieghart/Design/Concepts/compact-hover-preview.png). Production views are rendered offscreen with illustrative data; no app window, real shortcut, sensor or microphone was started. SG-001/SG-002 remain physical Mac acceptance checks.

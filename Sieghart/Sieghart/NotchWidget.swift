@@ -12,6 +12,9 @@ struct NotchGeometry: Equatable {
     var contentTop: CGFloat { compact ? 0 : cutoutHeight + 6 }
     var height: CGFloat { contentTop + bodyHeight }
     var size: CGSize { CGSize(width: width, height: height) }
+    // The camera gap is part of the activation target, just like both wings.
+    // Expanded targets occupy the header only, leaving the controls accessible.
+    var activationSize: CGSize { CGSize(width: width, height: compact ? height : max(6, cutoutHeight)) }
     static let fallback = NotchGeometry(width: 480, cutoutWidth: 180, cutoutHeight: 0)
 
     init(width: CGFloat, cutoutWidth: CGFloat, cutoutHeight: CGFloat, bodyHeight: CGFloat = 192, compact: Bool = false) {
@@ -38,6 +41,7 @@ enum NotchPresentation: Equatable {
 @MainActor
 final class NotchWidgetController: ObservableObject {
     @Published private(set) var isVisible = false
+    @Published private(set) var isPointerHovering = false
     @Published private(set) var geometry: NotchGeometry = .fallback
 
     @Published private(set) var presentation: NotchPresentation = .home
@@ -46,7 +50,11 @@ final class NotchWidgetController: ObservableObject {
     private var shownCompletionID: UUID?
     private let managesWindows: Bool
     private let announcementDelay: Duration
-    private var expandTask: Task<Void, Never>?
+    static let pointerExitDelay: Duration = .milliseconds(800)
+    static let keyboardRevealDelay: Duration = .seconds(4)
+    private let pointerExitDelay: Duration
+    private let keyboardRevealDelay: Duration
+    private var revealGraceDeadline: ContinuousClock.Instant?
     private var completionTask: Task<Void, Never>?
     private var completionObservation: AnyCancellable?
     private let preferences: CompanionPreferences
@@ -54,12 +62,23 @@ final class NotchWidgetController: ObservableObject {
     var activation: ActivationController?
     var codexUsage: CodexUsageModel?
     var aiUsage: AIUsageModel?
+    private var activityObservation: AnyCancellable?
     private var panel: NSPanel?
+    private var canvas: IslandWindowCanvas<AnyView>?
     private var hoverPanel: HoverZonePanel?
     private var isPointerInsidePanel = false
-    private var isImpactRevealed = false
+    private var isPointerInsideHoverZone = false
+    private var pointerInsideInteractiveArea: Bool {
+        guard managesWindows else { return isPointerInsidePanel || isPointerInsideHoverZone }
+        let point = NSEvent.mouseLocation
+        return (hoverPanel?.frame.contains(point) ?? false) || (isVisible && (panel?.frame.contains(point) ?? false))
+    }
+    private var lastPointerInside = false
+    private var pointerPresenceTask: Task<Void, Never>?
+    private var cameraClickMonitor: Any?
     private var hideTask: Task<Void, Never>?
     private var pomodoroObservation: AnyCancellable?
+    private var clockObservation: AnyCancellable?
     private var preferencesObservation: AnyCancellable?
     private var screenChangeObserver: AnyCancellable?
     private var workspaceObservation: AnyCancellable?
@@ -67,11 +86,13 @@ final class NotchWidgetController: ObservableObject {
         rawValue: NSWindow.Level.mainMenu.rawValue + 3
     )
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5)) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetController.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetController.keyboardRevealDelay) {
         self.assistant = assistant
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay
+        self.pointerExitDelay = pointerExitDelay
+        self.keyboardRevealDelay = keyboardRevealDelay
         if managesWindows {
             if let screen = Self.selectedScreen() { geometry = NotchGeometry(screen: screen) }
             configureHoverZone()
@@ -89,11 +110,13 @@ final class NotchWidgetController: ObservableObject {
                 .receive(on: RunLoop.main)
                 .sink { [weak self] _ in
                     guard let self else { return }
-                    if self.preferences.hoverEnabled { self.hoverPanel?.orderFrontRegardless() }
-                    else { self.hoverPanel?.orderOut(nil) }
+                    self.hoverPanel?.orderFrontRegardless()
                     self.screenDidChange()
                 }
         }
+        // A saved completion is context, never a new announcement on launch.
+        latestCompletion = assistant.completionNotice
+        shownCompletionID = assistant.completionNotice?.id
         completionObservation = assistant.$completionNotice.compactMap { $0 }
             .receive(on: RunLoop.main)
             .sink { [weak self] notice in self?.presentCompletion(notice) }
@@ -103,51 +126,81 @@ final class NotchWidgetController: ObservableObject {
             .sink { [weak self] phase in
                 self?.handlePomodoroPhaseChange(phase)
             }
+        clockObservation = assistant.utilityClock.$phase.dropFirst().receive(on: RunLoop.main).sink { [weak self] phase in
+            guard let self, phase == self.assistant.utilityClock.phase else { return }
+            // A clock tick never changes the user's open page.
+            if phase == .completed && self.presentation == .island {
+                self.assistant.selectTimerMode(.timer)
+                self.presentation = .timer
+                self.reveal(approachGrace: false)
+                self.scheduleHide(delay: self.announcementDelay)
+            } else if !self.isVisible && self.assistant.hasTimerActivity { self.showIsland() }
+            else if self.presentation == .island && !self.assistant.hasTimerActivity && (self.aiUsage?.analytics.work.isEmpty ?? true) { self.dismissPanel() }
+        }
     }
 
     func toggle() {
         isVisible && presentation != .island ? hide() : show()
     }
 
+    func clickIsland() {
+        if isVisible && presentation != .island { hide() }
+        else { showCurrentTask() }
+    }
+
     // Every normal reveal returns to the companion. Timer tools are explicit.
     func show() {
         presentation = activation?.isListening == true || activation?.isPreparing == true ? .voice : .home
-        reveal(stickyUntilImpact: presentation == .voice)
+        reveal()
     }
 
     func showCurrentTask() {
-        if assistant.hasActiveSession { presentation = .timer }
-        else if assistant.pomodoroPhase == .completed { presentation = .completion }
+        if !(aiUsage?.analytics.work.isEmpty ?? true) { presentation = .aiLimits }
+        else if assistant.hasTimerActivity { assistant.selectTimerMode(assistant.activeTimerMode); presentation = .timer }
         else { presentation = .home }
-        reveal(stickyUntilImpact: presentation == .completion)
+        reveal()
     }
 
     func showIsland() {
-        guard assistant.hasActiveSession else { dismissPanel(); return }
+        guard assistant.hasTimerActivity || !(aiUsage?.analytics.work.isEmpty ?? true) else { dismissPanel(); return }
         presentation = .island
-        reveal(stickyUntilImpact: false)
+        reveal()
     }
 
-    func restoreSessionPresence() { if assistant.hasActiveSession { showIsland() } }
+    func restoreSessionPresence() { if assistant.hasTimerActivity || !(aiUsage?.analytics.work.isEmpty ?? true) { showIsland() } }
+
+    func observeAIActivity() {
+        activityObservation = aiUsage?.$analytics.receive(on: RunLoop.main).sink { [weak self] analytics in
+            guard let self else { return }
+            if !analytics.work.isEmpty && !self.isVisible { self.showIsland() }
+            else if analytics.work.isEmpty && !self.assistant.hasTimerActivity && self.presentation == .island { self.dismissPanel() }
+        }
+    }
+
+    func showTimer() {
+        if assistant.hasTimerActivity { assistant.selectTimerMode(assistant.activeTimerMode) }
+        presentation = .timer; reveal()
+    }
 
     func showFocusSetup() {
+        assistant.selectTimerMode(.pomodoro)
         presentation = .focusSetup
-        reveal(stickyUntilImpact: true)
+        reveal()
     }
 
     func showTools() {
         presentation = .tools
-        reveal(stickyUntilImpact: true)
+        reveal()
     }
 
     func showAILimits() {
         presentation = .aiLimits
-        reveal(stickyUntilImpact: true)
+        reveal()
     }
 
     func showVoice() {
         presentation = .voice
-        reveal(stickyUntilImpact: true)
+        reveal()
     }
 
     func handleImpact() {
@@ -155,33 +208,39 @@ final class NotchWidgetController: ObservableObject {
             hide()
         } else {
             show()
-            isImpactRevealed = true
         }
     }
 
     func setPointerInsidePanel(_ isInside: Bool) {
         isPointerInsidePanel = isInside
-        expandTask?.cancel()
-        if isInside {
-            hideTask?.cancel()
-            if presentation == .island {
-                expandTask = Task { @MainActor [weak self] in
-                    try? await Task.sleep(for: .milliseconds(220))
-                    guard !Task.isCancelled, let self, self.isPointerInsidePanel, self.presentation == .island else { return }
-                    self.showCurrentTask()
-                }
-            }
-        } else if isVisible && (presentation == .home || presentation == .timer || presentation == .celebration) {
-            scheduleHide()
-        }
+        updatePointerPresence()
+    }
+
+    func setPointerInsideHoverZone(_ isInside: Bool) {
+        isPointerInsideHoverZone = isInside
+        if isInside { showHoverFeedback() }
+        updatePointerPresence()
+    }
+
+    private func updatePointerPresence() {
+        let inside = pointerInsideInteractiveArea
+        isPointerHovering = inside && preferences.hoverEnabled
+        lastPointerInside = inside
+        if inside { revealGraceDeadline = nil; hideTask?.cancel() }
+        else if isVisible { scheduleHide(delay: pointerExitDelay) }
+    }
+
+    private func showHoverFeedback() {
+        guard preferences.hoverEnabled else { return }
+        isPointerHovering = true
+        hideTask?.cancel()
+        if !isVisible { presentation = .island; reveal() }
     }
 
     func hide() {
-        expandTask?.cancel()
         completionTask?.cancel()
         if activation?.isListening == true || activation?.isPreparing == true { activation?.cancelVoiceCommand(); return }
-        if let latestCompletion, latestCompletion.id != shownCompletionID { presentCompletion(latestCompletion); return }
-        if assistant.hasActiveSession { showIsland() }
+        if assistant.hasTimerActivity || !(aiUsage?.analytics.work.isEmpty ?? true) { showIsland() }
         else { dismissPanel() }
     }
 
@@ -189,34 +248,42 @@ final class NotchWidgetController: ObservableObject {
         hideTask?.cancel()
         hideTask = nil
         isVisible = false
-        isImpactRevealed = false
+        revealGraceDeadline = nil
+        pointerPresenceTask?.cancel(); pointerPresenceTask = nil
         guard let panel, panel.isVisible else { return }
-        panel.orderOut(nil)
+        guard let canvas, let screen = notchScreen, !preferences.usesReducedMotion else { panel.orderOut(nil); return }
+        let compact = NotchGeometry(screen: screen, compact: true)
+        canvas.prepare(target: compact.canvasGeometry, reserved: panel.frame.size, animated: true, closing: true) { [weak self, weak panel] in
+            guard self?.isVisible == false else { return }
+            panel?.orderOut(nil)
+        }
     }
 
     private func handlePomodoroPhaseChange(_ phase: PomodoroPhase) {
         guard phase == assistant.pomodoroPhase else { return }
         if presentation == .voice || presentation == .celebration || presentation == .aiLimits || presentation == .tools { return }
         switch phase {
-        case .focusing, .paused: showIsland()
+        case .focusing, .paused:
+            if !isVisible || presentation == .island { showIsland() }
         case .completed: break // The completion event includes the interval that just ended.
         case .idle:
-            if presentation != .focusSetup { show() }
+            if isVisible && presentation != .focusSetup && presentation != .timer { show() }
         }
     }
 
     private func presentCompletion(_ notice: SessionCompletion) {
         latestCompletion = notice
+        guard notice.id != shownCompletionID else { return }
         guard activation?.isListening != true, activation?.isPreparing != true else { return }
         shownCompletionID = notice.id
         presentation = .celebration
-        reveal(stickyUntilImpact: false)
+        reveal()
         completionTask?.cancel()
         completionTask = Task { @MainActor [weak self] in
             guard let self else { return }
             try? await Task.sleep(for: self.announcementDelay)
             guard !Task.isCancelled, self.presentation == .celebration, self.latestCompletion?.id == notice.id else { return }
-            if !self.isPointerInsidePanel { self.hide() }
+            if !self.pointerInsideInteractiveArea { self.hide() }
         }
     }
 
@@ -229,31 +296,28 @@ final class NotchWidgetController: ObservableObject {
         mainWindow.makeKeyAndOrderFront(nil)
     }
 
-    private func reveal(stickyUntilImpact: Bool) {
+    private func reveal(approachGrace: Bool = true) {
         hideTask?.cancel()
         hideTask = nil
-        isImpactRevealed = stickyUntilImpact
+        revealGraceDeadline = nil
         isVisible = true
         screenDidChange()
-        if presentation == .home || presentation == .timer {
-            if !isPointerInsidePanel { scheduleHide() }
+        if approachGrace && !pointerInsideInteractiveArea && presentation != .island && presentation != .voice && presentation != .celebration {
+            revealGraceDeadline = .now.advanced(by: keyboardRevealDelay)
+            scheduleHide(delay: keyboardRevealDelay)
         }
         guard managesWindows else { return }
         makePanelIfNeeded()
 
         guard let panel else { return }
-        guard let screen = notchScreen else { return }
-        let size = geometry.size
-        let expanded = NSRect(x: notchCenterX(on: screen) - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height)
-        isVisible = true
-        // Resize the native panel immediately. Animating a window smaller than
-        // its fixed SwiftUI content centers and crops that content mid-reveal.
-        panel.setFrame(expanded, display: true)
-        panel.contentView?.frame = NSRect(origin: .zero, size: expanded.size)
-        // Keep the black backplate opaque. Fading the entire window mixes in
-        // the bright app underneath and makes the notch appear gray.
+        guard notchScreen != nil else { return }
+        positionPanel()
         panel.alphaValue = 1
         panel.orderFrontRegardless()
+        // Keep the activation strip available when expanded, without covering
+        // any controls below the camera. A second strip click tucks it away.
+        hoverPanel?.orderFrontRegardless()
+        trackPointerPresence()
     }
 
     private func makePanelIfNeeded() {
@@ -283,37 +347,45 @@ final class NotchWidgetController: ObservableObject {
         // of leaving it underneath the menu bar surface.
         configureOverlay(widgetPanel)
         widgetPanel.isMovableByWindowBackground = false
-        let hosting = NSHostingView(
-            rootView: NotchWidgetView()
+        let hosting = IslandWindowCanvas(
+            rootView: AnyView(NotchWidgetView()
+                .environment(\.nativeIslandCanvas, true)
                 .environmentObject(self)
                 .environmentObject(assistant)
                 .environmentObject(activation)
                 .environmentObject(preferences)
                 .environmentObject(codexUsage)
-                .environmentObject(aiUsage)
+                .environmentObject(aiUsage))
         )
 
         // The controller owns the panel geometry. SwiftUI must not keep the
         // initial home min/max bounds when switching to a larger tool view.
-        hosting.focusRingType = .none
-        hosting.sizingOptions = []
-        hosting.autoresizingMask = [.width, .height]
         hosting.frame = NSRect(origin: .zero, size: geometry.size)
         widgetPanel.contentView = hosting
         widgetPanel.contentMinSize = .zero
         widgetPanel.contentMaxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         panel = widgetPanel
+        canvas = hosting
     }
 
     private func positionPanel() {
-        guard let panel else { return }
+        guard let panel, let canvas else { return }
         guard let screen = notchScreen else { return }
-
-        let size = geometry.size
+        guard canvas.currentSurface != geometry.size || canvas.isDeparting else { return }
+        let margin: CGFloat = geometry.compact ? 0 : 144
+        let bottom: CGFloat = geometry.compact ? 0 : 64
+        let size = CGSize(width: max(canvas.currentSurface.width, geometry.width) + margin, height: max(canvas.currentSurface.height, geometry.height) + bottom)
         let centerX = notchCenterX(on: screen)
         let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height)
         panel.setFrame(frame, display: true)
-        panel.contentView?.frame = NSRect(origin: .zero, size: size)
+        canvas.prepare(target: geometry.canvasGeometry, reserved: size, animated: !preferences.usesReducedMotion, closing: false) { [weak self] in self?.settlePanel() }
+    }
+
+    private func settlePanel() {
+        guard let panel, let canvas, let screen = notchScreen, isVisible else { return }
+        let size = CGSize(width: geometry.width + (geometry.compact ? 0 : 144), height: geometry.height + (geometry.compact ? 0 : 64))
+        panel.setFrame(NSRect(x: notchCenterX(on: screen) - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height), display: true)
+        canvas.prepare(target: geometry.canvasGeometry, reserved: size, animated: false, closing: false, settled: {})
     }
 
     private func configureHoverZone() {
@@ -325,35 +397,41 @@ final class NotchWidgetController: ObservableObject {
         )
         hover.isOpaque = false
         hover.backgroundColor = .clear
-        hover.alphaValue = 0.01
+        hover.alphaValue = 1
         hover.hasShadow = false
         configureOverlay(hover)
 
         let view = HoverZoneView()
         view.onEnter = { [weak self] in
-            Task { @MainActor [weak self] in
-                guard let self, self.preferences.hoverEnabled else { return }
-                if self.presentation == .island { self.showCurrentTask() }
-                else if !self.isVisible { self.show() }
-            }
+            self?.setPointerInsideHoverZone(true)
         }
         view.onExit = { [weak self] in
-            Task { @MainActor [weak self] in
-                guard let self, !self.isImpactRevealed, !self.isPointerInsidePanel else { return }
-                self.scheduleHide()
-            }
+            self?.setPointerInsideHoverZone(false)
+        }
+        view.onClick = { [weak self] in
+            self?.clickIsland()
         }
         hover.contentView = view
         hoverPanel = hover
         positionHoverPanel()
-        if preferences.hoverEnabled { hover.orderFrontRegardless() }
+        hover.orderFrontRegardless()
+        // The WindowServer can route an event over the physical camera gap to
+        // another app. Observe that click only within our activation rectangle.
+        // Global monitors exclude our own events, so native clicks fire once.
+        cameraClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.hoverPanel?.frame.contains(NSEvent.mouseLocation) == true else { return }
+                self.clickIsland()
+            }
+        }
     }
 
     private func positionHoverPanel() {
         guard let hoverPanel else { return }
         guard let screen = notchScreen else { return }
 
-        let size = CGSize(width: geometry.cutoutWidth + 12, height: max(geometry.cutoutHeight, 30))
+        let compact = NotchGeometry(screen: screen, compact: true)
+        let size = isVisible ? geometry.activationSize : compact.size
         let centerX = notchCenterX(on: screen)
         hoverPanel.setFrame(
             NSRect(
@@ -378,38 +456,45 @@ final class NotchWidgetController: ObservableObject {
         panel.isFloatingPanel = true
         panel.level = overlayLevel
         panel.hidesOnDeactivate = false
-        // canJoinAllApplications is the cross-app full-screen policy on our
-        // macOS 14.6+ target. A specific fullScreenAuxiliary policy overrides
-        // that classification; let the overlay join other apps directly.
+        // Cross-app overlay classification and full-screen capability are
+        // separate option groups in AppKit. Both panels need both policies.
         panel.collectionBehavior = [
             .canJoinAllApplications, .canJoinAllSpaces,
-            .fullScreenDisallowsTiling, .stationary, .ignoresCycle
+            .fullScreenAuxiliary, .fullScreenDisallowsTiling, .stationary, .ignoresCycle
         ]
+        panel.ignoresMouseEvents = false
     }
 
     private func refreshWorkspacePresence() {
         // A Space transition doesn't change the timer or reopen a dismissed
         // companion. Restore ordering only for surfaces that should be visible.
         screenDidChange()
-        if preferences.hoverEnabled { hoverPanel?.orderFrontRegardless() }
         if isVisible { panel?.orderFrontRegardless() }
+        hoverPanel?.orderFrontRegardless()
     }
 
     private func screenDidChange() {
         let height: CGFloat
         switch presentation {
-        case .home: height = 192
-        case .focusSetup: height = 390
-        case .timer: height = preferences.compactTimer ? 150 : 220
-        case .completion: height = 148
-        case .voice: height = 208
+        case .home: height = 254
+        case .focusSetup: height = 450
+        case .timer: height = 450
+        case .completion: height = 212
+        case .voice: height = 260
         case .island: height = 42
-        case .celebration: height = 212
-        case .tools: height = 280
+        case .celebration: height = 270
+        case .tools: height = 320
         case .aiLimits: height = min(560, (notchScreen?.visibleFrame.height ?? 700) - 80)
         }
-        if managesWindows, let screen = notchScreen { geometry = NotchGeometry(screen: screen, setup: presentation == .focusSetup, bodyHeight: height, compact: presentation == .island) }
-        else { geometry = NotchGeometry(width: presentation == .island ? 240 : presentation == .focusSetup ? 520 : 480, cutoutWidth: 0, cutoutHeight: 0, bodyHeight: height, compact: presentation == .island) }
+        if managesWindows, let screen = notchScreen {
+            let measured = NotchGeometry(screen: screen, setup: presentation == .focusSetup, bodyHeight: height, compact: presentation == .island)
+            geometry = presentation == .aiLimits ? NotchGeometry(width: min(720, screen.frame.width - 32), cutoutWidth: measured.cutoutWidth, cutoutHeight: measured.cutoutHeight, bodyHeight: height) : measured
+        }
+        else { geometry = NotchGeometry(width: presentation == .island ? 240 : presentation == .aiLimits ? 720 : presentation == .focusSetup ? 520 : 480, cutoutWidth: 0, cutoutHeight: 0, bodyHeight: height, compact: presentation == .island) }
+        if presentation != .island {
+            let factor = preferences.widgetSize.scale
+            geometry = NotchGeometry(width: min(geometry.width * factor, (notchScreen?.frame.width ?? 1400) - 32), cutoutWidth: geometry.cutoutWidth, cutoutHeight: geometry.cutoutHeight, bodyHeight: min(geometry.bodyHeight * factor, (notchScreen?.visibleFrame.height ?? 900) - 40))
+        }
         positionHoverPanel()
         positionPanel()
     }
@@ -425,13 +510,28 @@ final class NotchWidgetController: ObservableObject {
         return leftArea.maxX + ((rightArea.minX - leftArea.maxX) / 2)
     }
 
-    private func scheduleHide() {
+    private func trackPointerPresence() {
+        guard pointerPresenceTask == nil else { return }
+        lastPointerInside = pointerInsideInteractiveArea
+        pointerPresenceTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled, let self, self.isVisible else { return }
+                // Read a single pointer point; no global movement hook or input
+                // stream. This also covers a camera click without tracking events.
+                if self.pointerInsideInteractiveArea != self.lastPointerInside { self.updatePointerPresence() }
+            }
+        }
+    }
+
+    private func scheduleHide(delay: Duration) {
         hideTask?.cancel()
+        let grace = revealGraceDeadline.map { ContinuousClock.now.duration(to: $0) } ?? .zero
+        let delay = max(delay, grace)
         hideTask = Task { @MainActor [weak self] in
-            let delay: Duration = self?.presentation == .celebration ? self?.announcementDelay ?? .seconds(5) : .milliseconds(1100)
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled, let self else { return }
-            if !self.isPointerInsidePanel && !self.isImpactRevealed {
+            if !self.pointerInsideInteractiveArea {
                 self.hide()
             }
         }
@@ -441,18 +541,22 @@ final class NotchWidgetController: ObservableObject {
 private final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
 private final class HoverZonePanel: NSPanel {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
-private final class HoverZoneView: NSView {
+final class HoverZoneView: NSView {
     var onEnter: (() -> Void)?
     var onExit: (() -> Void)?
+    var onClick: (() -> Void)?
 
     private var trackingArea: NSTrackingArea?
+    override func hitTest(_ point: NSPoint) -> NSView? { bounds.contains(convert(point, from: superview)) ? self : nil }
 
     override func updateTrackingAreas() {
         if let trackingArea {
@@ -470,6 +574,9 @@ private final class HoverZoneView: NSView {
         super.updateTrackingAreas()
     }
 
+    override func mouseDown(with event: NSEvent) { onClick?() }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     override func mouseEntered(with event: NSEvent) {
         onEnter?()
     }
@@ -484,21 +591,51 @@ struct NotchWidgetView: View {
     @EnvironmentObject private var assistant: AssistantViewModel
     @EnvironmentObject private var activation: ActivationController
     @EnvironmentObject private var preferences: CompanionPreferences
+    @EnvironmentObject private var aiActivity: AIUsageModel
     @StateObject private var reactions = CompanionReactions()
     @State private var avatarPointer = CGSize.zero
+    private var scrollable: Bool
 
-    init(reactions: CompanionReactions = CompanionReactions()) {
+    init(reactions: CompanionReactions = CompanionReactions(), scrollable: Bool = true) {
         _reactions = StateObject(wrappedValue: reactions)
+        self.scrollable = scrollable
     }
 
+    private var panelScale: CGFloat { notch.presentation == .island ? 1 : preferences.widgetSize.scale }
+
+    @Environment(\.nativeIslandCanvas) private var nativeCanvas
+    @Environment(\.islandPreview) private var staticPreview
+    private var compact: Bool { notch.presentation == .island }
+    private var gutter: CGFloat { compact ? 0 : 72 }
+    private var bottomInset: CGFloat { compact ? 0 : 64 }
+
     var body: some View {
+        ZStack(alignment: .top) {
+            surface
+                .frame(width: notch.geometry.width, height: notch.geometry.height, alignment: .top)
+            if !compact { quickAccess }
+        }
+        .frame(width: notch.geometry.width + gutter * 2, height: notch.geometry.height + bottomInset, alignment: .top)
+        .foregroundStyle(.white)
+        .tint(CompanionStyle.accent)
+        .preferredColorScheme(.dark)
+        .environment(\.islandGlass, !compact)
+        .environment(\.islandReduceMotion, preferences.usesReducedMotion)
+        .onHover { notch.setPointerInsidePanel($0) }
+        .focusEffectDisabled()
+        .onExitCommand { notch.hide() }
+        .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
+        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset() } }
+    }
+
+    private var surface: some View {
         VStack(spacing: 0) {
             Color.clear.frame(height: notch.geometry.contentTop).allowsHitTesting(false)
-            VStack(spacing: 0) {
+            VStack(spacing: 14) {
+                if !compact { pageHeader }
                 switch notch.presentation {
                 case .home: home
-                case .focusSetup:
-                    ScrollView(.vertical) { setup }.scrollIndicators(.hidden)
+                case .focusSetup: pageScroll { setup }
                 case .timer: timer
                 case .completion: completion
                 case .voice: voice
@@ -506,36 +643,83 @@ struct NotchWidgetView: View {
                 case .celebration: celebration
                 case .tools: tools
                 case .aiLimits:
-                    VStack(alignment: .leading, spacing: 14) {
-                        HStack(spacing: 10) {
-                            iconButton("chevron.left", label: "Back to tools") { notch.showTools() }
-                            CompanionCharacter(size: 34, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, mood: .understood)
-                            Text("Your AI limits").font(.title3.weight(.semibold))
-                            Spacer()
-                            iconButton("xmark", label: "Close AI limits") { notch.hide() }
-                        }
-                        ScrollView(.vertical) { AIUsageView() }.scrollIndicators(.visible)
-                    }
+                    pageScroll { AIUsageView(showsHeader: false) }
                 }
             }
-            .id(notch.presentation)
-            .transition(.opacity)
-            .animation(preferences.usesReducedMotion ? nil : .spring(response: 0.38, dampingFraction: 0.86), value: notch.presentation)
-            .padding(notch.presentation == .island ? 0 : 20)
+            .padding(compact ? 0 : 28)
+            .frame(width: notch.geometry.width / panelScale, height: notch.geometry.bodyHeight / panelScale, alignment: .top)
+            .scaleEffect(panelScale, anchor: .top)
             .frame(width: notch.geometry.width, height: notch.geometry.bodyHeight, alignment: .top)
         }
-        .frame(width: notch.geometry.width, height: notch.geometry.height, alignment: .top)
-        .background(CompanionStyle.notchBlack, in: NotchPanelShape())
+        .background {
+            if !nativeCanvas { IslandBackdrop(compact: compact, stripHeight: notch.geometry.cutoutHeight) }
+        }
         .clipShape(NotchPanelShape())
         .contentShape(NotchPanelShape())
-        .foregroundStyle(.white)
-        .tint(CompanionStyle.accent)
-        .preferredColorScheme(.dark)
-        .onHover { notch.setPointerInsidePanel($0) }
-        .focusEffectDisabled()
-        .onExitCommand { notch.hide() }
-        .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
-        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset() } }
+        .animation(preferences.usesReducedMotion ? nil : .easeOut(duration: 0.15), value: notch.isPointerHovering)
+    }
+
+    @ViewBuilder private func pageScroll<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        if scrollable { ScrollView(.vertical) { content() }.scrollIndicators(.hidden) }
+        else { content().fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).clipped() }
+    }
+
+    private var pageHeader: some View {
+        HStack {
+            Text(pageTitle).font(.system(size: 20, weight: .semibold))
+            Spacer()
+            if staticPreview {
+                HStack(spacing: 5) { Image(systemName: "ellipsis"); Image(systemName: "chevron.down").font(.caption2.weight(.bold)) }
+            } else { Menu {
+                Button("Companion") { notch.show() }
+                Button("Timers") { notch.showTimer() }
+                Button("AI agents") { notch.showAILimits() }
+                Button("Tools") { notch.showTools() }
+                Divider()
+                Button("Close") { notch.hide() }
+            } label: {
+                HStack(spacing: 5) { Image(systemName: "ellipsis"); Image(systemName: "chevron.down").font(.caption2.weight(.bold)) }
+            }.menuStyle(.borderlessButton).fixedSize().focusEffectDisabled().accessibilityLabel("Island pages") }
+        }.frame(height: 24)
+    }
+
+    private var pageTitle: String {
+        switch notch.presentation {
+        case .home: "Companion"
+        case .focusSetup, .timer: "Timers"
+        case .aiLimits: "AI agents"
+        case .tools: "Controls"
+        case .voice: "Voice"
+        case .completion, .celebration: "Session complete"
+        case .island: ""
+        }
+    }
+
+    private var quickAccess: some View {
+        let width = notch.geometry.width + 144
+        return ZStack(alignment: .topLeading) {
+            floatingButton("square.grid.2x2", label: "Controls") { notch.showTools() }
+                .position(x: 28, y: notch.geometry.contentTop + 52)
+            floatingButton("timer", label: "Timer, Pomodoro and stopwatch") { notch.showTimer() }.position(x: 28, y: notch.geometry.contentTop + 106)
+            floatingButton("gearshape", label: "Preferences") { notch.focusMainWindow() }
+                .position(x: width - 28, y: notch.geometry.contentTop + 52)
+            floatingButton("mic", label: "Speak a command") { activation.toggleListening() }
+                .position(x: width - 28, y: notch.geometry.contentTop + 106)
+            Button { notch.show() } label: {
+                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: animates)
+                    .frame(width: 44, height: 44).background(.black.opacity(0.6), in: Circle())
+                    .overlay { Circle().strokeBorder(.white.opacity(0.14), lineWidth: 0.75) }
+            }.buttonStyle(IslandButtonStyle()).focusEffectDisabled().accessibilityLabel("Your companion")
+                .position(x: width / 2, y: notch.geometry.height + 32)
+        }.frame(width: width, height: notch.geometry.height + 64)
+    }
+
+    private func floatingButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 18, weight: .medium))
+                .frame(width: 44, height: 44).background(.black.opacity(0.95), in: Circle())
+                .overlay { Circle().strokeBorder(.white.opacity(0.2), lineWidth: 0.75) }
+        }.buttonStyle(IslandButtonStyle()).focusEffectDisabled().accessibilityLabel(label).help(label)
     }
 
     private var animates: Bool { preferences.characterMotion && !preferences.usesReducedMotion && notch.isVisible }
@@ -603,7 +787,7 @@ struct NotchWidgetView: View {
             }
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                 toolTile("Companion", subtitle: preferences.avatar.name, symbol: "face.smiling") { notch.show() }
-                toolTile("Focus", subtitle: "\(assistant.focusMinutes) min · Choose your rhythm", symbol: "timer") { notch.showFocusSetup() }
+                toolTile("Timers", subtitle: "Timer · Pomodoro · Stopwatch", symbol: "timer") { notch.showTimer() }
                 toolTile("AI limits", subtitle: "Codex · Claude · Spending", symbol: "chart.bar.xaxis") { notch.showAILimits() }
                 toolTile("Voice", subtitle: activation.voiceShortcut?.label ?? "Speak a command", symbol: "mic.fill") { activation.toggleListening() }
             }
@@ -620,7 +804,7 @@ struct NotchWidgetView: View {
                 }
                 Spacer(minLength: 0)
             }.padding(14).frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
-                .background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+                .modifier(IslandControlSurface())
         }.accessibilityLabel("\(name). \(subtitle)")
     }
 
@@ -671,19 +855,59 @@ struct NotchWidgetView: View {
     }
 
     private var setup: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 10) {
-                face
-                title("Focus session", caption: "Choose time & rhythm.")
-                Spacer()
-                iconButton("xmark", label: "Back to Sieghart") { notch.show() }
-            }
-            FocusSessionEditor(onStart: { notch.showIsland() }, onCancel: { notch.show() })
-        }
+        TimerToolsView(onStart: { notch.showIsland() })
     }
 
     private var island: some View {
-        Button { notch.showCurrentTask() } label: {
+        Group {
+            if let work = aiActivity.analytics.work.first {
+                Button { notch.clickIsland() } label: {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        HStack(spacing: 0) {
+                            HStack(spacing: 3) {
+                                CompanionCharacter(size: 21, avatar: preferences.avatar, animates: animates, focusing: true, mood: notch.isPointerHovering ? .happy : .idle)
+                                ProviderMark(provider: work.provider, size: 20)
+                            }.frame(maxWidth: .infinity)
+                            Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
+                            VStack(spacing: 1) {
+                                Text(assistant.hasTimerActivity ? assistant.compactTimeLabel : work.elapsed(at: context.date)).font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
+                                Text(assistant.hasTimerActivity ? work.provider.title : "Working").font(.system(size: 8)).foregroundStyle(CompanionStyle.accent)
+                            }.frame(maxWidth: .infinity)
+                        }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight).contentShape(Rectangle())
+                    }
+                }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("\(work.provider.title) working on \(work.project). Open AI activity.")
+            } else if assistant.hasTimerActivity { timerIsland }
+            else {
+                Button { notch.clickIsland() } label: {
+                    HStack(spacing: 0) {
+                        CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, mood: notch.isPointerHovering ? .happy : .idle).frame(maxWidth: .infinity)
+                        Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
+                        Text("Open").font(.system(size: 11, weight: .medium)).foregroundStyle(CompanionStyle.accent).frame(maxWidth: .infinity)
+                    }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityLabel("Open Sieghart")
+            }
+        }
+    }
+
+    @ViewBuilder private var timerIsland: some View {
+        if assistant.activeTimerMode != .pomodoro { utilityIsland } else { pomodoroIsland }
+    }
+
+    private var utilityIsland: some View {
+        Button { notch.clickIsland() } label: {
+            HStack(spacing: 0) {
+                CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, mood: notch.isPointerHovering ? .happy : .idle).frame(maxWidth: .infinity)
+                Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
+                VStack(spacing: 1) {
+                    Text(assistant.utilityClock.timeLabel).font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
+                    Text(assistant.utilityClock.isRunning ? assistant.utilityClock.mode.title : "Paused").font(.system(size: 8)).foregroundStyle(CompanionStyle.accent)
+                }.frame(maxWidth: .infinity)
+            }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityLabel("Open \(assistant.utilityClock.mode.title) controls")
+    }
+
+    private var pomodoroIsland: some View {
+        Button { notch.clickIsland() } label: {
             TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
                 let time = animates ? context.date.timeIntervalSinceReferenceDate : 0
                 let phase = time.truncatingRemainder(dividingBy: 60)
@@ -698,7 +922,7 @@ struct NotchWidgetView: View {
                                 islandProgress
                             }.foregroundStyle(CompanionStyle.accent)
                         } else {
-                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, strolling: walking)
+                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, mood: notch.isPointerHovering ? .happy : .idle, strolling: walking)
                                 .offset(x: walking ? sin(phase / 4 * .pi * 2) * 12 : 0)
                         }
                     }.frame(maxWidth: .infinity)
@@ -721,7 +945,7 @@ struct NotchWidgetView: View {
                             if !finishing { islandProgress }
                         }
                     }.frame(maxWidth: .infinity)
-                }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight)
+                }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight).contentShape(Rectangle())
                     .animation(animates ? .easeInOut(duration: 0.35) : nil, value: finishing)
             }
         }
@@ -761,35 +985,7 @@ struct NotchWidgetView: View {
     }
 
     private var timer: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 10) {
-                face
-                title(assistant.activityTitle, caption: assistant.sessionCaption).frame(width: 88, alignment: .leading)
-                Spacer(minLength: 0)
-                if preferences.compactTimer {
-                    Text(assistant.pomodoroTimeLabel).font(.system(size: 32, weight: .medium)).monospacedDigit()
-                        .lineLimit(1).minimumScaleFactor(0.8)
-                }
-                iconButton(assistant.isRunning ? "pause.fill" : "play.fill", label: assistant.isRunning ? "Pause timer" : "Resume timer") { assistant.togglePomodoro() }
-                iconButton("stop.fill", label: "Finish session") { assistant.finishPomodoroFromWidget() }
-            }
-            if !preferences.compactTimer {
-                Text(assistant.pomodoroTimeLabel).font(.system(size: 48, weight: .medium)).monospacedDigit()
-            }
-            GeometryReader { geometry in
-                Capsule().fill(CompanionStyle.separator)
-                    .overlay(alignment: .leading) {
-                        Capsule().fill(CompanionStyle.accent).frame(width: geometry.size.width * assistant.pomodoroProgress)
-                    }
-            }.frame(height: 3).accessibilityLabel("Time remaining").accessibilityValue("\(Int(assistant.pomodoroProgress * 100)) percent")
-            HStack(spacing: 8) {
-                Text(assistant.pomodoroPhase == .paused ? "Resume whenever you’re ready." : assistant.interval == .focus ? "Stay with one thing." : "Take a breath. Come back ready.")
-                    .font(.caption).foregroundStyle(CompanionStyle.muted)
-                Spacer(minLength: 0)
-                Button("Adjust") { notch.showFocusSetup() }.font(.caption).buttonStyle(.plain).foregroundStyle(CompanionStyle.muted)
-                iconButton("xmark", label: "Tuck away widget") { notch.hide() }
-            }
-        }
+        TimerToolsView(onStart: { notch.showIsland() })
     }
 
     private var completion: some View {
@@ -841,24 +1037,13 @@ struct NotchWidgetView: View {
     private func iconButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
-                .frame(width: 32, height: 32).background(CompanionStyle.surface, in: Circle())
-        }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel(label).help(label)
+                .frame(width: 32, height: 32).background(.white.opacity(0.08), in: Circle())
+        }.buttonStyle(IslandButtonStyle()).focusEffectDisabled().accessibilityLabel(label).help(label)
     }
 
 
 }
 
-private struct NotchPanelShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        let radius = min(NotchGeometry.cornerRadius, min(rect.width, rect.height) / 2)
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
-        path.addQuadCurve(to: CGPoint(x: rect.maxX - radius, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
-        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - radius), control: CGPoint(x: rect.minX, y: rect.maxY))
-        path.closeSubpath()
-        return path
-    }
+private extension NotchGeometry {
+    var canvasGeometry: IslandCanvasGeometry { IslandCanvasGeometry(size: size, cutoutWidth: cutoutWidth, cutoutHeight: cutoutHeight, compact: compact) }
 }

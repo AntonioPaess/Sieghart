@@ -1,4 +1,4 @@
-# Vorssaint reference gallery
+# Widget reference gallery
 
 39 screenshots supplied by the user on October 5, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
 
