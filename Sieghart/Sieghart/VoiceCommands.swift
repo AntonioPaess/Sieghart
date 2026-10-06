@@ -1,7 +1,7 @@
 import Foundation
 
 enum FocusVoiceCommand: Equatable {
-    case start(minutes: Int?), resume, pause, finish, reset, startBreak, show, hide, configure
+    case start(minutes: Int?), resume, pause, finish, reset, startBreak, show, hide, configure, aiLimits
 }
 
 enum FocusVoiceParser {
@@ -11,6 +11,10 @@ enum FocusVoiceParser {
         guard !["don't", "do not", "never", "nao", "not now"].contains(where: text.contains) else { return nil }
         let words = Set(text.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty })
         func has(_ options: [String]) -> Bool { !words.isDisjoint(with: options) }
+        if has(["ai", "ia", "codex", "claude"]) && has(["limits", "limit", "limites", "limite", "usage", "consumo", "tokens", "cost", "costs", "gasto", "gastos"]) {
+            guard !has(["pause", "stop", "start", "begin", "resume", "finish", "reset", "hide", "close", "focus", "pomodoro", "pausar", "iniciar", "retomar", "finalizar", "zerar", "esconder", "fechar", "focar"]) else { return nil }
+            return .aiLimits
+        }
         let pause = has(["pause", "pausar", "pausa", "stop", "parar"])
         let start = has(["start", "begin", "iniciar", "comecar", "comece", "focar", "focus", "pomodoro"])
         let resume = has(["resume", "continue", "retomar", "continuar"])
@@ -26,7 +30,10 @@ enum FocusVoiceParser {
         if resume { return .resume }
         if has(["configure", "settings", "adjust", "configurar", "ajustar"]) { return .configure }
         if has(["hide", "close", "esconder", "fechar", "recolher"]) { return .hide }
-        if has(["show", "open", "mostrar", "abrir"]) { return .show }
+        if has(["show", "open", "mostrar", "abrir"]) {
+            if has(["open", "abrir"]) && !has(["sieghart", "companion", "widget", "companheiro"]) { return nil }
+            return .show
+        }
         if (start || has(["take", "quero", "fazer", "preciso"])) && has(["break", "rest", "descanso", "intervalo"]) { return .startBreak }
         guard start else { return nil }
         guard !has(["hour", "hours", "hora", "horas", "seconds", "segundos"]) else { return nil }

@@ -32,7 +32,7 @@ struct NotchGeometry: Equatable {
 }
 
 enum NotchPresentation: Equatable {
-    case home, focusSetup, timer, completion, voice, island, celebration
+    case home, focusSetup, timer, completion, voice, island, celebration, aiLimits, tools
 }
 
 @MainActor
@@ -52,6 +52,8 @@ final class NotchWidgetController: ObservableObject {
     private let preferences: CompanionPreferences
     private let assistant: AssistantViewModel
     var activation: ActivationController?
+    var codexUsage: CodexUsageModel?
+    var aiUsage: AIUsageModel?
     private var panel: NSPanel?
     private var hoverPanel: HoverZonePanel?
     private var isPointerInsidePanel = false
@@ -133,6 +135,16 @@ final class NotchWidgetController: ObservableObject {
         reveal(stickyUntilImpact: true)
     }
 
+    func showTools() {
+        presentation = .tools
+        reveal(stickyUntilImpact: true)
+    }
+
+    func showAILimits() {
+        presentation = .aiLimits
+        reveal(stickyUntilImpact: true)
+    }
+
     func showVoice() {
         presentation = .voice
         reveal(stickyUntilImpact: true)
@@ -184,7 +196,7 @@ final class NotchWidgetController: ObservableObject {
 
     private func handlePomodoroPhaseChange(_ phase: PomodoroPhase) {
         guard phase == assistant.pomodoroPhase else { return }
-        if presentation == .voice || presentation == .celebration { return }
+        if presentation == .voice || presentation == .celebration || presentation == .aiLimits || presentation == .tools { return }
         switch phase {
         case .focusing, .paused: showIsland()
         case .completed: break // The completion event includes the interval that just ended.
@@ -246,7 +258,7 @@ final class NotchWidgetController: ObservableObject {
 
     private func makePanelIfNeeded() {
         guard panel == nil else { return }
-        guard let activation else { return }
+        guard let activation, let codexUsage, let aiUsage else { return }
 
         let widgetPanel = NotchPanel(
             contentRect: NSRect(
@@ -277,6 +289,8 @@ final class NotchWidgetController: ObservableObject {
                 .environmentObject(assistant)
                 .environmentObject(activation)
                 .environmentObject(preferences)
+                .environmentObject(codexUsage)
+                .environmentObject(aiUsage)
         )
 
         // The controller owns the panel geometry. SwiftUI must not keep the
@@ -391,6 +405,8 @@ final class NotchWidgetController: ObservableObject {
         case .voice: height = 208
         case .island: height = 42
         case .celebration: height = 212
+        case .tools: height = 280
+        case .aiLimits: height = min(560, (notchScreen?.visibleFrame.height ?? 700) - 80)
         }
         if managesWindows, let screen = notchScreen { geometry = NotchGeometry(screen: screen, setup: presentation == .focusSetup, bodyHeight: height, compact: presentation == .island) }
         else { geometry = NotchGeometry(width: presentation == .island ? 240 : presentation == .focusSetup ? 520 : 480, cutoutWidth: 0, cutoutHeight: 0, bodyHeight: height, compact: presentation == .island) }
@@ -488,6 +504,18 @@ struct NotchWidgetView: View {
                 case .voice: voice
                 case .island: island
                 case .celebration: celebration
+                case .tools: tools
+                case .aiLimits:
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 10) {
+                            iconButton("chevron.left", label: "Back to tools") { notch.showTools() }
+                            CompanionCharacter(size: 34, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, mood: .understood)
+                            Text("Your AI limits").font(.title3.weight(.semibold))
+                            Spacer()
+                            iconButton("xmark", label: "Close AI limits") { notch.hide() }
+                        }
+                        ScrollView(.vertical) { AIUsageView() }.scrollIndicators(.visible)
+                    }
                 }
             }
             .id(notch.presentation)
@@ -557,11 +585,43 @@ struct NotchWidgetView: View {
                     Button("Break") { notch.showCurrentTask() }.buttonStyle(.plain).focusEffectDisabled().font(.callout)
                 }
                 Spacer()
+                iconButton("square.grid.2x2", label: "Open tools") { notch.showTools() }
                 iconButton("mic.fill", label: "Speak a command") { activation.toggleListening() }
                 iconButton("gearshape", label: "Open preferences") { notch.focusMainWindow() }
                 iconButton("xmark", label: "Tuck away widget") { notch.hide() }
             }
         }
+    }
+
+    private var tools: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: false)
+                Text("Your workspace").font(.title3.weight(.semibold))
+                Spacer()
+                iconButton("xmark", label: "Tuck away tools") { notch.hide() }
+            }
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                toolTile("Companion", subtitle: preferences.avatar.name, symbol: "face.smiling") { notch.show() }
+                toolTile("Focus", subtitle: "\(assistant.focusMinutes) min · Choose your rhythm", symbol: "timer") { notch.showFocusSetup() }
+                toolTile("AI limits", subtitle: "Codex · Claude · Spending", symbol: "chart.bar.xaxis") { notch.showAILimits() }
+                toolTile("Voice", subtitle: activation.voiceShortcut?.label ?? "Speak a command", symbol: "mic.fill") { activation.toggleListening() }
+            }
+        }
+    }
+
+    private func toolTile(_ name: String, subtitle: String, symbol: String, action: @escaping () -> Void) -> some View {
+        CompanionInteraction(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(CompanionStyle.accent).frame(width: 24)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(name).font(.callout.weight(.semibold))
+                    Text(subtitle).font(.system(size: 10)).foregroundStyle(CompanionStyle.muted).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+            }.padding(14).frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
+                .background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+        }.accessibilityLabel("\(name). \(subtitle)")
     }
 
     private func reactToTouch() {

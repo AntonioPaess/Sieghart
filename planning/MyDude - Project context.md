@@ -54,3 +54,8 @@ The Challenge is the first target, followed by a broader macOS product. The sens
 
 - [[Projects - Index]]
 - [[Career Map]] — relevant to the O-1A portfolio and the next Swift Student Challenge cycle
+
+
+## Current execution checkpoint — October 5, 2026
+
+The current plan is [ROADMAP.md](../ROADMAP.md), mirrored to the Obsidian Sieghart project. It includes all 77 modules from the user-authorized Vorssaint reference, 39 archived screenshots, six object companions (Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout), and explicit implementation/real-Mac acceptance status. Sprint 3 begins with a six-avatar onboarding choice, one-time local AI consent, automatic detection/refresh and live AI island. Challenge remains the first delivery; Calendar stays temporarily hidden. Neutral branch: `feature/companion-island`.

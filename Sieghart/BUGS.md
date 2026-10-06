@@ -4,7 +4,7 @@
 
 **Priority:** high. **Reported:** October 5, 2026. **Status:** recovery improvements implemented; the reported intermittent case remains open for validation on the Mac.
 
-**Observed:** both the companion and voice shortcuts sometimes stop working and do not recover, confirmed by the user. The foreground app and triggering sequence have not yet been identified. The investigation prioritizes the shared capture/registration state; a modifier-monitor-only interruption would not explain the default regular-key companion binding by itself.
+**Observed:** both the companion and voice shortcuts sometimes stop working and do not recover, confirmed by the user. The user confirmed switching desktops/Spaces and entering full-screen on the same Mac as a trigger. The investigation prioritizes shared capture/registration state and overlay visibility; a modifier-monitor-only interruption would not explain the default regular-key companion binding by itself.
 
 ### Analysis
 
@@ -16,7 +16,7 @@
 
 ### Verified
 
-Headless regression checks cover activation being blocked during recording, cancelling only the relevant recorder, restoring the companion shortcut after abandonment, and preserving both configured bindings during recovery. Compilation covers the system notification and registration paths. These checks do not install global shortcuts or change permissions.
+Headless regression checks cover activation being blocked during recording, cancelling only the relevant recorder, restoring the companion shortcut after abandonment, preserving configured bindings during recovery, and posting a Space-change notification through the actual recovery observer. Activation also shows the last received shortcut and offers Restore shortcuts, allowing a user run to distinguish event delivery from panel visibility. These checks do not install global shortcuts or change permissions.
 
 ### Remaining validation
 

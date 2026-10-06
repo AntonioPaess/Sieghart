@@ -8,9 +8,9 @@ enum CompanionAvatar: String, CaseIterable, Identifiable {
     case crtBuddy = "crt-buddy"
     case arcade1984 = "arcade-1984"
     case minimalSpirit = "minimal-spirit"
-    case softOrbit = "soft-orbit"
+    case coastBuddy = "coast-buddy"
     case paperPal = "paper-pal"
-    case starSprout = "star-sprout"
+    case inkBuddy = "ink-buddy"
 
     var id: String { rawValue }
     var name: String {
@@ -18,9 +18,9 @@ enum CompanionAvatar: String, CaseIterable, Identifiable {
         case .crtBuddy: "CRT Buddy"
         case .arcade1984: "Arcade 1984"
         case .minimalSpirit: "Minimal Spirit"
-        case .softOrbit: "Soft Orbit"
+        case .coastBuddy: "Coast Buddy"
         case .paperPal: "Paper Pal"
-        case .starSprout: "Star Sprout"
+        case .inkBuddy: "Ink Buddy"
         }
     }
     var subtitle: String {
@@ -28,9 +28,9 @@ enum CompanionAvatar: String, CaseIterable, Identifiable {
         case .crtBuddy: "Phosphor soul"
         case .arcade1984: "Pixel nostalgia"
         case .minimalSpirit: "Less, with feeling"
-        case .softOrbit: "A little universe"
+        case .coastBuddy: "Work from anywhere"
         case .paperPal: "Folded with care"
-        case .starSprout: "A spark of joy"
+        case .inkBuddy: "Classic, with character"
         }
     }
     var detail: String {
@@ -38,15 +38,17 @@ enum CompanionAvatar: String, CaseIterable, Identifiable {
         case .crtBuddy: "A pocket CRT with mint eyes and a warm arcade glow."
         case .arcade1984: "An amber pixel friend with a green screen and victory hops."
         case .minimalSpirit: "Just a face, a soft blink, and a little personality."
-        case .softOrbit: "A pearl of light with a slowly moving orbit."
+        case .coastBuddy: "A seafoam pocket radio with a sun hat, backpack, and a relaxed rhythm."
         case .paperPal: "A friendly paper creature with expressive folded ears."
-        case .starSprout: "A tiny golden star with a mint sprout and a cheerful sway."
+        case .inkBuddy: "A quiet ivory and charcoal desk companion with vintage cartoon limbs."
         }
     }
     var tint: Color {
         switch self {
-        case .crtBuddy, .minimalSpirit, .softOrbit: CompanionStyle.accent
-        case .arcade1984, .starSprout: Color(red: 1, green: 0.80, blue: 0.43)
+        case .crtBuddy, .minimalSpirit: CompanionStyle.accent
+        case .coastBuddy: Color(red: 0.43, green: 0.77, blue: 0.71)
+        case .inkBuddy: Color(red: 0.86, green: 0.84, blue: 0.78)
+        case .arcade1984: Color(red: 1, green: 0.80, blue: 0.43)
         case .paperPal: Color(red: 1, green: 0.62, blue: 0.48)
         }
     }
@@ -85,9 +87,9 @@ private struct CompanionVectorFace: View, Animatable {
             case .crtBuddy: drawCRT(in: context)
             case .arcade1984: drawArcade(in: context)
             case .minimalSpirit: drawMinimal(in: context)
-            case .softOrbit: drawOrbit(in: context)
+            case .coastBuddy: drawObject(in: context, coast: true)
             case .paperPal: drawPaper(in: context)
-            case .starSprout: drawStar(in: context)
+            case .inkBuddy: drawObject(in: context, coast: false)
             }
         }
         .frame(width: 42, height: 42)
@@ -186,20 +188,21 @@ private struct CompanionVectorFace: View, Animatable {
         for x: CGFloat in [19, 73] { context.fill(rect(x, 58, 5, 2, radius: 1), with: .color(pink.opacity(0.6))) }
     }
 
-    private func drawOrbit(in context: GraphicsContext) {
-        let orb = Path(ellipseIn: CGRect(x: 16, y: 16, width: 64, height: 64))
-        context.fill(orb, with: .linearGradient(Gradient(colors: [cream, mint, CompanionStyle.accent, pink.opacity(0.9)]), startPoint: CGPoint(x: 25, y: 15), endPoint: CGPoint(x: 74, y: 83)))
-        context.stroke(orb, with: .color(.white.opacity(0.55)), lineWidth: 1.5)
-        context.fill(Path(ellipseIn: CGRect(x: 26, y: 22, width: 24, height: 12)), with: .color(.white.opacity(0.3)))
-        var orbit = context
-        orbit.translateBy(x: 48, y: 48)
-        orbit.rotate(by: .degrees(-24 + sin(motionTime * 0.65) * 8))
-        orbit.stroke(Path(ellipseIn: CGRect(x: -44, y: -19, width: 88, height: 38)), with: .color(CompanionStyle.accent.opacity(0.8)), lineWidth: 2.5)
-        let phase = motionTime * 0.65 + 0.5
-        let satellite = CGRect(x: cos(phase) * 44 - 4, y: sin(phase) * 19 - 4, width: 8, height: 8)
-        orbit.fill(Path(ellipseIn: satellite), with: .color(listening ? mint : amber))
-        drawExpression(in: context, color: ink, eyeY: 46, eyeWidth: 8, eyeHeight: 13, mouthY: 58, brows: false)
-        for x: CGFloat in [24, 66] { context.fill(Path(ellipseIn: CGRect(x: x, y: 56, width: 6, height: 4)), with: .color(pink.opacity(0.7))) }
+    private func drawObject(in context: GraphicsContext, coast: Bool) {
+        let shell = rect(14, 17, 68, 65, radius: 18)
+        let teal = Color(red: 0.43, green: 0.77, blue: 0.71)
+        context.fill(shell, with: .color(coast ? teal : ink))
+        context.fill(rect(21, 24, 54, 40, radius: 12), with: .color(coast ? ink : cream))
+        drawExpression(in: context, color: coast ? mint : ink, eyeY: 41, eyeWidth: 8, eyeHeight: 13, mouthY: 52)
+        if coast {
+            context.fill(rect(17, 10, 62, 9, radius: 4), with: .color(cream))
+            context.fill(rect(29, 3, 35, 12, radius: 4), with: .color(cream))
+            for y: CGFloat in [69, 73, 77] { context.fill(rect(27, y, 22, 2, radius: 1), with: .color(ink)) }
+        } else {
+            context.fill(polygon([CGPoint(x: 38, y: 68), CGPoint(x: 49, y: 73), CGPoint(x: 58, y: 68), CGPoint(x: 58, y: 78), CGPoint(x: 49, y: 73), CGPoint(x: 38, y: 78)]), with: .color(cream))
+        }
+        for x: CGFloat in [7, 83] { context.fill(rect(x, 48, 6, 13, radius: 3), with: .color(cream)) }
+        for x: CGFloat in [28, 58] { context.fill(rect(x, 82, 12, 8, radius: 4), with: .color(coast ? cream : ink)) }
     }
 
     private func drawPaper(in context: GraphicsContext) {
@@ -220,19 +223,7 @@ private struct CompanionVectorFace: View, Animatable {
         for x: CGFloat in [23, 67] { context.fill(rect(x, 60, 6, 3, radius: 1.5), with: .color(listening ? mint : coral)) }
     }
 
-    private func drawStar(in context: GraphicsContext) {
-        let star = polygon([CGPoint(x: 48, y: 19), CGPoint(x: 60, y: 33), CGPoint(x: 82, y: 30), CGPoint(x: 77, y: 51), CGPoint(x: 91, y: 65), CGPoint(x: 69, y: 71), CGPoint(x: 63, y: 91), CGPoint(x: 48, y: 80), CGPoint(x: 30, y: 89), CGPoint(x: 26, y: 70), CGPoint(x: 6, y: 61), CGPoint(x: 21, y: 46), CGPoint(x: 18, y: 27), CGPoint(x: 38, y: 32)])
-        context.fill(star, with: .linearGradient(Gradient(colors: [cream, amber, Color(red: 1, green: 0.61, blue: 0.32)]), startPoint: CGPoint(x: 32, y: 22), endPoint: CGPoint(x: 66, y: 90)))
-        context.stroke(star, with: .color(amber), style: StrokeStyle(lineWidth: 2, lineJoin: .round))
-        context.stroke(line([CGPoint(x: 48, y: 23), CGPoint(x: 48, y: 12)]), with: .color(mint), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-        var leaf = Path()
-        leaf.move(to: CGPoint(x: 48, y: 14))
-        leaf.addQuadCurve(to: CGPoint(x: 68, y: 4), control: CGPoint(x: 50, y: 0))
-        leaf.addQuadCurve(to: CGPoint(x: 48, y: 14), control: CGPoint(x: 66, y: 20))
-        context.fill(leaf, with: .color(listening ? CompanionStyle.accent : mint))
-        drawExpression(in: context, color: ink, eyeY: 49, eyeWidth: 8, eyeHeight: 13, mouthY: 62, brows: false)
-        for x: CGFloat in [23, 67] { context.fill(Path(ellipseIn: CGRect(x: x, y: 60, width: 6, height: 4)), with: .color(pink.opacity(0.75))) }
-    }
+
 }
 
 enum CompanionMood: Equatable {
@@ -294,16 +285,16 @@ enum CompanionSprites {
     }
 
     private static func approvedIdle(for avatar: CompanionAvatar) -> NSImage? {
-        // Neutral poses come directly from the first approved board, rather
-        // than a recreation. Only the sixth character uses its new artwork.
+        // The four retained neutral designs use the unchanged approved board.
+        // The two replacements use their own new sprite artwork.
         let crop: CGRect
         switch avatar {
         case .crtBuddy: crop = CGRect(x: 60, y: 170, width: 390, height: 390)
         case .arcade1984: crop = CGRect(x: 435, y: 168, width: 395, height: 395)
         case .minimalSpirit: crop = CGRect(x: 880, y: 230, width: 286, height: 286)
-        case .softOrbit: crop = CGRect(x: 1220, y: 166, width: 404, height: 404)
+
         case .paperPal: crop = CGRect(x: 1643, y: 180, width: 385, height: 385)
-        case .starSprout: return nil
+        case .coastBuddy, .inkBuddy: return nil
         }
         if originalBoard == nil, let url = directory?.appendingPathComponent("approved-directions.png"),
            let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
@@ -335,9 +326,9 @@ enum CompanionSprites {
         case .crtBuddy:
             context.addPath(CGPath(roundedRect: CGRect(x: 45, y: 96, width: 291, height: 222), cornerWidth: 50, cornerHeight: 50, transform: nil)); context.fillPath()
         case .arcade1984: context.fill(CGRect(x: 108, y: 153, width: 205, height: 153))
-        case .softOrbit: context.fillEllipse(in: CGRect(x: 42, y: 101, width: 285, height: 270))
+
         case .paperPal: context.fill(CGRect(x: 110, y: 155, width: 175, height: 112))
-        case .minimalSpirit, .starSprout: break
+        case .minimalSpirit, .coastBuddy, .inkBuddy: break
         }
         return context.makeImage()
     }
@@ -464,7 +455,7 @@ struct CompanionCharacter: View {
             let eye = animates && phase < 0.26 ? 1 - sin(phase / 0.26 * .pi) * 0.96 : 1
             let amplitude = avatar == .minimalSpirit ? 0.7 : 2.0
             let float = avatar == .arcade1984 ? (sin(time * 2) * 2).rounded() : sin(time * 1.8) * amplitude
-            let sway = avatar == .starSprout ? 3.0 : avatar == .minimalSpirit ? 0.3 : 1.2
+            let sway = avatar == .minimalSpirit || avatar == .inkBuddy ? 0.3 : 1.2
             let reaction = joyful ? CompanionMood.happy : mood
             let hop = (reaction == .happy || reaction == .celebrating) && animates ? -abs(sin(time * 6)) * size * (reaction == .celebrating ? 0.085 : 0.065) : strolling && animates ? -abs(sin(time * 6)) * 2 : float
             let shake = reaction == .annoyed && animates ? sin(time * 18) * size * 0.025 : 0

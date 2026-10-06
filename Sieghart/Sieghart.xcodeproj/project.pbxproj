@@ -22,6 +22,11 @@
 		A10000000000000000000036 /* CompanionAvatars.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000037 /* CompanionAvatars.swift */; };
 		A10000000000000000000038 /* AvatarSprites in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000039 /* AvatarSprites */; };
 		A10000000000000000000040 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000041 /* MenuBarView.swift */; };
+		A10000000000000000000042 /* CodexUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000043 /* CodexUsage.swift */; };
+		A10000000000000000000044 /* CodexUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000045 /* CodexUsageView.swift */; };
+		A10000000000000000000046 /* AIUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000047 /* AIUsage.swift */; };
+		A10000000000000000000048 /* AIUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000049 /* AIUsageView.swift */; };
+		A10000000000000000000050 /* ProviderAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000051 /* ProviderAssets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +47,11 @@
 		A10000000000000000000037 /* CompanionAvatars.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionAvatars.swift; sourceTree = "<group>"; };
 		A10000000000000000000039 /* AvatarSprites */ = {isa = PBXFileReference; lastKnownFileType = folder; path = AvatarSprites; sourceTree = "<group>"; };
 		A10000000000000000000041 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		A10000000000000000000043 /* CodexUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsage.swift; sourceTree = "<group>"; };
+		A10000000000000000000045 /* CodexUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageView.swift; sourceTree = "<group>"; };
+		A10000000000000000000047 /* AIUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIUsage.swift; sourceTree = "<group>"; };
+		A10000000000000000000049 /* AIUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIUsageView.swift; sourceTree = "<group>"; };
+		A10000000000000000000051 /* ProviderAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ProviderAssets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +90,11 @@
 				A10000000000000000000035 /* FocusSessionView.swift */,
 				A10000000000000000000037 /* CompanionAvatars.swift */,
 				A10000000000000000000041 /* MenuBarView.swift */,
+				A10000000000000000000043 /* CodexUsage.swift */,
+				A10000000000000000000045 /* CodexUsageView.swift */,
+				A10000000000000000000047 /* AIUsage.swift */,
+				A10000000000000000000049 /* AIUsageView.swift */,
+				A10000000000000000000051 /* ProviderAssets.xcassets */,
 				A10000000000000000000039 /* AvatarSprites */,
 				A10000000000000000000029 /* Sieghart.entitlements */,
 			);
@@ -148,6 +163,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000038 /* AvatarSprites in Resources */,
+				A10000000000000000000050 /* ProviderAssets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -171,6 +187,10 @@
 				A10000000000000000000034 /* FocusSessionView.swift in Sources */,
 				A10000000000000000000036 /* CompanionAvatars.swift in Sources */,
 				A10000000000000000000040 /* MenuBarView.swift in Sources */,
+				A10000000000000000000042 /* CodexUsage.swift in Sources */,
+				A10000000000000000000044 /* CodexUsageView.swift in Sources */,
+				A10000000000000000000048 /* AIUsageView.swift in Sources */,
+				A10000000000000000000046 /* AIUsage.swift in Sources */,
 				A10000000000000000000027 /* VoiceCallbacks.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

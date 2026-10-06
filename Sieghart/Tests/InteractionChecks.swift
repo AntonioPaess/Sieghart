@@ -24,6 +24,14 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Start focus for -5 minutes") == nil)
         precondition(FocusVoiceParser.parse("Start focus for twenty-five minutes") == .start(minutes: 25))
         precondition(FocusVoiceParser.parse("Show and hide") == nil)
+        precondition(FocusVoiceParser.parse("Open Warp") == nil)
+        precondition(FocusVoiceParser.parse("Open Safari and search YouTube") == nil)
+        precondition(FocusVoiceParser.parse("Open Sieghart") == .show)
+        precondition(FocusVoiceParser.parse("What is my ai limits") == .aiLimits)
+        precondition(FocusVoiceParser.parse("What are my AI limits?") == .aiLimits)
+        precondition(FocusVoiceParser.parse("Mostre meus limites do Codex") == .aiLimits)
+        precondition(FocusVoiceParser.parse("Show AI limits and start focus") == nil)
+        precondition(FocusVoiceParser.parse("Don't show my AI limits") == nil)
 
         var tracker = ModifierShortcutTracker()
         tracker.keyPressed() // Normal typing must not block the next modifier shortcut.
@@ -72,11 +80,16 @@ struct InteractionChecks {
             preferences.avatar = avatar
             precondition(CompanionPreferences(defaults: defaults).avatar == avatar)
         }
+        defaults.set("soft-orbit", forKey: "appearance.avatar")
+        precondition(CompanionPreferences(defaults: defaults).avatar == .coastBuddy)
+        defaults.set("star-sprout", forKey: "appearance.avatar")
+        precondition(CompanionPreferences(defaults: defaults).avatar == .inkBuddy)
         defaults.set("retired-avatar", forKey: "appearance.avatar")
         precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
         preferences.avatar = .crtBuddy
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90))
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
+        let lifecycle = NotificationCenter()
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle)
         notch.activation = activation
 
         // Abandoning a recorder or changing apps cannot leave activation locked.
@@ -88,6 +101,14 @@ struct InteractionChecks {
         activation.cancelShortcutRecording(for: .voice)
         activation.performShortcut(.companion)
         precondition(notch.isVisible)
+        notch.hide()
+
+        activation.recordingShortcut = .voice
+        lifecycle.post(name: NSWorkspace.activeSpaceDidChangeNotification, object: nil)
+        try await Task.sleep(for: .milliseconds(220))
+        precondition(activation.recordingShortcut == nil)
+        activation.performShortcut(.companion)
+        precondition(notch.isVisible && activation.lastShortcutActivation != nil)
         notch.hide()
         activation.recordingShortcut = .companion
         activation.recoverShortcuts()
@@ -114,6 +135,12 @@ struct InteractionChecks {
         activation.executeVoiceCommand("Don't start focus for 10 minutes")
         precondition(assistant.focusMinutes == 50) // Unsupported speech never changes the session.
         precondition(!activation.commandAcknowledged)
+
+        notch.showTools()
+        precondition(notch.presentation == .tools && notch.isVisible)
+        activation.executeVoiceCommand("What is my ai limits")
+        precondition(notch.presentation == .aiLimits && activation.commandAcknowledged)
+        precondition(assistant.focusMinutes == 50 && assistant.isRunning)
 
         assistant.startFocusSession(minutes: 5, autoBreak: true)
         notch.showIsland()

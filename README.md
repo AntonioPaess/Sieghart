@@ -19,7 +19,7 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 | Feature | What it does |
 | --- | --- |
-| **Six companions** | The original five designs are preserved, with Star Sprout added as the sixth. Choose one in Appearance; it also becomes your menu-bar icon. |
+| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose a companion in Appearance; it also becomes your menu-bar icon. |
 | **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Body motion and short messages explain each response. |
 | **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
 | **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover or click for controls. |
@@ -33,7 +33,7 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 ![The six Sieghart companions and their reactions](Sieghart/Design/Concepts/avatar-reactions-preview.png)
 
-*Rendered from the app’s bundled artwork. The original five neutral designs are taken directly from the approved concept board; the sixth and additional poses use local transparent sprite sheets.*
+*Rendered from the app’s bundled artwork. Four original neutral designs come from the preserved concept board. Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout; all six use bundled reaction sheets.*
 
 Open **Appearance** and select a companion in the three-column gallery. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is bundled and works offline. CRT Buddy remains the default.
 
@@ -119,7 +119,7 @@ Run all deterministic checks:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, and completion announcements during automatic breaks.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence.
 
 ## Project map
 
@@ -137,7 +137,21 @@ These checks do not open the app, activate the sensor, register system shortcuts
 | [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
 | [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) / [`AvatarSprites`](Sieghart/Sieghart/AvatarSprites) | Original artwork, six sprite libraries, body motion, touch reactions, and the Appearance gallery. |
 | [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
+| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) | Local token counters, spending ledger and shared provider panels. |
+| [`CodexUsage.swift`](Sieghart/Sieghart/CodexUsage.swift) | Read-only Codex quota adapter, reset windows and timeouts. |
 | [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
+
+## AI usage
+
+Open **AI limits** from Overview, the menu or widget tools; say “What is my AI limits” to open the same panel. Codex reads the locally signed-in account through its app server: real 5-hour and weekly remaining percentages, reset dates and countdowns. Local Codex and Claude Code logs supply input, output and cache counters, with a clearly marked partial-history scope.
+
+Recorded subscription/API charges remain separate from token estimates. Custom USD prices and a dated USD-to-BRL rate calculate estimates without representing them as bills. Claude quotas can use a dated imported report; automatic individual Claude quota access remains an adapter milestone. Provider symbols are bundled vector assets; see [third-party notices](Sieghart/THIRD_PARTY_NOTICES.md).
+
+![Example Codex panel, rendered from production views](Sieghart/Design/Concepts/codex-usage-preview.png)
+
+## Roadmap and references
+
+[Full roadmap](ROADMAP.md) · [39 reference screenshots](Sieghart/Design/References/Vorssaint/README.md). The roadmap covers all 77 modules in the current reference catalog, foundational onboarding/settings, and companion interactions. Planned modules are not claims of shipped functionality.
 
 ## Next steps
 

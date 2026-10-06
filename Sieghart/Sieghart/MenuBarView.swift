@@ -52,6 +52,7 @@ struct MenuBarView: View {
                 Button("Choose focus session") { notch.showFocusSetup() }
                     .buttonStyle(CompanionButtonStyle(primary: !assistant.hasActiveSession)).focusEffectDisabled()
             }.padding(16).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+            AIUsageSummary(compact: true)
             VStack(spacing: 8) {
                 actionRow(notch.presentation == .island || !notch.isVisible ? "Show companion" : "Tuck away widget", symbol: "rectangle.topthird.inset.filled") { notch.toggle() }
                 actionRow(activation.isListening || activation.isPreparing ? "Cancel voice" : "Speak a command", symbol: "mic.fill", detail: activation.voiceShortcut?.label) {

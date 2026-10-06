@@ -371,3 +371,8 @@ The three-impact calendar action requests EventKit access on first use, then swi
 ### Interaction feedback — 2026-10-05
 
 Use neutral feature branch names and omit tool branding from published names and commit trailers. Focus navigation in the main window must open an app tab. The notch opens on the character; active sessions tuck into a compact island. Finishing an interval must announce completion through the avatar even when the break starts automatically. Explicitly activated voice commands execute supported local actions after speech ends, with configurable independent shortcuts including modifier-only combinations. The character’s current direction is an original retro CRT identity with fluid motion and accessible controls.
+
+
+## Current execution checkpoint — October 5, 2026
+
+The current plan is [ROADMAP.md](../ROADMAP.md), mirrored to the Obsidian Sieghart project. It includes all 77 modules from the user-authorized Vorssaint reference, 39 archived screenshots, six object companions (Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout), and explicit implementation/real-Mac acceptance status. Sprint 3 begins with a six-avatar onboarding choice, one-time local AI consent, automatic detection/refresh and live AI island. Challenge remains the first delivery; Calendar stays temporarily hidden. Neutral branch: `feature/companion-island`.

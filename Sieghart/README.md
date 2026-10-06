@@ -9,9 +9,9 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 - **Overview** shows the current session and completed count.
 - **Focus** opens a dedicated tab in the app. It uses the same configuration editor as the widget: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
 - **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
-- **Appearance** offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Soft Orbit, Paper Pal, and Star Sprout. Selection saves immediately and applies throughout the app and notch. Expanded timer density, character motion, and reduced motion are configurable. macOS Reduce Motion is always respected.
+- **Appearance** offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal, and Ink Buddy. Selection saves immediately and applies throughout the app and notch. Expanded timer density, character motion, and reduced motion are configurable. macOS Reduce Motion is always respected.
 
-Normal reveal opens the selected avatar beside a contextual message, session time, and completed count. The original five neutral designs come directly from the unchanged approved board; Star Sprout adds a sixth. Local transparent sprite sheets provide nine poses per character, with additional body movement for touch, listening, acknowledgement, and celebration. The same avatar appears in the menu header and replaces the menu-bar sparkle icon.
+Normal reveal opens the selected avatar beside a contextual message, session time, and completed count. Four original neutral designs come directly from the unchanged approved board. Coast Buddy replaces Soft Orbit and Ink Buddy replaces Star Sprout; the replacements use their own neutral pose. Local transparent sprite sheets provide nine poses per character, with additional body movement for touch, listening, acknowledgement, and celebration. The same avatar appears in the menu header and replaces the menu-bar sparkle icon.
 
 The first three quick touches produce a happy bounce and sparkle, the fourth brings a grumpy shake, and the fifth sends the companion to sleep. One more touch wakes and stretches it. Each reaction has a short written response. Sleep lasts until another touch; taps separated by more than three seconds start a new burst. Custom interactions retain keyboard and VoiceOver actions with a rounded focus indicator, avoiding the native rectangular mouse focus ring.
 
@@ -37,13 +37,31 @@ Leaving a shortcut recorder cancels unfinished capture and restores activation. 
 
 Voice starts explicitly through its shortcut, Speak, or the microphone button. Choose English or Portuguese. The app requests microphone and speech access, listens for up to ten seconds, and automatically executes a supported local command after recognition ends or a short pause. Capture stops before executing. Cancel remains available; the microphone is off while idle.
 
-Supported intents include starting focus with a valid duration, pause, resume, finish, reset, start break, show, hide, and configuration. A successful command gets a nod, green checkmark, and “Got it.” message. Negation, conflicting actions, and unsupported durations are rejected. This is a bounded local command interface; open-ended conversation and launching other apps remain future work. On-device speech is preferred when supported, but language and system availability can require Apple services. The timer and core interaction work independently of speech.
+Supported intents include starting focus with a valid duration, pause, resume, finish, reset, start break, show, hide, configuration, and AI limits. A successful command gets a nod, green checkmark, and “Got it.” message. Negation, conflicting actions, and unsupported durations are rejected. This is a bounded local command interface; open-ended conversation and launching other apps remain future work. On-device speech is preferred when supported, but language and system availability can require Apple services. The timer and core interaction work independently of speech.
 
 Speech authorization uses a Sendable callback bridge. Audio tap writes are serialized through a thread-safe feed that closes on teardown. Recognition results cross to the main actor as primitive text and status values. The signed target retains its Hardened Runtime Audio Input entitlement.
 
 Impact gestures are off by default. Enabling them activates the experimental accelerometer reader and configurable one/two/three-impact mappings. Availability depends on Mac hardware.
 
 Calendar is temporarily hidden. `CalendarContext.swift` remains for later repair; saved Calendar impact mappings fall back to revealing the companion.
+
+## AI adapters
+
+Codex quota access uses `account/rateLimits/read` through the installed CLI app server and existing sign-in. Requests time out after twelve seconds. The app never starts a model turn or resets a quota. Percentages show **remaining** usage, and window names come from the returned duration. Expired/missing values are unavailable instead of fabricated zeroes. Credentials stay within Codex.
+
+Token counters read numeric usage fields from recent `.codex/sessions` and `.claude/projects` JSONL files. Discovery is bounded to 5,000 files, processing to 80 recent files/provider, and each read to its final 2 MiB. Codex cumulative counters and cloned rollout UUIDs are deduplicated; Claude streamed message IDs are deduplicated. Reasoning and cache are not added twice. This is **partial local history**, not full account lifetime usage.
+
+The local ledger holds dated subscription/API charges separately in USD and BRL. Token estimates use custom average prices per million, with an optional dated exchange rate. They are not provider invoices. Disconnect controls stop provider reads. Claude individual subscription quotas have no verified automatic adapter in this release. A JSON report can supply a dated reading:
+
+```json
+{
+  "capturedAt": "2026-10-05T21:00:00Z",
+  "primary": {"usedPercent": 25, "windowDurationMins": 300, "resetsAt": 1791244800},
+  "secondary": {"usedPercent": 40, "windowDurationMins": 10080, "resetsAt": 1791763200}
+}
+```
+
+Source protocol: [Codex app server](https://learn.chatgpt.com/docs/app-server). Provider asset attribution: [third-party notices](THIRD_PARTY_NOTICES.md).
 
 ## Verification
 

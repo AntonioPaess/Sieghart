@@ -28,7 +28,10 @@ final class CompanionPreferences: ObservableObject {
         compactTimer = defaults.object(forKey: "appearance.compactTimer") as? Bool ?? true
         characterMotion = defaults.object(forKey: "appearance.characterMotion") as? Bool ?? true
         reduceMotion = defaults.object(forKey: "appearance.reduceMotion") as? Bool ?? false
-        avatar = defaults.string(forKey: "appearance.avatar").flatMap(CompanionAvatar.init(rawValue:)) ?? .crtBuddy
+        let savedAvatar = defaults.string(forKey: "appearance.avatar")
+        let migrated = savedAvatar == "soft-orbit" ? "coast-buddy" : savedAvatar == "star-sprout" ? "ink-buddy" : savedAvatar
+        avatar = migrated.flatMap(CompanionAvatar.init(rawValue:)) ?? .crtBuddy
+        if savedAvatar != migrated { defaults.set(avatar.rawValue, forKey: "appearance.avatar") }
     }
 
     var usesReducedMotion: Bool { reduceMotion || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }

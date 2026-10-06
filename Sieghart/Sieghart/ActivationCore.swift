@@ -14,6 +14,7 @@ final class ActivationController: ObservableObject {
     @Published private(set) var shortcutStatus = ""
     @Published private(set) var voiceShortcutStatus = ""
     @Published private(set) var needsShortcutPermission = false
+    @Published private(set) var lastShortcutActivation: Date?
     @Published private(set) var voiceStatus = "Voice is off"
     @Published private(set) var transcript = ""
     @Published private(set) var isListening = false
@@ -47,7 +48,7 @@ final class ActivationController: ObservableObject {
     private var settleTask: Task<Void, Never>?
     private var feedbackTask: Task<Void, Never>?
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil) {
         self.assistant = assistant
         self.notch = notch
         self.defaults = defaults
@@ -67,8 +68,8 @@ final class ActivationController: ObservableObject {
         voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
         if registersShortcuts {
             registerHotkeys()
-            observeShortcutLifecycle()
         }
+        if registersShortcuts || lifecycleNotifications != nil { observeShortcutLifecycle(workspace: lifecycleNotifications) }
     }
 
     func cancelShortcutRecording(for action: ShortcutAction) {
@@ -83,13 +84,13 @@ final class ActivationController: ObservableObject {
         else if registersShortcuts { registerHotkeys() }
     }
 
-    private func observeShortcutLifecycle() {
+    private func observeShortcutLifecycle(workspace suppliedWorkspace: NotificationCenter?) {
         for name in [NSApplication.didBecomeActiveNotification, NSApplication.didResignActiveNotification] {
             appObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.scheduleShortcutRecovery() }
             })
         }
-        let workspace = NSWorkspace.shared.notificationCenter
+        let workspace = suppliedWorkspace ?? NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
                      NSWorkspace.sessionDidBecomeActiveNotification, NSWorkspace.activeSpaceDidChangeNotification,
                      NSWorkspace.didActivateApplicationNotification] {
@@ -97,6 +98,7 @@ final class ActivationController: ObservableObject {
                 MainActor.assumeIsolated { self?.scheduleShortcutRecovery() }
             })
         }
+        guard registersShortcuts else { return }
         shortcutHealthTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(2))
@@ -219,6 +221,7 @@ final class ActivationController: ObservableObject {
 
     func performShortcut(_ action: ShortcutAction) {
         guard recordingShortcut == nil else { return }
+        lastShortcutActivation = Date()
         if action == .voice { toggleListening() } else { notch.toggle() }
     }
 
@@ -365,6 +368,8 @@ final class ActivationController: ObservableObject {
             voiceStatus = "Sieghart tucked away"; notch.hide(); return
         case .configure:
             voiceStatus = "Choose your focus settings"; commandAcknowledged = true; notch.showFocusSetup(); scheduleFeedback(closeWidget: false); return
+        case .aiLimits:
+            voiceStatus = "Here are your AI limits"; commandAcknowledged = true; notch.showAILimits(); scheduleFeedback(closeWidget: false); return
         }
         commandAcknowledged = succeeded
         notch.showVoice()

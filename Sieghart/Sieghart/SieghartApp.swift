@@ -8,15 +8,21 @@ struct SieghartApp: App {
     @StateObject private var gestures: ImpactGestureCoordinator
     @StateObject private var activation: ActivationController
     @StateObject private var preferences: CompanionPreferences
+    @StateObject private var codexUsage: CodexUsageModel
+    @StateObject private var aiUsage: AIUsageModel
 
     init() {
         let preferences = CompanionPreferences()
+        let codexUsage = CodexUsageModel()
+        let aiUsage = AIUsageModel()
         let assistant = AssistantViewModel()
         let sensor = SensorViewModel()
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences)
         let gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)
         let activation = ActivationController(assistant: assistant, notch: notch)
         notch.activation = activation
+        notch.codexUsage = codexUsage
+        notch.aiUsage = aiUsage
         notch.restoreSessionPresence()
         sensor.onImpact = { impact in
             guard preferences.impactsEnabled else { return }
@@ -30,6 +36,8 @@ struct SieghartApp: App {
         _gestures = StateObject(wrappedValue: gestures)
         _activation = StateObject(wrappedValue: activation)
         _preferences = StateObject(wrappedValue: preferences)
+        _codexUsage = StateObject(wrappedValue: codexUsage)
+        _aiUsage = StateObject(wrappedValue: aiUsage)
     }
 
     var body: some Scene {
@@ -41,6 +49,8 @@ struct SieghartApp: App {
                 .environmentObject(gestures)
                 .environmentObject(activation)
                 .environmentObject(preferences)
+                .environmentObject(codexUsage)
+                .environmentObject(aiUsage)
         }
         .defaultSize(width: 1000, height: 680)
         .windowToolbarStyle(.unifiedCompact)
@@ -51,6 +61,8 @@ struct SieghartApp: App {
                 .environmentObject(notch)
                 .environmentObject(activation)
                 .environmentObject(preferences)
+                .environmentObject(codexUsage)
+                .environmentObject(aiUsage)
         } label: {
             if let image = CompanionSprites.menuBarImage(for: preferences.avatar) {
                 Image(nsImage: image).accessibilityLabel("Sieghart — \(preferences.avatar.name)")
@@ -63,7 +75,7 @@ struct SieghartApp: App {
 }
 
 private enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", focus = "Focus", activation = "Activation", appearance = "Appearance"
+    case overview = "Overview", focus = "Focus", activation = "Activation", appearance = "Appearance", aiLimits = "AI limits"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -71,6 +83,7 @@ private enum AppSection: String, CaseIterable, Identifiable {
         case .focus: "timer"
         case .activation: "keyboard"
         case .appearance: "slider.horizontal.3"
+        case .aiLimits: "chart.bar.xaxis"
         }
     }
 }
@@ -94,6 +107,9 @@ private struct ContentView: View {
                     case .focus: focusSettings
                     case .activation: activationSettings
                     case .appearance: appearanceSettings
+                    case .aiLimits:
+                        heading("Your AI limits", subtitle: "Know what’s left, when it resets, and what you spend.")
+                        AIUsageView()
                     }
                 }
                 .padding(32)
@@ -182,6 +198,7 @@ private struct ContentView: View {
             quickCard("Activation", value: activation.companionShortcut?.label ?? "Shortcut off", detail: "Choose how Sieghart appears.") { section = .activation }
             quickCard("Appearance", value: preferences.avatar.name, detail: "Choose your companion and tune its motion.") { section = .appearance }
         }
+        AIUsageSummary(onOpen: { section = .aiLimits })
         HStack {
             Text("Completed")
             Spacer()
@@ -217,6 +234,13 @@ private struct ContentView: View {
             Divider()
             PreferenceRow("Voice shortcut", detail: "Record keys, or press and release only modifiers such as Option + Command.") { ShortcutRecorder(action: .voice) }
             Text(activation.voiceShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+            HStack {
+                if let date = activation.lastShortcutActivation {
+                    Text("Last shortcut received at \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(CompanionStyle.muted)
+                }
+                Spacer()
+                Button("Restore shortcuts") { activation.recoverShortcuts() }.buttonStyle(.plain).focusEffectDisabled().font(.caption)
+            }
             if activation.recordingShortcut != nil {
                 Text("Press your combination. Release modifier-only keys to save. Escape cancels.").font(.caption).foregroundStyle(CompanionStyle.accent)
             }
