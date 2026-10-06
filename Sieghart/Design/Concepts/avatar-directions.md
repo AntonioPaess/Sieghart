@@ -36,3 +36,8 @@ Create ONE polished landscape character-design comparison board for the native m
 ## Current selection — October 5, 2026
 
 The original board above remains preserved. The current six are CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Coast Buddy replaces Soft Orbit; Ink Buddy replaces Star Sprout. See [current reactions and generation notes](avatar-reactions.md).
+
+
+## Latest art direction — October 6, 2026
+
+The user rejected a detailed 3D bot proposal and clarified a much simpler eye/dot/visor style. See [the new minimal studies](avatar-simple-studies.md). Those studies are a proposal; they do not replace the current six bundled avatars or imply completed animation. Prefer fluid native eye/shape interpolation with very few details. Visual utility references are selective, not a requirement for complete design duplication.

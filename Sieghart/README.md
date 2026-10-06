@@ -92,3 +92,12 @@ All seven deterministic check groups passed, including click-only island behavio
 `IslandChrome.swift` owns the independently authored shoulder contour, glass/blur fallback, translucent cards, local button feedback and native canvas. The canvas reserves both transition sizes, animates its contour without resizing the content, then returns the window to the settled bounds. Closing removes the page before contracting the shell. Compact/camera pixels stay black; Reduce Motion and Reduce Transparency are respected. External source code and reference branding are not part of the app or Challenge package.
 
 All six sprite avatars retain their identities. Body motion runs at 60 Hz, cosine landings remove step kinks, continuous opacity blends blinks, and pointer perspective responds with a spring. This is 2D artwork with perspective, not a 3D skeletal rig.
+
+
+## October 6 — Click regression and three timer tools
+
+The native activation strip now accepts the first mouse event from another app, uses the complete compact island width, and toggles expansion/collapse through one synchronous route. SwiftUI hosting explicitly accepts first mouse too; compact button labels give transparent spacing the same hit target. The strip stays above the panel only in the camera-height band. Hover highlights without expansion, and pointer exit collapses every expanded page. SG-002 remains a physical-Mac acceptance gate.
+
+The app's Timers tab and widget offer Timer, Pomodoro and Stopwatch. Countdown duration is 1–180 minutes with presets. Stopwatch displays tenths and hours after an hour. Dates preserve running/paused state across sleep/relaunch; utility clocks never increment focus rounds. Selecting a mode changes only the selected page. Pause/reset keep the timer controls visible. Pomodoro retains its configurable focus/break rounds and completion notice.
+
+Selective reference influence is the current design direction. Use useful glass/cards and timing interactions while retaining Sieghart's visual identity. New character studies should be minimal eye/dot/visor designs; the detailed 3D robot proposal was rejected. [Simple concept board](Design/Concepts/avatar-simple-studies.png) is a proposal; it does not replace production sprites. [Timer previews](Design/Concepts/timer-timer-preview.png) render offscreen.

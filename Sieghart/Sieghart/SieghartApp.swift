@@ -77,7 +77,7 @@ struct SieghartApp: App {
 }
 
 private enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", focus = "Focus", activation = "Activation", appearance = "Appearance", aiLimits = "AI limits"
+    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", aiLimits = "AI limits"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -150,7 +150,7 @@ private struct ContentView: View {
             }
             .padding(.bottom, 20)
             sidebarButton("Overview", symbol: "square.grid.2x2", selected: section == .overview) { section = .overview }
-            sidebarButton("Focus", symbol: "timer", selected: section == .focus) { section = .focus }
+            sidebarButton("Timers", symbol: "timer", selected: section == .focus) { section = .focus }
             sidebarButton("Activation", symbol: "keyboard", selected: section == .activation) { section = .activation }
             sidebarButton("Appearance", symbol: "slider.horizontal.3", selected: section == .appearance) { section = .appearance }
             sidebarButton("AI limits", symbol: "chart.bar.xaxis", selected: section == .aiLimits) { section = .aiLimits }
@@ -193,12 +193,12 @@ private struct ContentView: View {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(assistant.hasActiveSession ? assistant.activityTitle : "Make room for one thing.")
                         .font(.title3.weight(.semibold))
-                    Text("Choose your rhythm in Focus or use the notch for quick access.")
+                    Text("Choose your rhythm in Timers or use the notch for quick access.")
                         .font(.callout).foregroundStyle(CompanionStyle.muted)
                 }
             }
             HStack(spacing: 8) {
-                Button("Configure focus") { section = .focus }.buttonStyle(CompanionButtonStyle(primary: true))
+                Button("Open timers") { section = .focus }.buttonStyle(CompanionButtonStyle(primary: true))
                 if assistant.hasActiveSession {
                     Button(assistant.pomodoroButtonLabel) { assistant.togglePomodoro() }.buttonStyle(CompanionButtonStyle())
                 } else {
@@ -221,22 +221,9 @@ private struct ContentView: View {
     }
 
     @ViewBuilder private var focusSettings: some View {
-        heading("Make time for one thing.", subtitle: "Configure your session here. The notch keeps a quiet countdown while you work.")
-        if assistant.hasActiveSession {
-            HStack(spacing: 20) {
-                CompanionCharacter(size: 64, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: assistant.interval == .focus)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(assistant.activityTitle).font(.headline)
-                    Text(assistant.pomodoroTimeLabel).font(.system(size: 40, weight: .medium)).monospacedDigit()
-                    Text(assistant.sessionCaption).font(.caption).foregroundStyle(CompanionStyle.muted)
-                }
-                Spacer()
-                Button(assistant.pomodoroButtonLabel) { assistant.togglePomodoro() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
-                Button("Finish") { assistant.finishPomodoroFromWidget() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
-            }.companionCard()
-        }
-        FocusSessionEditor(onStart: { notch.showIsland() }).companionCard()
-        Text("A finished session brings Sieghart down to celebrate and announce your break.").font(.caption).foregroundStyle(CompanionStyle.muted)
+        heading("Make time your own.", subtitle: "Count down, focus in rounds, or keep track of elapsed time.")
+        TimerToolsView(onStart: { notch.showIsland() }).companionCard()
+        Text("Selecting a mode leaves your clock alone. Start, pause or reset when you choose.").font(.caption).foregroundStyle(CompanionStyle.muted)
     }
 
     @ViewBuilder private var activationSettings: some View {

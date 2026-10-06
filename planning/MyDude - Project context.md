@@ -63,3 +63,10 @@ The current plan is [ROADMAP.md](../ROADMAP.md), mirrored to the Obsidian Siegha
 ## Current interaction override — October 6, 2026
 
 Click opens the island; hover gives visual feedback only. Every expanded page closes on pointer exit. Saved focus completion does not reopen itself. Small/Medium/Large sizes persist. Expanded glass, translucent cards, external circular quick controls and fluid six-avatar motion replace the earlier fully opaque expanded treatment. Compact/camera pixels stay black. The app and Challenge materials carry only Sieghart branding; research screenshots are excluded from the bundle.
+
+
+## Current correction — October 6, 2026
+
+The latest user direction overrides the earlier full-copy brief: visual reference influence is selective. Timer, Pomodoro and Stopwatch are implemented in one shared app/widget surface. Native first-mouse acceptance, a synchronous activation-strip toggle, full compact-wing targeting and strip ordering address the renewed click report (SG-002); physical Mac acceptance stays open. Mode selection never starts a clock, and pause/reset leave controls available.
+
+The detailed 3D bot concept was rejected. New companion art should be simple eye/dot/visor forms with expression through fluid gaze, blink and gentle shape motion. The [simple six-character board](../Sieghart/Design/Concepts/avatar-simple-studies.png) is reviewable concept art, not a production replacement or rig. Current sprites and initial six-avatar selection remain available. All app/Challenge product text uses Sieghart branding.

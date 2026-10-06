@@ -9,7 +9,7 @@
 
 Sieghart is a native macOS companion that lives near the camera notch. An animated avatar reacts to your touch and pointer, while focus sessions and quick controls stay close to the top of your screen.
 
-Configure your Pomodoro in the app’s **Focus tab** or directly inside the widget. When a session starts, Sieghart tucks into a small island around the notch, keeping its countdown nearby while you work.
+Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab** or directly inside the widget. Starting is explicit; the compact island keeps the countdown or elapsed time nearby while you work.
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
@@ -21,8 +21,8 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 | --- | --- |
 | **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance. It also becomes your menu-bar icon. |
 | **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Continuous body motion, blended blinking, pointer perspective and short messages explain each response. |
-| **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
-| **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover for a visual highlight; click for controls. Every expanded page collapses when the pointer leaves. |
+| **Three timer modes** | The app and notch share a standalone countdown, Pomodoro with breaks/rounds, and stopwatch. Each supports pause, resume and reset; choosing a mode never starts a session. |
+| **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover for a visual highlight; the first click opens controls even with another app active. A second click on the activation strip tucks them away. Every expanded page collapses when the pointer leaves. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
 | **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
@@ -91,8 +91,8 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 1. Complete the two-step onboarding: choose one of six avatars, then decide whether to follow local AI usage automatically. Focus works with monitoring off.
 2. Click the compact island or press **Control + Option + S** to reveal the companion. Hover only highlights it.
-3. Open the app’s **Focus tab**, or click **Focus** in the widget, and choose your duration, breaks, and rounds.
-4. Press **Start focus**. The widget tucks into the island; click it to pause, resume, or finish.
+3. Open **Timers** in the app or widget. Choose Timer for a countdown, Pomodoro for focus/break rounds, or Stopwatch for elapsed time.
+4. Press **Start** for the selected mode. The widget tucks into the island; click it for pause/resume/reset controls. Pomodoro also offers Finish.
 5. Open **Activation** or **Appearance** in the main window to customize the experience.
 
 The menu bar also provides access to the widget and app. In Activation, press a shortcut recorder and enter any key combination; release modifier-only keys to save. Companion and voice bindings can be disabled separately. Impact gestures are off by default.
@@ -125,7 +125,7 @@ Run all deterministic checks:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence, AI lifecycle completion, long-turn metadata recovery, graph deduplication, first-run avatar persistence, click-only expansion, collapse of every panel, old-completion suppression, widget sizes, automatic price/tier/cache arithmetic, unpriced lower bounds and usage-based provider logos.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover all three timer modes, countdown/stopwatch pause and restoration, explicit mode selection, interval counting, native first-click acceptance, activation-strip toggle, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence, AI lifecycle completion, long-turn metadata recovery, graph deduplication, first-run avatar persistence, click-only expansion, collapse of every panel, old-completion suppression, widget sizes, automatic price/tier/cache arithmetic, unpriced lower bounds and usage-based provider logos.
 
 ## Project map
 
@@ -134,11 +134,11 @@ These checks do not open the app, activate the sensor, register system shortcuts
 | [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) | Main window, navigation, preferences, and selected menu-bar icon. |
 | [`MenuBarView.swift`](Sieghart/Sieghart/MenuBarView.swift) | Companion header, session card, and quick controls. |
 | [`NotchWidget.swift`](Sieghart/Sieghart/NotchWidget.swift) | Notch panel, companion, focus configuration, and timer views. |
-| [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro intervals, deadlines, rounds, and persistence. |
+| [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro, countdown/stopwatch dates, rounds, and persistence. |
 | [`ActivationCore.swift`](Sieghart/Sieghart/ActivationCore.swift) | Global keyboard shortcut and explicit voice commands. |
 | [`KeyboardShortcuts.swift`](Sieghart/Sieghart/KeyboardShortcuts.swift) | Shortcut capture, persistence format, and modifier gestures. |
 | [`VoiceCommands.swift`](Sieghart/Sieghart/VoiceCommands.swift) | Supported local voice intents and duration validation. |
-| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Shared configuration editor for the app and widget. |
+| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Three-mode timer surface and shared focus configuration editor. |
 | [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
 | [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
 | [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) / [`AvatarSprites`](Sieghart/Sieghart/AvatarSprites) | Original artwork, six sprite libraries, body motion, touch reactions, and the Appearance gallery. |
@@ -170,9 +170,17 @@ Provider logos appear only when readings or usage show that provider was used. M
 
 [Full roadmap](ROADMAP.md) · [39 reference screenshots](Sieghart/Design/References/Widget/README.md). The roadmap covers all 77 modules in the current reference catalog, foundational onboarding/settings, and companion interactions. Planned modules are not claims of shipped functionality.
 
+### Timer previews
+
+[Countdown](Sieghart/Design/Concepts/timer-timer-preview.png) · [Pomodoro](Sieghart/Design/Concepts/timer-pomodoro-preview.png) · [Stopwatch](Sieghart/Design/Concepts/timer-stopwatch-preview.png). Rendered from production SwiftUI views offscreen; native desktop glass and cross-app click delivery remain Mac acceptance checks.
+
+### Simpler companion direction
+
+[Six minimal character studies](Sieghart/Design/Concepts/avatar-simple-studies.png) explore small silhouettes and expressive eyes with very few details. The detailed 3D robot direction was rejected. These are visual proposals, not shipped artwork or animation rigs; the current six bundled companions remain selectable. Future motion should convey personality through gaze, blinking, gentle shape changes and movement. See [the design brief](Sieghart/Design/Concepts/avatar-simple-studies.md).
+
 ## Next steps
 
-Sprint 3 is in progress: onboarding and the live AI dashboard are implemented. Automatic model pricing/FX, the interaction corrections and the glass island with smoother companion motion are implemented. Voice opening apps/browser search and invoice imports are the next slices.
+Sprint 3 is in progress: onboarding and the live AI dashboard are implemented. Automatic model pricing/FX, the first-click/toggle corrections, three timer modes and glass island are implemented. Visual reference influence is selective; Sieghart retains its palette, avatar role and control layout. Voice opening apps/browser search and invoice imports are the next slices.
 
 - Validate the new widget layout and voice flow on the physical Mac.
 - Validate real sensor interaction in the accepted Challenge submission environment.

@@ -112,6 +112,12 @@ struct IslandCanvasGeometry {
     var height: CGFloat { size.height }
 }
 
+// The island is a nonactivating overlay. Its first click must run the action
+// even when another application owns keyboard focus.
+final class IslandHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
 @MainActor final class IslandWindowCanvas<Content: View>: NSView {
     private let host: NSHostingView<Content>
     private let backdrop = NSHostingView(rootView: IslandBackdrop(compact: true, stripHeight: 0))
@@ -122,7 +128,7 @@ struct IslandCanvasGeometry {
     private var completion: Task<Void, Never>?
     override var isFlipped: Bool { true }
     init(rootView: Content) {
-        host = NSHostingView(rootView: rootView)
+        host = IslandHostingView(rootView: rootView)
         super.init(frame: .zero)
         wantsLayer = true
         backdrop.wantsLayer = true; host.wantsLayer = true
@@ -134,6 +140,7 @@ struct IslandCanvasGeometry {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     var currentSurface: CGSize { surface }
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, settled: @escaping @MainActor () -> Void) {
         completion?.cancel()

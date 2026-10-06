@@ -25,3 +25,14 @@ The user also observed shortcuts only activating with Sieghart foreground. Modif
 ### Remaining validation
 
 Use each configured shortcut before and after leaving an unfinished recorder, switching apps and full-screen Spaces, locking/unlocking, and sleep/wake. If it stops again, record which binding failed, the foreground app, and the status shown in Activation. Confirm both regular-key and modifier-only bindings recover. Keep this issue open until the reported failure is reproduced or the recovery is confirmed on the Mac.
+
+
+## SG-002 — Island click remains unreliable
+
+**Priority:** high. **Reported:** October 6, 2026. **Status:** native first-click and toggle corrections implemented; physical Mac acceptance pending.
+
+The user reported that clicking still did not behave as expected. The previous activation handler always opened rather than toggled, queued its action asynchronously, used a nearly invisible window alpha, and did not explicitly accept first mouse when another app held focus. The native target covered only the camera gap rather than both compact wings. SwiftUI button labels did not explicitly cover transparent spacing.
+
+The native strip now has a clear background with normal window opacity, spans the compact surface, synchronously toggles open/closed, and accepts first mouse. SwiftUI hosting also accepts first mouse, with rectangular compact label targets. Ordering keeps only the camera-height strip over the expanded panel. Hover still highlights only; leaving expanded content collapses it.
+
+Offscreen checks dispatch mouse events through the real native handler, verify first-mouse acceptance, idle/AI/clock opening and second-click closure, and verify mouse-exit collapse while stopwatch time continues. No app window is launched by these checks. Confirm single click from another app, both wings, second activation-strip click, all three timer modes, Spaces/full-screen and pointer exit on the physical Mac before closing this issue.

@@ -32,10 +32,17 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 ### Glass island and companion motion — October 6, 2026
 
 - Attached shoulder contour, translucent glass body, native Liquid Glass on macOS 26 and behind-window blur on older supported macOS. The camera strip and compact island remain black. Reduce Transparency provides an opaque fallback.
-- An adjustable minute ruler, glass break/round controls and explicit Start action in the focus widget. Circular quick access controls around the surface; the bottom companion control opens the selected avatar. AI cards share the translucent chrome.
+- Three selectable modes (Timer, Pomodoro and Stopwatch), with an adjustable focus minute ruler, glass break/round controls and explicit Start actions. Circular quick access controls around the surface; the bottom companion control opens the selected avatar. AI cards share the translucent chrome.
 - Native contour transitions reserve their full window bounds, keep content at its destination layout, and reveal it after the shell grows. Closing hides departing content and contracts the silhouette. Reduce Motion bypasses movement.
-- All six avatars keep their artwork and gain continuous 60 Hz body motion, smooth landings, blended blinking and pointer-driven perspective. A new character-art redesign requires the requested visual reference; these are animated 2D characters, not rigged 3D models.
+- All six avatars keep their artwork and gain continuous 60 Hz body motion, smooth landings, blended blinking and pointer-driven perspective. The current sprites are animated 2D characters. The user rejected detailed 3D robot studies and clarified a minimal eye/dot/visor direction. A new simple six-character board is available for review; production replacements and their motion remain a separate art slice.
 - Challenge product text uses only Sieghart branding. External research photographs stay outside the application resources and Challenge package. No external application source code is shipped.
+
+### Click regression and timer completion — October 6, 2026
+
+- SG-002 records the user's renewed click failure. Native activation and SwiftUI hosting now explicitly accept first mouse, the transparent strip keeps full opacity while its background stays clear, its target covers the compact island wings, and its click uses one synchronous toggle route. The second strip click collapses the island. Physical cross-app delivery remains unverified.
+- Timer and Stopwatch join Pomodoro in both app and island. Persisted countdown deadlines and stopwatch start/accumulated dates survive pause, sleep and relaunch. Stopwatch supports tenths/hours. Utility clocks never increase focus completion counts. Mode selection never starts a clock; pause/reset preserve open controls.
+- Reference influence is selective, not a requirement to duplicate every visual component. Keep the companion central and retain Sieghart's palette/control choices. Detailed robot bodies were rejected; future avatar work follows the minimal eye/dot direction in [the new board](Sieghart/Design/Concepts/avatar-simple-studies.png).
+- [Timer](Sieghart/Design/Concepts/timer-timer-preview.png), [Pomodoro](Sieghart/Design/Concepts/timer-pomodoro-preview.png) and [Stopwatch](Sieghart/Design/Concepts/timer-stopwatch-preview.png) are production-view renders. The new avatar board is generated concept art, not a runtime capture or completed rig.
 
 ### Evidence
 
@@ -162,7 +169,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `notchCalendar` | Week/month agenda and meeting links | Planned | S3–S5 |
 | `notchNotifications` | New notification cards | Planned | S3–S5 |
 | `notchGestures` | Island scroll/swipe gestures | Planned | S3–S5 |
-| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Pomodoro implemented; standalone countdown/stopwatch pending | S3 + S5 |
+| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro implemented; real Mac acceptance pending | S3 + S5 |
 | `notchAccessories` | Accessory status and battery alerts | Planned | S3–S5 |
 | `notchLyrics` | Lyrics | Planned | S3–S5 |
 | `notchQueue` | Playback queue | Planned | S3–S5 |

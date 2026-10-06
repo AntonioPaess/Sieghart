@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 
 @main
 struct InteractionChecks {
@@ -91,12 +92,27 @@ struct InteractionChecks {
         let lifecycle = NotificationCenter()
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle)
         notch.activation = activation
+        // A first click from another app must reach both native activation and
+        // the SwiftUI controls. These views stay offscreen; no window is opened.
+        let hitZone = HoverZoneView(frame: NSRect(x: 0, y: 0, width: 240, height: 36))
+        let hosted = IslandHostingView(rootView: Text("Offscreen check"))
+        precondition(hitZone.acceptsFirstMouse(for: nil) && hosted.acceptsFirstMouse(for: nil))
+        hitZone.onClick = { notch.clickIsland() }
+        let click = NSEvent.mouseEvent(with: .leftMouseDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil, eventNumber: 1, clickCount: 1, pressure: 1)!
+        hitZone.mouseDown(with: click)
+        precondition(notch.isVisible && notch.presentation == .home)
+        hitZone.mouseDown(with: click)
+        precondition(!notch.isVisible) // Second activation click closes, rather than reopening.
 
         let liveTask = AIWork(id: "fixture", provider: .codex, model: "fixture-model", project: "Fixture project", startedAt: .now.addingTimeInterval(-20), lastSeen: .now, output: 100)
         let liveUsage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
         notch.aiUsage = liveUsage
         notch.showIsland()
         precondition(notch.isVisible && notch.presentation == .island && notch.geometry.height == 36)
+        hitZone.mouseDown(with: click)
+        precondition(notch.presentation == .aiLimits)
+        hitZone.mouseDown(with: click)
+        precondition(notch.presentation == .island)
         notch.setPointerInsidePanel(true)
         try await Task.sleep(for: .milliseconds(300))
         precondition(notch.presentation == .island && notch.isPointerHovering) // Hover highlights; it never expands.
@@ -110,6 +126,24 @@ struct InteractionChecks {
         notch.showIsland()
         precondition(!notch.isVisible)
         notch.aiUsage = nil
+        assistant.selectTimerMode(.timer)
+        notch.showTimer()
+        precondition(assistant.selectedTimerMode == .timer && !assistant.utilityClock.hasSession)
+        assistant.utilityClock.start(.stopwatch)
+        drainEvents(); notch.hide()
+        precondition(notch.presentation == .island)
+        hitZone.mouseDown(with: click)
+        precondition(notch.presentation == .timer && assistant.selectedTimerMode == .stopwatch)
+        notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(notch.presentation == .island && assistant.utilityClock.isRunning)
+        assistant.utilityClock.reset(); drainEvents(); notch.hide()
+        assistant.utilityClock.start(.timer, minutes: 1); drainEvents()
+        clock = clock.addingTimeInterval(61); assistant.utilityClock.refresh(); drainEvents()
+        precondition(notch.presentation == .timer && assistant.utilityClock.phase == .completed && assistant.completedSessions == 0)
+        try await Task.sleep(for: .milliseconds(170))
+        precondition(!notch.isVisible) // The explicit countdown announces once, then closes.
+        assistant.utilityClock.reset(); drainEvents()
         var widths: [CGFloat] = []
         for size in WidgetSize.allCases {
             preferences.widgetSize = size
