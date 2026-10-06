@@ -13,14 +13,19 @@ struct AIUsageView: View {
     @State private var provider: AIProvider = .codex
     @State private var period: UsagePeriod = .today
     @State private var details = false
+    @State private var selectedHour: Int?
+    @State private var selectedDay: Date?
+    private var providers: [AIProvider] { usage.usedProviders(codex: codex) }
+    var showsHeader = true
+    init(initialHour: Int? = nil, showsHeader: Bool = true) { self.showsHeader = showsHeader; _selectedHour = State(initialValue: initialHour) }
     private var points: [AIUsagePoint] { usage.analytics.filtered(provider: provider, since: period.start) }
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("AI agents").font(.title2.weight(.semibold))
+                if showsHeader { Text("AI agents").font(.title2.weight(.semibold)) }
                 Spacer()
-                if usage.claudeEnabled {
-                    ForEach(AIProvider.allCases) { choice in
+                if providers.count > 1 {
+                    ForEach(providers) { choice in
                         Button(choice.title) { provider = choice }.buttonStyle(.plain).font(.caption.weight(.medium)).foregroundStyle(provider == choice ? CompanionStyle.accent : CompanionStyle.muted)
                     }
                 }
@@ -54,7 +59,12 @@ struct AIUsageView: View {
                 .font(.callout).tint(CompanionStyle.accent)
         }
         .foregroundStyle(.white)
-        .onChange(of: usage.claudeEnabled) { _, enabled in if !enabled { provider = .codex } }
+        .onAppear { if let first = providers.first { provider = first } }
+        .onChange(of: providers) { _, choices in
+            if !choices.contains(provider), let first = choices.first { provider = first }
+            selectedHour = nil; selectedDay = nil
+        }
+        .onChange(of: provider) { _, _ in selectedHour = nil; selectedDay = nil }
     }
 
     @ViewBuilder private var limits: some View {
@@ -77,21 +87,22 @@ struct AIUsageView: View {
 
     private var spending: some View {
         let input = points.reduce(Int64(0)) { $0 + $1.input }, output = points.reduce(Int64(0)) { $0 + $1.output }, cache = points.reduce(Int64(0)) { $0 + $1.cached }
-        let tokens = LocalTokenUsage(input: input, cachedInput: cache, cacheCreation: points.reduce(0) { $0 + $1.cacheCreation }, output: output, sessions: 0)
-        let estimate = usage.ledger.prices[provider]?.estimate(points.isEmpty ? nil : tokens)
+        let estimate = usage.estimate(points, provider: provider)
         return VStack(alignment: .leading, spacing: 12) {
             HStack { Label("Spending", systemImage: "dollarsign.circle").font(.headline); Spacer(); Text(period.rawValue).font(.caption).foregroundStyle(CompanionStyle.muted) }
-            if let estimate {
-                Text(estimate.formatted(.currency(code: "USD"))).font(.system(size: 32, weight: .semibold)).monospacedDigit()
-                if let rate = usage.ledger.usdToBRL { Text((estimate * rate).formatted(.currency(code: "BRL"))).font(.callout).foregroundStyle(CompanionStyle.muted) }
+            if estimate.hasValue {
+                Text(estimate.label).font(.system(size: 32, weight: .semibold)).monospacedDigit()
+                if let rate = usage.conversionRate { Text((estimate.isLowerBound ? "≥ " : "") + (estimate.usd * rate).formatted(.currency(code: "BRL"))).font(.callout).foregroundStyle(CompanionStyle.muted) }
             } else {
                 Text("Estimate unavailable").font(.title3.weight(.medium))
-                Button("Set token prices") { details = true }.buttonStyle(.plain).foregroundStyle(CompanionStyle.accent).font(.caption)
+                Button("Prices & sources") { details = true }.buttonStyle(.plain).foregroundStyle(CompanionStyle.accent).font(.caption)
             }
             Capsule().fill(CompanionStyle.accent).frame(height: 4)
             Text(points.isEmpty ? "No token records for this period" : "\(short(input + output)) tokens · \(input > 0 ? Int(Double(cache) / Double(input) * 100) : 0)% input cache")
                 .font(.caption).foregroundStyle(CompanionStyle.muted)
-            Text("API-equivalent estimate · Custom prices").font(.caption2).foregroundStyle(CompanionStyle.muted)
+            Text(usage.pricingDescription(provider) + " · Not a bill").font(.caption2).foregroundStyle(CompanionStyle.muted)
+            if estimate.unpricedTokens > 0 { Text("\(estimate.unpricedTokens.formatted()) tokens have no documented model price; excluded from value.").font(.caption2).foregroundStyle(.orange) }
+            if let date = usage.conversionDate { Text("USD/BRL · \(date.formatted(date: .abbreviated, time: .omitted))").font(.caption2).foregroundStyle(CompanionStyle.muted) }
             ForEach(SpendCurrency.allCases, id: \.self) { currency in
                 let charges = usage.ledger.charges.filter { $0.provider == provider && $0.currency == currency && $0.date >= period.start && $0.date <= Date() }
                 if !charges.isEmpty {
@@ -104,7 +115,7 @@ struct AIUsageView: View {
         }.companionCard()
     }
     private func metric(_ label: String, _ value: Int64) -> some View {
-        VStack(alignment: .leading, spacing: 3) { Text(label).font(.caption2).foregroundStyle(CompanionStyle.muted); Text(points.isEmpty ? "—" : short(value)).font(.callout.weight(.medium)) }.frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 3) { Text(label).font(.caption2).foregroundStyle(CompanionStyle.muted); Text(points.isEmpty ? "—" : value.formatted()).font(.callout.weight(.medium)) }.frame(maxWidth: .infinity, alignment: .leading)
     }
     private var currentWork: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -122,7 +133,7 @@ struct AIUsageView: View {
                             CompanionCharacter(size: 48, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: true)
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack { ProviderMark(provider: task.provider, size: 22); Text(task.project).font(.headline).lineLimit(1) }
-                                Text("\(task.model) · \(short(task.output)) recent output").font(.caption).foregroundStyle(CompanionStyle.muted).lineLimit(1)
+                                Text("\(modelName(task.model)) · \(task.output.formatted()) recent output").font(.caption).foregroundStyle(CompanionStyle.muted).lineLimit(1)
                             }
                             Spacer()
                             Text(task.elapsed(at: context.date)).font(.title3.weight(.semibold)).monospacedDigit().foregroundStyle(CompanionStyle.accent)
@@ -145,13 +156,24 @@ struct AIUsageView: View {
                             .fill(value > 0 ? CompanionStyle.accent : CompanionStyle.separator)
                             .frame(maxWidth: .infinity)
                             .frame(height: value > 0 ? max(3, geometry.size.height * Double(value) / Double(peak)) : 3)
-                            .help(String(format: "%02d:00 · %@ tokens", hour, value.formatted()))
+                            .frame(height: geometry.size.height, alignment: .bottom)
+                            .contentShape(Rectangle())
+                            .onHover { inside in selectedHour = inside ? hour : (selectedHour == hour ? nil : selectedHour) }
+                            .onTapGesture { selectedHour = hour }
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityAction { selectedHour = hour }
                             .accessibilityLabel(String(format: "%02d:00, %@ tokens", hour, value.formatted()))
                     }
                 }.frame(height: geometry.size.height, alignment: .bottom)
             }.frame(height: 135)
                 .accessibilityLabel("Today's hourly token usage")
             HStack { Text("00"); Spacer(); Text("12"); Spacer(); Text("23") }.font(.caption2).foregroundStyle(CompanionStyle.muted)
+            let selection = selectedHour.map { hour in today.filter { Calendar.current.component(.hour, from: $0.date) == hour } } ?? []
+            VStack(alignment: .leading, spacing: 5) {
+                Text(selectedHour.map { String(format: "%02d:00–%02d:00 · %@ tokens", $0, $0 + 1, hours[$0].formatted()) } ?? "Hover or select an hour to see its tokens and value.").font(.caption.weight(.semibold))
+                Text(selectedHour == nil ? "Input · Output · Cache read · API equivalent" : "Input \(selection.reduce(0) { $0 + $1.input }.formatted()) · Output \(selection.reduce(0) { $0 + $1.output }.formatted()) · Cache \(selection.reduce(0) { $0 + $1.cached }.formatted()) · \(selection.isEmpty ? "$0.00" : usage.estimate(selection, provider: provider).label)")
+                    .font(.caption2).foregroundStyle(CompanionStyle.muted)
+            }.frame(height: 42, alignment: .topLeading).accessibilityElement(children: .combine)
             if today.isEmpty { Text("No usage found in today's local records.").font(.caption).foregroundStyle(CompanionStyle.muted) }
         }.companionCard()
     }
@@ -162,11 +184,13 @@ struct AIUsageView: View {
             if groups.isEmpty { Text("No records for this period").font(.caption).foregroundStyle(CompanionStyle.muted) }
             ForEach(Array(groups.prefix(5).enumerated()), id: \.offset) { _, item in
                 HStack(spacing: 8) {
-                    Text(item.0).font(.callout.weight(.medium)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-                    GeometryReader { geometry in Capsule().fill(title == "Models" ? CompanionStyle.accent : .white).frame(width: max(3, geometry.size.width * Double(item.1) / Double(max(1, groups.first?.1 ?? 1)))) }.frame(width: 62, height: 4)
-                    Text(short(item.1)).font(.caption).foregroundStyle(CompanionStyle.muted).frame(width: 45, alignment: .trailing)
+                    Text(title == "Models" ? modelName(item.0) : item.0).font(.callout.weight(.medium)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                    GeometryReader { geometry in Capsule().fill(title == "Models" ? CompanionStyle.accent : .white).frame(width: max(3, geometry.size.width * Double(item.1) / Double(max(1, groups.first?.1 ?? 1)))) }.frame(width: 38, height: 4)
+                    Text(item.1.formatted()).font(.caption).monospacedDigit().foregroundStyle(CompanionStyle.muted).fixedSize()
                 }.accessibilityElement(children: .combine)
+                .help("\(item.0): \(item.1.formatted()) tokens · \(period.rawValue)")
             }
+            if title == "Models", groups.contains(where: { $0.0 == "Unknown model" }) { Text("Model not recorded: the source has no model metadata. These tokens remain in totals.").font(.caption2).foregroundStyle(CompanionStyle.muted) }
         }.companionCard()
     }
     private var daily: [Date: Int64] {
@@ -196,6 +220,11 @@ struct AIUsageView: View {
                                 let date = dates[week * 7 + day], count = values[date] ?? 0
                                 RoundedRectangle(cornerRadius: 3).fill(count == 0 ? CompanionStyle.separator.opacity(0.5) : Color.white.opacity(0.25 + 0.75 * Double(count) / Double(max(1, peak))))
                                     .frame(width: 12, height: 12)
+                                    .contentShape(Rectangle())
+                                    .onHover { inside in selectedDay = inside ? date : (selectedDay == date ? nil : selectedDay) }
+                                    .onTapGesture { selectedDay = date }
+                                    .accessibilityAddTraits(.isButton)
+                                    .accessibilityAction { selectedDay = date }
                                     .help("\(date.formatted(date: .abbreviated, time: .omitted)): \(values[date].map { "\($0.formatted()) tokens" } ?? "No record")")
                                     .accessibilityLabel("\(date.formatted(date: .abbreviated, time: .omitted)), \(values[date].map { "\($0.formatted()) tokens" } ?? "No record")")
                             }
@@ -205,6 +234,8 @@ struct AIUsageView: View {
                 VStack(alignment: .leading, spacing: 6) { Text(values.isEmpty ? "—" : short(total)).font(.title.weight(.semibold)); Text("13 weeks").font(.caption).foregroundStyle(CompanionStyle.muted); Spacer(minLength: 8); Text(values.isEmpty ? "Activity unavailable" : "\(active) active days").font(.caption); Text(source).font(.caption2).foregroundStyle(CompanionStyle.muted) }
                 Spacer(minLength: 0)
             }
+            Text(selectedDay.map { date in "\(date.formatted(date: .abbreviated, time: .omitted)) · \(values[date].map { "\($0.formatted()) tokens" } ?? "No record")" } ?? "Hover or select a day for its exact usage.")
+                .font(.caption).foregroundStyle(CompanionStyle.muted).frame(height: 18, alignment: .leading)
             if provider == .codex, let updated = usage.accountUpdatedAt {
                 Text("\(usage.accountRefreshFailed ? "Last account reading" : "Account updated") \(updated.formatted(date: .abbreviated, time: .shortened))").font(.caption2).foregroundStyle(usage.accountRefreshFailed ? .orange : CompanionStyle.muted)
             }
@@ -212,6 +243,11 @@ struct AIUsageView: View {
                 HStack { Text("Most intense day"); Spacer(); Text("\(date.formatted(date: .abbreviated, time: .omitted)) · \(short(peak))") }.font(.caption).foregroundStyle(CompanionStyle.muted)
             }
         }.companionCard()
+    }
+    private func modelName(_ model: String) -> String {
+        if model == "Unknown model" { return "Model not recorded" }
+        if model.hasPrefix("gpt-") { return "GPT-" + model.dropFirst(4).split(separator: "-").enumerated().map { $0.offset == 0 ? String($0.element) : $0.element.capitalized }.joined(separator: " ") }
+        return model
     }
     private func short(_ value: Int64) -> String { value.formatted(.number.notation(.compactName)) }
 }

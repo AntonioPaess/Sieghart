@@ -10,6 +10,9 @@ struct AIUsagePoint: Sendable, Identifiable {
     let output: Int64
     let cached: Int64
     var cacheCreation: Int64 = 0
+    var cacheCreationLong: Int64 = 0
+    var serviceTier: String?
+    var perRequest = true
     var total: Int64 { input + output }
 }
 
@@ -51,12 +54,15 @@ enum AIActivityParser {
            let record = object(first), let payload = record["payload"] as? [String: Any], let cwd = payload["cwd"] as? String {
             project = URL(fileURLWithPath: cwd).lastPathComponent
         }
+        // Recover the context immediately before the tail for historical
+        // counters too, even when the turn is already complete.
+        let older = provider == .codex && offset > 0 ? olderCodexState(handle, before: offset, length: length) : nil
         try? handle.seek(toOffset: offset)
         guard let data = try? handle.readToEnd() else { return AIAnalytics() }
         let lines = data.split(separator: 10)
         let session = UUID(uuidString: String(url.deletingPathExtension().lastPathComponent.suffix(36)))?.uuidString ?? url.path
-        var model = "Unknown model", started: Date?, turnID: String?, lastSeen = Date.distantPast
-        var sawLifecycle = false
+        var model = older?.model ?? "Unknown model", started: Date?, turnID: String?, lastSeen = Date.distantPast
+        var sawLifecycle = false, serviceTier = older?.tier
         var output: Int64 = 0, previous: [Int64]?, points: [String: AIUsagePoint] = [:]
         let cutoff = now.addingTimeInterval(-91 * 86400)
         for line in offset > 0 ? lines.dropFirst() : lines[...] {
@@ -66,6 +72,7 @@ enum AIActivityParser {
                 guard let payload = record["payload"] as? [String: Any] else { continue }
                 if type == "turn_context" {
                     model = payload["model"] as? String ?? model
+                    serviceTier = payload["service_tier"] as? String
                     if let cwd = payload["cwd"] as? String { project = URL(fileURLWithPath: cwd).lastPathComponent }
                 }
                 guard type == "event_msg", let event = payload["type"] as? String else { continue }
@@ -83,7 +90,7 @@ enum AIActivityParser {
                 output += delta[1]
                 guard date >= cutoff, date <= now, delta[0] + delta[1] > 0 else { continue }
                 let id = "\(session):\(timestamp):\(current[0]):\(current[1])"
-                points[id] = AIUsagePoint(id: id, provider: provider, date: date, model: model, project: project, input: delta[0], output: delta[1], cached: delta[2], cacheCreation: delta[3])
+                points[id] = AIUsagePoint(id: id, provider: provider, date: date, model: model, project: project, input: delta[0], output: delta[1], cached: delta[2], cacheCreation: delta[3], serviceTier: serviceTier, perRequest: info["last_token_usage"] != nil)
             } else {
                 if let cwd = record["cwd"] as? String { project = URL(fileURLWithPath: cwd).lastPathComponent }
                 if type == "user", started == nil { started = date; turnID = record["uuid"] as? String; output = 0 }
@@ -96,7 +103,7 @@ enum AIActivityParser {
                 let count = counts(usage, claude: true)
                 let key = "claude:\(id)"
                 if let earlier = points[key], earlier.total >= count[0] + count[1] { continue }
-                points[key] = AIUsagePoint(id: key, provider: provider, date: date, model: model, project: project, input: count[0], output: count[1], cached: count[2], cacheCreation: count[3])
+                points[key] = AIUsagePoint(id: key, provider: provider, date: date, model: model, project: project, input: count[0], output: count[1], cached: count[2], cacheCreation: count[3], cacheCreationLong: min(count[3], Self.count((usage["cache_creation"] as? [String: Any])?["ephemeral_1h_input_tokens"])), serviceTier: usage["service_tier"] as? String)
                 output = count[1]
             }
         }
@@ -107,15 +114,9 @@ enum AIActivityParser {
             if let knownWork {
                 started = knownWork.startedAt; turnID = knownWork.id.split(separator: ":").last.map(String.init)
                 if model == "Unknown model" { model = knownWork.model }
-            } else if let state = olderCodexState(handle, before: offset, length: length) {
+            } else if let state = older {
                 started = state.started; turnID = state.turnID
                 if model == "Unknown model", let known = state.model { model = known }
-            }
-        }
-        if provider == .codex, !sawLifecycle, started != nil, model != "Unknown model" {
-            points = points.mapValues { point in
-                guard point.model == "Unknown model" else { return point }
-                return AIUsagePoint(id: point.id, provider: point.provider, date: point.date, model: model, project: point.project, input: point.input, output: point.output, cached: point.cached, cacheCreation: point.cacheCreation)
             }
         }
         var work: [AIWork] = []
@@ -125,8 +126,8 @@ enum AIActivityParser {
         }
         return AIAnalytics(points: Array(points.values), work: work, scannedFiles: 1)
     }
-    private static func olderCodexState(_ handle: FileHandle, before offset: UInt64, length: UInt64) -> (started: Date?, turnID: String?, model: String?)? {
-        var cursor = offset, model: String?, state: (Date?, String?)?, scanned: UInt64 = 0
+    private static func olderCodexState(_ handle: FileHandle, before offset: UInt64, length: UInt64) -> (started: Date?, turnID: String?, model: String?, tier: String?)? {
+        var cursor = offset, model: String?, tier: String?, state: (Date?, String?)?, scanned: UInt64 = 0
         while cursor > 0 && scanned < 268_435_456 {
             let begin = cursor > 524_288 ? cursor - 524_288 : 0
             try? handle.seek(toOffset: begin)
@@ -134,19 +135,19 @@ enum AIActivityParser {
             guard let chunk = try? handle.read(upToCount: Int(min(length - begin, cursor - begin + 524_288))) else { break }
             let lines = chunk.split(separator: 10)
             for line in (begin > 0 ? lines.dropFirst() : lines[...]).reversed() {
+                guard begin + UInt64(line.startIndex) < cursor else { continue }
                 guard line.range(of: Data("task_started".utf8)) != nil || line.range(of: Data("task_complete".utf8)) != nil || line.range(of: Data("turn_aborted".utf8)) != nil || line.range(of: Data("turn_context".utf8)) != nil else { continue }
                 guard let record = object(line), let payload = record["payload"] as? [String: Any] else { continue }
-                if model == nil, record["type"] as? String == "turn_context" { model = payload["model"] as? String }
+                if model == nil, record["type"] as? String == "turn_context" { model = payload["model"] as? String; tier = payload["service_tier"] as? String }
                 if state == nil, record["type"] as? String == "event_msg", let type = payload["type"] as? String {
                     if type == "task_started", let stamp = record["timestamp"] as? String, let date = parseDate(stamp) { state = (date, payload["turn_id"] as? String) }
-                    else if ["task_complete", "turn_aborted"].contains(type) { return (nil, nil, model) }
+                    else if ["task_complete", "turn_aborted"].contains(type) { state = (nil, nil) }
                 }
-                if let state, model != nil { return (state.0, state.1, model) }
+                if let state, model != nil { return (state.0, state.1, model, tier) }
             }
-            // Stop once the lifecycle is known; model absence remains honest.
-            if let state { return (state.0, state.1, model) }
             scanned += cursor - begin; cursor = begin
         }
+        if state != nil || model != nil { return (state?.0, state?.1, model, tier) }
         return nil
     }
     private static func object(_ line: Data.SubSequence) -> [String: Any]? { try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any] }

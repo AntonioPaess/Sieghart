@@ -11,6 +11,12 @@ enum CompanionStyle {
     static let muted = Color(red: 170 / 255, green: 170 / 255, blue: 181 / 255)
 }
 
+enum WidgetSize: String, CaseIterable, Identifiable {
+    case small = "Small", medium = "Medium", large = "Large"
+    var id: String { rawValue }
+    var scale: CGFloat { self == .small ? 0.85 : self == .large ? 1.2 : 1 }
+}
+
 @MainActor
 final class CompanionPreferences: ObservableObject {
     @Published var hoverEnabled: Bool { didSet { save(hoverEnabled, "hover") } }
@@ -18,12 +24,14 @@ final class CompanionPreferences: ObservableObject {
     @Published var compactTimer: Bool { didSet { save(compactTimer, "compactTimer") } }
     @Published var characterMotion: Bool { didSet { save(characterMotion, "characterMotion") } }
     @Published var reduceMotion: Bool { didSet { save(reduceMotion, "reduceMotion") } }
+    @Published var widgetSize: WidgetSize { didSet { defaults.set(widgetSize.rawValue, forKey: "appearance.widgetSize") } }
     @Published var avatar: CompanionAvatar { didSet { defaults.set(avatar.rawValue, forKey: "appearance.avatar") } }
     @Published var onboardingComplete: Bool { didSet { defaults.set(onboardingComplete, forKey: "onboarding.completed.v1") } }
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        widgetSize = defaults.string(forKey: "appearance.widgetSize").flatMap(WidgetSize.init(rawValue:)) ?? .medium
         onboardingComplete = defaults.bool(forKey: "onboarding.completed.v1")
         hoverEnabled = defaults.object(forKey: "appearance.hover") as? Bool ?? true
         impactsEnabled = defaults.object(forKey: "appearance.impacts") as? Bool ?? false
@@ -79,7 +87,16 @@ struct CompanionInteraction<Content: View>: View {
 }
 
 extension View {
+    @ViewBuilder
     func companionCard() -> some View {
-        padding(24).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17))
+        modifier(CompanionCardModifier())
+    }
+}
+
+private struct CompanionCardModifier: ViewModifier {
+    @Environment(\.islandGlass) private var glass
+    func body(content: Content) -> some View {
+        if glass { content.padding(16).modifier(IslandControlSurface()) }
+        else { content.padding(24).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17)) }
     }
 }

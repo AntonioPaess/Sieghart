@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000070 /* IslandChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000071 /* IslandChrome.swift */; };
 		A10000000000000000000001 /* SieghartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* SieghartApp.swift */; };
 		A10000000000000000000013 /* SensorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000014 /* SensorEngine.swift */; };
 		A10000000000000000000015 /* AssistantCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* AssistantCore.swift */; };
@@ -30,9 +31,12 @@
 		A10000000000000000000052 /* AIActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000053 /* AIActivity.swift */; };
 		A10000000000000000000054 /* AIActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000055 /* AIActivityView.swift */; };
 		A10000000000000000000056 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000057 /* OnboardingView.swift */; };
+		A10000000000000000000058 /* ModelPricing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000059 /* ModelPricing.swift */; };
+		A10000000000000000000060 /* ModelTokenPrices.json in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000061 /* ModelTokenPrices.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000071 /* IslandChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandChrome.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* Sieghart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sieghart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* SieghartApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SieghartApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000014 /* SensorEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorEngine.swift; sourceTree = "<group>"; };
@@ -58,6 +62,8 @@
 		A10000000000000000000053 /* AIActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIActivity.swift; sourceTree = "<group>"; };
 		A10000000000000000000055 /* AIActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIActivityView.swift; sourceTree = "<group>"; };
 		A10000000000000000000057 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A10000000000000000000059 /* ModelPricing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelPricing.swift; sourceTree = "<group>"; };
+		A10000000000000000000061 /* ModelTokenPrices.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ModelTokenPrices.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +108,9 @@
 				A10000000000000000000049 /* AIUsageView.swift */,
 				A10000000000000000000051 /* ProviderAssets.xcassets */,
 				A10000000000000000000057 /* OnboardingView.swift */,
+				A10000000000000000000059 /* ModelPricing.swift */,
+				A10000000000000000000071 /* IslandChrome.swift */,
+				A10000000000000000000061 /* ModelTokenPrices.json */,
 				A10000000000000000000055 /* AIActivityView.swift */,
 				A10000000000000000000053 /* AIActivity.swift */,
 				A10000000000000000000039 /* AvatarSprites */,
@@ -173,6 +182,7 @@
 			files = (
 				A10000000000000000000038 /* AvatarSprites in Resources */,
 				A10000000000000000000050 /* ProviderAssets.xcassets in Resources */,
+				A10000000000000000000060 /* ModelTokenPrices.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,6 +210,8 @@
 				A10000000000000000000044 /* CodexUsageView.swift in Sources */,
 				A10000000000000000000048 /* AIUsageView.swift in Sources */,
 				A10000000000000000000056 /* OnboardingView.swift in Sources */,
+				A10000000000000000000058 /* ModelPricing.swift in Sources */,
+				A10000000000000000000070 /* IslandChrome.swift in Sources */,
 				A10000000000000000000054 /* AIActivityView.swift in Sources */,
 				A10000000000000000000052 /* AIActivity.swift in Sources */,
 				A10000000000000000000046 /* AIUsage.swift in Sources */,

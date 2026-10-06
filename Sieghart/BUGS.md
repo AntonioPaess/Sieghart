@@ -2,7 +2,7 @@
 
 ## SG-001 — Shortcut intermittently stops responding
 
-**Priority:** high. **Reported:** October 5, 2026. **Status:** recovery improvements implemented; the reported intermittent case remains open for validation on the Mac.
+**Priority:** high. **Reported:** October 5, 2026. **Status:** recovery improvements and listen-only session event tap implemented; the reported intermittent case remains open for validation on the Mac.
 
 **Observed:** both the companion and voice shortcuts sometimes stop working and do not recover, confirmed by the user. The user confirmed switching desktops/Spaces and entering full-screen on the same Mac as a trigger. The investigation prioritizes shared capture/registration state and overlay visibility; a modifier-monitor-only interruption would not explain the default regular-key companion binding by itself.
 
@@ -17,6 +17,10 @@
 ### Verified
 
 Headless regression checks cover activation being blocked during recording, cancelling only the relevant recorder, restoring the companion shortcut after abandonment, preserving configured bindings during recovery, and posting a Space-change notification through the actual recovery observer. Activation also shows the last received shortcut and offers Restore shortcuts, allowing a user run to distinguish event delivery from panel visibility. These checks do not install global shortcuts or change permissions.
+
+### October 6 follow-up
+
+The user also observed shortcuts only activating with Sieghart foreground. Modifier gestures now prefer a listen-only CG session tap when Input Monitoring is granted, with the existing Accessibility/AppKit path as fallback. Main-run-loop common modes and reenabling after tap interruption cover background/modal delivery. Failed regular Carbon registrations can use the permitted tap. Permission status is explicit; an ordinary key shortcut does not require monitoring access. Tests feed the same event router without registering real shortcuts. Cross-app and full-screen delivery remains an acceptance check, not a claimed hardware result.
 
 ### Remaining validation
 

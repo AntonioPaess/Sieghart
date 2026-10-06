@@ -261,8 +261,8 @@ private struct ContentView: View {
                 Button("Allow modifier shortcuts in other apps") { activation.enableModifierShortcuts() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
             }
             Divider()
-            PreferenceRow("Hover at the notch", detail: "A quiet peek when your pointer reaches the notch.") {
-                Toggle("Hover at the notch", isOn: $preferences.hoverEnabled).labelsHidden().toggleStyle(.switch)
+            PreferenceRow("Island hover feedback", detail: "Highlight the compact island on hover. Click to open it.") {
+                Toggle("Island hover feedback", isOn: $preferences.hoverEnabled).labelsHidden().toggleStyle(.switch)
             }
             Divider()
             PreferenceRow("Voice", detail: "Use your shortcut and speak naturally. Focus commands run when you finish.") {
@@ -313,6 +313,12 @@ private struct ContentView: View {
         Text("Your choice is saved automatically and follows you into the island, voice, and celebrations.")
             .font(.caption).foregroundStyle(CompanionStyle.muted)
         VStack(spacing: 20) {
+            PreferenceRow("Widget size", detail: "Scale the expanded panels. The compact island keeps the camera's physical height.") {
+                Picker("Widget size", selection: $preferences.widgetSize) {
+                    ForEach(WidgetSize.allCases) { Text($0.rawValue).tag($0) }
+                }.labelsHidden().pickerStyle(.segmented).frame(width: 240)
+            }
+            Divider()
             PreferenceRow("Compact active timer", detail: "Keep remaining time and controls close together.") {
                 Toggle("Compact active timer", isOn: $preferences.compactTimer).labelsHidden().toggleStyle(.switch)
             }

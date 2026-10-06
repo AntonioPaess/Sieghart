@@ -3,6 +3,7 @@ import SwiftUI
 struct CodexUsageView: View {
     @EnvironmentObject private var usage: CodexUsageModel
     @EnvironmentObject private var localUsage: AIUsageModel
+    @Environment(\.islandGlass) private var glass
     var compact = false
 
     var body: some View {
@@ -47,10 +48,18 @@ struct CodexUsageView: View {
             }
         }
         .padding(compact ? 14 : 20)
-        .background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        .modifier(CodexCardChrome(glass: glass))
         .task(id: usage.enabled) { await usage.refreshWhileVisible() }
     }
 
+}
+
+private struct CodexCardChrome: ViewModifier {
+    var glass: Bool
+    func body(content: Content) -> some View {
+        if glass { content.modifier(IslandControlSurface()) }
+        else { content.background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16)) }
+    }
 }
 
 struct QuotaWindowView: View {

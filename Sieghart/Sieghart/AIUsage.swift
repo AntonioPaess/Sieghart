@@ -88,7 +88,7 @@ enum LocalTokenReader {
     }
 }
 
-struct TokenPrices: Codable, Equatable {
+struct TokenPrices: Codable, Equatable, Sendable {
     var inputUSD: Decimal?
     var outputUSD: Decimal?
     var cachedInputUSD: Decimal?
@@ -118,6 +118,8 @@ struct AIUsageLedger: Codable {
     var charges: [RecordedCharge] = []
     var usdToBRL: Decimal?
     var exchangeRateDate: Date?
+    var customPriceProviders: [AIProvider]?
+    var customExchangeRate: Bool?
 
     func recorded(_ provider: AIProvider, currency: SpendCurrency, month: Date, calendar: Calendar = .current) -> Decimal? {
         let entries = charges.filter { $0.provider == provider && $0.currency == currency && calendar.isDate($0.date, equalTo: month, toGranularity: .month) }
@@ -160,17 +162,25 @@ struct ClaudeLimitsReport: Codable {
     @Published private(set) var updatedAt: Date?
     @Published private(set) var isRefreshing = false
     @Published private(set) var ledger: AIUsageLedger
+    @Published private(set) var priceCatalog: PriceCatalog
+    @Published private(set) var exchangeQuote: ExchangeQuote?
+    @Published private(set) var pricingRefreshing = false
+    private var priceAttempts: [AIProvider: Date] = [:]
+    private var exchangeAttempt = Date.distantPast
     @Published private(set) var claudeReport: ClaudeLimitsReport?
     private var readRevision = 0
     private var monitorTask: Task<Void, Never>?
     private let analyticsReader = AIAnalyticsReader()
     private let defaults: UserDefaults
     private let read: @Sendable (AIProvider) -> LocalTokenUsage?
-    init(defaults: UserDefaults = .standard, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
+    init(defaults: UserDefaults = .standard, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
         let configured = ProcessInfo.processInfo.environment["CODEX_HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
         return LocalTokenReader.read(provider, codexHome: configured)
     }) {
         self.defaults = defaults; self.read = read
+        let cache = defaults.data(forKey: "integrations.modelPrices").flatMap { try? JSONDecoder().decode(PriceCatalog.self, from: $0) }
+        priceCatalog = initialPrices ?? cache ?? PriceCatalog.bundled()
+        exchangeQuote = defaults.data(forKey: "integrations.exchangeQuote").flatMap { try? JSONDecoder().decode(ExchangeQuote.self, from: $0) }.flatMap { $0.valid ? $0 : nil }
         analytics = initialAnalytics; accountActivity = initialAccountActivity
         automaticDetection = defaults.bool(forKey: "integrations.autoDetect")
         claudeEnabled = defaults.bool(forKey: "integrations.claudeUsage")
@@ -212,6 +222,7 @@ struct ClaudeLimitsReport: Codable {
                 if !codex.enabled { self.tokens[.codex] = nil; self.accountActivity = nil; self.accountUpdatedAt = nil; self.accountRefreshFailed = false }
                 if Date().timeIntervalSince(lastCounters) >= 60 {
                     await self.refresh(codexEnabled: codex.enabled)
+                    await self.refreshPricing(providers: allowed)
                     await codex.refresh()
                     lastCounters = .now
                 }
@@ -237,9 +248,73 @@ struct ClaudeLimitsReport: Codable {
 
     func savePrices(_ prices: TokenPrices, provider: AIProvider, exchangeRate: Decimal?) {
         ledger.prices[provider] = prices
+        ledger.customPriceProviders = Array(Set((ledger.customPriceProviders ?? []) + [provider]))
+        ledger.customExchangeRate = exchangeRate != nil
         if ledger.usdToBRL != exchangeRate { ledger.usdToBRL = exchangeRate; ledger.exchangeRateDate = exchangeRate == nil ? nil : .now }
         persist()
     }
+    // Presence is based on readings or recorded work, not installation alone.
+    func usedProviders(codex: CodexUsageModel) -> [AIProvider] {
+        AIProvider.allCases.filter { provider in
+            let enabled = provider == .codex ? codex.enabled : claudeEnabled
+            guard enabled else { return false }
+            return (tokens[provider]?.total ?? 0) > 0 || analytics.points.contains { $0.provider == provider && $0.total > 0 } || analytics.work.contains { $0.provider == provider }
+                || (provider == .codex ? codex.bucket != nil : claudeReport != nil)
+        }
+    }
+    func usesCustomPrices(_ provider: AIProvider) -> Bool { ledger.customPriceProviders?.contains(provider) == true }
+    func useAutomaticPrices(_ provider: AIProvider) {
+        ledger.customPriceProviders = (ledger.customPriceProviders ?? []).filter { $0 != provider }
+        ledger.customExchangeRate = false; persist()
+    }
+    var conversionRate: Decimal? { ledger.customExchangeRate == true ? ledger.usdToBRL : exchangeQuote?.rate }
+    var conversionDate: Date? { ledger.customExchangeRate == true ? ledger.exchangeRateDate : exchangeQuote.flatMap { AIActivityParser.parseDate($0.date + "T00:00:00Z") } }
+    func estimate(_ points: [AIUsagePoint], provider: AIProvider) -> TokenEstimate {
+        var result = TokenEstimate()
+        for point in points where point.provider == provider {
+            let usage = LocalTokenUsage(input: point.input, cachedInput: point.cached, cacheCreation: point.cacheCreation, output: point.output, sessions: 0)
+            let custom = usesCustomPrices(provider) ? ledger.prices[provider] : nil
+            let price = priceCatalog.price(model: point.model, provider: provider, tier: point.serviceTier)
+            let rates = custom ?? price?.rates(long: point.perRequest && point.input > 272000)
+            if var usd = rates?.estimate(usage) {
+                if custom == nil, let price, point.cacheCreationLong > 0,
+                   let hourly = price.creationLong.flatMap({ Decimal(string: $0) }), let short = rates?.cacheCreationUSD ?? rates?.inputUSD {
+                    usd += Decimal(min(point.cacheCreationLong, point.cacheCreation)) * (hourly - short) / 1_000_000
+                }
+                result.usd += usd; result.pricedTokens += point.total
+            } else { result.unpricedTokens += point.total }
+        }
+        return result
+    }
+    func refreshPricing(providers: [AIProvider], force: Bool = false) async {
+        guard !providers.isEmpty, !pricingRefreshing else { return }
+        let now = Date()
+        let due = providers.filter { force || (now.timeIntervalSince(priceCatalog.fetched[$0] ?? .distantPast) >= 86400 && now.timeIntervalSince(priceAttempts[$0] ?? .distantPast) >= 3600) }
+        let exchangeDue = ledger.customExchangeRate != true && (force || now.timeIntervalSince(exchangeAttempt) >= 86400)
+        guard !due.isEmpty || exchangeDue else { return }
+        pricingRefreshing = true; defer { pricingRefreshing = false }
+        for provider in due {
+            priceAttempts[provider] = now
+            if let entries = try? await PricingSource.fetch(provider) {
+                priceCatalog.entries.removeAll { $0.provider == provider }
+                priceCatalog.entries += entries; priceCatalog.fetched[provider] = now
+                if let data = try? JSONEncoder().encode(priceCatalog) { defaults.set(data, forKey: "integrations.modelPrices") }
+            }
+        }
+        if exchangeDue {
+            exchangeAttempt = now
+            if let quote = try? await PricingSource.exchange() {
+                exchangeQuote = quote
+                if let data = try? JSONEncoder().encode(quote) { defaults.set(data, forKey: "integrations.exchangeQuote") }
+            }
+        }
+    }
+    func pricingDescription(_ provider: AIProvider) -> String {
+        if usesCustomPrices(provider) { return "Custom average prices · API equivalent" }
+        let date = priceCatalog.entries.filter { $0.provider == provider }.map(\.checked).max()
+        return "Automatic model prices" + (date.map { " · \($0)" } ?? " · unavailable")
+    }
+
     func record(_ charge: RecordedCharge) {
         guard charge.amount > 0, charge.amount < 1_000_000_000 else { return }
         ledger.charges.append(charge); persist()

@@ -1,15 +1,15 @@
 # Sieghart roadmap
 
-Updated October 5, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 6, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 ## Status and release gates
 
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
-- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Voice app launch/search and automatic pricing/billing sources remain next.
+- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Automatic model pricing/FX, exact chart details, island interaction corrections and the glass presentation with smoother avatars are also implemented. Voice app launch/search and billing imports remain next.
 - **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The assistant does not run the app or open Xcode.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
-- **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Automatic billing imports, current model price sources and dated FX must have verified adapters before being described as automatic spending.
+- **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Invoice imports remain planned.
 
 ## Sprint 3 — First-run companion and live AI
 
@@ -19,7 +19,23 @@ Updated October 5, 2026. This is the current execution plan; older Obsidian chec
 - One local-monitoring consent enables detection of installed Codex/Claude Code using existing sign-in. Declining preserves offline companion/focus use. Opening the dashboard requires no repeated connection step; disconnect removes that provider's activity and stops automatic reconnection.
 - Background refresh follows active/completed lifecycle events, model, project and elapsed work. The compact island shows the companion and active provider while keeping camera space and physical notch height. A running focus countdown stays available alongside AI activity.
 - The complete reference dashboard includes quota/reset windows, spending, Now, 24 hourly bars, model/project rankings and a 13-week activity heatmap with streak, active days and busiest day. Account daily activity comes from Codex when available; hourly/model/project data is explicitly partial local history.
-- USD/BRL token estimates use custom prices and dated FX. Recorded charges remain separate. Missing data stays unavailable; there are no fabricated activity records or invoice amounts.
+- Automatic per-model prices use bundled facts, official daily OpenAI/Claude updates and persistent fallback. Logged tiers, per-request long context and cache costs are considered. Unknown prices produce a disclosed unpriced token count/≥ lower bound. Frankfurter supplies automatic dated USD/BRL conversion; explicit custom overrides remain possible. Recorded charges stay separate.
+
+### Interaction and precision corrections — October 6, 2026
+
+- Click opens the island. Hover only gives visual feedback, including idle compact state. All expanded pages collapse on pointer exit with a short crossing allowance. Saved focus completion never hijacks AI or normal navigation.
+- Appearance saves Small/Medium/Large widget sizes; expanded content scales consistently and compact camera height stays exact.
+- Provider logos/selectors follow actual usage/readings, not installation alone. Model/project rows show exact integers; older completed history recovers model context when present.
+- Hourly hover/selection gives range, total, input/output/cache and API-equivalent value. Heatmap hover/selection gives exact dated usage. Missing metadata remains explicit.
+- Modifier shortcuts now prefer a common-mode listen-only session event tap, with interruption recovery; regular keys retain global Carbon registration and a permitted fallback. Real Mac acceptance remains open.
+
+### Glass island and companion motion — October 6, 2026
+
+- Attached shoulder contour, translucent glass body, native Liquid Glass on macOS 26 and behind-window blur on older supported macOS. The camera strip and compact island remain black. Reduce Transparency provides an opaque fallback.
+- An adjustable minute ruler, glass break/round controls and explicit Start action in the focus widget. Circular quick access controls around the surface; the bottom companion control opens the selected avatar. AI cards share the translucent chrome.
+- Native contour transitions reserve their full window bounds, keep content at its destination layout, and reveal it after the shell grows. Closing hides departing content and contracts the silhouette. Reduce Motion bypasses movement.
+- All six avatars keep their artwork and gain continuous 60 Hz body motion, smooth landings, blended blinking and pointer-driven perspective. A new character-art redesign requires the requested visual reference; these are animated 2D characters, not rigged 3D models.
+- Challenge product text uses only Sieghart branding. External research photographs stay outside the application resources and Challenge package. No external application source code is shipped.
 
 ### Evidence
 
@@ -30,7 +46,7 @@ Updated October 5, 2026. This is the current execution plan; older Obsidian chec
 ### Next in Sprint 3
 
 1. Voice launch of installed applications with deterministic resolution, ambiguity handling and honest errors; browser search without sending arbitrary text through a shell. These actions are not implemented yet.
-2. Verified automatic model-price, dated FX and billing/import adapters. Custom token estimates are not provider invoices; Codex's tested thread usage did not supply a USD estimate.
+2. Billing/import adapters and broader historical coverage. Automatic price/FX sources are implemented; values are API equivalents and local history remains partial.
 3. Verified automatic individual Claude quota access; the dated report import remains available.
 4. User Mac acceptance for onboarding, activity/island behavior, permissions and companion/voice shortcuts across Spaces/full-screen.
 
@@ -48,9 +64,9 @@ Updated October 5, 2026. This is the current execution plan; older Obsidian chec
 
 ## Complete reference coverage — 77 modules
 
-Reference catalog: [Vorssaint, pinned revision 9066461](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Core/FeatureCatalog.swift). The screenshots show 73 installed-version modules; the current catalog adds four. Every entry below is retained, including advanced modules. A milestone is sequencing, not a delivery date.
+Catalog: the 77 utility requirements retained from the supplied screenshots and catalog review. The screenshots show 73 installed-version modules; the current catalog adds four. Every entry below is retained, including advanced modules. A milestone is sequencing, not a delivery date.
 
-Status: **Partial** = a related implemented slice with remaining acceptance/scope. **Planned** = backlog. Upstream identifiers provide traceability; runtime implementations are Sieghart's own.
+Status: **Partial** = a related implemented slice with remaining acceptance/scope. **Planned** = backlog. Stable identifiers keep the requirements traceable; runtime implementations are Sieghart's own.
 
 ### Windows and Dock (7)
 
@@ -152,7 +168,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `notchQueue` | Playback queue | Planned | S3–S5 |
 | `notchLiveEqualizer` | Live audio bars | Planned | S3–S5 |
 | `notchDownloads` | Selected-folder downloads | Planned | S3–S5 |
-| `notchAgents` | AI limits/tokens/cost/live work | Partial — Codex quota and local counters/ledger; live work and automated sources next | S3 + S5 |
+| `notchAgents` | AI limits/tokens/cost/live work | Partial — Live work, Codex quotas, charts, automatic price/FX estimates implemented; broader adapters/acceptance pending | S3 + S5 |
 | `notchWatch` | Selected screen-area monitoring | Planned | S3–S5 |
 | `notchMascot` | Companion interaction | Partial — Six original companions and reactions; feature-specific interactions expand per module | S3 + S5 |
 
@@ -173,7 +189,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 - Onboarding: preset/individual module choices, six avatars, language, optional permissions tied to enabled features, no unnecessary access to finish. Revisit later from Settings.
 - Settings: searchable sections, configurable keyboard/mouse shortcuts, startup at login, theme, menu-bar symbol/color, density, module enable/disable and real service teardown.
-- Display behavior: physical-notch geometry, capsule on other screens, multiple displays, full-screen and Spaces, lock/unlock, sensible hit targets, pure black compact backplate, no focus theft.
+- Display behavior: click-only expansion, visual hover feedback, universal pointer-exit collapse, Small/Medium/Large expanded size, physical-notch geometry, capsule on other screens, multiple displays, full-screen and Spaces, lock/unlock, sensible hit targets, pure black compact backplate, no focus theft.
 - Island navigation: home/control center, side shortcuts, reorderable modules, compact/expanded states, keyboard routes, music/player selection and volume.
 - AI: Codex/Claude first, then OpenCode/Copilot when a verified source exists; quota windows, resets, tokens/cache, models/projects/trends, task elapsed/completion alerts. Read-only existing sign-in with bounded local metadata access.
 - Money: distinguish invoices/subscription charges from API-equivalent estimates; model-specific prices with date/source, USD/BRL and dated FX; import/export and retention controls.
@@ -192,7 +208,8 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 ## Evidence and references
 
-- [39 original screenshot gallery](Sieghart/Design/References/Vorssaint/README.md), with timestamp/hash manifest.
+- [39 original screenshot gallery](Sieghart/Design/References/Widget/README.md), with timestamp/hash manifest.
 - [Current character artwork](Sieghart/Design/Concepts/avatar-reactions.md) and [app notes](Sieghart/README.md).
+- [October 6 regression captures](Sieghart/Design/References/Sieghart/README.md).
 - [Known bugs](Sieghart/BUGS.md).
 - Reference source is GPL-3.0-or-later; no upstream runtime code was copied into this MIT repository. Symbols carry their own [MIT attribution](Sieghart/THIRD_PARTY_NOTICES.md).

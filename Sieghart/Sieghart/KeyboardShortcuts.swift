@@ -31,6 +31,10 @@ struct ShortcutChord: Codable, Equatable {
         return value
     }
 
+    func matches(keyCode: UInt32, flags: NSEvent.ModifierFlags) -> Bool {
+        self.keyCode == keyCode && self.flags == flags.intersection(Self.allowedModifiers)
+    }
+
     static func captured(from event: NSEvent) -> ShortcutChord {
         let names: [UInt16: String] = [36: "↩", 48: "⇥", 49: "Space", 51: "⌫", 53: "⎋", 76: "Enter", 117: "⌦", 123: "←", 124: "→", 125: "↓", 126: "↑", 122: "F1", 120: "F2", 99: "F3", 118: "F4", 96: "F5", 97: "F6", 98: "F7", 100: "F8", 101: "F9", 109: "F10", 103: "F11", 111: "F12", 105: "F13", 107: "F14", 113: "F15", 106: "F16", 64: "F17", 79: "F18", 80: "F19", 90: "F20"]
         let label = names[event.keyCode] ?? event.charactersIgnoringModifiers?.uppercased() ?? "Key \(event.keyCode)"

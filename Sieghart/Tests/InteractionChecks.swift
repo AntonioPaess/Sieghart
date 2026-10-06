@@ -97,6 +97,10 @@ struct InteractionChecks {
         notch.aiUsage = liveUsage
         notch.showIsland()
         precondition(notch.isVisible && notch.presentation == .island && notch.geometry.height == 36)
+        notch.setPointerInsidePanel(true)
+        try await Task.sleep(for: .milliseconds(300))
+        precondition(notch.presentation == .island && notch.isPointerHovering) // Hover highlights; it never expands.
+        notch.setPointerInsidePanel(false)
         notch.showCurrentTask()
         precondition(notch.presentation == .aiLimits) // No focus timer needed for live AI.
         notch.hide()
@@ -106,6 +110,23 @@ struct InteractionChecks {
         notch.showIsland()
         precondition(!notch.isVisible)
         notch.aiUsage = nil
+        var widths: [CGFloat] = []
+        for size in WidgetSize.allCases {
+            preferences.widgetSize = size
+            precondition(CompanionPreferences(defaults: defaults).widgetSize == size)
+            notch.show(); widths.append(notch.geometry.width); notch.hide()
+        }
+        precondition(widths[0] < widths[1] && widths[1] < widths[2])
+        preferences.widgetSize = .medium
+        notch.setPointerInsideHoverZone(true)
+        precondition(notch.presentation == .island && notch.isPointerHovering)
+        notch.setPointerInsidePanel(true)
+        notch.setPointerInsideHoverZone(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(notch.isVisible && notch.presentation == .island) // Crossing between native and SwiftUI hover regions is stable.
+        notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(!notch.isVisible)
 
         // Abandoning a recorder or changing apps cannot leave activation locked.
         activation.recordingShortcut = .voice
@@ -187,8 +208,35 @@ struct InteractionChecks {
         notch.showCurrentTask(); notch.setPointerInsidePanel(false)
         try await Task.sleep(for: .milliseconds(1200))
         precondition(notch.presentation == .island) // Leaving expanded controls tucks them away.
+        // Every expanded page obeys pointer exit, including former sticky pages.
+        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, notch.showVoice] {
+            open(); notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
+            try await Task.sleep(for: .milliseconds(320))
+            precondition(notch.presentation == .island && assistant.hasActiveSession)
+        }
         assistant.resetPomodoro(); drainEvents(); notch.hide()
         precondition(!notch.isVisible)
+        assistant.startFocusSession(minutes: 5, autoBreak: false)
+        assistant.finishPomodoroFromWidget(); drainEvents()
+        try await Task.sleep(for: .milliseconds(170))
+        precondition(!notch.isVisible)
+        notch.showCurrentTask()
+        precondition(notch.presentation == .home) // Completed focus cannot hijack a reveal.
+        let relaunched = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false)
+        drainEvents()
+        precondition(!relaunched.isVisible) // Published saved completion is not replayed.
+        notch.hide()
+        activation.setShortcut(ShortcutChord(keyCode: nil, modifiers: NSEvent.ModifierFlags([.control, .shift]).rawValue, keyLabel: ""), for: .companion)
+        activation.receiveShortcutEvent(keyCode: nil, flags: [.control, .shift])
+        activation.receiveShortcutEvent(keyCode: nil, flags: [])
+        precondition(notch.isVisible)
+        notch.hide()
+        activation.receiveShortcutEvent(keyCode: nil, flags: [.control, .shift])
+        activation.receiveShortcutEvent(keyCode: 1, flags: [.control, .shift])
+        activation.receiveShortcutEvent(keyCode: nil, flags: [])
+        precondition(!notch.isVisible) // A regular key suppresses modifier-only capture.
+        precondition(ShortcutChord.companion.matches(keyCode: 1, flags: [.control, .option]))
+        precondition(!ShortcutChord.companion.matches(keyCode: 1, flags: [.control, .option, .command]))
         print("PASS: repeated touch moods and wake, exact notch height, avatar resources and persistence, voice intents and acknowledgement, abandoned shortcut recording and recovery, compact island, completion announcement, and automatic collapse")
     }
 }

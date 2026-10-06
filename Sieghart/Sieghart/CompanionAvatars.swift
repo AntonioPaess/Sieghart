@@ -366,26 +366,30 @@ struct CompanionFace: View {
         }
         if joyful { return .happy }
         if listening { return .listening }
-        if blinking || (eyeOpen ?? 1) < 0.5 { return .blink }
+        if blinking { return .blink }
         return focusing ? .focused : .idle
     }
 
     var body: some View {
         Group {
             if let image = CompanionSprites.image(for: avatar, pose: pose) {
-                Image(nsImage: image).resizable()
-                    .interpolation(avatar == .arcade1984 ? .none : .high)
-                    .scaledToFit()
-                    .scaleEffect(1.1)
-                    .offset(x: gaze.width * 0.2, y: gaze.height * 0.2)
-                    .id(pose)
-                    .transition(.opacity)
+                ZStack {
+                    Image(nsImage: image).resizable().interpolation(avatar == .arcade1984 ? .none : .high).scaledToFit()
+                    if mood == .idle, !listening, !joyful, let blink = CompanionSprites.image(for: avatar, pose: .blink) {
+                        Image(nsImage: blink).resizable().interpolation(avatar == .arcade1984 ? .none : .high).scaledToFit()
+                            .opacity(Double(min(1, max(0, 1 - (eyeOpen ?? 1)))))
+                    }
+                }
+                .scaleEffect(1.1)
+                .offset(x: gaze.width * 0.2, y: gaze.height * 0.2)
+                .id(pose)
+                .transition(.opacity)
             } else {
                 CompanionVectorFace(avatar: avatar, blinking: blinking, focusing: focusing, joyful: joyful || mood == .happy, gaze: gaze, eyeOpen: mood == .asleep ? 0.08 : eyeOpen, listening: listening, motionTime: motionTime)
             }
         }
         .frame(width: 42, height: 42)
-        .animation(animates && pose != .blink ? .easeInOut(duration: 0.12) : nil, value: pose)
+        .animation(animates ? .easeInOut(duration: 0.2) : nil, value: pose)
         .accessibilityHidden(true)
     }
 }
@@ -449,22 +453,25 @@ struct CompanionCharacter: View {
     var strolling = false
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: avatar == .arcade1984 ? 1.0 / 12 : 1.0 / 60, paused: !animates)) { context in
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animates)) { context in
             let time = animates ? context.date.timeIntervalSinceReferenceDate : 0
             let phase = time.truncatingRemainder(dividingBy: 4.7)
             let eye = animates && phase < 0.26 ? 1 - sin(phase / 0.26 * .pi) * 0.96 : 1
             let amplitude = avatar == .minimalSpirit ? 0.7 : 2.0
-            let float = avatar == .arcade1984 ? (sin(time * 2) * 2).rounded() : sin(time * 1.8) * amplitude
+            let float = sin(time * 1.8) * amplitude
             let sway = avatar == .minimalSpirit || avatar == .inkBuddy ? 0.3 : 1.2
             let reaction = joyful ? CompanionMood.happy : mood
-            let hop = (reaction == .happy || reaction == .celebrating) && animates ? -abs(sin(time * 6)) * size * (reaction == .celebrating ? 0.085 : 0.065) : strolling && animates ? -abs(sin(time * 6)) * 2 : float
+            // Cosine has a smooth landing; absolute-sine hops kink at every step.
+            let hop = (reaction == .happy || reaction == .celebrating) && animates ? (cos(time * 6) - 1) * size * (reaction == .celebrating ? 0.045 : 0.035) : strolling && animates ? (cos(time * 6) - 1) * 1.2 : float
             let shake = reaction == .annoyed && animates ? sin(time * 18) * size * 0.025 : 0
             let stretch: CGFloat = reaction == .waking ? 1.08 : reaction == .asleep ? 0.96 : 1
-            let breath = animates && reaction == .asleep ? 1 + sin(time * 1.5) * 0.02 : 1
-            let nod = reaction == .understood && animates ? abs(sin(time * 5)) * 6 : 0
+            let breath = animates ? 1 + sin(time * (reaction == .asleep ? 1.5 : 1.8)) * (reaction == .asleep ? 0.02 : 0.009) : 1
+            let nod = reaction == .understood && animates ? (1 - cos(time * 5)) * 3 : 0
             CompanionFace(avatar: avatar, focusing: focusing, joyful: joyful, gaze: gaze, eyeOpen: eye, listening: listening, motionTime: time, mood: reaction, animates: animates)
                 .scaleEffect(x: size / 42 * breath, y: size / 42 * stretch * breath)
                 .rotationEffect(.degrees(strolling && animates ? sin(time * 6) * 4 : reaction == .understood ? nod : reaction == .celebrating && animates ? sin(time * 7) * 9 : reaction == .asleep ? 6 : reaction == .annoyed && animates ? sin(time * 12) * 4 : animates && joyful ? sin(time * 6) * 5 : sin(time * 0.9) * sway))
+                .rotation3DEffect(.degrees(animates ? Double(gaze.width) * 1.6 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.3)
+                .rotation3DEffect(.degrees(animates ? -Double(gaze.height) * 1.2 : 0), axis: (x: 1, y: 0, z: 0), perspective: 0.3)
                 .offset(x: shake, y: reaction == .asleep ? size * 0.035 : hop)
                 .frame(width: size, height: size)
                 .overlay(alignment: .topTrailing) {
