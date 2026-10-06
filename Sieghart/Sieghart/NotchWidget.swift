@@ -2,155 +2,221 @@ import AppKit
 import Combine
 import SwiftUI
 
-enum NotchWidgetMode: Equatable {
-    case character
-    case calendar
-}
-
 struct NotchGeometry: Equatable {
     let width: CGFloat
-    let neckWidth: CGFloat
-    let neckHeight: CGFloat
-
-    static let bodyHeight: CGFloat = 166
-    static let cornerRadius: CGFloat = 28
-
-    var shoulderHeight: CGFloat { neckHeight > 0 ? 24 : 0 }
-    var contentTop: CGFloat { neckHeight + shoulderHeight }
-    var height: CGFloat { contentTop + Self.bodyHeight }
+    let cutoutWidth: CGFloat
+    let cutoutHeight: CGFloat
+    let bodyHeight: CGFloat
+    var compact = false
+    static let cornerRadius: CGFloat = 24
+    var contentTop: CGFloat { compact ? 0 : cutoutHeight + 6 }
+    var height: CGFloat { contentTop + bodyHeight }
     var size: CGSize { CGSize(width: width, height: height) }
+    static let fallback = NotchGeometry(width: 480, cutoutWidth: 180, cutoutHeight: 0)
 
-    static let fallback = NotchGeometry(width: 300, neckWidth: 300, neckHeight: 0)
-
-    init(width: CGFloat, neckWidth: CGFloat, neckHeight: CGFloat) {
-        self.width = width
-        self.neckWidth = neckWidth
-        self.neckHeight = neckHeight
+    init(width: CGFloat, cutoutWidth: CGFloat, cutoutHeight: CGFloat, bodyHeight: CGFloat = 192, compact: Bool = false) {
+        self.width = width; self.cutoutWidth = cutoutWidth; self.cutoutHeight = cutoutHeight
+        // The compact island grows sideways around the camera, never below
+        // its physical cutout. Displays without a notch use a 36-point pill.
+        self.bodyHeight = compact ? (cutoutHeight > 0 ? cutoutHeight : 36) : bodyHeight
+        self.compact = compact
     }
 
-    init(screen: NSScreen) {
-        guard let left = screen.auxiliaryTopLeftArea,
-              let right = screen.auxiliaryTopRightArea,
-              right.minX > left.maxX else {
-            self = .fallback
-            return
-        }
-
-        let cutoutWidth = right.minX - left.maxX
-        let panelWidth = min(max(300, cutoutWidth + 96), screen.frame.width - 24)
-        width = panelWidth
-        neckWidth = min(cutoutWidth + 2, panelWidth - 32)
-        neckHeight = max(screen.safeAreaInsets.top, min(left.height, right.height))
+    init(screen: NSScreen, setup: Bool = false, bodyHeight: CGFloat = 192, compact: Bool = false) {
+        let left = screen.auxiliaryTopLeftArea
+        let right = screen.auxiliaryTopRightArea
+        let measuredWidth = left != nil && right != nil ? max(0, right!.minX - left!.maxX) : 0
+        let measuredHeight = measuredWidth > 0 ? max(screen.safeAreaInsets.top, min(left!.height, right!.height)) : 0
+        self.init(width: compact ? (measuredWidth > 0 ? measuredWidth + 148 : 240) : min(max(setup ? 520 : 480, measuredWidth + 188), screen.frame.width - 32), cutoutWidth: compact ? measuredWidth : max(measuredWidth, 180), cutoutHeight: measuredHeight, bodyHeight: bodyHeight, compact: compact)
     }
+}
+
+enum NotchPresentation: Equatable {
+    case home, focusSetup, timer, completion, voice, island, celebration, aiLimits, tools
 }
 
 @MainActor
 final class NotchWidgetController: ObservableObject {
     @Published private(set) var isVisible = false
-    @Published private(set) var mode: NotchWidgetMode = .character
     @Published private(set) var geometry: NotchGeometry = .fallback
 
+    @Published private(set) var presentation: NotchPresentation = .home
+
+    @Published private(set) var latestCompletion: SessionCompletion?
+    private var shownCompletionID: UUID?
+    private let managesWindows: Bool
+    private let announcementDelay: Duration
+    private var expandTask: Task<Void, Never>?
+    private var completionTask: Task<Void, Never>?
+    private var completionObservation: AnyCancellable?
+    private let preferences: CompanionPreferences
     private let assistant: AssistantViewModel
-    private let calendar: CalendarViewModel
+    var activation: ActivationController?
+    var codexUsage: CodexUsageModel?
+    var aiUsage: AIUsageModel?
     private var panel: NSPanel?
     private var hoverPanel: HoverZonePanel?
     private var isPointerInsidePanel = false
     private var isImpactRevealed = false
     private var hideTask: Task<Void, Never>?
-    private var collapseTask: Task<Void, Never>?
     private var pomodoroObservation: AnyCancellable?
+    private var preferencesObservation: AnyCancellable?
     private var screenChangeObserver: AnyCancellable?
+    private var workspaceObservation: AnyCancellable?
     private let overlayLevel = NSWindow.Level(
         rawValue: NSWindow.Level.mainMenu.rawValue + 3
     )
 
-    init(assistant: AssistantViewModel, calendar: CalendarViewModel) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5)) {
         self.assistant = assistant
-        self.calendar = calendar
-        if let screen = Self.selectedScreen() { geometry = NotchGeometry(screen: screen) }
-        configureHoverZone()
-        screenChangeObserver = NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+        self.preferences = preferences
+        self.managesWindows = managesWindows
+        self.announcementDelay = announcementDelay
+        if managesWindows {
+            if let screen = Self.selectedScreen() { geometry = NotchGeometry(screen: screen) }
+            configureHoverZone()
+            screenChangeObserver = NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.screenDidChange() }
+            let workspace = NSWorkspace.shared.notificationCenter
+            workspaceObservation = Publishers.Merge(
+                workspace.publisher(for: NSWorkspace.activeSpaceDidChangeNotification),
+                workspace.publisher(for: NSWorkspace.didActivateApplicationNotification)
+            )
+            .debounce(for: .milliseconds(150), scheduler: RunLoop.main)
+            .sink { [weak self] _ in self?.refreshWorkspacePresence() }
+            preferencesObservation = preferences.objectWillChange
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in
+                    guard let self else { return }
+                    if self.preferences.hoverEnabled { self.hoverPanel?.orderFrontRegardless() }
+                    else { self.hoverPanel?.orderOut(nil) }
+                    self.screenDidChange()
+                }
+        }
+        completionObservation = assistant.$completionNotice.compactMap { $0 }
             .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.screenDidChange() }
+            .sink { [weak self] notice in self?.presentCompletion(notice) }
         pomodoroObservation = assistant.$pomodoroPhase
+            .dropFirst()
+            .receive(on: RunLoop.main)
             .sink { [weak self] phase in
                 self?.handlePomodoroPhaseChange(phase)
             }
     }
 
     func toggle() {
-        isVisible ? hide() : show()
+        isVisible && presentation != .island ? hide() : show()
     }
 
+    // Every normal reveal returns to the companion. Timer tools are explicit.
     func show() {
-        mode = .character
-        reveal(stickyUntilImpact: assistant.pomodoroPhase == .focusing)
+        presentation = activation?.isListening == true || activation?.isPreparing == true ? .voice : .home
+        reveal(stickyUntilImpact: presentation == .voice)
     }
 
-    func showCalendar() {
-        mode = .calendar
-        // A sensor gesture may reveal Calendar, but only an explicit button
-        // press may initiate the system permission request.
-        calendar.prepare()
+    func showCurrentTask() {
+        if assistant.hasActiveSession { presentation = .timer }
+        else if assistant.pomodoroPhase == .completed { presentation = .completion }
+        else { presentation = .home }
+        reveal(stickyUntilImpact: presentation == .completion)
+    }
+
+    func showIsland() {
+        guard assistant.hasActiveSession else { dismissPanel(); return }
+        presentation = .island
+        reveal(stickyUntilImpact: false)
+    }
+
+    func restoreSessionPresence() { if assistant.hasActiveSession { showIsland() } }
+
+    func showFocusSetup() {
+        presentation = .focusSetup
+        reveal(stickyUntilImpact: true)
+    }
+
+    func showTools() {
+        presentation = .tools
+        reveal(stickyUntilImpact: true)
+    }
+
+    func showAILimits() {
+        presentation = .aiLimits
+        reveal(stickyUntilImpact: true)
+    }
+
+    func showVoice() {
+        presentation = .voice
         reveal(stickyUntilImpact: true)
     }
 
     func handleImpact() {
-        if isVisible {
+        if isVisible && presentation != .island {
             hide()
         } else {
-            reveal(stickyUntilImpact: true)
+            show()
+            isImpactRevealed = true
         }
     }
 
     func setPointerInsidePanel(_ isInside: Bool) {
         isPointerInsidePanel = isInside
+        expandTask?.cancel()
         if isInside {
             hideTask?.cancel()
-            hideTask = nil
-        } else if isVisible && !isImpactRevealed {
+            if presentation == .island {
+                expandTask = Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .milliseconds(220))
+                    guard !Task.isCancelled, let self, self.isPointerInsidePanel, self.presentation == .island else { return }
+                    self.showCurrentTask()
+                }
+            }
+        } else if isVisible && (presentation == .home || presentation == .timer || presentation == .celebration) {
             scheduleHide()
         }
     }
 
     func hide() {
+        expandTask?.cancel()
+        completionTask?.cancel()
+        if activation?.isListening == true || activation?.isPreparing == true { activation?.cancelVoiceCommand(); return }
+        if let latestCompletion, latestCompletion.id != shownCompletionID { presentCompletion(latestCompletion); return }
+        if assistant.hasActiveSession { showIsland() }
+        else { dismissPanel() }
+    }
+
+    private func dismissPanel() {
         hideTask?.cancel()
         hideTask = nil
         isVisible = false
         isImpactRevealed = false
-        mode = .character
         guard let panel, panel.isVisible else { return }
-        collapseTask?.cancel()
-        if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            panel.orderOut(nil)
-            return
-        }
-
-        let collapsed = collapsedFrame(for: panel.frame)
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.24
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            panel.animator().setFrame(collapsed, display: true)
-            panel.animator().alphaValue = 0
-        }
-        collapseTask = Task { @MainActor [weak self, weak panel] in
-            try? await Task.sleep(for: .milliseconds(250))
-            guard !Task.isCancelled, let self, !self.isVisible else { return }
-            panel?.orderOut(nil)
-        }
+        panel.orderOut(nil)
     }
 
     private func handlePomodoroPhaseChange(_ phase: PomodoroPhase) {
+        guard phase == assistant.pomodoroPhase else { return }
+        if presentation == .voice || presentation == .celebration || presentation == .aiLimits || presentation == .tools { return }
         switch phase {
-        case .focusing:
-            mode = .character
-            reveal(stickyUntilImpact: true)
-        case .idle, .paused, .completed:
-            guard isVisible, isImpactRevealed else { return }
-            isImpactRevealed = false
-            if !isPointerInsidePanel {
-                scheduleHide()
-            }
+        case .focusing, .paused: showIsland()
+        case .completed: break // The completion event includes the interval that just ended.
+        case .idle:
+            if presentation != .focusSetup { show() }
+        }
+    }
+
+    private func presentCompletion(_ notice: SessionCompletion) {
+        latestCompletion = notice
+        guard activation?.isListening != true, activation?.isPreparing != true else { return }
+        shownCompletionID = notice.id
+        presentation = .celebration
+        reveal(stickyUntilImpact: false)
+        completionTask?.cancel()
+        completionTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: self.announcementDelay)
+            guard !Task.isCancelled, self.presentation == .celebration, self.latestCompletion?.id == notice.id else { return }
+            if !self.isPointerInsidePanel { self.hide() }
         }
     }
 
@@ -166,38 +232,35 @@ final class NotchWidgetController: ObservableObject {
     private func reveal(stickyUntilImpact: Bool) {
         hideTask?.cancel()
         hideTask = nil
-        collapseTask?.cancel()
-        collapseTask = nil
         isImpactRevealed = stickyUntilImpact
-        makePanelIfNeeded()
+        isVisible = true
         screenDidChange()
+        if presentation == .home || presentation == .timer {
+            if !isPointerInsidePanel { scheduleHide() }
+        }
+        guard managesWindows else { return }
+        makePanelIfNeeded()
 
         guard let panel else { return }
-        let expanded = panel.frame
-        let wasVisible = panel.isVisible
+        guard let screen = notchScreen else { return }
+        let size = geometry.size
+        let expanded = NSRect(x: notchCenterX(on: screen) - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height)
         isVisible = true
-        if !wasVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
-            panel.setFrame(collapsedFrame(for: expanded), display: false)
-            panel.alphaValue = 0
-        }
+        // Resize the native panel immediately. Animating a window smaller than
+        // its fixed SwiftUI content centers and crops that content mid-reveal.
+        panel.setFrame(expanded, display: true)
+        panel.contentView?.frame = NSRect(origin: .zero, size: expanded.size)
+        // Keep the black backplate opaque. Fading the entire window mixes in
+        // the bright app underneath and makes the notch appear gray.
+        panel.alphaValue = 1
         panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.28
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            panel.animator().setFrame(expanded, display: true)
-            panel.animator().alphaValue = 1
-        }
-    }
-
-    private func collapsedFrame(for expanded: NSRect) -> NSRect {
-        let height = max(geometry.neckHeight, 1)
-        return NSRect(x: expanded.minX, y: expanded.maxY - height, width: expanded.width, height: height)
     }
 
     private func makePanelIfNeeded() {
         guard panel == nil else { return }
+        guard let activation, let codexUsage, let aiUsage else { return }
 
-        let widgetPanel = NSPanel(
+        let widgetPanel = NotchPanel(
             contentRect: NSRect(
                 x: 0,
                 y: 0,
@@ -210,6 +273,7 @@ final class NotchWidgetController: ObservableObject {
         )
         widgetPanel.isOpaque = false
         widgetPanel.backgroundColor = .clear
+        widgetPanel.colorSpace = .sRGB
         // The panel must visually merge with the physical notch. A shadow and a
         // translucent fill make the content underneath look like it is showing
         // through the widget.
@@ -217,23 +281,27 @@ final class NotchWidgetController: ObservableObject {
         // The notch is composited with the menu bar. A level above the main
         // menu keeps the widget in the same visual plane as the notch instead
         // of leaving it underneath the menu bar surface.
-        widgetPanel.level = overlayLevel
-        widgetPanel.hidesOnDeactivate = false
+        configureOverlay(widgetPanel)
         widgetPanel.isMovableByWindowBackground = false
-        widgetPanel.collectionBehavior = [
-            .canJoinAllApplications,
-            .canJoinAllSpaces,
-            .fullScreenAuxiliary,
-            .stationary,
-            .ignoresCycle
-        ]
-        widgetPanel.contentView = NSHostingView(
+        let hosting = NSHostingView(
             rootView: NotchWidgetView()
                 .environmentObject(self)
                 .environmentObject(assistant)
-                .environmentObject(calendar)
+                .environmentObject(activation)
+                .environmentObject(preferences)
+                .environmentObject(codexUsage)
+                .environmentObject(aiUsage)
         )
 
+        // The controller owns the panel geometry. SwiftUI must not keep the
+        // initial home min/max bounds when switching to a larger tool view.
+        hosting.focusRingType = .none
+        hosting.sizingOptions = []
+        hosting.autoresizingMask = [.width, .height]
+        hosting.frame = NSRect(origin: .zero, size: geometry.size)
+        widgetPanel.contentView = hosting
+        widgetPanel.contentMinSize = .zero
+        widgetPanel.contentMaxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         panel = widgetPanel
     }
 
@@ -243,20 +311,14 @@ final class NotchWidgetController: ObservableObject {
 
         let size = geometry.size
         let centerX = notchCenterX(on: screen)
-        panel.setFrame(
-            NSRect(
-                x: centerX - (size.width / 2),
-                y: screen.frame.maxY - size.height,
-                width: size.width,
-                height: size.height
-            ),
-            display: true
-        )
+        let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height)
+        panel.setFrame(frame, display: true)
+        panel.contentView?.frame = NSRect(origin: .zero, size: size)
     }
 
     private func configureHoverZone() {
         let hover = HoverZonePanel(
-            contentRect: NSRect(x: 0, y: 0, width: geometry.neckWidth + 12, height: max(geometry.neckHeight, 30)),
+            contentRect: NSRect(x: 0, y: 0, width: geometry.cutoutWidth + 12, height: max(geometry.cutoutHeight, 30)),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -265,21 +327,14 @@ final class NotchWidgetController: ObservableObject {
         hover.backgroundColor = .clear
         hover.alphaValue = 0.01
         hover.hasShadow = false
-        hover.level = overlayLevel
-        hover.hidesOnDeactivate = false
-        hover.collectionBehavior = [
-            .canJoinAllApplications,
-            .canJoinAllSpaces,
-            .fullScreenAuxiliary,
-            .stationary,
-            .ignoresCycle
-        ]
+        configureOverlay(hover)
 
         let view = HoverZoneView()
         view.onEnter = { [weak self] in
             Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.reveal(stickyUntilImpact: self.assistant.pomodoroPhase == .focusing)
+                guard let self, self.preferences.hoverEnabled else { return }
+                if self.presentation == .island { self.showCurrentTask() }
+                else if !self.isVisible { self.show() }
             }
         }
         view.onExit = { [weak self] in
@@ -291,14 +346,14 @@ final class NotchWidgetController: ObservableObject {
         hover.contentView = view
         hoverPanel = hover
         positionHoverPanel()
-        hover.orderFrontRegardless()
+        if preferences.hoverEnabled { hover.orderFrontRegardless() }
     }
 
     private func positionHoverPanel() {
         guard let hoverPanel else { return }
         guard let screen = notchScreen else { return }
 
-        let size = CGSize(width: geometry.neckWidth + 12, height: max(geometry.neckHeight, 30))
+        let size = CGSize(width: geometry.cutoutWidth + 12, height: max(geometry.cutoutHeight, 30))
         let centerX = notchCenterX(on: screen)
         hoverPanel.setFrame(
             NSRect(
@@ -319,8 +374,42 @@ final class NotchWidgetController: ObservableObject {
 
     private var notchScreen: NSScreen? { Self.selectedScreen() }
 
+    private func configureOverlay(_ panel: NSPanel) {
+        panel.isFloatingPanel = true
+        panel.level = overlayLevel
+        panel.hidesOnDeactivate = false
+        // canJoinAllApplications is the cross-app full-screen policy on our
+        // macOS 14.6+ target. A specific fullScreenAuxiliary policy overrides
+        // that classification; let the overlay join other apps directly.
+        panel.collectionBehavior = [
+            .canJoinAllApplications, .canJoinAllSpaces,
+            .fullScreenDisallowsTiling, .stationary, .ignoresCycle
+        ]
+    }
+
+    private func refreshWorkspacePresence() {
+        // A Space transition doesn't change the timer or reopen a dismissed
+        // companion. Restore ordering only for surfaces that should be visible.
+        screenDidChange()
+        if preferences.hoverEnabled { hoverPanel?.orderFrontRegardless() }
+        if isVisible { panel?.orderFrontRegardless() }
+    }
+
     private func screenDidChange() {
-        if let screen = notchScreen { geometry = NotchGeometry(screen: screen) }
+        let height: CGFloat
+        switch presentation {
+        case .home: height = 192
+        case .focusSetup: height = 390
+        case .timer: height = preferences.compactTimer ? 150 : 220
+        case .completion: height = 148
+        case .voice: height = 208
+        case .island: height = 42
+        case .celebration: height = 212
+        case .tools: height = 280
+        case .aiLimits: height = min(560, (notchScreen?.visibleFrame.height ?? 700) - 80)
+        }
+        if managesWindows, let screen = notchScreen { geometry = NotchGeometry(screen: screen, setup: presentation == .focusSetup, bodyHeight: height, compact: presentation == .island) }
+        else { geometry = NotchGeometry(width: presentation == .island ? 240 : presentation == .focusSetup ? 520 : 480, cutoutWidth: 0, cutoutHeight: 0, bodyHeight: height, compact: presentation == .island) }
         positionHoverPanel()
         positionPanel()
     }
@@ -339,13 +428,19 @@ final class NotchWidgetController: ObservableObject {
     private func scheduleHide() {
         hideTask?.cancel()
         hideTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(900))
+            let delay: Duration = self?.presentation == .celebration ? self?.announcementDelay ?? .seconds(5) : .milliseconds(1100)
+            try? await Task.sleep(for: delay)
             guard !Task.isCancelled, let self else { return }
             if !self.isPointerInsidePanel && !self.isImpactRevealed {
                 self.hide()
             }
         }
     }
+}
+
+private final class NotchPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
 }
 
 private final class HoverZonePanel: NSPanel {
@@ -384,348 +479,386 @@ private final class HoverZoneView: NSView {
     }
 }
 
-private struct NotchWidgetView: View {
+struct NotchWidgetView: View {
     @EnvironmentObject private var notch: NotchWidgetController
     @EnvironmentObject private var assistant: AssistantViewModel
-    @EnvironmentObject private var calendar: CalendarViewModel
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var activation: ActivationController
+    @EnvironmentObject private var preferences: CompanionPreferences
+    @StateObject private var reactions = CompanionReactions()
+    @State private var avatarPointer = CGSize.zero
+
+    init(reactions: CompanionReactions = CompanionReactions()) {
+        _reactions = StateObject(wrappedValue: reactions)
+    }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.08)) { context in
-            let time = context.date.timeIntervalSinceReferenceDate
-            let blinkPhase = time.truncatingRemainder(dividingBy: 5.0)
-            let isBlinking = blinkPhase < 0.16
-            let breathing = reduceMotion ? 0 : sin(time * 1.4) * 0.012
-            let focusMotion = reduceMotion ? 0 : sin(time * 2.2)
-            let isFocusing = assistant.pomodoroPhase == .focusing
-            let showsPomodoro = isFocusing || assistant.pomodoroPhase == .paused
-
+        VStack(spacing: 0) {
+            Color.clear.frame(height: notch.geometry.contentTop).allowsHitTesting(false)
             VStack(spacing: 0) {
-                Color.clear
-                    .frame(height: notch.geometry.contentTop)
-                    .allowsHitTesting(false)
-
-                ZStack {
-                    if notch.mode == .calendar {
-                        CalendarWidgetView(calendar: calendar, time: time, width: notch.geometry.width)
-                        .transition(
-                            .asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal: .move(edge: .leading).combined(with: .opacity)
-                            )
-                        )
-                    } else {
-                        HStack(spacing: 12) {
-                            Button {
-                                notch.focusMainWindow()
-                            } label: {
-                                NotchFaceView(
-                                    isFocusing: isFocusing,
-                                    isBlinking: isBlinking,
-                                    focusMotion: focusMotion
-                                )
-                                .scaleEffect(1 + breathing)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Open Sieghart")
-
-                            if showsPomodoro {
-                                VStack(spacing: 7) {
-                                    PomodoroOrbView(
-                                        timeLabel: assistant.pomodoroTimeLabel,
-                                        progress: assistant.pomodoroProgress,
-                                        isPaused: assistant.pomodoroPhase == .paused,
-                                        pulse: reduceMotion ? 0 : sin(time * 2.0) * 0.018
-                                    )
-
-                                    Button("Finish") {
-                                        assistant.finishPomodoroFromWidget()
-                                    }
-                                    .font(.caption2.weight(.semibold))
-                                    .buttonStyle(.plain)
-                                    .foregroundStyle(.white.opacity(0.86))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 4)
-                                    .background(.white.opacity(0.12), in: Capsule())
-                                    .accessibilityLabel("Finish Pomodoro")
-                                }
-                            }
+                switch notch.presentation {
+                case .home: home
+                case .focusSetup:
+                    ScrollView(.vertical) { setup }.scrollIndicators(.hidden)
+                case .timer: timer
+                case .completion: completion
+                case .voice: voice
+                case .island: island
+                case .celebration: celebration
+                case .tools: tools
+                case .aiLimits:
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 10) {
+                            iconButton("chevron.left", label: "Back to tools") { notch.showTools() }
+                            CompanionCharacter(size: 34, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, mood: .understood)
+                            Text("Your AI limits").font(.title3.weight(.semibold))
+                            Spacer()
+                            iconButton("xmark", label: "Close AI limits") { notch.hide() }
                         }
-                        .transition(
-                            .asymmetric(
-                                insertion: .move(edge: .leading).combined(with: .opacity),
-                                removal: .move(edge: .trailing).combined(with: .opacity)
-                            )
-                        )
+                        ScrollView(.vertical) { AIUsageView() }.scrollIndicators(.visible)
                     }
                 }
-                .frame(width: notch.geometry.width, height: NotchGeometry.bodyHeight)
-                .animation(reduceMotion ? nil : .easeInOut(duration: 0.30), value: notch.mode)
+            }
+            .id(notch.presentation)
+            .transition(.opacity)
+            .animation(preferences.usesReducedMotion ? nil : .spring(response: 0.38, dampingFraction: 0.86), value: notch.presentation)
+            .padding(notch.presentation == .island ? 0 : 20)
+            .frame(width: notch.geometry.width, height: notch.geometry.bodyHeight, alignment: .top)
+        }
+        .frame(width: notch.geometry.width, height: notch.geometry.height, alignment: .top)
+        .background(CompanionStyle.notchBlack, in: NotchPanelShape())
+        .clipShape(NotchPanelShape())
+        .contentShape(NotchPanelShape())
+        .foregroundStyle(.white)
+        .tint(CompanionStyle.accent)
+        .preferredColorScheme(.dark)
+        .onHover { notch.setPointerInsidePanel($0) }
+        .focusEffectDisabled()
+        .onExitCommand { notch.hide() }
+        .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
+        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset() } }
+    }
+
+    private var animates: Bool { preferences.characterMotion && !preferences.usesReducedMotion && notch.isVisible }
+    private var face: some View {
+        CompanionInteraction(action: { notch.show() }) {
+            CompanionCharacter(avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening, mood: activation.commandAcknowledged ? .understood : .idle)
+        }.accessibilityLabel("Show companion")
+    }
+
+    private var home: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 18) {
+                CompanionInteraction(action: reactToTouch) {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
+                        let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
+                        let walking = animates && reactions.mood == .idle && !activation.commandAcknowledged && phase < 4
+                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : reactions.mood, strolling: walking)
+                            .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
+                    }.frame(width: 124, height: 96)
+                }
+                .accessibilityLabel("Interact with Sieghart")
+                .accessibilityValue(reactionDescription)
+                .help("Say hello. Repeated taps make Sieghart grumpy, then sleepy. Tap again to wake.")
+                .onContinuousHover { phase in
+                    switch phase {
+                    case .active(let location): avatarPointer = animates ? CGSize(width: min(3, max(-3, (location.x - 62) / 16)), height: min(2, max(-2, (location.y - 48) / 24))) : .zero
+                    case .ended: avatarPointer = .zero
+                    }
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(assistant.hasActiveSession ? assistant.activityTitle.uppercased() : "YOUR COMPANION")
+                        .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
+                    Text(homeHeadline).font(.system(size: 18, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.85)
+                    Text(homeMessage).font(.callout).foregroundStyle(CompanionStyle.muted).lineLimit(2)
+                    HStack(spacing: 12) {
+                        Label(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "\(assistant.focusMinutes) min focus", systemImage: "timer").monospacedDigit()
+                        Text("\(assistant.completedSessions) done")
+                    }.font(.caption.weight(.medium)).foregroundStyle(CompanionStyle.accent)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack(spacing: 10) {
+                Button("Focus") { notch.showFocusSetup() }.buttonStyle(CompanionButtonStyle(primary: true)).focusEffectDisabled()
+                if assistant.hasActiveSession {
+                    Button { notch.showCurrentTask() } label: { Label("Controls", systemImage: "timer") }
+                        .buttonStyle(.plain).focusEffectDisabled().font(.callout).help("Open current timer")
+                } else if assistant.pomodoroPhase == .completed && assistant.interval == .focus {
+                    Button("Break") { notch.showCurrentTask() }.buttonStyle(.plain).focusEffectDisabled().font(.callout)
+                }
+                Spacer()
+                iconButton("square.grid.2x2", label: "Open tools") { notch.showTools() }
+                iconButton("mic.fill", label: "Speak a command") { activation.toggleListening() }
+                iconButton("gearshape", label: "Open preferences") { notch.focusMainWindow() }
+                iconButton("xmark", label: "Tuck away widget") { notch.hide() }
             }
         }
-        .frame(width: notch.geometry.width, height: notch.geometry.height)
-        .background(.black, in: NotchPanelShape(geometry: notch.geometry))
-        .clipShape(NotchPanelShape(geometry: notch.geometry))
-        .contentShape(NotchPanelShape(geometry: notch.geometry))
-        .onHover { notch.setPointerInsidePanel($0) }
     }
+
+    private var tools: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: false)
+                Text("Your workspace").font(.title3.weight(.semibold))
+                Spacer()
+                iconButton("xmark", label: "Tuck away tools") { notch.hide() }
+            }
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                toolTile("Companion", subtitle: preferences.avatar.name, symbol: "face.smiling") { notch.show() }
+                toolTile("Focus", subtitle: "\(assistant.focusMinutes) min · Choose your rhythm", symbol: "timer") { notch.showFocusSetup() }
+                toolTile("AI limits", subtitle: "Codex · Claude · Spending", symbol: "chart.bar.xaxis") { notch.showAILimits() }
+                toolTile("Voice", subtitle: activation.voiceShortcut?.label ?? "Speak a command", symbol: "mic.fill") { activation.toggleListening() }
+            }
+        }
+    }
+
+    private func toolTile(_ name: String, subtitle: String, symbol: String, action: @escaping () -> Void) -> some View {
+        CompanionInteraction(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(CompanionStyle.accent).frame(width: 24)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(name).font(.callout.weight(.semibold))
+                    Text(subtitle).font(.system(size: 10)).foregroundStyle(CompanionStyle.muted).lineLimit(2)
+                }
+                Spacer(minLength: 0)
+            }.padding(14).frame(maxWidth: .infinity, minHeight: 70, alignment: .leading)
+                .background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+        }.accessibilityLabel("\(name). \(subtitle)")
+    }
+
+    private func reactToTouch() {
+        reactions.touch()
+    }
+
+    private var homeHeadline: String {
+        if activation.commandAcknowledged { return "Got it." }
+        switch reactions.mood {
+        case .happy: return "Hey, that tickles!"
+        case .annoyed: return "Okay, okay — I’m here!"
+        case .asleep: return "Tiny nap. Be right back."
+        case .waking: return "I’m awake! What’s next?"
+        case .startled: return "Oh! You surprised me."
+        case .understood: return "Got it."
+        case .celebrating: return "One thing done!"
+        case .idle:
+            if assistant.pomodoroPhase == .paused { return "Paused. Take your time." }
+            return assistant.hasActiveSession ? (assistant.interval == .focus ? "One thing at a time." : "A little room to breathe.") : "Ready when you are."
+        }
+    }
+
+    private var homeMessage: String {
+        if activation.commandAcknowledged { return activation.voiceStatus }
+        switch reactions.mood {
+        case .happy: return "Nice to see you. Easy on the pokes."
+        case .annoyed: return "Give me a second to catch my breath."
+        case .asleep: return "Tap once to wake me up."
+        case .waking: return "That was a very short nap."
+        default:
+            if assistant.pomodoroPhase == .paused { return "Resume whenever you’re ready." }
+            return assistant.hasActiveSession ? "\(assistant.pomodoroTimeLabel) left. \(assistant.interval == .focus ? "I’ll let you know when it’s time to rest." : "Enjoy your break — I’ll keep the time.")" : "Your \(assistant.focusMinutes)-minute focus session is one tap away."
+        }
+    }
+
+    private var reactionDescription: String {
+        switch reactions.mood {
+        case .idle: "Ready to say hello"
+        case .happy: "Happy"
+        case .annoyed: "A little grumpy"
+        case .asleep: "Sleeping. Tap to wake"
+        case .waking: "Waking up"
+        case .startled: "Surprised"
+        case .understood: "Command understood"
+        case .celebrating: "Celebrating a completed session"
+        }
+    }
+
+    private var setup: some View {
+        VStack(spacing: 20) {
+            HStack(spacing: 10) {
+                face
+                title("Focus session", caption: "Choose time & rhythm.")
+                Spacer()
+                iconButton("xmark", label: "Back to Sieghart") { notch.show() }
+            }
+            FocusSessionEditor(onStart: { notch.showIsland() }, onCancel: { notch.show() })
+        }
+    }
+
+    private var island: some View {
+        Button { notch.showCurrentTask() } label: {
+            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
+                let time = animates ? context.date.timeIntervalSinceReferenceDate : 0
+                let phase = time.truncatingRemainder(dividingBy: 60)
+                let finishing = assistant.isRunning && assistant.remainingSeconds <= 30
+                let walking = animates && assistant.isRunning && !finishing && phase < 4
+                let nudge = finishing && animates ? max(0, sin(time * 3)) : 0
+                HStack(spacing: 0) {
+                    Group {
+                        if finishing {
+                            VStack(spacing: 3) {
+                                Text("Almost!").font(.system(size: 10, weight: .medium, design: .rounded))
+                                islandProgress
+                            }.foregroundStyle(CompanionStyle.accent)
+                        } else {
+                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, strolling: walking)
+                                .offset(x: walking ? sin(phase / 4 * .pi * 2) * 12 : 0)
+                        }
+                    }.frame(maxWidth: .infinity)
+                    Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 40))
+                    HStack(spacing: 2) {
+                        if finishing {
+                            // On the timer side, the companion nudges the digits.
+                            // Both poses remain outside the physical camera gap.
+                            CompanionCharacter(size: 20, avatar: preferences.avatar, animates: animates, gaze: CGSize(width: 3, height: 0), mood: .startled, strolling: animates)
+                                .rotationEffect(.degrees(nudge * 8))
+                                .offset(x: nudge * 2)
+                        }
+                        VStack(spacing: 3) {
+                            Text(assistant.pomodoroTimeLabel)
+                                .font(.system(size: finishing ? 10 : 12, weight: .semibold, design: .rounded)).monospacedDigit()
+                                .foregroundStyle(finishing ? CompanionStyle.accent : .white)
+                                .contentTransition(.numericText(countsDown: true))
+                                .offset(x: nudge * 2, y: -nudge)
+                                .animation(animates ? .easeOut(duration: 0.2) : nil, value: assistant.pomodoroTimeLabel)
+                            if !finishing { islandProgress }
+                        }
+                    }.frame(maxWidth: .infinity)
+                }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight)
+                    .animation(animates ? .easeInOut(duration: 0.35) : nil, value: finishing)
+            }
+        }
+        .buttonStyle(.plain).focusEffectDisabled()
+        .accessibilityLabel("\(assistant.activityTitle), \(assistant.pomodoroTimeLabel) remaining. Open timer controls.")
+        .help("Open timer controls")
+    }
+
+    private var islandProgress: some View {
+        Capsule().fill(assistant.isRunning ? CompanionStyle.accent : .orange)
+            .frame(width: max(3, 48 * assistant.pomodoroProgress), height: 2)
+    }
+
+    private var celebration: some View {
+        HStack(spacing: 22) {
+            CompanionCharacter(size: 92, avatar: preferences.avatar, animates: animates, mood: .celebrating)
+            VStack(alignment: .leading, spacing: 12) {
+                Text(notch.latestCompletion?.interval == .focus ? "Focus complete!" : "Break complete!").font(.title3.weight(.semibold))
+                Text(completionMessage).font(.callout).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
+                if assistant.hasActiveSession {
+                    Text(assistant.pomodoroTimeLabel).font(.title2.weight(.medium)).monospacedDigit()
+                    Button("Back to your break") { notch.hide() }.buttonStyle(CompanionButtonStyle(primary: true)).focusEffectDisabled()
+                } else {
+                    Button(notch.latestCompletion?.interval == .focus ? "Start break" : "Choose next focus") {
+                        if notch.latestCompletion?.interval == .focus { assistant.startBreak(); notch.showIsland() }
+                        else { notch.showFocusSetup() }
+                    }.buttonStyle(CompanionButtonStyle(primary: true)).focusEffectDisabled()
+                }
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            iconButton("xmark", label: "Dismiss completion") { notch.hide() }
+        }
+    }
+
+    private var completionMessage: String {
+        if let minutes = notch.latestCompletion?.automaticBreakMinutes { return "You did it. Your \(minutes)-minute break has started." }
+        return notch.latestCompletion?.interval == .focus ? "One thing done. Take a breath — you earned a break." : "Rested and ready. Start your next session whenever you like."
+    }
+
+    private var timer: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                face
+                title(assistant.activityTitle, caption: assistant.sessionCaption).frame(width: 88, alignment: .leading)
+                Spacer(minLength: 0)
+                if preferences.compactTimer {
+                    Text(assistant.pomodoroTimeLabel).font(.system(size: 32, weight: .medium)).monospacedDigit()
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                }
+                iconButton(assistant.isRunning ? "pause.fill" : "play.fill", label: assistant.isRunning ? "Pause timer" : "Resume timer") { assistant.togglePomodoro() }
+                iconButton("stop.fill", label: "Finish session") { assistant.finishPomodoroFromWidget() }
+            }
+            if !preferences.compactTimer {
+                Text(assistant.pomodoroTimeLabel).font(.system(size: 48, weight: .medium)).monospacedDigit()
+            }
+            GeometryReader { geometry in
+                Capsule().fill(CompanionStyle.separator)
+                    .overlay(alignment: .leading) {
+                        Capsule().fill(CompanionStyle.accent).frame(width: geometry.size.width * assistant.pomodoroProgress)
+                    }
+            }.frame(height: 3).accessibilityLabel("Time remaining").accessibilityValue("\(Int(assistant.pomodoroProgress * 100)) percent")
+            HStack(spacing: 8) {
+                Text(assistant.pomodoroPhase == .paused ? "Resume whenever you’re ready." : assistant.interval == .focus ? "Stay with one thing." : "Take a breath. Come back ready.")
+                    .font(.caption).foregroundStyle(CompanionStyle.muted)
+                Spacer(minLength: 0)
+                Button("Adjust") { notch.showFocusSetup() }.font(.caption).buttonStyle(.plain).foregroundStyle(CompanionStyle.muted)
+                iconButton("xmark", label: "Tuck away widget") { notch.hide() }
+            }
+        }
+    }
+
+    private var completion: some View {
+        VStack(spacing: 18) {
+            HStack(spacing: 10) {
+                face
+                title(assistant.activityTitle, caption: assistant.interval == .focus ? "\(assistant.completedSessions) sessions done. Time for a break." : "Come back ready.")
+                Spacer()
+                iconButton("xmark", label: "Hide widget") { notch.hide() }
+            }
+            HStack(spacing: 8) {
+                Button("Back to focus") { notch.showFocusSetup() }.buttonStyle(CompanionButtonStyle())
+                Button {
+                    if assistant.interval == .focus { assistant.startBreak() }
+                    else { assistant.startFocusSession() }
+                    notch.showCurrentTask()
+                } label: {
+                    Text(assistant.interval == .focus ? "Start \(assistant.nextBreakMinutes) min break" : "Start focus").frame(maxWidth: .infinity)
+                }.buttonStyle(CompanionButtonStyle(primary: true))
+            }
+        }
+    }
+
+    private var voice: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 10) {
+                face
+                title(activation.commandAcknowledged ? "Got it." : activation.isListening ? "Listening…" : activation.isPreparing ? "Getting ready…" : "Voice", caption: activation.voiceStatus)
+                Spacer()
+                iconButton("xmark", label: "Cancel voice command") { activation.cancelVoiceCommand() }
+            }
+            Text(activation.transcript.isEmpty ? "Try “start focus” or “pause timer”." : "“\(activation.transcript)”")
+                .font(activation.transcript.isEmpty ? .callout : .title3).lineLimit(2)
+                .foregroundStyle(activation.transcript.isEmpty ? CompanionStyle.muted : .white)
+            HStack(spacing: 8) {
+                Button("Cancel") { activation.cancelVoiceCommand() }.buttonStyle(CompanionButtonStyle())
+                if activation.isListening { Text("Finish speaking to run your command.").font(.caption).foregroundStyle(CompanionStyle.muted) }
+            }
+        }
+    }
+
+    private func title(_ title: String, caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.headline).lineLimit(1)
+            Text(caption).font(.caption).foregroundStyle(CompanionStyle.muted).lineLimit(2)
+        }
+    }
+
+    private func iconButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 13, weight: .semibold))
+                .frame(width: 32, height: 32).background(CompanionStyle.surface, in: Circle())
+        }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel(label).help(label)
+    }
+
+
 }
 
 private struct NotchPanelShape: Shape {
-    let geometry: NotchGeometry
-
     func path(in rect: CGRect) -> Path {
         let radius = min(NotchGeometry.cornerRadius, min(rect.width, rect.height) / 2)
-        let leftNeck = rect.midX - geometry.neckWidth / 2
-        let rightNeck = rect.midX + geometry.neckWidth / 2
-        let shoulderBottom = rect.minY + geometry.contentTop
-        let neckBottom = rect.minY + geometry.neckHeight
         var path = Path()
-        path.move(to: CGPoint(x: leftNeck, y: rect.minY))
-        path.addLine(to: CGPoint(x: rightNeck, y: rect.minY))
-        if geometry.shoulderHeight > 0 {
-            path.addLine(to: CGPoint(x: rightNeck, y: neckBottom))
-            path.addCurve(
-                to: CGPoint(x: rect.maxX, y: shoulderBottom),
-                control1: CGPoint(x: rightNeck, y: shoulderBottom),
-                control2: CGPoint(x: rect.maxX, y: neckBottom)
-            )
-        }
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - radius))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.maxX - radius, y: rect.maxY),
-            control: CGPoint(x: rect.maxX, y: rect.maxY)
-        )
+        path.addQuadCurve(to: CGPoint(x: rect.maxX - radius, y: rect.maxY), control: CGPoint(x: rect.maxX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.minX + radius, y: rect.maxY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX, y: rect.maxY - radius),
-            control: CGPoint(x: rect.minX, y: rect.maxY)
-        )
-        if geometry.shoulderHeight > 0 {
-            path.addLine(to: CGPoint(x: rect.minX, y: shoulderBottom))
-            path.addCurve(
-                to: CGPoint(x: leftNeck, y: neckBottom),
-                control1: CGPoint(x: rect.minX, y: neckBottom),
-                control2: CGPoint(x: leftNeck, y: shoulderBottom)
-            )
-        }
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - radius), control: CGPoint(x: rect.minX, y: rect.maxY))
         path.closeSubpath()
-        return path
-    }
-}
-
-private struct PomodoroOrbView: View {
-    let timeLabel: String
-    let progress: Double
-    let isPaused: Bool
-    let pulse: Double
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            .white.opacity(0.28),
-                            (isPaused ? Color.gray : Color.purple).opacity(0.72),
-                            .black.opacity(0.88)
-                        ],
-                        center: .topLeading,
-                        startRadius: 2,
-                        endRadius: 62
-                    )
-                )
-
-            Circle()
-                .stroke(.white.opacity(0.16), lineWidth: 3)
-
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(
-                    isPaused ? .white.opacity(0.62) : .mint,
-                    style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .padding(3)
-
-            Text(timeLabel)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .monospacedDigit()
-                .foregroundStyle(.white)
-        }
-        .frame(width: 78, height: 78)
-        .scaleEffect(1 + pulse)
-        .shadow(color: (isPaused ? Color.gray : Color.purple).opacity(0.45), radius: 12)
-        .accessibilityLabel("Pomodoro \(timeLabel) remaining")
-    }
-}
-
-private struct CalendarWidgetView: View {
-    @EnvironmentObject private var notch: NotchWidgetController
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    let calendar: CalendarViewModel
-    let time: TimeInterval
-    let width: CGFloat
-
-    var body: some View {
-        let pulse = reduceMotion ? 1 : 1 + sin(time * 1.6) * 0.025
-
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Button {
-                    notch.show()
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Back to character")
-                Image(systemName: "calendar")
-                    .font(.system(size: 18, weight: .semibold))
-                    .scaleEffect(pulse)
-                    .foregroundStyle(.cyan)
-                Text("Calendar")
-                    .font(.headline)
-                Spacer()
-                Button {
-                    calendar.refresh()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-                .disabled(calendar.accessState != .fullAccess || calendar.isLoading)
-                .accessibilityLabel("Refresh calendar")
-                if calendar.nextEvent?.hasLink == true {
-                    Button {
-                        calendar.openNextEventLink()
-                    } label: {
-                        Label("Join", systemImage: "link")
-                    }
-                    .font(.caption.weight(.semibold))
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.cyan)
-                    .accessibilityLabel("Open next event meeting link")
-                }
-            }
-
-            if calendar.upcomingEvents.isEmpty {
-                VStack(alignment: .leading, spacing: 7) {
-                    Text(calendar.status)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-
-                    if !calendar.isLoading {
-                        Button(calendar.accessButtonLabel) {
-                            calendar.requestAccessAndRefresh()
-                        }
-                        .font(.caption2.weight(.semibold))
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.cyan)
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 4)
-                        .background(.cyan.opacity(0.13), in: Capsule())
-                        .disabled(calendar.isRequestingAccess)
-                    }
-                }
-            } else {
-                ForEach(Array(calendar.upcomingEvents.prefix(3))) { event in
-                    HStack(alignment: .firstTextBaseline, spacing: 8) {
-                        Text(event.startDate.formatted(date: .omitted, time: .shortened))
-                            .font(.caption.monospacedDigit())
-                            .foregroundStyle(.cyan)
-                            .frame(width: 54, alignment: .leading)
-                        Text(event.title)
-                            .font(.caption.weight(.medium))
-                            .lineLimit(1)
-                    }
-                }
-                Text(calendar.status)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
-        .padding(.horizontal, 22)
-        .frame(width: width, height: NotchGeometry.bodyHeight, alignment: .leading)
-    }
-}
-
-private struct NotchFaceView: View {
-    let isFocusing: Bool
-    let isBlinking: Bool
-    let focusMotion: Double
-
-    var body: some View {
-        ZStack {
-            if isFocusing {
-                HStack(spacing: 84) {
-                    FocusArm(isLeft: true, motion: focusMotion)
-                    FocusArm(isLeft: false, motion: focusMotion)
-                }
-                .offset(y: 20)
-            }
-
-            VStack(spacing: 12) {
-                HStack(spacing: 34) {
-                    FaceEye(isBlinking: isBlinking)
-                    FaceEye(isBlinking: isBlinking)
-                }
-
-                Smile(depth: isFocusing ? 0.72 : 0.62)
-                    .stroke(.white.opacity(0.90), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .frame(width: 64, height: 30)
-            }
-        }
-        .frame(width: 160, height: 130)
-        .accessibilityHidden(true)
-    }
-}
-
-private struct FocusArm: View {
-    let isLeft: Bool
-    let motion: Double
-
-    var body: some View {
-        VStack(spacing: 2) {
-            Capsule()
-                .fill(.white.opacity(0.82))
-                .frame(width: 8, height: 30)
-            Circle()
-                .fill(.white)
-                .frame(width: 15, height: 15)
-        }
-        .rotationEffect(.degrees((isLeft ? -1 : 1) * (18 + motion * 4)))
-        .offset(y: -motion * 4)
-    }
-}
-
-private struct FaceEye: View {
-    let isBlinking: Bool
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Capsule()
-                .fill(.white.opacity(0.82))
-                .frame(width: 18, height: 4)
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(.white)
-                .frame(width: 24, height: isBlinking ? 4 : 38)
-        }
-    }
-}
-
-private struct Smile: Shape {
-    let depth: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let start = CGPoint(x: rect.minX + 4, y: rect.midY - 2)
-        let end = CGPoint(x: rect.maxX - 4, y: rect.midY - 2)
-        let control = CGPoint(x: rect.midX, y: rect.minY + rect.height * depth)
-        path.move(to: start)
-        path.addQuadCurve(to: end, control: control)
         return path
     }
 }

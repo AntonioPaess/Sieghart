@@ -1,23 +1,76 @@
 # Sieghart
 
-Native macOS SwiftUI project for the personal assistant previously referred to as MyDude.
+Native macOS SwiftUI companion with a configurable notch island and local Pomodoro timer.
 
-Sieghart will bring together daily context, calendar, reminders, Pomodoro sessions, voice, AI integrations, and a physical trigger driven by impact detection from the Mac accelerometer.
+The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is the macOS development base. The [repository overview](../README.md#swift-student-challenge) records the offline, three-minute story and submission milestone. Real sensor interaction remains a goal; compatibility with the accepted playground destination needs validation.
 
-## Current state
+## App and notch
 
-The project has a main window, a menu bar entry, a notch panel prototype, an experimental AppleSPUHIDDevice accelerometer reader, a Calendar/EventKit integration under real-device validation, configurable one-, two-, and three-impact actions, and a local Pomodoro action. The sensor starts automatically when the app opens. Two impacts can start or pause Pomodoro, and the focus widget shows a countdown orb on the right, animated arms, and a **Finish** button. Three impacts show Calendar mode without triggering a permission prompt; a **Show calendar in notch** action is also available from the main window and menu bar. Only the explicit **Connect calendar** action requests access. After authorization, an asynchronous EventKit query checks the next seven days and distinguishes no calendars, no upcoming events, and loaded events. A meeting URL from the event URL, location, or notes can be opened from the widget. The detector uses all three axes, a simple gravity baseline, and a cooldown to reduce repeated triggers.
+- **Overview** shows the current session and completed count.
+- **Focus** opens a dedicated tab in the app. It uses the same configuration editor as the widget: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
+- **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
+- **Appearance** offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal, and Ink Buddy. Selection saves immediately and applies throughout the app and notch. Expanded timer density, character motion, and reduced motion are configurable. macOS Reduce Motion is always respected.
 
-The development environment confirmed a Mac15,7 with an Apple M3 Pro and an AppleSPUHIDDevice service using usage 3 with 22-byte reports. The app still needs to be run on the hardware to confirm actual sensor access, sampling behavior, and permission requirements.
+Normal reveal opens the selected avatar beside a contextual message, session time, and completed count. Four original neutral designs come directly from the unchanged approved board. Coast Buddy replaces Soft Orbit and Ink Buddy replaces Star Sprout; the replacements use their own neutral pose. Local transparent sprite sheets provide nine poses per character, with additional body movement for touch, listening, acknowledgement, and celebration. The same avatar appears in the menu header and replaces the menu-bar sparkle icon.
 
-The notch panel now derives the camera cutout width and top inset from `NSScreen`, draws a narrow neck that expands into the body below the physical notch, and animates the panel height from the top edge. Its hover target follows the measured cutout rather than covering a broad section of the menu bar. Reduce Motion disables the panel transition and continuous character motion. These geometry changes are a test candidate, not an accepted visual design. Pomodoro phase, deadline, and paused time are stored in `UserDefaults` so a session can recover after relaunch; full-session behavior still needs a real Mac test.
+The first three quick touches produce a happy bounce and sparkle, the fourth brings a grumpy shake, and the fifth sends the companion to sleep. One more touch wakes and stretches it. Each reaction has a short written response. Sleep lasts until another touch; taps separated by more than three seconds start a new burst. Custom interactions retain keyboard and VoiceOver actions with a rounded focus indicator, avoiding the native rectangular mouse focus ring.
 
-The project also builds for `x86_64`, but that only confirms binary compatibility. It does not mean that the Intel Mac has the required accelerometer.
+Starting a session tucks the widget into a small island. Its height matches the physical camera cutout exactly; it grows horizontally, leaving the camera area clear. Displays without a notch use a 36-point island. The companion strolls occasionally in the free lateral space. During the final 30 seconds it appears beside the countdown, nudges the digits, and shows “Almost!”. Hover or click expands timer controls; leaving or closing them returns to the island. Impact reveal also opens the companion from the compact state. Native panel bounds are controlled explicitly; the hosting view cannot retain an earlier view’s size constraints.
 
-## Current technical milestone
+The widget backplate uses opaque sRGB black, with no whole-window transparency during reveal. Offscreen rendering verifies actual backplate pixels as RGB 0,0,0 with alpha 1. Physical camera glass and the display can still differ in apparent black level. Walking, nudging, bouncing, and other motion pause when character motion is disabled or Reduce Motion is enabled.
 
-The Calendar integration still needs a real Mac test with a known event and meeting URL. A successful build and a granted authorization state do not establish that personal events load correctly. The notch appearance also requires the user's visual review on the actual display.
+The menu shares the app’s dark palette, rounded controls, selected avatar, session card, progress bar, and voice shortcut hint.
 
-## Name
+The widget and hover zone are nonactivating floating panels with the cross-app `canJoinAllApplications` policy. They restore ordering when the active Space or application changes, including full-screen apps, without activating Sieghart or reopening a dismissed companion. This follows [Apple’s overlay collection behavior](https://developer.apple.com/documentation/appkit/nswindow/collectionbehavior-swift.struct/canjoinallapplications). Full-screen transitions and hover behavior still need a physical Mac check.
 
-`Sieghart` is the current technical project name. `MyDude` remains the product concept name in the vault until the product identity is finalized.
+Every completed interval emits a separate completion event. The widget expands with a bouncing avatar, orbiting sparkles, and a clear completion message, including when a break starts automatically. After five seconds it tucks away if the pointer is outside; hovering keeps the message available. The break countdown continues during this announcement. Manual Finish offers a break action. Completed breaks invite the next focus session.
+
+Timer deadlines, paused state, interval type, configuration, rounds, and completed count survive relaunch. Focus counts once; breaks never increase that count. Long breaks follow the last round. Expired sessions finish once after relaunch and wait for the user before starting another interval.
+
+## Shortcuts and voice
+
+The companion defaults to **Control + Option + S**. Voice defaults to **Option + Command**, pressed and released. Record any key combination in Activation; modifier-only chords are saved on release. Escape cancels recording. Bindings persist independently, can be disabled, and cannot use the same chord. Existing companion shortcut choices migrate automatically.
+
+Regular key combinations use Carbon hotkeys. Modifier-only shortcuts use local and global AppKit event monitors and require Accessibility permission for use outside Sieghart. Activation offers the permission button and displays availability. Using a regular key or an extra modifier suppresses a modifier-only trigger. No keyboard text is recorded or logged.
+
+Leaving a shortcut recorder cancels unfinished capture and restores activation. Registrations refresh after app and Space changes, wake, display wake, and unlock. A two-second health check observes permission and secure-input changes and retries failed setup without changing the saved bindings. The intermittent failure report remains tracked in [SG-001](BUGS.md) pending physical Mac validation.
+
+Voice starts explicitly through its shortcut, Speak, or the microphone button. Choose English or Portuguese. The app requests microphone and speech access, listens for up to ten seconds, and automatically executes a supported local command after recognition ends or a short pause. Capture stops before executing. Cancel remains available; the microphone is off while idle.
+
+Supported intents include starting focus with a valid duration, pause, resume, finish, reset, start break, show, hide, configuration, and AI limits. A successful command gets a nod, green checkmark, and “Got it.” message. Negation, conflicting actions, and unsupported durations are rejected. This is a bounded local command interface; open-ended conversation and launching other apps remain future work. On-device speech is preferred when supported, but language and system availability can require Apple services. The timer and core interaction work independently of speech.
+
+Speech authorization uses a Sendable callback bridge. Audio tap writes are serialized through a thread-safe feed that closes on teardown. Recognition results cross to the main actor as primitive text and status values. The signed target retains its Hardened Runtime Audio Input entitlement.
+
+Impact gestures are off by default. Enabling them activates the experimental accelerometer reader and configurable one/two/three-impact mappings. Availability depends on Mac hardware.
+
+Calendar is temporarily hidden. `CalendarContext.swift` remains for later repair; saved Calendar impact mappings fall back to revealing the companion.
+
+## AI adapters
+
+Codex quota access uses `account/rateLimits/read` through the installed CLI app server and existing sign-in. Requests time out after twelve seconds. The app never starts a model turn or resets a quota. Percentages show **remaining** usage, and window names come from the returned duration. Expired/missing values are unavailable instead of fabricated zeroes. Credentials stay within Codex.
+
+Token counters read numeric usage fields from recent `.codex/sessions` and `.claude/projects` JSONL files. Discovery is bounded to 5,000 files, processing to 80 recent files/provider, and each read to its final 2 MiB. Codex cumulative counters and cloned rollout UUIDs are deduplicated; Claude streamed message IDs are deduplicated. Reasoning and cache are not added twice. This is **partial local history**, not full account lifetime usage.
+
+The local ledger holds dated subscription/API charges separately in USD and BRL. Token estimates use custom average prices per million, with an optional dated exchange rate. They are not provider invoices. Disconnect controls stop provider reads. Claude individual subscription quotas have no verified automatic adapter in this release. A JSON report can supply a dated reading:
+
+```json
+{
+  "capturedAt": "2026-10-05T21:00:00Z",
+  "primary": {"usedPercent": 25, "windowDurationMins": 300, "resetsAt": 1791244800},
+  "secondary": {"usedPercent": 40, "windowDurationMins": 10080, "resetsAt": 1791763200}
+}
+```
+
+Source protocol: [Codex app server](https://learn.chatgpt.com/docs/app-server). Provider asset attribution: [third-party notices](THIRD_PARTY_NOTICES.md).
+
+## Verification
+
+From the repository root:
+
+```sh
+bash Sieghart/Tests/run-checks.sh
+```
+
+The checks cover timer behavior and restoration, background speech callbacks, voice execution and acknowledgement, shortcut persistence and modifier gestures, all six libraries of nine poses, persistent avatar selection, repeated-touch moods and waking, exact compact notch height, expanded-control collapse, and completion announcements during automatic breaks. They use isolated preferences and a headless controller: no app windows, sensor, microphone, permission requests, or system shortcut registration.
+
+The generic signed macOS build covers `arm64` and `x86_64`. Physical notch fit, recording a shortcut in the UI, permissions, real microphone recognition, animation feel, and impact hardware still require a user run on the Mac.

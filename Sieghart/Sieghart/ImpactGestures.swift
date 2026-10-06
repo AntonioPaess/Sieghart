@@ -8,7 +8,6 @@ enum ImpactAction: String, CaseIterable, Identifiable {
     case startPomodoro
     case pausePomodoro
     case togglePomodoro
-    case showCalendar
 
     var id: String { rawValue }
 
@@ -26,8 +25,6 @@ enum ImpactAction: String, CaseIterable, Identifiable {
             return "Pause Pomodoro"
         case .togglePomodoro:
             return "Start or pause Pomodoro"
-        case .showCalendar:
-            return "Show calendar"
         }
     }
 }
@@ -61,7 +58,13 @@ final class ImpactGestureCoordinator: ObservableObject {
         self.notch = notch
         singleImpactAction = Self.loadAction(forKey: singleActionKey, default: .toggleCharacter)
         doubleImpactAction = Self.loadAction(forKey: doubleActionKey, default: .togglePomodoro)
-        tripleImpactAction = Self.loadAction(forKey: tripleActionKey, default: .showCalendar)
+        tripleImpactAction = Self.loadAction(forKey: tripleActionKey, default: .showCharacter)
+    }
+
+    func cancelPendingImpacts() {
+        sequenceTask?.cancel()
+        sequenceTask = nil
+        pendingImpactCount = 0
     }
 
     func receive(_ impact: ImpactEvent) {
@@ -107,8 +110,6 @@ final class ImpactGestureCoordinator: ObservableObject {
         case .togglePomodoro:
             assistant.togglePomodoro()
             notch.show()
-        case .showCalendar:
-            notch.showCalendar()
         }
     }
 
