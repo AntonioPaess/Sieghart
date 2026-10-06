@@ -19,10 +19,12 @@ final class CompanionPreferences: ObservableObject {
     @Published var characterMotion: Bool { didSet { save(characterMotion, "characterMotion") } }
     @Published var reduceMotion: Bool { didSet { save(reduceMotion, "reduceMotion") } }
     @Published var avatar: CompanionAvatar { didSet { defaults.set(avatar.rawValue, forKey: "appearance.avatar") } }
+    @Published var onboardingComplete: Bool { didSet { defaults.set(onboardingComplete, forKey: "onboarding.completed.v1") } }
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        onboardingComplete = defaults.bool(forKey: "onboarding.completed.v1")
         hoverEnabled = defaults.object(forKey: "appearance.hover") as? Bool ?? true
         impactsEnabled = defaults.object(forKey: "appearance.impacts") as? Bool ?? false
         compactTimer = defaults.object(forKey: "appearance.compactTimer") as? Bool ?? true
@@ -73,5 +75,11 @@ struct CompanionInteraction<Content: View>: View {
             .onKeyPress(keys: [.space, .return]) { _ in pointerActivated = false; action(); return .handled }
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { action() }
+    }
+}
+
+extension View {
+    func companionCard() -> some View {
+        padding(24).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17))
     }
 }

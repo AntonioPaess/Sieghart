@@ -19,7 +19,7 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 | Feature | What it does |
 | --- | --- |
-| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose a companion in Appearance; it also becomes your menu-bar icon. |
+| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance. It also becomes your menu-bar icon. |
 | **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Body motion and short messages explain each response. |
 | **Focus in both surfaces** | The app’s Focus tab and notch share duration, break lengths, rounds, and automatic break settings. |
 | **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover or click for controls. |
@@ -27,6 +27,7 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
 | **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
 | **Voice on demand** | Supported commands execute automatically in English or Portuguese. A nod, checkmark, and message acknowledge an understood command. |
+| **AI work nearby** | With one local-monitoring consent, follow Codex/Claude Code activity automatically, see limits and charts, and keep the active provider beside your avatar. |
 | **Motion preferences** | Choose compact mode and character motion; macOS Reduce Motion is always respected. |
 
 ### Meet the companion
@@ -35,7 +36,7 @@ Configure your Pomodoro in the app’s **Focus tab** or directly inside the widg
 
 *Rendered from the app’s bundled artwork. Four original neutral designs come from the preserved concept board. Coast Buddy and Ink Buddy replace Soft Orbit and Star Sprout; all six use bundled reaction sheets.*
 
-Open **Appearance** and select a companion in the three-column gallery. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is bundled and works offline. CRT Buddy remains the default.
+First launch presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is bundled and works offline. CRT Buddy remains the default.
 
 ### A companion with context
 
@@ -84,10 +85,11 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 ### Start your first session
 
-1. Hover at the notch or press **Control + Option + S** to reveal the companion.
-2. Open the app’s **Focus tab**, or click **Focus** in the widget, and choose your duration, breaks, and rounds.
-3. Press **Start focus**. The widget tucks into the island; hover or click it to pause, resume, or finish.
-4. Open **Activation** or **Appearance** in the main window to customize the experience.
+1. Complete the two-step onboarding: choose one of six avatars, then decide whether to follow local AI usage automatically. Focus works with monitoring off.
+2. Hover at the notch or press **Control + Option + S** to reveal the companion.
+3. Open the app’s **Focus tab**, or click **Focus** in the widget, and choose your duration, breaks, and rounds.
+4. Press **Start focus**. The widget tucks into the island; hover or click it to pause, resume, or finish.
+5. Open **Activation** or **Appearance** in the main window to customize the experience.
 
 The menu bar also provides access to the widget and app. In Activation, press a shortcut recorder and enter any key combination; release modifier-only keys to save. Companion and voice bindings can be disabled separately. Impact gestures are off by default.
 
@@ -119,7 +121,7 @@ Run all deterministic checks:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover timer configuration and restoration, interval counting, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six sprite libraries, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence, AI lifecycle completion, long-turn metadata recovery, graph deduplication and first-run avatar persistence.
 
 ## Project map
 
@@ -137,23 +139,34 @@ These checks do not open the app, activate the sensor, register system shortcuts
 | [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
 | [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) / [`AvatarSprites`](Sieghart/Sieghart/AvatarSprites) | Original artwork, six sprite libraries, body motion, touch reactions, and the Appearance gallery. |
 | [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
-| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) | Local token counters, spending ledger and shared provider panels. |
+| [`OnboardingView.swift`](Sieghart/Sieghart/OnboardingView.swift) | Initial six-avatar choice and local AI monitoring consent. |
+| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIActivity.swift`](Sieghart/Sieghart/AIActivity.swift) | Background provider monitoring, local lifecycle/counters and spending ledger. |
+| [`AIActivityView.swift`](Sieghart/Sieghart/AIActivityView.swift) | Quotas, spending, live work, hourly/model/project charts and activity heatmap. |
+| [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) | Detailed counters, recorded charges and source settings. |
 | [`CodexUsage.swift`](Sieghart/Sieghart/CodexUsage.swift) | Read-only Codex quota adapter, reset windows and timeouts. |
 | [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
 
 ## AI usage
 
-Open **AI limits** from Overview, the menu or widget tools; say “What is my AI limits” to open the same panel. Codex reads the locally signed-in account through its app server: real 5-hour and weekly remaining percentages, reset dates and countdowns. Local Codex and Claude Code logs supply input, output and cache counters, with a clearly marked partial-history scope.
+Onboarding asks once whether to follow local AI usage. When enabled, Sieghart detects installed Codex/Claude Code and refreshes in the background using existing provider sign-in. Open **AI limits** from the sidebar, Overview, menu or widget tools; say “What is my AI limits” to open the same panel. No extra API key is required for this local adapter.
 
-Recorded subscription/API charges remain separate from token estimates. Custom USD prices and a dated USD-to-BRL rate calculate estimates without representing them as bills. Claude quotas can use a dated imported report; automatic individual Claude quota access remains an adapter milestone. Provider symbols are bundled vector assets; see [third-party notices](Sieghart/THIRD_PARTY_NOTICES.md).
+The dashboard follows the reference screenshots: quota and spending cards, current project/model/output/elapsed work beside your avatar, a 24-hour chart, model/project rankings, and a 13-week activity heatmap with streak, active days and busiest day. Reliable active work also appears automatically in the compact island. Completion clears the work indicator; a focus timer remains available.
 
-![Example Codex panel, rendered from production views](Sieghart/Design/Concepts/codex-usage-preview.png)
+Codex supplies real 5-hour and weekly remaining percentages, resets and dated account activity. Hourly/model/project charts use deduplicated local logs and are marked **partial local history**. Missing readings remain unavailable. Disconnect stops provider reads and automatic reconnection.
+
+Recorded subscription/API charges remain separate from token estimates. Custom USD prices and a dated USD-to-BRL rate calculate estimates without representing them as bills. Automatic billing, model-price sources and FX sources remain Sprint 3 work. Claude quotas can use a dated imported report; automatic individual Claude quota access remains an adapter milestone. Provider emblems are bundled vector assets, including the corrected OpenAI emblem for Codex; see [third-party notices](Sieghart/THIRD_PARTY_NOTICES.md).
+
+![Complete AI dashboard rendered from production views](Sieghart/Design/Concepts/ai-dashboard-preview.png)
+
+*Offscreen production-view render with labeled example data; no live app window was opened. [Six-avatar onboarding preview](Sieghart/Design/Concepts/onboarding-preview.png).*
 
 ## Roadmap and references
 
 [Full roadmap](ROADMAP.md) · [39 reference screenshots](Sieghart/Design/References/Vorssaint/README.md). The roadmap covers all 77 modules in the current reference catalog, foundational onboarding/settings, and companion interactions. Planned modules are not claims of shipped functionality.
 
 ## Next steps
+
+Sprint 3 is in progress: onboarding and the live AI dashboard are implemented. Voice opening apps/browser search and automatic spending sources are the next slices.
 
 - Validate the new widget layout and voice flow on the physical Mac.
 - Validate real sensor interaction in the accepted Challenge submission environment.

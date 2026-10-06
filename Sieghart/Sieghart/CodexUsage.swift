@@ -28,6 +28,7 @@ struct CodexQuotaWindow: Decodable, Equatable, Sendable {
 
 struct CodexQuotaBucket: Decodable, Sendable {
     let limitId: String?
+    var planType: String? = nil
     let primary: CodexQuotaWindow?
     let secondary: CodexQuotaWindow?
 }
@@ -58,7 +59,7 @@ enum CodexUsageError: Error, LocalizedError {
     }
 }
 
-// One short-lived stdio connection, with only initialize and rateLimits/read.
+// Short-lived read-only stdio connections for quota and account activity.
 // Credentials stay inside Codex. No inference, login, turns, or reset requests.
 enum LocalCodexUsage {
     static func executable() -> URL? {
@@ -74,6 +75,16 @@ enum LocalCodexUsage {
     }
 
     static func fetch(executable: URL? = nil, timeout: TimeInterval = 12) throws -> CodexUsageResponse {
+        let result = try JSONDecoder().decode(CodexUsageResponse.self, from: request(method: "account/rateLimits/read", executable: executable, timeout: timeout))
+        guard let bucket = result.codex, bucket.primary != nil || bucket.secondary != nil else { throw CodexUsageError.invalidResponse }
+        return result
+    }
+
+    static func fetchActivity() throws -> CodexAccountActivity {
+        try JSONDecoder().decode(CodexAccountActivity.self, from: request(method: "account/usage/read"))
+    }
+
+    private static func request(method: String, executable: URL? = nil, timeout: TimeInterval = 12) throws -> Data {
         guard let executable = executable ?? self.executable() else { throw CodexUsageError.missingCLI }
         let process = Process()
         let input = Pipe(), output = Pipe()
@@ -127,10 +138,8 @@ enum LocalCodexUsage {
         try send(["id": 1, "method": "initialize", "params": ["clientInfo": ["name": "sieghart", "title": "Sieghart", "version": "0.1.0"]]])
         _ = try response(id: 1)
         try send(["method": "initialized", "params": [:]])
-        try send(["id": 2, "method": "account/rateLimits/read"])
-        let result = try JSONDecoder().decode(CodexUsageResponse.self, from: response(id: 2))
-        guard let bucket = result.codex, bucket.primary != nil || bucket.secondary != nil else { throw CodexUsageError.invalidResponse }
-        return result
+        try send(["id": 2, "method": method])
+        return try response(id: 2)
     }
 }
 
@@ -181,4 +190,19 @@ final class CodexUsageModel: ObservableObject {
             do { try await Task.sleep(for: .seconds(60)) } catch { return }
         }
     }
+}
+
+
+struct CodexAccountActivity: Decodable, Sendable {
+    struct Summary: Decodable, Sendable {
+        let lifetimeTokens: Int64?
+        let peakDailyTokens: Int64?
+        let currentStreakDays: Int64?
+    }
+    struct Day: Decodable, Sendable {
+        let startDate: String
+        let tokens: Int64
+    }
+    let summary: Summary?
+    let dailyUsageBuckets: [Day]?
 }

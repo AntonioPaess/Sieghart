@@ -6,6 +6,8 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 
 ## App and notch
 
+First launch shows a two-step onboarding: choose one of all six avatars with its name/personality, then choose local AI monitoring. Finish saves both preferences. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** changes the avatar later.
+
 - **Overview** shows the current session and completed count.
 - **Focus** opens a dedicated tab in the app. It uses the same configuration editor as the widget: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
 - **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
@@ -47,11 +49,17 @@ Calendar is temporarily hidden. `CalendarContext.swift` remains for later repair
 
 ## AI adapters
 
-Codex quota access uses `account/rateLimits/read` through the installed CLI app server and existing sign-in. Requests time out after twelve seconds. The app never starts a model turn or resets a quota. Percentages show **remaining** usage, and window names come from the returned duration. Expired/missing values are unavailable instead of fabricated zeroes. Credentials stay within Codex.
+`AIUsageModel.startMonitoring` runs independently of whether the AI panel is open. With saved consent, installed Codex/Claude Code detection runs at most once per minute. Cached local lifecycle metadata refreshes nominally every five seconds; quota/counter work runs on the minute cycle and quota requests coalesce for five minutes. Codex account activity refreshes every five minutes. Requests can delay a polling cycle. Disabled providers are removed from displayed activity; disconnect also disables automatic reconnection. In-flight counter results are discarded after disconnect.
 
-Token counters read numeric usage fields from recent `.codex/sessions` and `.claude/projects` JSONL files. Discovery is bounded to 5,000 files, processing to 80 recent files/provider, and each read to its final 2 MiB. Codex cumulative counters and cloned rollout UUIDs are deduplicated; Claude streamed message IDs are deduplicated. Reasoning and cache are not added twice. This is **partial local history**, not full account lifetime usage.
+Codex access uses `account/rateLimits/read` and `account/usage/read` through the installed CLI app server and existing sign-in. Requests time out after twelve seconds. The app never starts a model turn or resets a quota. Percentages show **remaining** usage, and window names come from returned durations. Expired/missing values remain unavailable. Credentials stay within Codex. Account activity supplies dated daily buckets and a reported streak when available; failed refresh preserves a visibly dated last successful reading.
 
-The local ledger holds dated subscription/API charges separately in USD and BRL. Token estimates use custom average prices per million, with an optional dated exchange rate. They are not provider invoices. Disconnect controls stop provider reads. Claude individual subscription quotas have no verified automatic adapter in this release. A JSON report can supply a dated reading:
+Numeric counters and activity metadata come from recent `.codex/sessions` and `.claude/projects` JSONL files. Discovery is bounded to 5,000 candidate files and processing to 80 recent files/provider. Counter parsing reads the final 2 MiB. Activity also inspects the initial 64 KiB for project metadata. When a recent Codex turn begins before the tail, a cached, bounded reverse search can inspect up to 256 MiB of older lifecycle/context records. Unchanged files are not reparsed on every poll. Only timestamps, counters, model, project basename and lifecycle are retained; no prompt, response, tool arguments or credentials are retained or logged.
+
+Codex cumulative counters/cloned rollout IDs and Claude streamed message IDs are deduplicated. Cache and reasoning are not added twice; Claude cache creation is accounted for separately in estimates. A recent modified file alone is not proof of active work: start/completion events govern the badge, with a five-minute freshness limit. This is **partial local history**, not full account lifetime usage.
+
+The shared dashboard provides quotas, spending, current work, 24 hourly bars, model/project rankings and a 13-week activity heatmap. Account daily activity is used when supplied; otherwise the heatmap has the partial local source label. Missing days are marked **No record**. Active work appears beside the selected avatar in the compact island and opens the complete AI panel, while preserving active focus. The island retains the camera gap and physical notch height. [Dashboard preview](Design/Concepts/ai-dashboard-preview.png) and [onboarding preview](Design/Concepts/onboarding-preview.png) use labeled sample fixtures in production views.
+
+The local ledger holds dated subscription/API charges separately in USD and BRL. Token estimates use custom average prices per million, with an optional dated exchange rate. They are not provider invoices. Verified live Codex thread usage did not return a USD estimate; automatic billing/model prices/FX still require adapters. Claude individual subscription quotas have no verified automatic adapter in this release. A JSON report can supply a dated reading:
 
 ```json
 {
@@ -61,7 +69,7 @@ The local ledger holds dated subscription/API charges separately in USD and BRL.
 }
 ```
 
-Source protocol: [Codex app server](https://learn.chatgpt.com/docs/app-server). Provider asset attribution: [third-party notices](THIRD_PARTY_NOTICES.md).
+Source protocol: [Codex app server](https://learn.chatgpt.com/docs/app-server). Provider asset attribution: [third-party notices](THIRD_PARTY_NOTICES.md). User reference screenshots: [39-image gallery](Design/References/Vorssaint/README.md).
 
 ## Verification
 
@@ -71,6 +79,6 @@ From the repository root:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-The checks cover timer behavior and restoration, background speech callbacks, voice execution and acknowledgement, shortcut persistence and modifier gestures, all six libraries of nine poses, persistent avatar selection, repeated-touch moods and waking, exact compact notch height, expanded-control collapse, and completion announcements during automatic breaks. They use isolated preferences and a headless controller: no app windows, sensor, microphone, permission requests, or system shortcut registration.
+The checks cover timer behavior and restoration, background speech callbacks, voice execution and acknowledgement, shortcut persistence and modifier gestures, all six libraries of nine poses, persistent avatar selection, repeated-touch moods and waking, exact compact notch height, expanded-control collapse, completion announcements during automatic breaks, real quota/activity protocol fixtures, token/stream/clone deduplication, live-island transitions, long-turn metadata recovery, cache creation and onboarding persistence. They use isolated preferences and a headless controller: no app windows, sensor, microphone, permission requests, or system shortcut registration.
 
 The generic signed macOS build covers `arm64` and `x86_64`. Physical notch fit, recording a shortcut in the UI, permissions, real microphone recognition, animation feel, and impact hardware still require a user run on the Mac.

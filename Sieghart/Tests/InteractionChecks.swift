@@ -92,6 +92,21 @@ struct InteractionChecks {
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle)
         notch.activation = activation
 
+        let liveTask = AIWork(id: "fixture", provider: .codex, model: "fixture-model", project: "Fixture project", startedAt: .now.addingTimeInterval(-20), lastSeen: .now, output: 100)
+        let liveUsage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
+        notch.aiUsage = liveUsage
+        notch.showIsland()
+        precondition(notch.isVisible && notch.presentation == .island && notch.geometry.height == 36)
+        notch.showCurrentTask()
+        precondition(notch.presentation == .aiLimits) // No focus timer needed for live AI.
+        notch.hide()
+        precondition(notch.presentation == .island)
+        let disconnected = CodexUsageModel(defaults: defaults, load: { throw CodexUsageError.unavailable })
+        liveUsage.disable(.codex, codex: disconnected)
+        notch.showIsland()
+        precondition(!notch.isVisible)
+        notch.aiUsage = nil
+
         // Abandoning a recorder or changing apps cannot leave activation locked.
         activation.recordingShortcut = .voice
         activation.performShortcut(.companion)

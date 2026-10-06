@@ -27,6 +27,9 @@
 		A10000000000000000000046 /* AIUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000047 /* AIUsage.swift */; };
 		A10000000000000000000048 /* AIUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000049 /* AIUsageView.swift */; };
 		A10000000000000000000050 /* ProviderAssets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000051 /* ProviderAssets.xcassets */; };
+		A10000000000000000000052 /* AIActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000053 /* AIActivity.swift */; };
+		A10000000000000000000054 /* AIActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000055 /* AIActivityView.swift */; };
+		A10000000000000000000056 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000057 /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -52,6 +55,9 @@
 		A10000000000000000000047 /* AIUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIUsage.swift; sourceTree = "<group>"; };
 		A10000000000000000000049 /* AIUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIUsageView.swift; sourceTree = "<group>"; };
 		A10000000000000000000051 /* ProviderAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = ProviderAssets.xcassets; sourceTree = "<group>"; };
+		A10000000000000000000053 /* AIActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIActivity.swift; sourceTree = "<group>"; };
+		A10000000000000000000055 /* AIActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIActivityView.swift; sourceTree = "<group>"; };
+		A10000000000000000000057 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +101,9 @@
 				A10000000000000000000047 /* AIUsage.swift */,
 				A10000000000000000000049 /* AIUsageView.swift */,
 				A10000000000000000000051 /* ProviderAssets.xcassets */,
+				A10000000000000000000057 /* OnboardingView.swift */,
+				A10000000000000000000055 /* AIActivityView.swift */,
+				A10000000000000000000053 /* AIActivity.swift */,
 				A10000000000000000000039 /* AvatarSprites */,
 				A10000000000000000000029 /* Sieghart.entitlements */,
 			);
@@ -190,6 +199,9 @@
 				A10000000000000000000042 /* CodexUsage.swift in Sources */,
 				A10000000000000000000044 /* CodexUsageView.swift in Sources */,
 				A10000000000000000000048 /* AIUsageView.swift in Sources */,
+				A10000000000000000000056 /* OnboardingView.swift in Sources */,
+				A10000000000000000000054 /* AIActivityView.swift in Sources */,
+				A10000000000000000000052 /* AIActivity.swift in Sources */,
 				A10000000000000000000046 /* AIUsage.swift in Sources */,
 				A10000000000000000000027 /* VoiceCallbacks.swift in Sources */,
 			);

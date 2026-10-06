@@ -5,21 +5,36 @@ Updated October 5, 2026. This is the current execution plan; older Obsidian chec
 ## Status and release gates
 
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
-- **Sprint 2:** implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
-- **Sprint 3:** next: onboarding with initial choice of all six avatars, one-time local AI consent, automatic detection/refresh, live AI island. Follow with voice app launch/search and focused navigation improvements.
+- **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
+- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Voice app launch/search and automatic pricing/billing sources remain next.
 - **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The assistant does not run the app or open Xcode.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Automatic billing imports, current model price sources and dated FX must have verified adapters before being described as automatic spending.
 
 ## Sprint 3 — First-run companion and live AI
 
-1. Present a six-avatar gallery in onboarding. Show each name and personality, require a visible selection, save it on Finish, support keyboard/VoiceOver and Reduce Motion, and allow later change in Appearance. Existing avatar choices are preselected.
-2. Detect installed Codex/Claude without reading conversation content. Ask once in onboarding before local usage monitoring; core focus works if declined. Existing provider sign-in supplies account authorization. No repeated Connect step when opening a panel.
-3. Refresh Codex quota/reset values in the background, then show provider, model, project and elapsed work where reliable local lifecycle events exist. Task completion removes the live work badge; idle logs must not become fictitious work. Preserve an active focus countdown alongside AI activity.
-4. Add voice launch of installed applications with deterministic resolution, ambiguity handling and honest errors. Add browser search without routing arbitrary text through a shell.
-5. Keep provider freshness, partial-history scope, missing data and cost provenance visible. Automatic Claude quotas require a verified source; local tokens alone do not prove a remaining percentage.
+### Implemented first slice — October 5, 2026
 
-**Exit:** persisted first run; six actual bundled avatars; one consent; automatic refresh outside the AI panel; correct active/completed fixture handling; no idle microphone; user Mac checks for onboarding, activity and both shortcuts.
+- Two-step onboarding presents all six bundled avatars with names and personalities, saves the initial choice on Finish and preselects an existing choice. Appearance can change it later. The gallery uses shared accessible controls and respects Reduce Motion.
+- One local-monitoring consent enables detection of installed Codex/Claude Code using existing sign-in. Declining preserves offline companion/focus use. Opening the dashboard requires no repeated connection step; disconnect removes that provider's activity and stops automatic reconnection.
+- Background refresh follows active/completed lifecycle events, model, project and elapsed work. The compact island shows the companion and active provider while keeping camera space and physical notch height. A running focus countdown stays available alongside AI activity.
+- The complete reference dashboard includes quota/reset windows, spending, Now, 24 hourly bars, model/project rankings and a 13-week activity heatmap with streak, active days and busiest day. Account daily activity comes from Codex when available; hourly/model/project data is explicitly partial local history.
+- USD/BRL token estimates use custom prices and dated FX. Recorded charges remain separate. Missing data stays unavailable; there are no fabricated activity records or invoice amounts.
+
+### Evidence
+
+- Universal signed macOS build; deterministic focus, voice, presentation, usage and lifecycle checks. Clone/stream deduplication, long-turn recovery, completed/idle activity, cache creation and first-run/avatar persistence are covered.
+- Read-only live verification detected current Codex work and returned 22 dated account activity buckets. No conversation content is retained. No actual app window, sensor, shortcut registration or microphone was used by the assistant.
+- [Full dashboard preview](Sieghart/Design/Concepts/ai-dashboard-preview.png) and [six-avatar onboarding preview](Sieghart/Design/Concepts/onboarding-preview.png) render production views offscreen with clearly labeled sample data.
+
+### Next in Sprint 3
+
+1. Voice launch of installed applications with deterministic resolution, ambiguity handling and honest errors; browser search without sending arbitrary text through a shell. These actions are not implemented yet.
+2. Verified automatic model-price, dated FX and billing/import adapters. Custom token estimates are not provider invoices; Codex's tested thread usage did not supply a USD estimate.
+3. Verified automatic individual Claude quota access; the dated report import remains available.
+4. User Mac acceptance for onboarding, activity/island behavior, permissions and companion/voice shortcuts across Spaces/full-screen.
+
+**Exit:** implemented first run and live AI pass the real Mac checks; voice launch/search have actual action adapters; each automatic source has provenance and unavailable states. Calendar remains hidden until its S5 repair.
 
 ## Following delivery order
 

@@ -8,7 +8,7 @@ struct ProviderMark: View {
     var size: CGFloat = 30
     var body: some View {
         Image(provider.assetName, bundle: AIProviderResources.bundle).resizable().renderingMode(.template).scaledToFit()
-            .foregroundStyle(provider == .codex ? Color.mint : Color(red: 0.85, green: 0.53, blue: 0.39))
+            .foregroundStyle(provider == .codex ? CompanionStyle.accent : Color(red: 0.85, green: 0.53, blue: 0.39))
             .padding(size * 0.18).frame(width: size, height: size)
             .background(CompanionStyle.background, in: RoundedRectangle(cornerRadius: size * 0.27))
             .accessibilityHidden(true)
@@ -57,7 +57,7 @@ struct AIUsageSummary: View {
     }
 }
 
-struct AIUsageView: View {
+struct AIUsageDetailsView: View {
     @EnvironmentObject private var codex: CodexUsageModel
     @EnvironmentObject private var usage: AIUsageModel
     @State private var editingProvider: AIProvider?
@@ -92,7 +92,7 @@ struct AIUsageView: View {
                 Text("Claude Code limits").font(.headline)
                 Spacer()
                 if usage.claudeEnabled {
-                    Button { usage.claudeEnabled = false } label: { Image(systemName: "xmark") }
+                    Button { usage.disable(.claude, codex: codex) } label: { Image(systemName: "xmark") }
                         .buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("Disconnect Claude usage")
                 }
             }

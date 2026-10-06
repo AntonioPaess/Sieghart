@@ -148,20 +148,31 @@ struct ClaudeLimitsReport: Codable {
 
 @MainActor final class AIUsageModel: ObservableObject {
     @Published var claudeEnabled: Bool {
-        didSet { defaults.set(claudeEnabled, forKey: "integrations.claudeUsage"); if !claudeEnabled { tokens[.claude] = nil } }
+        didSet { readRevision += 1; defaults.set(claudeEnabled, forKey: "integrations.claudeUsage"); if !claudeEnabled { tokens[.claude] = nil } }
     }
+    @Published var automaticDetection: Bool { didSet { defaults.set(automaticDetection, forKey: "integrations.autoDetect") } }
+    @Published private(set) var analytics = AIAnalytics()
+    @Published private(set) var accountActivity: CodexAccountActivity?
+    @Published private(set) var activityUpdatedAt: Date?
+    @Published private(set) var accountUpdatedAt: Date?
+    @Published private(set) var accountRefreshFailed = false
     @Published private(set) var tokens: [AIProvider: LocalTokenUsage] = [:]
     @Published private(set) var updatedAt: Date?
     @Published private(set) var isRefreshing = false
     @Published private(set) var ledger: AIUsageLedger
     @Published private(set) var claudeReport: ClaudeLimitsReport?
+    private var readRevision = 0
+    private var monitorTask: Task<Void, Never>?
+    private let analyticsReader = AIAnalyticsReader()
     private let defaults: UserDefaults
     private let read: @Sendable (AIProvider) -> LocalTokenUsage?
-    init(defaults: UserDefaults = .standard, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
+    init(defaults: UserDefaults = .standard, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
         let configured = ProcessInfo.processInfo.environment["CODEX_HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
         return LocalTokenReader.read(provider, codexHome: configured)
     }) {
         self.defaults = defaults; self.read = read
+        analytics = initialAnalytics; accountActivity = initialAccountActivity
+        automaticDetection = defaults.bool(forKey: "integrations.autoDetect")
         claudeEnabled = defaults.bool(forKey: "integrations.claudeUsage")
         ledger = defaults.data(forKey: "integrations.usageLedger").flatMap { try? JSONDecoder().decode(AIUsageLedger.self, from: $0) } ?? AIUsageLedger()
         claudeReport = defaults.data(forKey: "integrations.claudeReport").flatMap { try? JSONDecoder().decode(ClaudeLimitsReport.self, from: $0) }
@@ -170,14 +181,58 @@ struct ClaudeLimitsReport: Codable {
     func refresh(codexEnabled: Bool) async {
         guard !isRefreshing else { return }
         isRefreshing = true; defer { isRefreshing = false }
+        let revision = readRevision
         let reader = read, providers = AIProvider.allCases.filter { $0 == .codex ? codexEnabled : claudeEnabled }
         let result = await Task.detached(priority: .utility) {
             var result: [AIProvider: LocalTokenUsage] = [:]
             for provider in providers { result[provider] = reader(provider) }
             return result
         }.value
-        guard !Task.isCancelled else { return }
+        guard !Task.isCancelled, revision == readRevision else { return }
         tokens = result.filter { $0.key != .claude || claudeEnabled }; updatedAt = .now
+    }
+
+    func startMonitoring(codex: CodexUsageModel) {
+        guard monitorTask == nil else { return }
+        monitorTask = Task { @MainActor [weak self, weak codex] in
+            var lastCounters = Date.distantPast, lastAccount = Date.distantPast, lastDetection = Date.distantPast
+            while !Task.isCancelled {
+                guard let self, let codex else { return }
+                if self.automaticDetection && Date().timeIntervalSince(lastDetection) >= 60 {
+                    let detected = InstalledAIProviders.detect()
+                    if detected.contains(.codex) && !codex.enabled { codex.enabled = true }
+                    if detected.contains(.claude) && !self.claudeEnabled { self.claudeEnabled = true }
+                    lastDetection = .now
+                }
+                let providers = AIProvider.allCases.filter { $0 == .codex ? codex.enabled : self.claudeEnabled }
+                let result = await self.analyticsReader.read(providers: providers)
+                let allowed = AIProvider.allCases.filter { $0 == .codex ? codex.enabled : self.claudeEnabled }
+                self.analytics = AIAnalytics(points: result.points.filter { allowed.contains($0.provider) }, work: result.work.filter { allowed.contains($0.provider) }, scannedFiles: result.scannedFiles)
+                self.activityUpdatedAt = .now
+                if !codex.enabled { self.tokens[.codex] = nil; self.accountActivity = nil; self.accountUpdatedAt = nil; self.accountRefreshFailed = false }
+                if Date().timeIntervalSince(lastCounters) >= 60 {
+                    await self.refresh(codexEnabled: codex.enabled)
+                    await codex.refresh()
+                    lastCounters = .now
+                }
+                if codex.enabled && Date().timeIntervalSince(lastAccount) >= 300 {
+                    let activity = await Task.detached(priority: .utility) { try? LocalCodexUsage.fetchActivity() }.value
+                    if codex.enabled {
+                        if let activity { self.accountActivity = activity; self.accountUpdatedAt = .now; self.accountRefreshFailed = false }
+                        else { self.accountRefreshFailed = true }
+                    }
+                    lastAccount = .now
+                }
+                do { try await Task.sleep(for: .seconds(5)) } catch { return }
+            }
+        }
+    }
+    func stopMonitoring() { monitorTask?.cancel(); monitorTask = nil }
+    func disable(_ provider: AIProvider, codex: CodexUsageModel) {
+        automaticDetection = false; readRevision += 1
+        if provider == .codex { codex.enabled = false; tokens[.codex] = nil; accountActivity = nil; accountUpdatedAt = nil; accountRefreshFailed = false }
+        else { claudeEnabled = false }
+        analytics.points.removeAll { $0.provider == provider }; analytics.work.removeAll { $0.provider == provider }
     }
 
     func savePrices(_ prices: TokenPrices, provider: AIProvider, exchangeRate: Decimal?) {

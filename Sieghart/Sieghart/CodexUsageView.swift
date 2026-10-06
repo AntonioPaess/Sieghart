@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CodexUsageView: View {
     @EnvironmentObject private var usage: CodexUsageModel
+    @EnvironmentObject private var localUsage: AIUsageModel
     var compact = false
 
     var body: some View {
@@ -9,12 +10,13 @@ struct CodexUsageView: View {
             HStack {
                 ProviderMark(provider: .codex)
                 Text("Codex limits").font(.headline)
+                if let plan = usage.bucket?.planType { Text(plan.capitalized).font(.caption2.weight(.semibold)).foregroundStyle(CompanionStyle.accent) }
                 Spacer()
                 if usage.enabled {
                     Button { Task { await usage.refresh(force: true) } } label: {
                         Image(systemName: "arrow.clockwise")
                     }.buttonStyle(.plain).focusEffectDisabled().disabled(usage.isRefreshing).accessibilityLabel("Refresh Codex limits")
-                    Button { usage.enabled = false } label: { Image(systemName: "xmark") }
+                    Button { localUsage.disable(.codex, codex: usage) } label: { Image(systemName: "xmark") }
                         .buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("Disconnect Codex usage")
                 }
             }

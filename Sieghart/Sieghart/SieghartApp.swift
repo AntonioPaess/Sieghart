@@ -23,6 +23,8 @@ struct SieghartApp: App {
         notch.activation = activation
         notch.codexUsage = codexUsage
         notch.aiUsage = aiUsage
+        aiUsage.startMonitoring(codex: codexUsage)
+        notch.observeAIActivity()
         notch.restoreSessionPresence()
         sensor.onImpact = { impact in
             guard preferences.impactsEnabled else { return }
@@ -98,6 +100,15 @@ private struct ContentView: View {
     @State private var section: AppSection = .overview
 
     var body: some View {
+        Group {
+            if preferences.onboardingComplete { workspace }
+            else { CompanionOnboardingView() }
+        }
+        .frame(minWidth: 840, minHeight: 660)
+        .preferredColorScheme(.dark)
+    }
+
+    private var workspace: some View {
         HStack(spacing: 0) {
             sidebar
             ScrollView {
@@ -142,7 +153,9 @@ private struct ContentView: View {
             sidebarButton("Focus", symbol: "timer", selected: section == .focus) { section = .focus }
             sidebarButton("Activation", symbol: "keyboard", selected: section == .activation) { section = .activation }
             sidebarButton("Appearance", symbol: "slider.horizontal.3", selected: section == .appearance) { section = .appearance }
+            sidebarButton("AI limits", symbol: "chart.bar.xaxis", selected: section == .aiLimits) { section = .aiLimits }
             Spacer()
+            Button("Review introduction") { preferences.onboardingComplete = false }.buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.muted)
             Text("Your Mac companion").font(.caption).foregroundStyle(CompanionStyle.muted)
         }
         .padding(20)
@@ -331,11 +344,7 @@ private struct ContentView: View {
     }
 }
 
-private extension View {
-    func companionCard() -> some View {
-        padding(24).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17))
-    }
-}
+
 
 private struct PreferenceRow<Control: View>: View {
     let title: String

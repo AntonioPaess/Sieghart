@@ -54,6 +54,7 @@ final class NotchWidgetController: ObservableObject {
     var activation: ActivationController?
     var codexUsage: CodexUsageModel?
     var aiUsage: AIUsageModel?
+    private var activityObservation: AnyCancellable?
     private var panel: NSPanel?
     private var hoverPanel: HoverZonePanel?
     private var isPointerInsidePanel = false
@@ -118,17 +119,26 @@ final class NotchWidgetController: ObservableObject {
     func showCurrentTask() {
         if assistant.hasActiveSession { presentation = .timer }
         else if assistant.pomodoroPhase == .completed { presentation = .completion }
+        else if !(aiUsage?.analytics.work.isEmpty ?? true) { presentation = .aiLimits }
         else { presentation = .home }
-        reveal(stickyUntilImpact: presentation == .completion)
+        reveal(stickyUntilImpact: presentation == .completion || presentation == .aiLimits)
     }
 
     func showIsland() {
-        guard assistant.hasActiveSession else { dismissPanel(); return }
+        guard assistant.hasActiveSession || !(aiUsage?.analytics.work.isEmpty ?? true) else { dismissPanel(); return }
         presentation = .island
         reveal(stickyUntilImpact: false)
     }
 
-    func restoreSessionPresence() { if assistant.hasActiveSession { showIsland() } }
+    func restoreSessionPresence() { if assistant.hasActiveSession || !(aiUsage?.analytics.work.isEmpty ?? true) { showIsland() } }
+
+    func observeAIActivity() {
+        activityObservation = aiUsage?.$analytics.receive(on: RunLoop.main).sink { [weak self] analytics in
+            guard let self else { return }
+            if !analytics.work.isEmpty && !self.isVisible { self.showIsland() }
+            else if analytics.work.isEmpty && !self.assistant.hasActiveSession && self.presentation == .island { self.dismissPanel() }
+        }
+    }
 
     func showFocusSetup() {
         presentation = .focusSetup
@@ -181,7 +191,7 @@ final class NotchWidgetController: ObservableObject {
         completionTask?.cancel()
         if activation?.isListening == true || activation?.isPreparing == true { activation?.cancelVoiceCommand(); return }
         if let latestCompletion, latestCompletion.id != shownCompletionID { presentCompletion(latestCompletion); return }
-        if assistant.hasActiveSession { showIsland() }
+        if assistant.hasActiveSession || !(aiUsage?.analytics.work.isEmpty ?? true) { showIsland() }
         else { dismissPanel() }
     }
 
@@ -408,7 +418,10 @@ final class NotchWidgetController: ObservableObject {
         case .tools: height = 280
         case .aiLimits: height = min(560, (notchScreen?.visibleFrame.height ?? 700) - 80)
         }
-        if managesWindows, let screen = notchScreen { geometry = NotchGeometry(screen: screen, setup: presentation == .focusSetup, bodyHeight: height, compact: presentation == .island) }
+        if managesWindows, let screen = notchScreen {
+            let measured = NotchGeometry(screen: screen, setup: presentation == .focusSetup, bodyHeight: height, compact: presentation == .island)
+            geometry = presentation == .aiLimits ? NotchGeometry(width: min(720, screen.frame.width - 32), cutoutWidth: measured.cutoutWidth, cutoutHeight: measured.cutoutHeight, bodyHeight: height) : measured
+        }
         else { geometry = NotchGeometry(width: presentation == .island ? 240 : presentation == .focusSetup ? 520 : 480, cutoutWidth: 0, cutoutHeight: 0, bodyHeight: height, compact: presentation == .island) }
         positionHoverPanel()
         positionPanel()
@@ -484,6 +497,7 @@ struct NotchWidgetView: View {
     @EnvironmentObject private var assistant: AssistantViewModel
     @EnvironmentObject private var activation: ActivationController
     @EnvironmentObject private var preferences: CompanionPreferences
+    @EnvironmentObject private var aiActivity: AIUsageModel
     @StateObject private var reactions = CompanionReactions()
     @State private var avatarPointer = CGSize.zero
 
@@ -683,6 +697,28 @@ struct NotchWidgetView: View {
     }
 
     private var island: some View {
+        Group {
+            if let work = aiActivity.analytics.work.first {
+                Button { notch.showAILimits() } label: {
+                    TimelineView(.periodic(from: .now, by: 1)) { context in
+                        HStack(spacing: 0) {
+                            HStack(spacing: 3) {
+                                CompanionCharacter(size: 21, avatar: preferences.avatar, animates: animates, focusing: true)
+                                ProviderMark(provider: work.provider, size: 20)
+                            }.frame(maxWidth: .infinity)
+                            Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
+                            VStack(spacing: 1) {
+                                Text(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : work.elapsed(at: context.date)).font(.system(size: 11, weight: .semibold, design: .rounded)).monospacedDigit()
+                                Text(assistant.hasActiveSession ? work.provider.title : "Working").font(.system(size: 8)).foregroundStyle(CompanionStyle.accent)
+                            }.frame(maxWidth: .infinity)
+                        }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight)
+                    }
+                }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("\(work.provider.title) working on \(work.project). Open AI activity.")
+            } else { timerIsland }
+        }
+    }
+
+    private var timerIsland: some View {
         Button { notch.showCurrentTask() } label: {
             TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
                 let time = animates ? context.date.timeIntervalSinceReferenceDate : 0
