@@ -45,3 +45,12 @@ The pinned widget reference revision `906646178553325e76107af78ff04bf352c10adf` 
 ![Sleeping avatar appears static; repeated fullscreen shortcut and focus-border report](2026-10-06-21-49-36-sleep-before.png)
 
 The compact menu now measures 380 points wide with natural page heights (Companion about 297 points), rather than 560 × 548 with a fixed empty area. The built bundle now contains the system-audio privacy key. Enable app mixer starts the public permission path; app sliders depend on an actual audio connection. At most five real running apps are shown, prioritizing playback, then connected apps, plus Master. The physical seam, sleep and fullscreen reports remain traceable in the bug tracker. No app/audio hardware was started by assistant verification.
+
+
+## October 6 — Avatar quality report; October 7 correction
+
+![Gallery quality before](2026-10-06-22-39-27-avatar-quality-before.png)
+
+![Companion quality before](2026-10-06-22-39-37-companion-quality-before.png)
+
+Original screenshots are preserved with SHA-256 in the regression manifest. The approved white reference board remains [archived](../../Concepts/simple-companions-depth-reference.png). The Canvas now draws at its final display size instead of magnifying 42-point artwork; matte shading, visor depth and the paper crease retain the approved silhouettes. [Updated production light board](../../Concepts/simple-companions-depth-preview.png) · [Appearance](../../Concepts/app-appearance-preview.png).

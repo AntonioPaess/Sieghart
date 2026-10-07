@@ -16,7 +16,7 @@ import UniformTypeIdentifiers
                     GridRow {
                         ForEach(Array(CompanionAvatar.allCases[row * 3 ..< row * 3 + 3])) { avatar in
                             VStack(spacing: 14) {
-                                CompanionCharacter(size: 94, avatar: avatar, animates: time != nil,
+                                CompanionCharacter(size: time == nil ? (dark ? 108 : 160) : 94, avatar: avatar, animates: time != nil,
                                     gaze: CGSize(width: sin((time ?? 0) * 1.3) * 3, height: cos((time ?? 0) * 1.1) * 1.5), mood: sleeping ? .asleep : .idle, previewTime: time)
                                 Text(avatar.name).font(.headline)
                                 HStack(spacing: 28) {

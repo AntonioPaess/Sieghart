@@ -91,7 +91,9 @@ final class ActivationController: ObservableObject {
     }
 
     private func observeShortcutLifecycle(workspace suppliedWorkspace: NotificationCenter?) {
-        for name in [NSApplication.didBecomeActiveNotification, NSApplication.didResignActiveNotification] {
+        for name in [NSApplication.didBecomeActiveNotification, NSApplication.didResignActiveNotification,
+                     NSApplication.didHideNotification, NSApplication.didUnhideNotification,
+                     NSWindow.willCloseNotification] {
             appObservers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.scheduleShortcutRecovery() }
             })

@@ -119,6 +119,7 @@ struct CompanionMotion: Equatable {
 }
 
 struct CompanionFace: View {
+    var renderSize: CGFloat = 42
     var avatar: CompanionAvatar = .crtBuddy
     var blinking = false
     var focusing = false
@@ -147,7 +148,7 @@ struct CompanionFace: View {
     var body: some View {
         SimpleCompanionFace(avatar: avatar, openness: expression.open, joy: expression.joy, tilt: expression.tilt,
                             gaze: CGSize(width: min(4, max(-4, gaze.width)), height: min(3, max(-3, gaze.height))))
-            .frame(width: 42, height: 42)
+            .frame(width: renderSize, height: renderSize)
             .animation(animates && !reduceMotion ? .spring(response: 0.32, dampingFraction: 0.82) : nil, value: mood)
             .animation(animates && !reduceMotion ? .spring(response: 0.32, dampingFraction: 0.82) : nil, value: joyful)
             .animation(animates && !reduceMotion ? .spring(response: 0.32, dampingFraction: 0.85) : nil, value: gaze)
@@ -200,30 +201,32 @@ private struct SimpleCompanionFace: View, Animatable {
         }
     }
 
-    // Restrained matte lighting and layered edges give the simple shapes
-    // depth. The cream front and coral fold are separate curved paper planes.
+    // Draw light on the native paths at the final display size. Clipped edge
+    // shading gives a matte rounded surface without enlarging a small canvas.
     private func fillShell(_ path: Path, in context: GraphicsContext, colors: [Color], shadow: CGFloat = 1.2) {
         context.drawLayer { layer in
-            layer.addFilter(.shadow(color: .black.opacity(colorScheme == .dark ? 0.18 : 0.07), radius: shadow, x: 0.4, y: 1.1))
+            layer.addFilter(.shadow(color: .black.opacity(colorScheme == .dark ? 0.25 : 0.10), radius: shadow, x: 0.4, y: 1.4))
             layer.fill(path, with: .linearGradient(Gradient(colors: colors), startPoint: CGPoint(x: 20 + gaze.width, y: 15 + gaze.height), endPoint: CGPoint(x: 76, y: 85)))
         }
-        context.fill(path, with: .radialGradient(Gradient(colors: [.white.opacity(0.09), .clear]), center: CGPoint(x: 32 + gaze.width * 0.5, y: 28 + gaze.height * 0.5), startRadius: 2, endRadius: 55))
+        context.fill(path, with: .radialGradient(Gradient(colors: [.white.opacity(0.22), .white.opacity(0.06), .clear]), center: CGPoint(x: 29 + gaze.width * 0.5, y: 21 + gaze.height * 0.5), startRadius: 0, endRadius: 67))
+        var edge = context
+        edge.clip(to: path)
+        edge.stroke(path, with: .linearGradient(Gradient(colors: [.white.opacity(0.25), .clear, .black.opacity(0.18)]), startPoint: CGPoint(x: 22, y: 15), endPoint: CGPoint(x: 70, y: 83)), lineWidth: 1.3)
+        edge.fill(path, with: .linearGradient(Gradient(stops: [.init(color: .clear, location: 0.5), .init(color: .black.opacity(0.06), location: 1)]), startPoint: CGPoint(x: 48, y: 15), endPoint: CGPoint(x: 48, y: 81)))
     }
 
     private func drawBody(in context: GraphicsContext) {
         switch avatar {
         case .crtBuddy:
             let shell = Path(roundedRect: CGRect(x: 12, y: 15, width: 72, height: 66), cornerRadius: 21)
-            fillShell(shell, in: context, colors: [Color(red: 0.80, green: 0.70, blue: 0.99), Color(red: 0.74, green: 0.63, blue: 0.94)])
-            context.stroke(shell, with: .color(.white.opacity(0.15)), lineWidth: 0.5)
+            fillShell(shell, in: context, colors: [Color(red: 0.81, green: 0.71, blue: 1), Color(red: 0.72, green: 0.59, blue: 0.92)])
             let visor = Path(roundedRect: CGRect(x: 20, y: 23, width: 56, height: 50), cornerRadius: 17)
-            context.fill(visor, with: .linearGradient(Gradient(colors: [Color(red: 0.13, green: 0.15, blue: 0.15), Color(red: 0.065, green: 0.08, blue: 0.08)]), startPoint: CGPoint(x: 28, y: 25), endPoint: CGPoint(x: 68, y: 71)))
-            context.stroke(visor, with: .color(.black.opacity(0.13)), lineWidth: 0.65)
+            context.fill(visor, with: .linearGradient(Gradient(colors: [Color(red: 0.08, green: 0.10, blue: 0.10), Color(red: 0.11, green: 0.13, blue: 0.13), Color(red: 0.045, green: 0.06, blue: 0.06)]), startPoint: CGPoint(x: 28, y: 25), endPoint: CGPoint(x: 68, y: 71)))
+            context.stroke(visor, with: .linearGradient(Gradient(colors: [.black.opacity(0.32), .white.opacity(0.18)]), startPoint: CGPoint(x: 48, y: 23), endPoint: CGPoint(x: 48, y: 73)), lineWidth: 0.8)
         case .arcade1984:
             let points: [CGPoint] = [(30,14),(66,14),(66,22),(77,22),(77,33),(84,33),(84,66),(77,66),(77,78),(19,78),(19,66),(12,66),(12,33),(19,33),(19,22),(30,22)].map { CGPoint(x: $0.0, y: $0.1) }
             let shell = Self.roundedPolygon(points, radius: 1.5)
-            fillShell(shell, in: context, colors: [Color(red: 1, green: 0.81, blue: 0.39), Color(red: 1, green: 0.77, blue: 0.34)], shadow: 0.65)
-            context.stroke(shell, with: .color(.white.opacity(0.12)), lineWidth: 0.5)
+            fillShell(shell, in: context, colors: [Color(red: 1, green: 0.82, blue: 0.43), Color(red: 0.99, green: 0.74, blue: 0.29)], shadow: 0.65)
         case .minimalSpirit: break
         case .coastBuddy:
             var pebble = Path()
@@ -232,7 +235,7 @@ private struct SimpleCompanionFace: View, Animatable {
             pebble.addCurve(to: CGPoint(x: 86, y: 55), control1: CGPoint(x: 68, y: 22), control2: CGPoint(x: 86, y: 35))
             pebble.addCurve(to: CGPoint(x: 48, y: 76), control1: CGPoint(x: 86, y: 73), control2: CGPoint(x: 70, y: 76))
             pebble.addCurve(to: CGPoint(x: 10, y: 55), control1: CGPoint(x: 26, y: 76), control2: CGPoint(x: 10, y: 73))
-            fillShell(pebble, in: context, colors: [Color(red: 0.58, green: 0.86, blue: 0.80), Color(red: 0.48, green: 0.80, blue: 0.73)])
+            fillShell(pebble, in: context, colors: [Color(red: 0.57, green: 0.87, blue: 0.81), Color(red: 0.40, green: 0.75, blue: 0.67)])
             var curl = Path(); curl.move(to: CGPoint(x: 42, y: 19))
             curl.addCurve(to: CGPoint(x: 62, y: 10), control1: CGPoint(x: 53, y: 17), control2: CGPoint(x: 59, y: 18))
             context.stroke(curl, with: .linearGradient(Gradient(colors: [Color(red: 0.28, green: 0.72, blue: 0.63), Color(red: 0.19, green: 0.64, blue: 0.55)]), startPoint: CGPoint(x: 42, y: 19), endPoint: CGPoint(x: 62, y: 10)), style: StrokeStyle(lineWidth: 2.3, lineCap: .round))
@@ -260,12 +263,15 @@ private struct SimpleCompanionFace: View, Animatable {
             front.addQuadCurve(to: CGPoint(x: 13, y: 42), control: CGPoint(x: 7, y: 48))
             front.addLine(to: CGPoint(x: 38, y: 17)); front.addQuadCurve(to: CGPoint(x: 44, y: 13), control: CGPoint(x: 41, y: 13))
             front.closeSubpath()
-            fillShell(front, in: context, colors: [Color(red: 1, green: 0.96, blue: 0.88), Color(red: 0.99, green: 0.91, blue: 0.80)], shadow: 0.8)
-            context.stroke(front, with: .color(.white.opacity(0.14)), lineWidth: 0.5)
+            fillShell(front, in: context, colors: [Color(red: 1, green: 0.97, blue: 0.90), Color(red: 0.97, green: 0.88, blue: 0.76)], shadow: 0.8)
+            var foldEdge = Path()
+            foldEdge.move(to: CGPoint(x: 50, y: 18))
+            foldEdge.addCurve(to: CGPoint(x: 70, y: 43), control1: CGPoint(x: 56, y: 29), control2: CGPoint(x: 63, y: 35))
+            foldEdge.addCurve(to: CGPoint(x: 70, y: 57), control1: CGPoint(x: 75, y: 49), control2: CGPoint(x: 75, y: 52))
+            context.stroke(foldEdge, with: .linearGradient(Gradient(colors: [.white.opacity(0.28), Color(red: 0.67, green: 0.37, blue: 0.29).opacity(0.13)]), startPoint: CGPoint(x: 50, y: 18), endPoint: CGPoint(x: 70, y: 57)), lineWidth: 0.75)
         case .inkBuddy:
             let shell = Path(roundedRect: CGRect(x: 8, y: 25, width: 80, height: 46), cornerRadius: 20)
-            fillShell(shell, in: context, colors: [Color(red: 0.16, green: 0.18, blue: 0.18), Color(red: 0.10, green: 0.12, blue: 0.12)])
-            if colorScheme == .dark { context.stroke(shell, with: .color(.white.opacity(0.10)), lineWidth: 0.65) }
+            fillShell(shell, in: context, colors: [Color(red: 0.16, green: 0.18, blue: 0.18), Color(red: 0.065, green: 0.08, blue: 0.08)])
         }
     }
 
@@ -307,7 +313,7 @@ private struct SimpleCompanionFace: View, Animatable {
     private static var menuImages: [CompanionAvatar: NSImage] = [:]
     static func menuBarImage(for avatar: CompanionAvatar) -> NSImage? {
         if let cached = menuImages[avatar] { return cached }
-        let renderer = ImageRenderer(content: CompanionFace(avatar: avatar).environment(\.colorScheme, avatar == .minimalSpirit ? .light : .dark))
+        let renderer = ImageRenderer(content: CompanionFace(renderSize: 22, avatar: avatar).environment(\.colorScheme, avatar == .minimalSpirit ? .light : .dark))
         renderer.scale = 2
         guard let cg = renderer.cgImage else { return nil }
         let image = NSImage(cgImage: cg, size: NSSize(width: 22, height: 22))
@@ -336,9 +342,9 @@ struct CompanionCharacter: View {
             let reaction = joyful ? CompanionMood.happy : mood
             let time = previewTime ?? context.date.timeIntervalSinceReferenceDate
             let motion = CompanionMotion.sample(time: time, size: size, avatar: avatar, mood: reaction, listening: listening, strolling: strolling, animates: moves)
-            CompanionFace(avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? gaze : .zero, eyeOpen: motion.eyeOpen,
+            CompanionFace(renderSize: size, avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? gaze : .zero, eyeOpen: motion.eyeOpen,
                           listening: listening, motionTime: time, mood: reaction, animates: moves)
-                .scaleEffect(x: size / 42 * motion.scaleX, y: size / 42 * motion.scaleY)
+                .scaleEffect(x: motion.scaleX, y: motion.scaleY)
                 .rotation3DEffect(.degrees(moves ? -gaze.height * 1.5 : 0), axis: (x: 1, y: 0, z: 0), perspective: 0.35)
                 .rotation3DEffect(.degrees(moves ? gaze.width * 1.4 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.35)
                 .rotationEffect(.degrees(motion.rotation))

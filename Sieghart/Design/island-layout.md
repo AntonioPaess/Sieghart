@@ -58,3 +58,10 @@ The generated bundle lacked the system-audio privacy string. The explicit merged
 The native panel overlaps the top screen edge by one backing pixel and has no contour stroke. The first-click interaction outline is removed; keyboard focus keeps a soft surface cue. All six companions breathe/sway while asleep and float a fading “z”; motion preferences remain respected. [Production sleep motion](Concepts/simple-companions-sleep.gif).
 
 Installed-app voice launch and menu-bar agent/full-screen input setup are implemented. Build/mocked tests/offscreen previews confirm implementation; permission prompts, WhatsApp/AirPods playback, actual full-screen shortcuts and physical top-edge alignment remain Mac acceptance gates. No app window, microphone, system-audio capture or real shortcut registration was started for verification.
+
+
+## October 7 — Companion quality and resident activation
+
+All companion surfaces use a Canvas at their final display size. Only small motion transforms remain; matte diffuse light, clipped edges and the paper fold give the approved silhouettes depth without magnified low-resolution artwork. [Light board](Concepts/simple-companions-depth-preview.png). Main-window, island and menu renders were refreshed.
+
+The user clarified the shortcut failure happens after the red window-close button. An explicit resident delegate keeps activation outside the settings scene and declines last-window termination; close/hide recovery releases abandoned recording. The two companion routing backends pass a simulated close check. Actual window-close/voice/full-screen delivery remains SG-001 acceptance; explicit Quit stops the app.

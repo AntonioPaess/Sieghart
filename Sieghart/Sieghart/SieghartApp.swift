@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct SieghartApp: App {
+    @NSApplicationDelegateAdaptor(ResidentAppDelegate.self) private var appDelegate
     @StateObject private var sensor: SensorViewModel
     @StateObject private var assistant: AssistantViewModel
     @StateObject private var notch: NotchWidgetController
@@ -40,6 +41,7 @@ struct SieghartApp: App {
         _preferences = StateObject(wrappedValue: preferences)
         _codexUsage = StateObject(wrappedValue: codexUsage)
         _aiUsage = StateObject(wrappedValue: aiUsage)
+        appDelegate.activation = activation
     }
 
     var body: some Scene {

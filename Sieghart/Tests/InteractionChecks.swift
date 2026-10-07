@@ -202,6 +202,18 @@ struct InteractionChecks {
         precondition(notch.isVisible && activation.lastShortcutActivation != nil)
         notch.hide()
         activation.recordingShortcut = .companion
+        // Closing the settings surface during recording must restore both
+        // event backends. Feed its notification without opening a real window.
+        NotificationCenter.default.post(name: NSWindow.willCloseNotification, object: nil)
+        try await Task.sleep(for: .milliseconds(220))
+        precondition(activation.recordingShortcut == nil)
+        activation.receiveHotkey(.companion, eventTime: 210)
+        precondition(notch.isVisible, "Companion activation must survive closing the settings window")
+        notch.hide()
+        activation.receiveShortcutEvent(keyCode: ShortcutChord.companion.keyCode, flags: ShortcutChord.companion.flags, eventTime: 211)
+        precondition(notch.isVisible, "The monitor fallback must survive window closure too")
+        notch.hide()
+        activation.recordingShortcut = .companion
         activation.recoverShortcuts()
         precondition(activation.recordingShortcut == nil)
         precondition(activation.companionShortcut == .companion && activation.voiceShortcut == .voice)

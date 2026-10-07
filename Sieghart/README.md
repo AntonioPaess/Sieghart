@@ -138,3 +138,12 @@ The audio checks use a mock backend and allocated sample buffers, covering the a
 
 
 After a CLI build, run `bash Sieghart/Tests/verify-built-app.sh /path/to/Sieghart.app` to check built privacy descriptions, agent metadata and signature without launching the app.
+
+
+## October 7 — Resident activation and native-size companion rendering
+
+Closing the main window with its red button must leave both shortcuts available. `ResidentAppDelegate` retains activation independently of the settings scene and explicitly keeps the process running after the last window closes. Window-close/hide recovery clears unfinished shortcut recording. Explicit Quit still terminates. Isolated tests post a close event and deliver companion activation through both routing backends; actual window closure and voice/full-screen acceptance stay open in SG-001. No background helper or login-item registration was introduced.
+
+The character Canvas previously drew at 42 points and then scaled to each display size. `CompanionFace.renderSize` now supplies the real size, including native menu icons. The animated wrapper only applies breathing/squash scale. Matte diffuse light, clipped edge shading, visor depth and the curved paper fold preserve the approved Simple Companions palette. Shared artwork updates onboarding, Appearance, menus and island. [Final-size depth preview](Design/Concepts/simple-companions-depth-preview.png).
+
+Universal signed build, built-package checks and eight isolated groups passed. Production artwork/screens and 20 fps motion were rendered offscreen. No app/Xcode window, sensor, microphone, system-audio capture or actual shortcut registration was started. Two user quality photos are retained in the issue archive. Core utilities remain ahead of future avatar/GitHub integrations; Sprint 3 stays active and Sprint 4 has not started.

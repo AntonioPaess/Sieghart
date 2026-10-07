@@ -32,6 +32,12 @@ Headless checks exercise both backend orders, exact chord matching, repeated ges
 
 Use each configured shortcut before and after leaving an unfinished recorder, switching apps and full-screen Spaces, locking/unlocking, and sleep/wake. If it stops again, record which binding failed, the foreground app, and the status shown in Activation. Confirm both regular-key and modifier-only bindings recover. Keep this issue open until the reported failure is reproduced or the recovery is confirmed on the Mac.
 
+### Red window-close clarification — October 7
+
+The user confirmed closing the main window with its red button, rather than Quit. `ResidentAppDelegate` now retains activation independently of that window and explicitly returns false for last-window termination. Closing/hiding a window cancels an abandoned recorder and checks shortcut recovery. The app stays resident; explicit Quit still stops it. Isolated checks post window-close notifications and route the companion through Carbon and monitor entry points without registering live shortcuts. The actual window-close/voice/full-screen case remains open until user acceptance. This is lifecycle hardening, not a proven reproduction of the physical failure.
+
+[Apple's last-window lifecycle contract](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/applicationshouldterminateafterlastwindowclosed(_:)).
+
 
 ## SG-002 — Island click remains unreliable
 

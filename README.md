@@ -36,7 +36,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 ![The six Sieghart companions and their reactions](Sieghart/Design/Concepts/avatar-reactions-preview.png)
 
-*Production native shapes based on the user-approved Simple Companions board, with matte light, soft shadow and a curved coral paper fold. Eyes and expressions interpolate directly; no bitmap pose swapping.*
+*Production native shapes based on the user-approved Simple Companions board, with matte light, soft shadow and a curved coral paper fold. Each canvas draws at its final display size for sharp edges in both the app and island. Eyes and expressions interpolate directly; no bitmap pose swapping.*
 
 ![Simple companions in motion](Sieghart/Design/Concepts/simple-companions-motion.gif)
 
@@ -117,7 +117,7 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 The menu bar also provides access to the widget and app. In Activation, press a shortcut recorder and enter any key combination; release modifier-only keys to save. Companion and voice bindings can be disabled separately. Impact gestures are off by default.
 
-The main window can be closed while Sieghart remains in the menu bar. A listen-only session event tap now handles modifier gestures across apps and restarts after interruption; regular-key hotkeys keep the system global registration. An intermittent shortcut interruption is tracked in [SG-001](Sieghart/BUGS.md). Abandoned recording restores activation. Healthy global registrations stay active across app/Space changes; permission changes or failed delivery setup trigger recovery. With an existing keyboard grant, both global delivery paths work with duplicate suppression. The reported intermittent case still needs a physical Mac check.
+Closing the main window with its red button keeps Sieghart in the menu bar. An app delegate retains activation independently of the window and explicitly keeps the process running after the last window closes. Window closure cancels an unfinished shortcut recorder and recovers activation; **Quit** stops the app. A listen-only session event tap handles modifier gestures across apps and restarts after interruption; regular-key hotkeys keep the system global registration. An intermittent shortcut interruption is tracked in [SG-001](Sieghart/BUGS.md). Healthy global registrations stay active across app/Space changes; permission changes or failed delivery setup trigger recovery. With an existing keyboard grant, both global delivery paths work with duplicate suppression. Closing the actual window and using both bindings in other apps/full-screen still needs a physical Mac check.
 
 ## Voice and local data
 

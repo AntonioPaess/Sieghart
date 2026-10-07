@@ -1,12 +1,12 @@
 # Sieghart roadmap
 
-Updated October 6, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 7, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 ## Status and release gates
 
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
-- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Automatic model pricing/FX, exact chart details, island interaction corrections and the glass presentation with smoother avatars are also implemented. Voice app launch/search and billing imports remain next.
+- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Automatic model pricing/FX, exact chart details, island interaction corrections, installed-app voice launch and the glass presentation with smoother avatars are also implemented. Browser search and billing imports remain next.
 - **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The assistant does not run the app or open Xcode.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Invoice imports remain planned.
@@ -84,6 +84,12 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 - Repeated full-screen shortcut report remains open (SG-001). Menu-bar agent metadata, application-target Carbon dispatch and authorized event-tap health recovery address the setup. Actual input and visibility acceptance remains required.
 - Three additional issue photos archived with SHA-256 verification. README, production previews, bug tracker and Obsidian checkpoint updated. Sprint 3 remains active; Sprint 4 has not started.
 
+### Window-close activation and companion quality — October 7, 2026
+
+- The user clarified that “closed” means the red window-close button. A resident app delegate owns activation independently of the settings window and explicitly refuses last-window termination. Window-close/hide lifecycle recovery clears abandoned shortcut recording; Quit remains explicit termination. Isolated event tests cover both companion delivery routes after a simulated window close. Real window-close, voice and full-screen delivery remain SG-001 acceptance.
+- The artwork previously rendered on a 42-point Canvas and scaled up. Every companion now draws at its final display size; only the small breathing/squash transform remains. Diffuse light, clipped edge shading, a recessed visor and a lit paper fold improve matte depth while retaining the approved silhouettes/palette and all motion/accessibility behavior.
+- Main-window, island and menu production previews refreshed offscreen; the two latest avatar-quality photos are archived with hashes. Build, eight isolated groups and built-package checks passed without running the app or hardware.
+
 ### Next in Sprint 3
 
 1. Browser search through a deterministic action adapter. Installed-app voice launch is now implemented; physical speech/app-launch acceptance remains open.
@@ -104,6 +110,19 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 | S5 | Calendar repair/reminders, notifications, selected-folder downloads, clipboard/shelf and core capture tools. |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
+
+## Companion usefulness after core utilities
+
+This is a future product direction, not an active integration sprint. First deliver and validate the utility sequence above.
+
+| Future companion role | Behavior | Dependency |
+| --- | --- | --- |
+| Quiet context | Express focus/break progress, AI working/completed and download completion through small gestures and optional brief messages. | Real timer, AI and download events; no fabricated activity. |
+| Quick actions | Companion entry to open an app, control audio, keep the Mac awake and revisit a completed task. | Verified utility actions and explicit user interaction. |
+| Calm reminders | Optional break/reminder nudges with quiet hours and a dismiss action; never starts focus automatically. | Reminder module and notification preferences. |
+| Optional GitHub | Selected-repository PR review requests and build results, with a direct link to the relevant item. Read-only first; opt-in and unavailable/offline states. | Core utilities complete, separate account consent and adapter. |
+
+GitHub makes sense as project context for people who develop software. It is optional and does not replace the primary Mac utilities or the offline companion journey. No GitHub connection is implemented or enabled in this round.
 
 ## Complete reference coverage — 77 modules
 

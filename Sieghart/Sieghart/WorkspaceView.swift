@@ -185,6 +185,8 @@ struct ContentView: View {
             Divider()
             PreferenceRow("Voice shortcut", detail: "Record keys, or press and release only modifiers such as Option + Command.") { ShortcutRecorder(action: .voice) }
             Text(activation.voiceShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+            Text("Close this window to keep Sieghart and its shortcuts in the menu bar. Choose Quit to stop the app.")
+                .font(.caption).foregroundStyle(CompanionStyle.muted)
             HStack {
                 if let date = activation.lastShortcutActivation {
                     Text("Last shortcut received at \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(CompanionStyle.muted)
