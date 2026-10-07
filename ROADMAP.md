@@ -6,10 +6,10 @@ Updated October 7, 2026. This is the current execution plan; older Obsidian chec
 
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
-- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Automatic model pricing/FX, exact chart details, island interaction corrections, installed-app voice launch and the glass presentation with smoother avatars are also implemented. Browser search and billing imports remain next.
-- **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The assistant does not run the app or open Xcode.
+- **Sprint 3:** implementation complete, manual Mac acceptance pending. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
+- **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The user reconfirmed on October 7 that the assistant must keep the app closed; the user will perform real interaction/audio acceptance. CLI builds, isolated checks, offscreen rendering and read-only adapter checks are allowed.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
-- **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Invoice imports remain planned.
+- **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
 
 ## Sprint 3 — First-run companion and live AI
 
@@ -98,15 +98,23 @@ Updated October 7, 2026. This is the current execution plan; older Obsidian chec
 - Eight isolated groups, universal signed build, package checks and offscreen production previews verify implementation. No app/Xcode window, real shortcut, microphone, sensor or audio capture is started by these checks. The new appearance reference is archived with its SHA-256 digest.
 - Concrete future companion options and dependencies are recorded in [Useful companions](Sieghart/Design/companion-capabilities.md). Task handoff and contextual quick actions are the recommended first combination after core utilities; no speculative integration is enabled.
 
-### Next in Sprint 3
+### Implementation closeout — October 7, 2026
 
-1. Browser search through a deterministic action adapter. Installed-app voice launch is now implemented; physical speech/app-launch acceptance remains open.
-2. Billing/import adapters and broader historical coverage. Automatic price/FX sources are implemented; values are API equivalents and local history remains partial.
-3. Verified automatic individual Claude quota access; the dated report import remains available.
-4. Before Sprint 4: Mac acceptance of the refreshed bounded panels/menu tabs and audio mixer: speakers/AirPods, capture permission grant/denial, app mute, output changes and unplugging devices.
-5. User Mac acceptance for onboarding, activity/island behavior, permissions and companion/voice shortcuts across Spaces/full-screen.
+- Voice search in English/Portuguese opens an encoded DuckDuckGo query in the default browser through NSWorkspace. Query words are data, never executable commands. Cancellation/generation checks and injected test actions keep execution/feedback coherent in Companion.
+- Actual charge import/export: versioned JSON and UTF-8 CSV, downloadable template, review with provider/currency totals, exact Decimal values, reference/source provenance, atomic validation, conflict detection and duplicate protection including exported manual charges. No automatic invoice charge is fabricated from token estimates.
+- **Expand history** reads up to a year of available Codex sessions/archives and Claude projects. It uses bounded files/bytes/counters, keeps metadata in memory for subsequent polling, permits cancellation and deduplicates cloned sessions/streamed messages. Coverage stays labeled partial; it does not claim account lifetime completeness or persist conversation content.
+- Claude desktop plan-history versions 1/2 supply automatic percentages, including scoped Opus/Sonnet allowances when present. Only the latest self-contained reading is used; older than 30 minutes is unavailable. No credential is read and no renewal date is inferred. Dated manual reports remain a fallback.
+- Audio permission preparation uses an unmuted temporary global tap rather than an empty process inclusion list. Output format/UID/channel changes rebuild routes even when the device ID is unchanged; restarted helpers can recover failed routes. Permission settings remain available while the mixer is enabled.
+- Verification: all nine isolated groups pass; signed universal build/package checks pass; updated production screens render offscreen. Real read-only source check: Codex quota available, 80 local files / 852 counter records / zero missing models. No fresh Claude desktop plan history is available on this Mac; its missing-source state and both supported formats are verified.
 
-**Exit:** implemented first run and live AI pass the real Mac checks; voice launch/search have actual action adapters; each automatic source has provenance and unavailable states. Calendar remains hidden until its S5 repair.
+### Remaining Mac acceptance — user performs these checks
+
+1. **Interaction / SG-001, SG-002, SG-005:** single-click entire compact notch and close/crossing behavior; Control + Option + S / V after red window-close, across desktops and another app in full screen; correct placement without the bright top seam. Saved custom modifier-only chords require their separate monitoring grant.
+2. **Voice:** actual microphone/speech grant and recognition, open an installed app, open a browser query, cancel and deny permission. Voice feedback must remain in Companion; focus starts only on request.
+3. **Audio / SG-004:** actual capture grant/denial/retry, master plus up to five real apps, WhatsApp/media gain and mute, speakers/AirPods, headset call format changes, unplug/reconnect and mixer disable restoring normal playback.
+4. **First run / AI / appearance:** save one of six avatars, accept/decline local monitoring, verify current provider and chart details against source, verify System/Light/Dark and independent Glass switches, reduced motion/transparency. Claude absence should stay unavailable; if used, enable its desktop usage menu and verify a fresh reading.
+
+**Exit:** implementation and automated verification are complete. Sprint 3 acceptance remains pending these real Mac checks, as reconfirmed by the user; SG-001/SG-002/SG-004 are not closed on mock evidence. Sprint 4 has not started. Calendar remains hidden until S5.
 
 ## Following delivery order
 

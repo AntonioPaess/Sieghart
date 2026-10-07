@@ -98,3 +98,12 @@ Mocked checks cover permission request, denial/retry/cancel, saved gain gating, 
 **Reported:** October 6, 2026. **Status:** corrections implemented and offscreen previews verified; physical seam acceptance pending.
 
 Menu width decreased from 560 to 380 points; natural subpage heights replace the fixed content area. Companion height is about 297 versus 548 points. Compact child controls preserve navigation and timer actions. Native island positioning overlaps the screen edge by one backing pixel and removes the contour stroke that could expose the bright seam. Sleeping motion now visibly breathes/sways and floats a fading “z” for every avatar. Isolated motion checks cover all six and disabled/reduced-motion stillness. The production sleep GIF demonstrates the new movement; it is design documentation outside app resources.
+
+
+## Sprint 3 implementation closeout — October 7, 2026
+
+The user reconfirmed **keep the app closed; I will test**. Nine isolated groups, signed universal build/package checks and offscreen screens pass. Real read-only Codex quota/counter sources are available; no fresh Claude desktop plan history exists here. [Exact manual acceptance](Design/sprint-3-closeout.md) now lists the remaining checks. SG-001/SG-002/SG-004 remain open for those results, and SG-005's physical top seam remains unverified.
+
+SG-004 follow-up: permission preparation now uses a temporary unmuted global tap, replacing an empty inclusion list that captures no processes. Same-ID output sample-rate/channel/UID changes tear down and rebuild routes. A restarted helper clears a previous failed-route suppression; disappearing audio processes release stale routes. Permission settings remain accessible after Enable, because startup success alone is not proof of audible gain control. Mock denial/retry/format-change cases pass; actual macOS permission and WhatsApp/AirPods playback have not been tested.
+
+Voice search has a real encoded default-browser action, actual charges have a reviewed CSV/JSON import/export adapter, expanded history includes archives, and automatic Claude desktop percentages have validated versioned parsing/freshness. Those implementation items are complete; actual speech and file-picker interaction join the user acceptance pass.

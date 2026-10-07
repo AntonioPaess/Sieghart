@@ -68,7 +68,7 @@ struct AudioControlsView: View {
                         else { Task { await audio.enableApplications() } }
                     }.buttonStyle(CompanionButtonStyle(primary: !audio.perAppEnabled, compact: compact)).disabled(audio.access == .requesting)
                     if audio.access == .requesting { ProgressView().controlSize(.small) }
-                    if audio.access == .permissionRequired || audio.access == .failed {
+                    if audio.access == .permissionRequired || audio.access == .failed || audio.perAppEnabled {
                         Button("Audio permission") { audio.openAudioPermissionSettings() }.buttonStyle(.plain).font(.caption)
                     }
                 }

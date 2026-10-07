@@ -1,6 +1,6 @@
 import Foundation
 
-struct AIUsagePoint: Sendable, Identifiable {
+struct AIUsagePoint: Codable, Sendable, Identifiable {
     let id: String
     let provider: AIProvider
     let date: Date
@@ -42,11 +42,11 @@ struct AIAnalytics: Sendable {
 // Only select metadata, usage counters and lifecycle types from JSON records.
 // No prompts, tool arguments, responses, credentials or conversation bodies are retained.
 enum AIActivityParser {
-    static func parse(_ url: URL, provider: AIProvider, now: Date = .now, knownWork: AIWork? = nil) -> AIAnalytics {
+    static func parse(_ url: URL, provider: AIProvider, now: Date = .now, knownWork: AIWork? = nil, fullHistory: Bool = false) -> AIAnalytics {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return AIAnalytics() }
         defer { try? handle.close() }
         guard let length = try? handle.seekToEnd() else { return AIAnalytics() }
-        let offset = length > 2_097_152 ? length - 2_097_152 : 0
+        let offset = !fullHistory && length > 2_097_152 ? length - 2_097_152 : 0
         var project = "Local project"
         // The first record identifies a Codex project; only its basename survives.
         try? handle.seek(toOffset: 0)
@@ -64,8 +64,9 @@ enum AIActivityParser {
         var model = older?.model ?? "Unknown model", started: Date?, turnID: String?, lastSeen = Date.distantPast
         var sawLifecycle = false, serviceTier = older?.tier
         var output: Int64 = 0, previous: [Int64]?, points: [String: AIUsagePoint] = [:]
-        let cutoff = now.addingTimeInterval(-91 * 86400)
+        let cutoff = now.addingTimeInterval(-(fullHistory ? 365 : 91) * 86400)
         for line in offset > 0 ? lines.dropFirst() : lines[...] {
+            if Task.isCancelled || points.count >= 30000 { break }
             guard let record = object(line), let timestamp = record["timestamp"] as? String, let date = parseDate(timestamp) else { continue }
             let type = record["type"] as? String
             if provider == .codex {
@@ -174,13 +175,14 @@ actor AIAnalyticsReader {
     private var cache: [URL: Cached] = [:]
     private var files: [AIProvider: [URL]] = [:]
     private var discovered: [AIProvider: Date] = [:]
+    private var history: [String: AIUsagePoint] = [:]
     private let home: URL
     private let codexHome: URL?
     init(home: URL = FileManager.default.homeDirectoryForCurrentUser, codexHome: URL? = ProcessInfo.processInfo.environment["CODEX_HOME"].map { URL(fileURLWithPath: $0) }) {
         self.home = home; self.codexHome = codexHome
     }
     func read(providers: [AIProvider], now: Date = .now) -> AIAnalytics {
-        var result = AIAnalytics(), unique: [String: AIUsagePoint] = [:], work: [String: AIWork] = [:]
+        var result = AIAnalytics(), unique = history.filter { providers.contains($0.value.provider) && now.timeIntervalSince($0.value.date) <= 365 * 86400 }, work: [String: AIWork] = [:]
         for provider in providers {
             if discovered[provider].map({ now.timeIntervalSince($0) >= 60 }) ?? true {
                 let root = provider == .codex ? (codexHome ?? home.appendingPathComponent(".codex")).appendingPathComponent("sessions") : home.appendingPathComponent(".claude/projects")
@@ -213,17 +215,52 @@ actor AIAnalyticsReader {
         }
         files = files.filter { providers.contains($0.key) }; discovered = discovered.filter { providers.contains($0.key) }
         let retained = Set(files.values.flatMap { $0 }); cache = cache.filter { retained.contains($0.key) }
-        result.points = unique.values.sorted { $0.date < $1.date }
+        history = history.filter { providers.contains($0.value.provider) }; result.points = unique.values.sorted { $0.date < $1.date }
         result.work = work.values.sorted { $0.startedAt > $1.startedAt }
         return result
     }
+    // Explicit broader scan, off the main actor, bounded in files, bytes and
+    // retained counters. Ordinary five-second polling remains a recent tail.
+    func readFullHistory(providers: [AIProvider], now: Date = .now) -> AIAnalytics {
+        var unique: [String: AIUsagePoint] = [:], scanned = 0, bytes = 0
+        for provider in providers {
+            let codex = codexHome ?? home.appendingPathComponent(".codex")
+            let roots = provider == .codex ? [codex.appendingPathComponent("sessions"), codex.appendingPathComponent("archived_sessions")] : [home.appendingPathComponent(".claude/projects")]
+            var candidates: [(URL, Date, Int)] = []
+            for root in roots {
+                guard let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey], options: [.skipsHiddenFiles]) else { continue }
+                for case let url as URL in files {
+                    if Task.isCancelled || candidates.count >= 5000 { break }
+                    guard url.pathExtension == "jsonl", let info = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey]), info.isRegularFile == true, info.isSymbolicLink != true,
+                          let size = info.fileSize, size <= 67_108_864 else { continue }
+                    candidates.append((url, info.contentModificationDate ?? .distantPast, size))
+                }
+            }
+            for (url, _, size) in candidates.sorted(by: { $0.1 > $1.1 }) {
+                if Task.isCancelled || scanned >= 1000 || bytes + size > 536_870_912 || unique.count >= 30000 { break }
+                let result = AIActivityParser.parse(url, provider: provider, now: now, fullHistory: true)
+                scanned += 1; bytes += size
+                for point in result.points {
+                    if unique.count >= 30000 && unique[point.id] == nil { break }
+                    if let old = unique[point.id], old.total > point.total || (old.total == point.total && old.model != "Unknown model") { continue }
+                    unique[point.id] = point
+                }
+            }
+        }
+        guard !Task.isCancelled else { return AIAnalytics() }
+        history = unique
+        var result = read(providers: providers, now: now)
+        result.scannedFiles = scanned
+        return result
+    }
+
 }
 
 enum InstalledAIProviders {
     static func detect(home: URL = FileManager.default.homeDirectoryForCurrentUser) -> Set<AIProvider> {
         var result = Set<AIProvider>()
         if LocalCodexUsage.executable() != nil || FileManager.default.fileExists(atPath: home.appendingPathComponent(".codex/sessions").path) { result.insert(.codex) }
-        let claudePaths = [home.appendingPathComponent(".claude/projects").path, home.appendingPathComponent(".local/bin/claude").path, "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
+        let claudePaths = [ClaudePlanHistory.location(home: home).path, home.appendingPathComponent(".claude/projects").path, home.appendingPathComponent(".local/bin/claude").path, "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
         if claudePaths.contains(where: { FileManager.default.fileExists(atPath: $0) }) { result.insert(.claude) }
         return result
     }

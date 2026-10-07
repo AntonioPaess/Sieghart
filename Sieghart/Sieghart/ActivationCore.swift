@@ -30,6 +30,7 @@ final class ActivationController: ObservableObject {
     private let registersShortcuts: Bool
     private var shortcutsStarted = false
     private let openApplication: @MainActor (String) async throws -> String
+    private let searchBrowser: @MainActor (String) async throws -> String
     private let assistant: AssistantViewModel
     private let notch: NotchWidgetController
     private var hotkeys: [EventHotKeyRef] = []
@@ -56,12 +57,13 @@ final class ActivationController: ObservableObject {
     private var settleTask: Task<Void, Never>?
     private var feedbackTask: Task<Void, Never>?
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open) {
         self.assistant = assistant
         self.notch = notch
         self.defaults = defaults
         self.registersShortcuts = registersShortcuts
         self.openApplication = openApplication
+        self.searchBrowser = searchBrowser
         func saved(_ action: ShortcutAction, fallback: ShortcutChord) -> ShortcutChord? {
             if defaults.bool(forKey: "activation.\(action.rawValue).disabled") { return nil }
             if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { return chord }
@@ -415,7 +417,7 @@ final class ActivationController: ObservableObject {
         transcript = text
         commandAcknowledged = false
         guard let command = FocusVoiceParser.parse(text) else {
-            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try “start focus for 25 minutes” or “open Safari”."
+            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try “open Safari” or “search for Swift tutorials”."
             notch.showVoice()
             return
         }
@@ -453,11 +455,27 @@ final class ActivationController: ObservableObject {
             let generation = voiceRequestGeneration
             voiceStatus = "Opening \(name)…"; notch.showVoice()
             Task { @MainActor [weak self] in
-                guard let self else { return }
+                guard let self, generation == self.voiceRequestGeneration, !Task.isCancelled else { return }
                 do {
                     let app = try await self.openApplication(name)
                     guard generation == self.voiceRequestGeneration else { return }
                     self.voiceStatus = "Opened \(app)"; self.commandAcknowledged = true
+                } catch {
+                    guard generation == self.voiceRequestGeneration else { return }
+                    self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false
+                }
+                self.scheduleFeedback(closeWidget: true)
+            }
+            return
+        case .search(let query):
+            let generation = voiceRequestGeneration
+            voiceStatus = "Opening your search…"; notch.showVoice()
+            Task { @MainActor [weak self] in
+                guard let self, generation == self.voiceRequestGeneration, !Task.isCancelled else { return }
+                do {
+                    let result = try await self.searchBrowser(query)
+                    guard generation == self.voiceRequestGeneration else { return }
+                    self.voiceStatus = "Search opened · \(result)"; self.commandAcknowledged = true
                 } catch {
                     guard generation == self.voiceRequestGeneration else { return }
                     self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false

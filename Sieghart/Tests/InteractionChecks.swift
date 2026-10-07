@@ -25,6 +25,15 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Start focus for -5 minutes") == nil)
         precondition(FocusVoiceParser.parse("Start focus for twenty-five minutes") == .start(minutes: 25))
         precondition(FocusVoiceParser.parse("Show and hide") == nil)
+        precondition(FocusVoiceParser.parse("search for Open Safari and start focus") == .search(query: "Open Safari and start focus"))
+        precondition(FocusVoiceParser.parse("Pesquise receitas de pão & café") == .search(query: "receitas de pão & café"))
+        precondition(FocusVoiceParser.parse("Não pesquise receitas") == nil)
+        let query = "C++ & café #5; $(touch /tmp/nope)"
+        let search = BrowserSearch.url(for: query)!
+        precondition(URLComponents(url: search, resolvingAgainstBaseURL: false)?.queryItems?.first?.value == query)
+        precondition(search.host == "duckduckgo.com" && search.scheme == "https")
+        precondition(BrowserSearch.url(for: String(repeating: "a", count: 501)) == nil)
+        precondition(BrowserSearch.url(for: "a\nb") == nil)
         precondition(FocusVoiceParser.parse("Open Warp") == .openApp(name: "warp"))
         precondition(FocusVoiceParser.parse("Open Safari and search YouTube") == nil)
         precondition(FocusVoiceParser.parse("Abra o WhatsApp") == .openApp(name: "whatsapp"))
@@ -124,7 +133,7 @@ struct InteractionChecks {
         preferences.avatar = .crtBuddy
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name })
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query })
         notch.activation = activation
         precondition(activation.voiceShortcut == .voice && activation.voiceShortcut?.keyCode != nil)
         // A first click from another app must reach both native activation and
@@ -248,6 +257,9 @@ struct InteractionChecks {
         activation.setShortcut(activation.companionShortcut, for: .voice)
         precondition(activation.voiceShortcut == custom) // Duplicate bindings are rejected.
 
+        activation.executeVoiceCommand("search for café & Swift")
+        try await Task.sleep(for: .milliseconds(80))
+        precondition(activation.commandAcknowledged && activation.voiceStatus == "Search opened · Fixture café & Swift" && notch.presentation == .home)
         activation.executeVoiceCommand("Open Safari")
         precondition(notch.presentation == .home && activation.voicePresented && activation.transcript == "Open Safari")
         try await Task.sleep(for: .milliseconds(20))

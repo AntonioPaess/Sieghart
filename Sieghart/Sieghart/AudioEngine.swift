@@ -11,6 +11,7 @@ struct AudioDeviceInfo: Identifiable, Equatable {
     let inputChannels: Int
     let outputChannels: Int
     var transport: UInt32 = 0
+    var sampleRate: Double = 0
     var symbol: String {
         let label = name.lowercased()
         if label.contains("airpods") { return label.contains("max") ? "airpodsmax" : label.contains("pro") ? "airpodspro" : "airpods" }
@@ -107,9 +108,15 @@ enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired
     }
     func refresh() {
         let latest = backend.snapshot()
-        if latest.output != state.output { backend.stopApplications(); routedApps = []; failedApps = [] }
+        let previousOutput = state.devices.first { $0.id == state.output }
+        let nextOutput = latest.devices.first { $0.id == latest.output }
+        if latest.output != state.output || previousOutput != nextOutput { backend.stopApplications(); routedApps = []; failedApps = [] }
+        // A restarted app/helper is a new route opportunity after a failure.
+        failedApps = failedApps.filter { id in
+            state.apps.first { $0.id == id }?.processes == latest.apps.first { $0.id == id }?.processes
+        }
         state = latest
-        let alive = Set(state.apps.map(\.id))
+        let alive = Set(state.apps.filter { !$0.processes.isEmpty }.map(\.id))
         backend.retainApplications(alive); routedApps.formIntersection(alive)
         guard perAppEnabled, let output = state.devices.first(where: { $0.id == state.output }) else { return }
         for app in state.apps where !app.processes.isEmpty && gains[app.id] != nil && !failedApps.contains(app.id) {
@@ -260,7 +267,9 @@ private enum SystemAudioPermissionProbe {
         guard let purpose = Bundle.main.object(forInfoDictionaryKey: "NSAudioCaptureUsageDescription") as? String, !purpose.isEmpty else {
             throw AudioFailure(operation: "System audio permission description is missing", status: kAudioHardwareIllegalOperationError)
         }
-        let description = CATapDescription(stereoMixdownOfProcesses: [])
+        // An empty inclusion list taps no processes and can skip the privacy
+        // request. A temporary unmuted global tap exercises the capture path.
+        let description = CATapDescription(stereoGlobalTapButExcludeProcesses: [])
         description.name = "Sieghart audio access"; description.isPrivate = true; description.muteBehavior = .unmuted
         var tap: AudioObjectID = 0, device: AudioObjectID = 0
         var io: AudioDeviceIOProcID?
@@ -294,12 +303,13 @@ private func audioCheck(_ status: OSStatus, _ operation: String) throws {
 private final class ApplicationAudioRoute {
     let processes: [AudioObjectID]
     let output: AudioObjectID
+    let device: AudioDeviceInfo
     private var tap: AudioObjectID = 0
     private var aggregate: AudioObjectID = 0
     private var callback: AudioDeviceIOProcID?
     private var state = AudioGainState()
     init(app: AudioApplicationInfo, device: AudioDeviceInfo, gain: Float) throws {
-        processes = app.processes; output = device.id
+        processes = app.processes; output = device.id; self.device = device
         // A stereo process mix includes all of an app's output streams, also
         // when a call changes a Bluetooth headset's stream/rate/channel layout.
         let description = CATapDescription(stereoMixdownOfProcesses: app.processes)
@@ -362,7 +372,7 @@ private final class ApplicationAudioRoute {
             guard !uid.isEmpty else { return nil }
             let name = string(id, kAudioObjectPropertyName)
             guard name != "Sieghart private mixer", name != "Sieghart audio access" else { return nil }
-            return AudioDeviceInfo(id: id, name: name, uid: uid, inputChannels: channels(id, input: true), outputChannels: channels(id, input: false), transport: scalar(id, kAudioDevicePropertyTransportType) ?? 0)
+            return AudioDeviceInfo(id: id, name: name, uid: uid, inputChannels: channels(id, input: true), outputChannels: channels(id, input: false), transport: scalar(id, kAudioDevicePropertyTransportType) ?? 0, sampleRate: scalar(id, kAudioDevicePropertyNominalSampleRate) ?? 0)
         }
         let output: UInt32 = scalar(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultOutputDevice) ?? 0
         let input: UInt32 = scalar(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultInputDevice) ?? 0
@@ -403,7 +413,7 @@ private final class ApplicationAudioRoute {
     func setApplication(_ app: AudioApplicationInfo, gain: Float, output: AudioDeviceInfo) throws {
         // Unity is passthrough; no tap is needed to play at normal volume.
         if gain >= 1 { routes.removeValue(forKey: app.id)?.close(); return }
-        if let existing = routes[app.id], existing.processes == app.processes, existing.output == output.id { existing.setGain(gain); return }
+        if let existing = routes[app.id], existing.processes == app.processes, existing.device == output { existing.setGain(gain); return }
         let replacement = try ApplicationAudioRoute(app: app, device: output, gain: gain)
         routes.removeValue(forKey: app.id)?.close()
         routes[app.id] = replacement

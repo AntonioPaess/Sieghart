@@ -4,10 +4,21 @@ import AppKit
 enum FocusVoiceCommand: Equatable {
     case start(minutes: Int?), resume, pause, finish, reset, startBreak, show, hide, configure, aiLimits
     case openApp(name: String)
+    case search(query: String)
 }
 
 enum FocusVoiceParser {
     static func parse(_ transcript: String) -> FocusVoiceCommand? {
+        // Parse search before interpreting words inside its query as actions.
+        let original = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let searchPattern = #"^(?:please\s+|por favor\s+)?(?:search(?:\s+the\s+web)?(?:\s+for)?|pesquise|pesquisar|busque|buscar)(?:\s+na\s+(?:web|internet))?\s+(.+)$"#
+        if let expression = try? NSRegularExpression(pattern: searchPattern, options: [.caseInsensitive]),
+           let match = expression.firstMatch(in: original, range: NSRange(original.startIndex..., in: original)),
+           let range = Range(match.range(at: 1), in: original) {
+            let query = String(original[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard BrowserSearch.url(for: query) != nil else { return nil }
+            return .search(query: query)
+        }
         var text = transcript.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US"))
         text = text.replacingOccurrences(of: "’", with: "'")
         guard !["don't", "do not", "never", "nao", "not now"].contains(where: text.contains) else { return nil }
@@ -67,6 +78,23 @@ enum FocusVoiceParser {
         }
         return .start(minutes: nil)
     }
+}
+
+enum BrowserSearch {
+    static func url(for query: String) -> URL? {
+        guard !query.isEmpty, query.count <= 500,
+              query.rangeOfCharacter(from: .controlCharacters) == nil else { return nil }
+        var parts = URLComponents(string: "https://duckduckgo.com/")!
+        parts.queryItems = [URLQueryItem(name: "q", value: query)]
+        return parts.url
+    }
+    @MainActor static func open(_ query: String) async throws -> String {
+        guard let url = url(for: query), NSWorkspace.shared.open(url) else { throw BrowserSearchFailure() }
+        return query
+    }
+}
+private struct BrowserSearchFailure: LocalizedError {
+    var errorDescription: String? { "Couldn't open your default browser. Try the search again." }
 }
 
 // Resolve exact installed app names/bundle aliases; transcripts are never

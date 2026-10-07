@@ -85,15 +85,15 @@ struct AIUsageView: View {
         if provider == .codex { CodexUsageView(compact: true, dashboard: true, cardHeight: summaryHeight) }
         else {
             VStack(alignment: .leading, spacing: dense ? 5 : 10) {
-                Label { Text("Claude Code").font(heading) } icon: { ProviderMark(provider: .claude, size: dense ? 18 : 28) }
-                if let report = usage.claudeReport {
+                Label { Text("Claude").font(heading) } icon: { ProviderMark(provider: .claude, size: dense ? 18 : 28) }
+                if let report = usage.effectiveClaudeReport {
                     TimelineView(.periodic(from: .now, by: 60)) { context in
                         VStack(spacing: 8) {
                             if let window = report.primary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
                             if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
                         }
                     }
-                    if !dense { Text("Dated report").font(.caption2).foregroundStyle(CompanionStyle.muted) }
+                    if !dense { Text(usage.claudeSource).font(.caption2).foregroundStyle(CompanionStyle.muted) }
                 } else { Text("Subscription limits unavailable").font(.callout).foregroundStyle(CompanionStyle.muted) }
             }.companionCard(height: summaryHeight, padding: cardPadding)
         }
