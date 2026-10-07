@@ -6,10 +6,10 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 
 ## App and notch
 
-First launch shows a two-step onboarding: choose one of all six avatars with its name/personality, then choose local AI monitoring. Finish saves both preferences. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** changes the avatar later.
+First launch shows a two-step onboarding: choose one of all six avatars with its name/personality, then choose local AI monitoring. Finish saves both preferences. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** or the menu-bar **Avatars** subpage changes the avatar later.
 
 - **Overview** shows the current session and completed count.
-- **Focus** opens a dedicated tab in the app. It uses the same configuration editor as the widget: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
+- **Timers** opens Timer, Pomodoro and Stopwatch in the app, menu bar and widget. Pomodoro shares these settings: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
 - **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
 - **Appearance** offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal, and Ink Buddy. Selection saves immediately and applies throughout the app and notch. Small, Medium and Large expanded widget sizes, timer density, character motion, and reduced motion are configurable. Compact height always follows the physical camera cutout. macOS Reduce Motion is always respected.
 
@@ -117,3 +117,15 @@ The latest user reference retains minimal shapes while requiring visible depth. 
 The main app now shares the glass treatment across Overview, Timers, grouped Activation preferences, Appearance, AI limits and onboarding. Overview reflects the active clock and keeps focus explicit. The compact island no longer draws its colored hover contour or native edge: feedback is a small character reaction on the unchanged black shell.
 
 [Main-window preview](Design/Concepts/app-overview-preview.png) · [Appearance](Design/Concepts/app-appearance-preview.png) · [Depth](Design/Concepts/simple-companions-depth-preview.png) · [Borderless compact hover](Design/Concepts/compact-hover-preview.png). Production views are rendered offscreen with illustrative data; no app window, real shortcut, sensor or microphone was started. SG-001/SG-002 remain physical Mac acceptance checks.
+
+## Before Sprint 4 — Bounded layout, menu subpages and audio
+
+Companion context now has contour-aware margins without the repeated inner action row. The launcher is a four-column grid with the saved native avatar in Companion, timers place the ruler and clock side by side, and AI cards preserve the compact reference order. Expanded island heights stay bounded; connection details open separately. Native menu tracking keeps the parent island available while selecting a submenu item.
+
+Menu-bar Companion, Timers, AI, Audio and Avatars tabs share one fixed-height content area. Change the saved companion there without opening the main window. The main workspace also includes Audio.
+
+`AudioEngine.swift` independently implements hardware device properties plus private per-app Core Audio taps/aggregate playback, a bounded Float32 gain callback and route teardown. `AudioControlsView.swift` provides master/app columns and device/microphone subpages. App mixing is explicit and disabled on each new launch; saved gains are restored only after enabling it. A device-specific tap mixes only the selected output. Process death/output changes remove old routes. Format checks reject unsupported PCM, encoded or multichannel outputs before reading/muting the original route. Failed controls remain unavailable rather than claiming a value was applied. macOS system-audio permission is declared in the generated Info.plist. No audio is saved.
+
+The audio checks use a mock backend and allocated sample buffers, covering consent, failure, mute, output changes, stopping routes, persistence, stereo/planar conversion and output bounds. They do not validate physical playback. Speakers/AirPods, grant/denial, app restarts, unplugging devices, sleep/wake and latency are mandatory Mac acceptance before Sprint 4. Audio pinning/order/device priorities remain S4.
+
+[Layout notes and current previews](Design/island-layout.md). Reference photos stay outside app/Challenge resources. See [Apple’s Core Audio tap documentation](https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps).

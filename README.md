@@ -9,7 +9,7 @@
 
 Sieghart is a native macOS companion that lives near the camera notch. An animated avatar reacts to your touch and pointer, while focus sessions and quick controls stay close to the top of your screen.
 
-Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab** or directly inside the widget. Starting is explicit; the compact island keeps the countdown or elapsed time nearby while you work.
+Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, the menu-bar Timers subpage, or directly inside the widget. Starting is explicit; the compact island keeps the countdown or elapsed time nearby while you work.
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
@@ -19,8 +19,10 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab** or
 
 | Feature | What it does |
 | --- | --- |
-| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance. It also becomes your menu-bar icon. |
+| **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance or the menu-bar Avatars tab. It also becomes your menu-bar icon. |
 | **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Native eye expressions, smooth blinking, gaze and gentle shape motion and short messages explain each response. |
+| **Audio controls** | Master output volume, default output/input selection, supported microphone gain/mute, and an opt-in per-app mixer on the selected output. Stereo/mono Float32 routes are implemented with Core Audio process taps; real-device acceptance remains open. |
+| **Menu-bar subpages** | Companion, Timers, AI, Audio and Avatars replace the long stacked panel. Avatar changes save immediately. |
 | **Three timer modes** | The app and notch share a standalone countdown, Pomodoro with breaks/rounds, and stopwatch. Each supports pause, resume and reset; choosing a mode never starts a session. |
 | **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover for a visual highlight; the first click opens controls even with another app active. The full activation strip, including the camera gap, toggles controls. Pointer exit allows 800 ms to cross between controls; keyboard reveal allows four seconds to reach them. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
@@ -40,17 +42,17 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab** or
 
 *Offscreen 20 fps preview of native gaze, blinking and breathing. The app’s motion updates at 60 Hz and respects Reduce Motion.*
 
-First launch presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
+First launch presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** or the menu-bar **Avatars** tab to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
 
 ### A companion with context
 
-![Widget context, repeated-touch feedback, and the updated menu](Sieghart/Design/Concepts/widget-menu-preview.png)
+![Companion with comfortable margins and no duplicated action row](Sieghart/Design/Concepts/island-companion-preview.png)
 
-*Static renders of the production views, without opening app windows. The widget shows the session, time, completed count, and a companion message as soon as it opens. The menu shares the app’s palette and selected avatar.*
+*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses five fixed-height subpages.*
 
 The compact island and camera strip stay sRGB black (`#000000`). Expanded pages use glass with dark translucent cards, an attached shoulder contour and circular quick controls around the surface. macOS 26 uses Liquid Glass; older supported systems use behind-window blur. Reduce Transparency keeps an opaque surface. Native transitions reserve their full bounds so the moving silhouette does not resize or crop its content.
 
-![Glass island with the selected companion](Sieghart/Design/Concepts/glass-island-preview.png)
+![Horizontal Pomodoro setup](Sieghart/Design/Concepts/island-pomodoro-preview.png)
 
 *Offscreen production-view render; glass translucency is illustrated against a sample background. Native desktop refraction and movement still require a Mac run.*
 
@@ -58,13 +60,23 @@ The compact island and camera strip stay sRGB black (`#000000`). Expanded pages 
 
 ![Sieghart main window](Sieghart/Design/Concepts/app-overview-preview.png)
 
-*Offscreen render of the production main window with illustrative AI data. Overview, Timers, Activation, Appearance, AI limits and onboarding share the same glass surfaces, palette and companions. Native desktop refraction remains a Mac acceptance check.*
+*Offscreen render of the production main window with illustrative AI data. Overview, Timers, Activation, Appearance, AI agents, Audio and onboarding share the same glass surfaces, palette and companions. Native desktop refraction remains a Mac acceptance check.*
 
-[Appearance](Sieghart/Design/Concepts/app-appearance-preview.png) · [Timers](Sieghart/Design/Concepts/app-timers-preview.png) · [Activation](Sieghart/Design/Concepts/app-activation-preview.png) · [AI dashboard](Sieghart/Design/Concepts/app-ai-preview.png)
+[Appearance](Sieghart/Design/Concepts/app-appearance-preview.png) · [Timers](Sieghart/Design/Concepts/app-timers-preview.png) · [Activation](Sieghart/Design/Concepts/app-activation-preview.png) · [AI dashboard](Sieghart/Design/Concepts/app-ai-preview.png) · [Audio](Sieghart/Design/Concepts/app-audio-preview.png)
 
 [Companion depth](Sieghart/Design/Concepts/simple-companions-depth-preview.png) · [Compact hover without an outline](Sieghart/Design/Concepts/compact-hover-preview.png)
 
 [Explore the design prototype](Sieghart/Design/Prototype) · [Read the implementation notes](Sieghart/README.md)
+
+### Audio and compact navigation
+
+![Audio mixer with illustrative apps and levels](Sieghart/Design/Concepts/island-audio-preview.png)
+
+Output selection, master volume and input-device controls use Core Audio hardware properties. Devices without writable volume/mute show unavailable controls. The per-app mixer is off after launch. **Enable app mixer** opts in; macOS requests system-audio access when restoring a saved mix or first adjusting an app. The mixer processes audio locally without saving it or recording the microphone. It groups audio helpers into their visible installed app, keeps connected silent apps available between sounds, loads native app icons, identifies the selected device (including AirPods), adjusts each with a private process tap and aggregate playback route, and restores normal playback when disabled. Encoded, multichannel or incompatible formats are rejected explicitly. Real speakers, AirPods, permission denial and disconnects still require Mac acceptance.
+
+![Choose a companion from the menu bar](Sieghart/Design/Concepts/menu-avatars-preview.png)
+
+Each menu-bar tab replaces the content within one fixed-height area. The island's tool grid opens Companion, Audio, AI agents, Timers, Voice, Avatars and Preferences. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
 
 ## Swift Student Challenge
 
@@ -109,7 +121,7 @@ The main window can be closed while Sieghart remains in the menu bar. A listen-o
 
 ## Voice and local data
 
-Voice starts with its configured shortcut, **Speak**, or the widget microphone. The default voice shortcut is **Option + Command**, pressed and released. Modifier-only shortcuts use a listen-only session event tap with Input Monitoring access, or the AppKit global monitor with existing Accessibility access. Activation provides an explicit permission button; one of those grants is sufficient. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
+Voice starts with its configured shortcut, **Speak**, or the Voice tile in the widget’s tools menu. The default voice shortcut is **Option + Command**, pressed and released. Modifier-only shortcuts use a listen-only session event tap with Input Monitoring access, or the AppKit global monitor with existing Accessibility access. Activation provides an explicit permission button; one of those grants is sufficient. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
 
 Speak a supported command and finish naturally. Recognition completion or a short pause executes it automatically; capture stops after at most ten seconds. Choose English or Portuguese in Activation. Try “start focus for 25 minutes”, “pause timer”, “resume”, “finish”, “show”, or “hide”. Unsupported, negated, or conflicting commands leave the timer unchanged. This is a local focus-command interface; open-ended AI conversation remains planned.
 
@@ -133,7 +145,7 @@ Run all deterministic checks:
 bash Sieghart/Tests/run-checks.sh
 ```
 
-These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover all three timer modes, countdown/stopwatch pause and restoration, explicit mode selection, interval counting, native first-click acceptance, activation-strip toggle, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six native menu icons, continuous eye/shape motion and Reduce Motion, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence, AI lifecycle completion, long-turn metadata recovery, graph deduplication, first-run avatar persistence, click-only expansion, collapse of every panel, old-completion suppression, widget sizes, automatic price/tier/cache arithmetic, unpriced lower bounds and usage-based provider logos.
+These checks do not open the app, activate the sensor, register system shortcuts, request permissions, or record audio. They cover all three timer modes, countdown/stopwatch pause and restoration, explicit mode selection, interval counting, native first-click acceptance, activation-strip toggle, background speech authorization, voice execution and acknowledgement, shortcut persistence, modifier gestures, all six native menu icons, continuous eye/shape motion and Reduce Motion, repeated-touch reactions, wake-up behavior, exact compact notch height, island collapse, completion announcements during automatic breaks, real quota protocol fixtures, cloned-session deduplication, token arithmetic and spending persistence, AI lifecycle completion, long-turn metadata recovery, graph deduplication, first-run avatar persistence, click-only expansion, collapse of every panel, old-completion suppression, widget sizes, automatic price/tier/cache arithmetic, unpriced lower bounds and usage-based provider logos. An eighth check group exercises opt-in audio, failure states, device changes, teardown and bounded planar/interleaved Float32 mixing without using hardware.
 
 ## Project map
 

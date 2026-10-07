@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", aiLimits = "AI limits"
+    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", aiLimits = "AI agents", audio = "Audio"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -10,6 +10,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .activation: "keyboard"
         case .appearance: "slider.horizontal.3"
         case .aiLimits: "chart.bar.xaxis"
+        case .audio: "speaker.wave.2"
         }
     }
 }
@@ -75,6 +76,9 @@ struct ContentView: View {
             case .focus: focusSettings
             case .activation: activationSettings
             case .appearance: appearanceSettings
+            case .audio:
+                heading("Sound, your way.", subtitle: "Your devices and audio apps in one quiet space.")
+                AudioControlsView().companionCard()
             case .aiLimits:
                 heading("Your AI, in view.", subtitle: "Limits, tokens and activity from the tools you use.")
                 AIUsageView()

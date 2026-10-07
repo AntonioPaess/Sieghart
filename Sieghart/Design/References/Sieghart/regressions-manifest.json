@@ -18,5 +18,23 @@
     "file": "2026-10-05-22-18-31-hourly-chart-before.png",
     "source_filename": "Captura de Tela 2026-10-05 às 22.18.31.png",
     "sha256": "9d0be62ce78076ac60a430e6a02ce138e8b1d0b2c32de21644c875bf77e0ef4c"
+  },
+  {
+    "file": "2026-10-06-20-51-05-companion-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 20.51.05.png",
+    "description": "Cramped companion layout and duplicate action row",
+    "sha256": "2e7190bfd5f7a9b3009a0b58fd2e6eeca9f5670d286536fe18252f9796e28e36"
+  },
+  {
+    "file": "2026-10-06-21-16-21-ai-card-heights-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 21.16.21.png",
+    "description": "Unequal quota and spending card heights",
+    "sha256": "bb3c7b5d8a9050e8c3e95d8126ff7493e88ceff3d24f9d181eff7372fe5fb31e"
+  },
+  {
+    "file": "2026-10-06-21-17-10-companion-tile-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 21.17.10.png",
+    "description": "Generic Companion tile instead of the selected avatar",
+    "sha256": "6e501a2709efeb392ac6e578741b7f2807ec179fecd2ad4d7663d29bdc11822c"
   }
 ]

@@ -405,16 +405,17 @@ final class CompanionReactions: ObservableObject {
 struct CompanionAvatarPicker: View {
     @Binding var selection: CompanionAvatar
     var animates: Bool
+    var compact = false
 
     var body: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 12) {
             ForEach(CompanionAvatar.allCases) { avatar in
                 CompanionInteraction(action: { selection = avatar }) {
                     VStack(spacing: 8) {
-                        CompanionCharacter(size: 62, avatar: avatar, animates: animates && selection == avatar)
+                        CompanionCharacter(size: compact ? 48 : 62, avatar: avatar, animates: animates && selection == avatar)
                             .padding(.top, 4)
                         Text(avatar.name).font(.callout.weight(.semibold)).foregroundStyle(.white).lineLimit(1).minimumScaleFactor(0.8)
-                        Text(avatar.subtitle).font(.caption).foregroundStyle(CompanionStyle.muted).lineLimit(1).minimumScaleFactor(0.8)
+                        if !compact { Text(avatar.subtitle).font(.caption).foregroundStyle(CompanionStyle.muted).lineLimit(1).minimumScaleFactor(0.8) }
                         Label(selection == avatar ? "Selected" : "Choose", systemImage: selection == avatar ? "checkmark.circle.fill" : "circle")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(selection == avatar ? avatar.tint : CompanionStyle.muted)

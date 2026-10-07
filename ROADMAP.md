@@ -25,7 +25,7 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 
 - Click opens the island. Hover only gives visual feedback, including idle compact state. All expanded pages collapse on pointer exit with a short crossing allowance. Saved focus completion never hijacks AI or normal navigation.
 - Appearance saves Small/Medium/Large widget sizes; expanded content scales consistently and compact camera height stays exact.
-- Provider logos/selectors follow actual usage/readings, not installation alone. Model/project rows show exact integers; older completed history recovers model context when present.
+- Provider logos/selectors follow actual usage/readings, not installation alone. Model/project rows offer exact integers on hover/accessibility; older completed history recovers model context when present.
 - Hourly hover/selection gives range, total, input/output/cache and API-equivalent value. Heatmap hover/selection gives exact dated usage. Missing metadata remains explicit.
 - Modifier shortcuts now prefer a common-mode listen-only session event tap, with interruption recovery; regular keys retain global Carbon registration and a permitted fallback. Real Mac acceptance remains open.
 
@@ -65,12 +65,22 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 - Read-only live verification detected current Codex work and returned 22 dated account activity buckets. No conversation content is retained. No actual app window, sensor, shortcut registration or microphone was used by the assistant.
 - [Full dashboard preview](Sieghart/Design/Concepts/ai-dashboard-preview.png) and [six-avatar onboarding preview](Sieghart/Design/Concepts/onboarding-preview.png) render production views offscreen with clearly labeled sample data.
 
+### Before Sprint 4 — Layout, menu and audio — October 6, 2026
+
+- Larger contour-aware horizontal margins; Companion no longer repeats grid/voice/settings/close controls inside its content. Seven implemented tools use a four-column launcher. Side audio access replaces the duplicated voice shortcut; Voice stays in the tool grid/menu and its global shortcut.
+- AI uses equal-width, equal-height limits/spending cards, current work, an hourly chart with exact hover detail, model/project rankings and 13-week activity. Connections/pricing details open in a separate sheet. The viewport stays bounded at 470 points rather than growing with details.
+- Timer, Pomodoro and Stopwatch share text tabs and a horizontal clock layout. Countdown/focus use a drag/VoiceOver-adjustable ruler. Pomodoro break/round/auto-break options fit one row. Explicit start, pause, reset and finish retain the existing persisted timer model.
+- Menu bar uses Companion / Timers / AI / Audio / Avatars subpages in one 300-point content area. All six companions are selectable there; the choice is shared with onboarding, app and island.
+- Core audio is implemented now: output volume, default input/output device selection, supported input gain/mute, app discovery with helper ownership, native installed app icons and AirPods/device identity, app volume/mute via private Core Audio process taps and aggregate playback. Explicit opt-in, local-only processing, saved gains but capture disabled on launch, incompatible-format errors and route teardown are implemented. Mixer/device/microphone subpages and horizontal app scrolling keep height bounded. Real device and permission acceptance remains open; pinning/order/device priorities are future S4 work.
+- Eight isolated check groups and production offscreen previews cover implementation. No app/Xcode window, sensor, microphone, system-audio capture or real shortcut is started by verification. Physical SG-001/SG-002 and audio acceptance are not claimed closed.
+
 ### Next in Sprint 3
 
 1. Voice launch of installed applications with deterministic resolution, ambiguity handling and honest errors; browser search without sending arbitrary text through a shell. These actions are not implemented yet.
 2. Billing/import adapters and broader historical coverage. Automatic price/FX sources are implemented; values are API equivalents and local history remains partial.
 3. Verified automatic individual Claude quota access; the dated report import remains available.
-4. User Mac acceptance for onboarding, activity/island behavior, permissions and companion/voice shortcuts across Spaces/full-screen.
+4. Before Sprint 4: Mac acceptance of the refreshed bounded panels/menu tabs and audio mixer: speakers/AirPods, capture permission grant/denial, app mute, output changes and unplugging devices.
+5. User Mac acceptance for onboarding, activity/island behavior, permissions and companion/voice shortcuts across Spaces/full-screen.
 
 **Exit:** implemented first run and live AI pass the real Mac checks; voice launch/search have actual action adapters; each automatic source has provenance and unavailable states. Calendar remains hidden until its S5 repair.
 
@@ -79,7 +89,8 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 | Milestone | Outcome |
 | --- | --- |
 | Challenge track | Three-minute offline companion/focus story, accepted playground destination, physical-sensor compatibility, local resources under edition size limit. Reference screenshots and network integrations stay outside its package. |
-| S4 | System monitor, keep awake, audio routing/mixer and power/display essentials. Permission and hardware support are explicit. |
+| Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. Real Mac audio/interaction acceptance pending. |
+| S4 | System monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Expand and validate the audio foundation. |
 | S5 | Calendar repair/reminders, notifications, selected-folder downloads, clipboard/shelf and core capture tools. |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
@@ -137,10 +148,10 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `mixer` | Per-app volume mixer | Planned | S4 |
-| `soundOutputSwitcher` | Output switcher | Planned | S4 |
+| `mixer` | Per-app volume mixer | Implemented core; Mac acceptance pending | Before S4 / S4 |
+| `soundOutputSwitcher` | Output switcher | Device picker implemented; global shortcut pending | Before S4 / S4 |
 | `audioPriority` | Preferred audio devices | Planned | S4 |
-| `micMute` | Global microphone mute | Planned | S4 |
+| `micMute` | Global microphone mute | Supported hardware mute implemented; global shortcut pending | Before S4 / S4 |
 | `musicBlock` | Prevent Music auto-launch | Planned | S4 |
 
 ### Energy and displays (4)
@@ -156,7 +167,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `quickLauncher` | Quick tool panel | Partial — Four widget routes; customizable launch panel pending | S5–S7 |
+| `quickLauncher` | Quick tool panel | Partial — Seven widget routes with selected companion artwork; customizable launch panel pending | S5–S7 |
 | `quickToggles` | Quick actions | Planned | S5–S7 |
 | `colorPicker` | Screen color picker | Planned | S5–S7 |
 | `screenOCR` | Screen text/QR copy | Planned | S5–S7 |

@@ -1,6 +1,6 @@
 # Widget reference gallery
 
-39 screenshots supplied by the user on October 5, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
+43 screenshots supplied by the user on October 5–6, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
 
 The user requests functional coverage across the reference app, improved usability, and an integrated Sieghart companion. See [the roadmap](../../../../ROADMAP.md). The installed reference shows version 3.4.0 and 73 modules; its current public catalog contains 77.
 
@@ -160,3 +160,23 @@ The user requests functional coverage across the reference app, improved usabili
 
 ![Downloads folder selection](2026-10-05-212216.png)
 
+
+## October 6 — Horizontal tile launcher
+
+![Horizontal tile launcher](2026-10-06-20-52-49-launcher-reference.png)
+
+## October 6 — Three timing tools, horizontal ruler and compact Pomodoro options
+
+![Three timing tools, horizontal ruler and compact Pomodoro options](2026-10-06-20-53-51-timers-reference.png)
+
+## October 6 — Master volume and per-app columns
+
+![Master volume and per-app columns](2026-10-06-20-54-54-audio-reference.png)
+
+## October 6 — Menu-bar subpages instead of stacked modules
+
+![Menu-bar subpages instead of stacked modules](2026-10-06-20-55-12-menu-tabs-reference.png)
+
+## October 6 source review — AI and audio
+
+Pinned source revision: `906646178553325e76107af78ff04bf352c10adf`. Reviewed [AI row geometry](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift), [local usage service](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/AgentUsage/AgentUsageService.swift), [mixer](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Audio/AppVolumeMixer.swift) and [owner/icon resolution](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/ResponsibleProcess.swift). These files show fixed-height paired cards, local agent records, regular app grouping (including silent audio connections), and icons supplied by macOS rather than downloaded SVGs. Implementation and preview notes: [bounded island layouts](../../island-layout.md). Public process ancestry replaces private symbol lookup in Sieghart.

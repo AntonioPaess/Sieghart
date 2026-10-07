@@ -53,6 +53,7 @@ struct SieghartApp: App {
                 .environmentObject(preferences)
                 .environmentObject(codexUsage)
                 .environmentObject(aiUsage)
+                .environmentObject(notch.audio)
         }
         .defaultSize(width: 1000, height: 680)
         .windowToolbarStyle(.unifiedCompact)
@@ -65,6 +66,7 @@ struct SieghartApp: App {
                 .environmentObject(preferences)
                 .environmentObject(codexUsage)
                 .environmentObject(aiUsage)
+                .environmentObject(notch.audio)
         } label: {
             if let image = CompanionArtwork.menuBarImage(for: preferences.avatar) {
                 Image(nsImage: image).accessibilityLabel("Sieghart — \(preferences.avatar.name)")

@@ -145,17 +145,22 @@ struct CompanionInteraction<Content: View>: View {
 
 extension View {
     @ViewBuilder
-    func companionCard() -> some View {
-        modifier(CompanionCardModifier())
+    func companionCard(height: CGFloat? = nil, padding: CGFloat? = nil) -> some View {
+        modifier(CompanionCardModifier(height: height, inset: padding))
     }
 }
 
 private struct CompanionCardModifier: ViewModifier {
+    var height: CGFloat?
+    var inset: CGFloat?
     @Environment(\.islandGlass) private var glass
     @Environment(\.workspaceGlass) private var workspace
     func body(content: Content) -> some View {
-        if workspace { content.padding(24).modifier(WorkspaceSurface()) }
-        else if glass { content.padding(16).modifier(IslandControlSurface()) }
-        else { content.padding(24).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17)) }
+        let padding: CGFloat = inset ?? (workspace || !glass ? 24 : 16)
+        let sized = content.frame(maxWidth: .infinity, alignment: .topLeading)
+            .frame(height: height.map { max(0, $0 - padding * 2) }, alignment: .topLeading).padding(padding)
+        if workspace { sized.modifier(WorkspaceSurface()) }
+        else if glass { sized.modifier(IslandControlSurface()) }
+        else { sized.background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17)) }
     }
 }
