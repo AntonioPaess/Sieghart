@@ -8,7 +8,7 @@ struct ProviderMark: View {
     var size: CGFloat = 30
     var body: some View {
         Image(provider.assetName, bundle: AIProviderResources.bundle).resizable().renderingMode(.template).scaledToFit()
-            .foregroundStyle(provider == .codex ? CompanionStyle.accent : Color(red: 0.85, green: 0.53, blue: 0.39))
+            .foregroundStyle(provider == .codex ? CompanionStyle.accentInk : Color(red: 0.85, green: 0.53, blue: 0.39))
             .padding(size * 0.18).frame(width: size, height: size)
             .background(CompanionStyle.background, in: RoundedRectangle(cornerRadius: size * 0.27))
             .accessibilityHidden(true)
@@ -26,7 +26,7 @@ struct AIUsageSummary: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 if let provider = usage.usedProviders(codex: codex).first { ProviderMark(provider: provider) }
-                else { Image(systemName: "chart.bar.xaxis").font(.title3).foregroundStyle(CompanionStyle.accent) }
+                else { Image(systemName: "chart.bar.xaxis").font(.title3).foregroundStyle(CompanionStyle.accentInk) }
                 VStack(alignment: .leading, spacing: 3) {
                     Text("AI limits").font(.headline)
                     Text("Usage, resets & spending").font(.caption).foregroundStyle(CompanionStyle.muted)
@@ -42,7 +42,7 @@ struct AIUsageSummary: View {
                                 Text(window.title).font(.caption)
                                 Spacer()
                                 Text(window.remainingPercent(at: context.date).map { "\($0)% left" } ?? "Refresh due")
-                                    .font(.caption.weight(.semibold)).foregroundStyle(CompanionStyle.accent)
+                                    .font(.caption.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk)
                             }
                             if let reset = window.resetDate {
                                 Text("Resets \(reset.formatted(date: .abbreviated, time: .shortened))")
@@ -260,7 +260,7 @@ private struct UsageSettingsView: View {
                     if invalid { Text("Use nonnegative prices and a positive amount or exchange rate.").font(.caption).foregroundStyle(.orange) }
                 }.textFieldStyle(.roundedBorder)
             }
-        }.padding(24).frame(width: 520, height: 650).background(CompanionStyle.background).foregroundStyle(.white).preferredColorScheme(.dark)
+        }.padding(24).frame(width: 520, height: 650).background(CompanionStyle.background).foregroundStyle(CompanionStyle.ink)
             .onAppear {
                 let prices = usage.ledger.prices[provider]
                 input = prices?.inputUSD.map { "\($0)" } ?? ""; output = prices?.outputUSD.map { "\($0)" } ?? ""

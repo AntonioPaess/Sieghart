@@ -180,3 +180,10 @@ The user requests functional coverage across the reference app, improved usabili
 ## October 6 source review — AI and audio
 
 Pinned source revision: `906646178553325e76107af78ff04bf352c10adf`. Reviewed [AI row geometry](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift), [local usage service](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/AgentUsage/AgentUsageService.swift), [mixer](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Audio/AppVolumeMixer.swift) and [owner/icon resolution](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/ResponsibleProcess.swift). These files show fixed-height paired cards, local agent records, regular app grouping (including silent audio connections), and icons supplied by macOS rather than downloaded SVGs. Implementation and preview notes: [bounded island layouts](../../island-layout.md). Public process ancestry replaces private symbol lookup in Sieghart.
+
+
+## October 7 — Optional Glass and appearance choices
+
+![System, light and dark choices with separate optional Glass switches](2026-10-07-09-41-26-appearance-glass-reference.png)
+
+The user requests separate settings rather than always-on Glass. Sieghart implements its own theme palette and independent saved switches, both initially off. [Implementation and voice direction](../../companion-capabilities.md).

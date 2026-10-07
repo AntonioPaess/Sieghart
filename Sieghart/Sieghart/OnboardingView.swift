@@ -39,8 +39,8 @@ struct CompanionOnboardingView: View {
                 }.buttonStyle(CompanionButtonStyle(primary: true))
             }
         }.padding(32).frame(maxWidth: 860, maxHeight: .infinity, alignment: .topLeading)
-            .foregroundStyle(.white).background { WorkspaceBackdrop() }
-            .environment(\.workspaceGlass, true)
+            .foregroundStyle(CompanionStyle.ink).background { WorkspaceBackdrop() }.preferredColorScheme(preferences.appearance.colorScheme)
+            .environment(\.workspaceGlass, true).environment(\.surfaceGlassEnabled, preferences.windowGlass)
             .environment(\.islandReduceMotion, preferences.usesReducedMotion)
             .onAppear { selection = preferences.avatar; detected = InstalledAIProviders.detect() }
     }

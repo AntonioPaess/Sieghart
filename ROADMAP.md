@@ -90,6 +90,14 @@ Updated October 7, 2026. This is the current execution plan; older Obsidian chec
 - The artwork previously rendered on a 42-point Canvas and scaled up. Every companion now draws at its final display size; only the small breathing/squash transform remains. Diffuse light, clipped edge shading, a recessed visor and a lit paper fold improve matte depth while retaining the approved silhouettes/palette and all motion/accessibility behavior.
 - Main-window, island and menu production previews refreshed offscreen; the two latest avatar-quality photos are archived with hashes. Build, eight isolated groups and built-package checks passed without running the app or hardware.
 
+### Optional appearance, Companion voice and renewed shortcuts — October 7, 2026
+
+- System / Light / Dark apply to app, onboarding, menu, sheets and expanded island. Two independent persisted Glass switches, Other windows and panels / Dynamic Island, default off. The compact camera band stays black; Reduce Transparency overrides both. Adaptive text and stronger light-theme status contrast are implemented.
+- Voice preparation, listening, transcript and acknowledgement/error now use Companion. The separate Voice page and launcher tile are removed; Cancel/Back stays in Companion without starting focus. Existing bounded geometry is retained.
+- Renewed SG-001: system-dispatcher hotkeys start after AppKit launch; the resident app sets accessory policy. Default voice is Control + Option + V, requiring no monitoring grant; saved custom modifier-only chords remain. Status distinguishes registration from foreground-only monitoring, with a default-key option and received-backend detail. Delivery uses physical event timestamps and rejects duplicate backend callbacks even when their timestamps arrive in reverse order. Foreground full-display bounds select a higher overlay level; session lock/sleep removes both panels. Apple DTS guidance informs visibility, but real input/window-close/full-screen acceptance remains open.
+- Eight isolated groups, universal signed build, package checks and offscreen production previews verify implementation. No app/Xcode window, real shortcut, microphone, sensor or audio capture is started by these checks. The new appearance reference is archived with its SHA-256 digest.
+- Concrete future companion options and dependencies are recorded in [Useful companions](Sieghart/Design/companion-capabilities.md). Task handoff and contextual quick actions are the recommended first combination after core utilities; no speculative integration is enabled.
+
 ### Next in Sprint 3
 
 1. Browser search through a deterministic action adapter. Installed-app voice launch is now implemented; physical speech/app-launch acceptance remains open.
@@ -113,7 +121,7 @@ Updated October 7, 2026. This is the current execution plan; older Obsidian chec
 
 ## Companion usefulness after core utilities
 
-This is a future product direction, not an active integration sprint. First deliver and validate the utility sequence above.
+This is a future product direction, not an active integration sprint. First deliver and validate the utility sequence above. The user requested concrete differentiating options: [Useful companions](Sieghart/Design/companion-capabilities.md) spells out each experience, its real event source and its dependencies. Prioritize task handoff plus contextual quick actions, then consider work-resume notes, meeting audio context and optional gentle routines.
 
 | Future companion role | Behavior | Dependency |
 | --- | --- | --- |

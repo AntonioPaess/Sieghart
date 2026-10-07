@@ -9,23 +9,26 @@ final class ActivationController: ObservableObject {
     @Published private(set) var companionShortcut: ShortcutChord?
     @Published private(set) var voiceShortcut: ShortcutChord?
     @Published var recordingShortcut: ShortcutAction? {
-        didSet { modifierTracker.reset(); if registersShortcuts { registerHotkeys() } }
+        didSet { modifierTracker.reset(); if registersShortcuts && shortcutsStarted { registerHotkeys() } }
     }
     @Published private(set) var shortcutStatus = ""
     @Published private(set) var voiceShortcutStatus = ""
     @Published private(set) var needsShortcutPermission = false
     @Published private(set) var lastShortcutActivation: Date?
+    @Published private(set) var lastShortcutSource = ""
     @Published private(set) var voiceStatus = "Voice is off"
     @Published private(set) var transcript = ""
     @Published private(set) var isListening = false
     @Published private(set) var isPreparing = false
     @Published private(set) var commandAcknowledged = false
+    @Published private(set) var voicePresented = false
     @Published var voiceLanguage: String {
         didSet { defaults.set(voiceLanguage, forKey: "activation.voiceLanguage"); cancelVoiceCommand() }
     }
     private var voiceRequestGeneration = 0
     private let defaults: UserDefaults
     private let registersShortcuts: Bool
+    private var shortcutsStarted = false
     private let openApplication: @MainActor (String) async throws -> String
     private let assistant: AssistantViewModel
     private let notch: NotchWidgetController
@@ -72,10 +75,16 @@ final class ActivationController: ObservableObject {
         companionShortcut = saved(.companion, fallback: .companion)
         voiceShortcut = saved(.voice, fallback: .voice)
         voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
-        if registersShortcuts {
-            registerHotkeys()
-        }
+        shortcutStatus = companionShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
+        voiceShortcutStatus = voiceShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
         if registersShortcuts || lifecycleNotifications != nil { observeShortcutLifecycle(workspace: lifecycleNotifications) }
+    }
+
+    // AppKit must finish launching before installing dispatcher hotkeys.
+    func startGlobalShortcuts() {
+        guard registersShortcuts, !shortcutsStarted else { return }
+        shortcutsStarted = true
+        registerHotkeys()
     }
 
     func cancelShortcutRecording(for action: ShortcutAction) {
@@ -128,7 +137,7 @@ final class ActivationController: ObservableObject {
     }
 
     private func checkShortcutHealth() {
-        guard recordingShortcut == nil else { return }
+        guard shortcutsStarted, recordingShortcut == nil else { return }
         let trusted = AXIsProcessTrusted()
         let secureInput = IsSecureEventInputEnabled()
         // A release can be lost while the system protects keyboard input.
@@ -164,6 +173,7 @@ final class ActivationController: ObservableObject {
     }
 
     private func registerHotkeys() {
+        guard shortcutsStarted else { return }
         hotkeys.forEach { UnregisterEventHotKey($0) }; hotkeys = []
         if let handler { RemoveEventHandler(handler) }; handler = nil
         if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }; globalMonitor = nil
@@ -176,14 +186,15 @@ final class ActivationController: ObservableObject {
         guard recordingShortcut == nil else { return }
         Self.activeHotkeyOwner = self
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let target = GetApplicationEventTarget()
+        let target = GetEventDispatcherTarget()
         let installed = InstallEventHandler(target, { _, event, _ in
             guard let event else { return OSStatus(eventNotHandledErr) }
             var identifier = EventHotKeyID()
             let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &identifier)
             let id = identifier.id
             if status == noErr, identifier.signature == 0x53494748, id == 1 || id == 2 {
-                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(id == 2 ? .voice : .companion) }
+                let timestamp = GetEventTime(event)
+                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(id == 2 ? .voice : .companion, eventTime: timestamp) }
                 return noErr
             }
             return OSStatus(eventNotHandledErr)
@@ -199,7 +210,7 @@ final class ActivationController: ObservableObject {
                 if let code = chord.keyCode {
                     var reference: EventHotKeyRef?
                     let status = installed == noErr ? RegisterEventHotKey(code, chord.carbonModifiers, EventHotKeyID(signature: 0x53494748, id: id), target, 0, &reference) : installed
-                    if status == noErr, let reference { hotkeys.append(reference); statusText = "\(chord.label) · Works in other apps" }
+                    if status == noErr, let reference { hotkeys.append(reference); statusText = "\(chord.label) · Global shortcut registered" }
                     else { fallbackActions.insert(action); registrationNeedsRetry = true; statusText = "Shortcut unavailable; record another combination" }
                 } else {
                     statusText = !trusted && !lastInputTrust ? "\(chord.label) · Allow keyboard access to use in other apps" : lastSecureInput ? "\(chord.label) · Secure keyboard input is active" : "\(chord.label) · Press and release to activate"
@@ -210,13 +221,13 @@ final class ActivationController: ObservableObject {
         guard companionShortcut != nil || voiceShortcut != nil else { return }
         guard lastInputTrust || trusted || voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true || !fallbackActions.isEmpty else { return }
         if lastInputTrust || trusted {
-            let tap = ShortcutEventTap { [weak self] key, flags, repeated in
-                self?.receiveShortcutEvent(keyCode: key, flags: flags, isRepeat: repeated)
+            let tap = ShortcutEventTap { [weak self] key, flags, repeated, timestamp in
+                self?.receiveShortcutEvent(keyCode: key, flags: flags, isRepeat: repeated, eventTime: timestamp)
             }
             if tap.start() {
                 eventTap = tap
                 for action in fallbackActions {
-                    let text = "\(shortcut(for: action)?.label ?? "") · Works in other apps"
+                    let text = "\(shortcut(for: action)?.label ?? "") · Global keyboard monitor active"
                     if action == .voice { voiceShortcutStatus = text } else { shortcutStatus = text }
                 }
                 registrationNeedsRetry = false
@@ -232,6 +243,13 @@ final class ActivationController: ObservableObject {
                 MainActor.assumeIsolated { self?.observeModifiers(event) }
             }
         }
+        for action in ShortcutAction.allCases where shortcut(for: action)?.isModifierOnly == true {
+            if globalMonitor == nil {
+                let message = "\(shortcut(for: action)?.label ?? "") · Foreground only. Allow keyboard access or use a shortcut with a key."
+                if action == .voice { voiceShortcutStatus = message } else { shortcutStatus = message }
+                if trusted || lastInputTrust { registrationNeedsRetry = true }
+            }
+        }
         if localMonitor == nil || (trusted && globalMonitor == nil) {
             registrationNeedsRetry = true
             let status = "Keyboard monitoring unavailable; retrying automatically"
@@ -241,7 +259,7 @@ final class ActivationController: ObservableObject {
     }
 
     private func observeModifiers(_ event: NSEvent) {
-        receiveShortcutEvent(keyCode: event.type == .keyDown ? UInt32(event.keyCode) : nil, flags: event.modifierFlags, isRepeat: event.type == .keyDown && event.isARepeat)
+        receiveShortcutEvent(keyCode: event.type == .keyDown ? UInt32(event.keyCode) : nil, flags: event.modifierFlags, isRepeat: event.type == .keyDown && event.isARepeat, eventTime: event.timestamp)
     }
 
     // The same routing handles foreground, background and headless fixtures.
@@ -271,6 +289,7 @@ final class ActivationController: ObservableObject {
 
     private func deliverShortcut(_ action: ShortcutAction, source: ShortcutDeliverySource, eventTime: TimeInterval) {
         guard recordingShortcut == nil, deliveryGate.accept(action, source: source, at: eventTime) else { return }
+        lastShortcutSource = source == .carbon ? "System hotkey" : "Keyboard monitor"
         performShortcut(action)
     }
 
@@ -287,6 +306,7 @@ final class ActivationController: ObservableObject {
         voiceRequestGeneration += 1
         let generation = voiceRequestGeneration
         isPreparing = true
+        voicePresented = true
         commandAcknowledged = false
         transcript = ""
         voiceStatus = "Checking microphone and speech access…"
@@ -364,14 +384,16 @@ final class ActivationController: ObservableObject {
         executeVoiceCommand(text)
     }
 
-    func cancelVoiceCommand() {
+    func cancelVoiceCommand(keepCompanionVisible: Bool = false) {
         voiceRequestGeneration += 1
         isPreparing = false
         commandAcknowledged = false
+        voicePresented = false
+        transcript = ""
         feedbackTask?.cancel()
         stopListening()
         voiceStatus = "Voice is off"
-        notch.hide()
+        if keepCompanionVisible { notch.show() } else { notch.hide() }
     }
 
     func stopListening() {
@@ -389,6 +411,8 @@ final class ActivationController: ObservableObject {
     // Recognition text is never evaluated as code or an external instruction.
     func executeVoiceCommand(_ text: String) {
         feedbackTask?.cancel()
+        voicePresented = true
+        transcript = text
         commandAcknowledged = false
         guard let command = FocusVoiceParser.parse(text) else {
             voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try “start focus for 25 minutes” or “open Safari”."
@@ -420,7 +444,7 @@ final class ActivationController: ObservableObject {
         case .show:
             voiceStatus = "Sieghart shown"; commandAcknowledged = true; notch.show(); scheduleFeedback(closeWidget: false); return
         case .hide:
-            voiceStatus = "Sieghart tucked away"; notch.hide(); return
+            voiceStatus = "Sieghart tucked away"; voicePresented = false; transcript = ""; notch.hide(); return
         case .configure:
             voiceStatus = "Choose your focus settings"; commandAcknowledged = true; notch.showFocusSetup(); scheduleFeedback(closeWidget: false); return
         case .aiLimits:
@@ -454,6 +478,7 @@ final class ActivationController: ObservableObject {
             try? await Task.sleep(for: .milliseconds(1500))
             guard !Task.isCancelled, let self, generation == self.voiceRequestGeneration else { return }
             self.commandAcknowledged = false
+            self.voicePresented = false
             if closeWidget { self.notch.hide() }
         }
     }
@@ -464,8 +489,8 @@ final class ActivationController: ObservableObject {
 @MainActor private final class ShortcutEventTap {
     private var port: CFMachPort?
     private var source: CFRunLoopSource?
-    private let receive: (UInt32?, NSEvent.ModifierFlags, Bool) -> Void
-    init(receive: @escaping (UInt32?, NSEvent.ModifierFlags, Bool) -> Void) { self.receive = receive }
+    private let receive: (UInt32?, NSEvent.ModifierFlags, Bool, TimeInterval) -> Void
+    init(receive: @escaping (UInt32?, NSEvent.ModifierFlags, Bool, TimeInterval) -> Void) { self.receive = receive }
     func start() -> Bool {
         guard CGPreflightListenEventAccess() || AXIsProcessTrusted() else { return false }
         let mask = (CGEventMask(1) << CGEventType.flagsChanged.rawValue) | (CGEventMask(1) << CGEventType.keyDown.rawValue)
@@ -475,7 +500,13 @@ final class ActivationController: ObservableObject {
                 let monitor = Unmanaged<ShortcutEventTap>.fromOpaque(pointer).takeUnretainedValue()
                 if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput { monitor.ensureEnabled() }
                 else {
-                    monitor.receive(type == .keyDown ? UInt32(event.getIntegerValueField(.keyboardEventKeycode)) : nil, NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue)), type == .keyDown && event.getIntegerValueField(.keyboardEventAutorepeat) != 0)
+                    let key = type == .keyDown ? UInt32(event.getIntegerValueField(.keyboardEventKeycode)) : nil
+                    let flags = NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue))
+                    let repeated = type == .keyDown && event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+                    let timestamp = Double(event.timestamp) / 1_000_000_000
+                    // Keep the tap callback short; AppKit layout and speech
+                    // preparation must not block the keyboard event stream.
+                    DispatchQueue.main.async { [weak monitor] in monitor?.receive(key, flags, repeated, timestamp) }
                 }
             }
             return Unmanaged.passUnretained(event)

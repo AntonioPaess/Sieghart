@@ -39,6 +39,19 @@ The user confirmed closing the main window with its red button, rather than Quit
 [Apple's last-window lifecycle contract](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/applicationshouldterminateafterlastwindowclosed(_:)).
 
 
+
+### Renewed whole-Mac report — October 7
+
+The user reports that global delivery is still not resolved after the previous lifecycle changes. No physical reproduction was performed. This round separates input setup from overlay visibility:
+
+- Install/register on the system dispatcher after AppKit launch; the resident delegate sets accessory policy and owns activation after main-window close.
+- Default voice changes to Control + Option + V, using a regular-key system hotkey without a keyboard-monitoring grant. Saved custom modifier-only chords remain intact; a default-key button is offered explicitly. Foreground-only/unavailable monitoring is shown accurately.
+- Carbon, CG and AppKit delivery use event timestamps rather than queued callback arrival, with received source shown in Activation. Reverse timestamp delivery is also deduplicated, preventing a second backend from immediately closing the island. The CG callback queues work instead of running speech preparation in its callback.
+- Both overlays choose the higher screen-saver window level while the foreground window bounds cover the notch display; normal desktop ordering uses statusBar + 1. Only window bounds metadata is examined, not screen pixels. Lock/session resignation and sleep stop voice and order out both panels. Space/app changes refresh ordering without reopening a dismissed page. This follows [Apple DTS's tested full-screen overlay setup](https://developer.apple.com/forums/thread/826308).
+
+Tests cover default-key and saved modifier choices, simulated window-close delivery, deduplication, and fabricated full-display bounds/levels. They do not register physical shortcuts or test WindowServer delivery. User acceptance must confirm Control + Option + S and Control + Option + V after red window-close, in a different desktop and with another app full screen. Compare the Last received/backend status when diagnosing a remaining failure. If a saved modifier-only chord is retained, verify its grant/status separately. SG-001 remains open.
+
+
 ## SG-002 — Island click remains unreliable
 
 **Priority:** high. **Reported:** October 6, 2026. **Status:** native first-click and toggle corrections implemented; physical Mac acceptance pending.

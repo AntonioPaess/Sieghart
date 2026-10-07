@@ -14,7 +14,9 @@ enum ShortcutDeliverySource { case carbon, monitor }
 struct ShortcutDeliveryGate {
     private var previous: [ShortcutAction: (source: ShortcutDeliverySource, time: TimeInterval)] = [:]
     mutating func accept(_ action: ShortcutAction, source: ShortcutDeliverySource, at time: TimeInterval) -> Bool {
-        if let last = previous[action], last.source != source, time >= last.time, time - last.time < 0.15 { return false }
+        // Physical timestamps can arrive in reverse callback order after a
+        // Space transition. The second backend must still count as a duplicate.
+        if let last = previous[action], last.source != source, abs(time - last.time) < 0.15 { return false }
         previous[action] = (source, time)
         return true
     }
@@ -27,7 +29,8 @@ struct ShortcutChord: Codable, Equatable {
     var keyLabel: String
 
     static let companion = ShortcutChord(keyCode: 1, modifiers: NSEvent.ModifierFlags([.control, .option]).rawValue, keyLabel: "S")
-    static let voice = ShortcutChord(keyCode: nil, modifiers: NSEvent.ModifierFlags([.option, .command]).rawValue, keyLabel: "")
+    static let voice = ShortcutChord(keyCode: 9, modifiers: NSEvent.ModifierFlags([.control, .option]).rawValue, keyLabel: "V")
+    static let legacyVoice = ShortcutChord(keyCode: nil, modifiers: NSEvent.ModifierFlags([.option, .command]).rawValue, keyLabel: "")
 
     var flags: NSEvent.ModifierFlags { NSEvent.ModifierFlags(rawValue: modifiers).intersection(Self.allowedModifiers) }
     var isModifierOnly: Bool { keyCode == nil && !flags.isEmpty }

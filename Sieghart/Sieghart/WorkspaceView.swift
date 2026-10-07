@@ -37,10 +37,11 @@ struct ContentView: View {
             else { CompanionOnboardingView() }
         }
         .frame(minWidth: 840, minHeight: 660)
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(preferences.appearance.colorScheme)
         .environment(\.workspaceGlass, true)
         .environment(\.islandReduceMotion, preferences.usesReducedMotion)
         .background { WorkspaceBackdrop() }
+        .environment(\.surfaceGlassEnabled, preferences.windowGlass)
     }
 
     private var workspace: some View {
@@ -54,7 +55,6 @@ struct ContentView: View {
         }
         .frame(minWidth: 840, minHeight: 580)
         .tint(CompanionStyle.accent)
-        .preferredColorScheme(.dark)
         .focusEffectDisabled()
         .onChange(of: preferences.impactsEnabled) { _, enabled in
             if enabled { sensor.startIfNeeded() }
@@ -108,21 +108,21 @@ struct ContentView: View {
                 Text("A little space for your time, your tools and your companion.")
                     .font(.caption).foregroundStyle(CompanionStyle.muted)
                 Button("Review introduction") { preferences.onboardingComplete = false }
-                    .buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.accent)
+                    .buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.accentInk)
             }.padding(15).modifier(WorkspaceSurface(radius: 17))
         }
         .padding(14)
         .frame(width: 212)
         .frame(maxHeight: .infinity)
-        .background(.white.opacity(0.025))
-        .overlay(alignment: .trailing) { Rectangle().fill(.white.opacity(0.07)).frame(width: 0.7).allowsHitTesting(false) }
+        .background(CompanionStyle.edge.opacity(0.025))
+        .overlay(alignment: .trailing) { Rectangle().fill(CompanionStyle.edge.opacity(0.07)).frame(width: 0.7).allowsHitTesting(false) }
     }
 
     private func sidebarButton(_ title: String, symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
         CompanionInteraction(action: action) {
             HStack(spacing: 11) {
                 Image(systemName: symbol).font(.system(size: 15)).frame(width: 18)
-                    .foregroundStyle(selected ? CompanionStyle.accent : CompanionStyle.muted)
+                    .foregroundStyle(selected ? CompanionStyle.accentInk : CompanionStyle.muted)
                 Text(title)
                 Spacer()
                 if selected { Circle().fill(CompanionStyle.accent).frame(width: 4, height: 4) }
@@ -130,8 +130,8 @@ struct ContentView: View {
                 .font(.callout.weight(selected ? .semibold : .regular))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
-                .foregroundStyle(selected ? Color.white : CompanionStyle.muted)
-                .background(selected ? .white.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 12))
+                .foregroundStyle(selected ? CompanionStyle.ink : CompanionStyle.muted)
+                .background(selected ? CompanionStyle.edge.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 12))
         }
         .accessibilityLabel(title)
         .accessibilityValue(selected ? "Selected" : "")
@@ -144,7 +144,7 @@ struct ContentView: View {
                 .frame(width: 120, height: 130)
             VStack(alignment: .leading, spacing: 14) {
                 Label(assistant.hasTimerActivity ? assistant.activeTimerMode.title.uppercased() : "READY WHEN YOU ARE", systemImage: assistant.hasTimerActivity ? assistant.activeTimerMode.symbol : "sparkle")
-                    .font(.system(size: 10, weight: .semibold)).tracking(1.2).foregroundStyle(CompanionStyle.accent)
+                    .font(.system(size: 10, weight: .semibold)).tracking(1.2).foregroundStyle(CompanionStyle.accentInk)
                 if assistant.hasTimerActivity {
                     Text(assistant.compactTimeLabel).font(.system(size: 52, weight: .medium, design: .rounded)).monospacedDigit()
                 } else {
@@ -185,17 +185,23 @@ struct ContentView: View {
             Divider()
             PreferenceRow("Voice shortcut", detail: "Record keys, or press and release only modifiers such as Option + Command.") { ShortcutRecorder(action: .voice) }
             Text(activation.voiceShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+            if activation.voiceShortcut?.isModifierOnly == true {
+                Button("Use Control + Option + V") { activation.setShortcut(.voice, for: .voice) }
+                    .buttonStyle(.plain).focusEffectDisabled().font(.caption)
+                Text("A shortcut with a key works across apps without keyboard monitoring access.")
+                    .font(.caption).foregroundStyle(CompanionStyle.muted)
+            }
             Text("Close this window to keep Sieghart and its shortcuts in the menu bar. Choose Quit to stop the app.")
                 .font(.caption).foregroundStyle(CompanionStyle.muted)
             HStack {
                 if let date = activation.lastShortcutActivation {
-                    Text("Last shortcut received at \(date.formatted(date: .omitted, time: .shortened))").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    Text("Last received at \(date.formatted(date: .omitted, time: .shortened)) · \(activation.lastShortcutSource)").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }
                 Spacer()
                 Button("Restore shortcuts") { activation.recoverShortcuts() }.buttonStyle(.plain).focusEffectDisabled().font(.caption)
             }
             if activation.recordingShortcut != nil {
-                Text("Press your combination. Release modifier-only keys to save. Escape cancels.").font(.caption).foregroundStyle(CompanionStyle.accent)
+                Text("Press your combination. Release modifier-only keys to save. Escape cancels.").font(.caption).foregroundStyle(CompanionStyle.accentInk)
             }
             if activation.needsShortcutPermission {
                 Button("Allow modifier shortcuts in other apps") { activation.enableModifierShortcuts() }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
@@ -216,7 +222,7 @@ struct ContentView: View {
                 }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
             }
             PreferenceRow("Speech language", detail: "Choose the language you use for commands.") {
-                if preview { Text(activation.voiceLanguage == "pt_BR" ? "Português" : "English").font(.callout).padding(9).background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 9)) }
+                if preview { Text(activation.voiceLanguage == "pt_BR" ? "Português" : "English").font(.callout).padding(9).background(CompanionStyle.edge.opacity(0.08), in: RoundedRectangle(cornerRadius: 9)) }
                 else { Picker("Speech language", selection: $activation.voiceLanguage) {
                     Text("English").tag("en_US")
                     Text("Português").tag("pt_BR")
@@ -245,6 +251,32 @@ struct ContentView: View {
 
     @ViewBuilder private var appearanceSettings: some View {
         heading("A little more you.", subtitle: "Six personalities. Choose the companion that feels at home on your Mac.")
+        VStack(alignment: .leading, spacing: 18) {
+            Text("Appearance").font(.headline)
+            HStack(spacing: 14) {
+                ForEach(AppAppearance.allCases) { choice in
+                    Button { preferences.appearance = choice } label: {
+                        VStack(spacing: 9) {
+                            AppearanceThumbnail(appearance: choice)
+                                .overlay { RoundedRectangle(cornerRadius: 11).strokeBorder(preferences.appearance == choice ? CompanionStyle.accent : CompanionStyle.edge.opacity(0.1), lineWidth: preferences.appearance == choice ? 2 : 0.7) }
+                            Text(choice.rawValue).font(.callout.weight(.medium)).foregroundStyle(CompanionStyle.ink)
+                        }.padding(10).frame(maxWidth: .infinity)
+                            .background(preferences.appearance == choice ? CompanionStyle.accent.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 15))
+                    }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("\(choice.rawValue) appearance")
+                        .accessibilityValue(preferences.appearance == choice ? "Selected" : "")
+                }
+            }
+            Text("Applies to Sieghart’s windows and panels. Your Mac’s appearance stays unchanged.").font(.caption).foregroundStyle(CompanionStyle.muted)
+            Divider()
+            Label("Liquid Glass", systemImage: "sparkles").font(.headline)
+            Text("Optional translucent panels. Reduce Transparency always takes priority.").font(.caption).foregroundStyle(CompanionStyle.muted)
+            PreferenceRow("Other windows and panels", detail: "Main app, menu-bar panel and data sheets.") {
+                Toggle("Glass in other windows and panels", isOn: $preferences.windowGlass).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            PreferenceRow("Dynamic Island", detail: "Expanded island only; the compact notch always stays black.") {
+                Toggle("Glass in Dynamic Island", isOn: $preferences.islandGlass).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+        }.companionCard()
         HStack(spacing: 18) {
             CompanionCharacter(size: 86, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
             VStack(alignment: .leading, spacing: 4) {
@@ -264,8 +296,8 @@ struct ContentView: View {
                     ForEach(WidgetSize.allCases) { size in
                         Button { preferences.widgetSize = size } label: {
                             Text(size.rawValue).font(.caption.weight(.medium)).frame(maxWidth: .infinity).padding(.vertical, 8)
-                                .foregroundStyle(preferences.widgetSize == size ? .white : CompanionStyle.muted)
-                                .background(preferences.widgetSize == size ? .white.opacity(0.13) : .clear, in: RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(preferences.widgetSize == size ? CompanionStyle.ink : CompanionStyle.muted)
+                                .background(preferences.widgetSize == size ? CompanionStyle.edge.opacity(0.13) : .clear, in: RoundedRectangle(cornerRadius: 8))
                         }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("\(size.rawValue) widget")
                             .accessibilityValue(preferences.widgetSize == size ? "Selected" : "")
                     }
@@ -296,10 +328,40 @@ struct ContentView: View {
     private func quickCard(_ title: String, symbol: String, value: String, detail: String, action: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(title, systemImage: symbol).font(.callout.weight(.semibold))
-            Text(value).font(.callout.weight(.medium)).foregroundStyle(CompanionStyle.accent)
+            Text(value).font(.callout.weight(.medium)).foregroundStyle(CompanionStyle.accentInk)
             Text(detail).font(.caption).foregroundStyle(CompanionStyle.muted)
             Button("Customize", action: action).buttonStyle(CompanionButtonStyle())
         }.frame(maxWidth: .infinity, alignment: .leading).companionCard()
+    }
+}
+
+private struct AppearanceThumbnail: View {
+    var appearance: AppAppearance
+    var body: some View {
+        ZStack {
+            window(light: appearance != .dark)
+            if appearance == .system { window(light: false).mask {
+                GeometryReader { geometry in
+                    Path { path in
+                        path.move(to: CGPoint(x: geometry.size.width, y: 0))
+                        path.addLine(to: CGPoint(x: geometry.size.width, y: geometry.size.height))
+                        path.addLine(to: CGPoint(x: 0, y: geometry.size.height))
+                        path.closeSubpath()
+                    }.fill(.white)
+                }
+            } }
+        }.frame(height: 82).clipShape(RoundedRectangle(cornerRadius: 11)).accessibilityHidden(true)
+    }
+    private func window(light: Bool) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 4) { ForEach([Color.red, .yellow, .green], id: \.self) { Circle().fill($0).frame(width: 5, height: 5) }; Spacer() }
+                .padding(8).background(light ? Color(white: 0.91) : Color(white: 0.18))
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) { ForEach(0..<3) { _ in Capsule().fill(light ? Color(white: 0.75) : Color(white: 0.38)).frame(height: 3) } }.frame(width: 28)
+                VStack(alignment: .leading, spacing: 5) { ForEach(0..<3) { row in Capsule().fill(light ? Color(white: 0.75) : Color(white: 0.38)).frame(width: CGFloat(46 - row * 8), height: 3) } }
+                Spacer(minLength: 0)
+            }.padding(10).frame(maxWidth: .infinity, maxHeight: .infinity).background(light ? Color.white : Color(white: 0.12))
+        }
     }
 }
 

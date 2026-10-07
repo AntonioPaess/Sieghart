@@ -16,7 +16,7 @@ struct CodexUsageView: View {
             HStack {
                 ProviderMark(provider: .codex, size: dense ? 18 : 28)
                 Text(dashboard ? "Codex" : "Codex limits").font(dense ? .system(size: 10.5, weight: .semibold) : .headline)
-                if let plan = usage.bucket?.planType { Text(plan.capitalized).font(.caption2.weight(.semibold)).foregroundStyle(CompanionStyle.accent) }
+                if let plan = usage.bucket?.planType { Text(plan.capitalized).font(.caption2.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk) }
                 Spacer()
                 if dense, let error = usage.errorMessage { Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange).help(error).accessibilityLabel(error) }
                 if usage.enabled {
@@ -84,7 +84,7 @@ struct QuotaWindowView: View {
                 if compact, let reset = window.resetDate { Text(reset <= now ? "Reset due" : countdown(to: reset, from: now)).font(dense ? .system(size: 9) : .caption2).foregroundStyle(CompanionStyle.muted) }
                 Spacer()
                 Text(window.remainingPercent(at: now).map { "\($0)% left" } ?? "—")
-                    .font(dense ? .system(size: 10, weight: .semibold) : .callout.weight(.semibold)).monospacedDigit().foregroundStyle(CompanionStyle.accent)
+                    .font(dense ? .system(size: 10, weight: .semibold) : .callout.weight(.semibold)).monospacedDigit().foregroundStyle(CompanionStyle.accentInk)
             }
             GeometryReader { geometry in
                 Capsule().fill(CompanionStyle.separator)

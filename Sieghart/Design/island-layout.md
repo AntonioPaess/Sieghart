@@ -6,9 +6,9 @@ October 6, 2026. Selective reference influence, Sieghart companions and palette.
 
 | Surface | Base size, points | Navigation |
 | --- | --- | --- |
-| Companion | 620 × 240 | Context only; external quick controls |
+| Companion | 620 × 240 | Context, inline voice; external quick controls |
 | Timers | 720 × 330 | Timer / Pomodoro / Stopwatch; horizontal ruler and digits |
-| Tool launcher | 760 × 350 | Four columns, seven implemented destinations |
+| Tool launcher | 760 × 350 | Four columns, six destinations; voice stays in Companion |
 | AI agents | 800 × 470 maximum | Scroll within the bounded viewport; details sheet |
 | Audio | 760 × 460 | Mixer / Devices / Microphone; horizontal app columns |
 | Avatar picker | 620 × 340 | Six saved companions |
@@ -65,3 +65,12 @@ Installed-app voice launch and menu-bar agent/full-screen input setup are implem
 All companion surfaces use a Canvas at their final display size. Only small motion transforms remain; matte diffuse light, clipped edges and the paper fold give the approved silhouettes depth without magnified low-resolution artwork. [Light board](Concepts/simple-companions-depth-preview.png). Main-window, island and menu renders were refreshed.
 
 The user clarified the shortcut failure happens after the red window-close button. An explicit resident delegate keeps activation outside the settings scene and declines last-window termination; close/hide recovery releases abandoned recording. The two companion routing backends pass a simulated close check. Actual window-close/voice/full-screen delivery remains SG-001 acceptance; explicit Quit stops the app.
+
+
+## October 7 — Appearance and voice
+
+Voice no longer has its own island page/tile. Preparation, listening avatar, transcript, acknowledgement and Cancel/Back use Companion within its existing geometry. The inline button is specific to that interaction; utility navigation remains on the outer controls/launcher. [Voice example](Concepts/island-companion-voice-preview.png).
+
+Solid surfaces are the default. Appearance offers System/Light/Dark and independent Glass switches for other windows/panels and Dynamic Island. Reduce Transparency overrides both; compact/camera black is unchanged. [Light settings](Concepts/app-appearance-light-solid-preview.png) · [Optional glass settings](Concepts/app-appearance-dark-glass-preview.png). These are offscreen examples, not validation of native desktop refraction.
+
+[Companion capability proposals](companion-capabilities.md) describe useful next actions driven by real task/audio/timer events, after the core utility milestones. They are not enabled in this implementation.
