@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000076 /* AudioControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000077 /* AudioControlsView.swift */; };
+		A10000000000000000000074 /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000075 /* AudioEngine.swift */; };
 		A10000000000000000000072 /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000073 /* WorkspaceView.swift */; };
 		A10000000000000000000070 /* IslandChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000071 /* IslandChrome.swift */; };
 		A10000000000000000000001 /* SieghartApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* SieghartApp.swift */; };
@@ -36,6 +38,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000077 /* AudioControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioControlsView.swift; sourceTree = "<group>"; };
+		A10000000000000000000075 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		A10000000000000000000073 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
 		A10000000000000000000071 /* IslandChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandChrome.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* Sieghart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Sieghart.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -91,6 +95,8 @@
 			children = (
 				A10000000000000000000005 /* SieghartApp.swift */,
 				A10000000000000000000073 /* WorkspaceView.swift */,
+				A10000000000000000000077 /* AudioControlsView.swift */,
+				A10000000000000000000075 /* AudioEngine.swift */,
 				A10000000000000000000014 /* SensorEngine.swift */,
 				A10000000000000000000016 /* AssistantCore.swift */,
 				A10000000000000000000018 /* CalendarContext.swift */,
@@ -196,6 +202,8 @@
 			files = (
 				A10000000000000000000001 /* SieghartApp.swift in Sources */,
 				A10000000000000000000072 /* WorkspaceView.swift in Sources */,
+				A10000000000000000000076 /* AudioControlsView.swift in Sources */,
+				A10000000000000000000074 /* AudioEngine.swift in Sources */,
 				A10000000000000000000013 /* SensorEngine.swift in Sources */,
 				A10000000000000000000015 /* AssistantCore.swift in Sources */,
 				A10000000000000000000017 /* CalendarContext.swift in Sources */,
@@ -236,6 +244,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Sieghart listens only when you press the voice button.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Sieghart transcribes your spoken focus commands after you start listening.";
@@ -263,6 +272,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Sieghart listens only when you press the voice button.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Sieghart transcribes your spoken focus commands after you start listening.";

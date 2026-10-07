@@ -6,10 +6,10 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 
 ## App and notch
 
-First launch shows a two-step onboarding: choose one of all six avatars with its name/personality, then choose local AI monitoring. Finish saves both preferences. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** changes the avatar later.
+First launch shows a two-step onboarding: choose one of all six avatars with its name/personality, then choose local AI monitoring. Finish saves both preferences. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** or the menu-bar **Avatars** subpage changes the avatar later.
 
 - **Overview** shows the current session and completed count.
-- **Focus** opens a dedicated tab in the app. It uses the same configuration editor as the widget: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
+- **Timers** opens Timer, Pomodoro and Stopwatch in the app, menu bar and widget. Pomodoro shares these settings: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
 - **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
 - **Appearance** offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal, and Ink Buddy. Selection saves immediately and applies throughout the app and notch. Small, Medium and Large expanded widget sizes, timer density, character motion, and reduced motion are configurable. Compact height always follows the physical camera cutout. macOS Reduce Motion is always respected.
 
@@ -107,7 +107,7 @@ Selective reference influence is the current design direction. Use useful glass/
 
 The full activation header spans the current island width, including its camera gap. Native hit testing treats the center and wings equally. A bounded global mouse-down fallback handles camera-area clicks routed by the WindowServer to another app; it sees only the pointer point inside this rectangle. Native windows accept first mouse and preserve their full screen-edge frame. A visible-only pointer check bridges missing camera tracking events. Keyboard reveals have four seconds of approach grace; pointer exit allows 800 ms. Entry cancels collapse; manual closure still acts immediately. Timer completion keeps its separate announcement deadline.
 
-Global shortcut registrations remain intact across foreground/Space transitions. Carbon uses the dispatcher target. Existing authorized session/AppKit monitoring routes ordinary-key shortcuts as well as modifier gestures, with duplicate backend suppression. Both overlay panels declare full-screen auxiliary capability in addition to cross-app/all-Spaces placement. These changes are covered by isolated routing and timing checks; actual full-screen event delivery, physical camera clicks and movement still require Mac acceptance (SG-001/SG-002).
+Global shortcut registrations remain intact across foreground/Space transitions. Carbon uses the application event target. Existing authorized session/AppKit monitoring routes ordinary-key shortcuts as well as modifier gestures, with duplicate backend suppression. Both overlay panels declare full-screen auxiliary capability in addition to cross-app/all-Spaces placement. These changes are covered by isolated routing and timing checks; actual full-screen event delivery, physical camera clicks and movement still require Mac acceptance (SG-001/SG-002).
 
 
 ## October 6 — Companion depth and main-window design
@@ -117,3 +117,24 @@ The latest user reference retains minimal shapes while requiring visible depth. 
 The main app now shares the glass treatment across Overview, Timers, grouped Activation preferences, Appearance, AI limits and onboarding. Overview reflects the active clock and keeps focus explicit. The compact island no longer draws its colored hover contour or native edge: feedback is a small character reaction on the unchanged black shell.
 
 [Main-window preview](Design/Concepts/app-overview-preview.png) · [Appearance](Design/Concepts/app-appearance-preview.png) · [Depth](Design/Concepts/simple-companions-depth-preview.png) · [Borderless compact hover](Design/Concepts/compact-hover-preview.png). Production views are rendered offscreen with illustrative data; no app window, real shortcut, sensor or microphone was started. SG-001/SG-002 remain physical Mac acceptance checks.
+
+## Before Sprint 4 — Bounded layout, menu subpages and audio
+
+Companion context now has contour-aware margins without the repeated inner action row. The launcher is a four-column grid with the saved native avatar in Companion, timers place the ruler and clock side by side, and AI cards preserve the compact reference order. Expanded island heights stay bounded; connection details open separately. Native menu tracking keeps the parent island available while selecting a submenu item.
+
+Menu-bar Companion, Timers, AI, Audio and Avatars tabs use a 380-point panel with natural content heights. The Companion page is about 297 points high, down from 548. Compact timer/audio controls fit the reduced width. Change the saved companion there without opening the main window. The main workspace also includes Audio.
+
+`AudioEngine.swift` independently implements hardware properties and private per-app Core Audio taps/aggregate playback. At most five real regular running apps appear alongside Master, with currently playing and connected apps first. A row without an audio connection is unavailable until the app produces audio; no placeholder apps or ineffective taps are created. Icons come from actual app bundles; device names/transport identify AirPods. Process mixdown includes all output streams from the chosen app and routes them onto the chosen output. Float32 PCM supports stereo/mono and planar/interleaved playback; a Bluetooth call folds stereo to mono without changing sample timing. Unity gain is normal passthrough and destroys its tap. Process death/output changes tear down routes. Unsupported formats fail explicitly; a failed replacement retains the previous route.
+
+The October 6 report revealed that the generated Info.plist omitted `NSAudioCaptureUsageDescription` despite its build setting. `Sieghart/Info.plist` now supplies that key and is merged into both build configurations. Enable app mixer starts a temporary private, unmuted tap-only aggregate through public Core Audio APIs on a worker task, before restoring gains/enabling app sliders. The probe includes no app processes, no physical input/output devices and retains no audio. Requesting/permission failure/retry/settings are explicit; cancelling an outstanding request cannot enable mixing afterward. Each new launch starts with mixing off. Verification checks the privacy key in the **built bundle**, not just project settings.
+
+The app is declared as a menu-bar agent (`LSUIElement`), with the normal workspace opened from its menu. Overlays remain nonactivating and eligible for other apps’ full-screen Spaces. Carbon handlers use the application event target; an authorized event tap accepts existing Accessibility or Input Monitoring access and invalid ports are rebuilt. This corrects input/visibility setup but does not claim the repeated physical full-screen report closed. The native island top edge overscans one backing pixel; its contour stroke and custom focus outline are removed. Keyboard focus keeps subtle surface feedback.
+
+Installed-app voice commands resolve exact local names and known bundle aliases, reject ambiguous/multi-action requests and never execute shell text. Sleep animation breathes, sways gently and floats a fading “z” for all six companions. Reduce Motion/disabled character motion preserve still artwork. [Sleep preview](Design/Concepts/simple-companions-sleep.gif).
+
+The audio checks use a mock backend and allocated sample buffers, covering the actual enable handshake through mocks, denial/retry/cancel, waiting apps, the five-app cap, failure, mute, output changes, teardown, persistence and stereo/mono/planar bounds. They do not validate physical playback. Speakers/AirPods, grant/denial, app restarts, unplugging devices, sleep/wake and latency are mandatory Mac acceptance before Sprint 4. Audio pinning/order/device priorities remain S4.
+
+[Layout notes and current previews](Design/island-layout.md). Reference photos stay outside app/Challenge resources. See [Apple’s Core Audio tap documentation](https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps).
+
+
+After a CLI build, run `bash Sieghart/Tests/verify-built-app.sh /path/to/Sieghart.app` to check built privacy descriptions, agent metadata and signature without launching the app.

@@ -232,5 +232,29 @@
     "original": "Captura de Tela 2026-10-05 às 21.21.47.png",
     "description": "Controls and quick actions",
     "sha256": "4c5abaaea043f04d52e916bc647e7eead144f16007a43cadc78c12de9ab9511e"
+  },
+  {
+    "file": "2026-10-06-20-52-49-launcher-reference.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 20.52.49.png",
+    "description": "Horizontal tile launcher",
+    "sha256": "4332c7ca0857205ad450b06f6b54560c8957ac401de3843e21a3b62eb4c6efad"
+  },
+  {
+    "file": "2026-10-06-20-53-51-timers-reference.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 20.53.51.png",
+    "description": "Three timing tools, horizontal ruler and compact Pomodoro options",
+    "sha256": "7e277e3071e71e7144bf0096c64f732a72e27a0cf999d655f90508ad7a41f0ce"
+  },
+  {
+    "file": "2026-10-06-20-54-54-audio-reference.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 20.54.54.png",
+    "description": "Master volume and per-app columns",
+    "sha256": "5ba8dddae81a1513e20e53fee6453c4bbf47dd1fbfe4e5e715ea1cd848d14af4"
+  },
+  {
+    "file": "2026-10-06-20-55-12-menu-tabs-reference.png",
+    "source_filename": "Captura de Tela 2026-10-06 às 20.55.12.png",
+    "description": "Menu-bar subpages instead of stacked modules",
+    "sha256": "60a8296b35674d59e820e08aeb2ff77dc7cf74293b3414a3c5e1aacfcdadfb31"
   }
 ]

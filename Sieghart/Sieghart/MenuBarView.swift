@@ -1,86 +1,76 @@
 import SwiftUI
 
+private enum MenuPage: String, CaseIterable {
+    case companion = "Companion", timers = "Timers", ai = "AI", audio = "Audio", avatars = "Avatars"
+    var symbol: String { switch self { case .companion: "face.smiling"; case .timers: "timer"; case .ai: "sparkles"; case .audio: "speaker.wave.2"; case .avatars: "person.crop.square" } }
+}
 struct MenuBarView: View {
     @EnvironmentObject private var assistant: AssistantViewModel
     @EnvironmentObject private var notch: NotchWidgetController
     @EnvironmentObject private var activation: ActivationController
     @EnvironmentObject private var preferences: CompanionPreferences
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.islandPreview) private var preview
+    @State private var page: MenuPage
+    init(initialPage: String = "Companion") { _page = State(initialValue: MenuPage(rawValue: initialPage) ?? .companion) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 12) {
-                CompanionCharacter(size: 44, avatar: preferences.avatar, animates: false)
+                CompanionCharacter(size: 30, avatar: preferences.avatar, animates: false)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Sieghart").font(.system(size: 20, weight: .semibold))
+                    Text("Sieghart").font(.system(size: 16, weight: .semibold))
                     Text(preferences.avatar.name).font(.caption).foregroundStyle(CompanionStyle.muted)
                 }
                 Spacer()
-                Image(systemName: "circle.fill").font(.system(size: 6)).foregroundStyle(assistant.isRunning ? .mint : CompanionStyle.accent)
+                Text(page.rawValue).font(.caption).foregroundStyle(CompanionStyle.muted)
             }
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(assistant.hasActiveSession ? assistant.activityTitle.uppercased() : "READY TO FOCUS")
-                    Spacer()
-                    Text(assistant.sessionCaption)
-                }.font(.system(size: 10, weight: .semibold)).foregroundStyle(CompanionStyle.muted)
-                HStack {
-                    Text(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : String(format: "%02d:00", assistant.focusMinutes))
-                        .font(.system(size: 38, weight: .medium)).monospacedDigit()
-                    Spacer()
-                    if assistant.hasActiveSession {
-                        Button { assistant.togglePomodoro() } label: {
-                            Image(systemName: assistant.isRunning ? "pause.fill" : "play.fill")
-                                .frame(width: 36, height: 36)
-                        }.buttonStyle(CompanionButtonStyle(primary: true)).focusEffectDisabled()
-                            .accessibilityLabel(assistant.pomodoroButtonLabel)
-                    }
+            HStack(spacing: 4) {
+                ForEach(MenuPage.allCases, id: \.self) { item in
+                    Button { page = item } label: {
+                        Group {
+                            if item == .companion { CompanionCharacter(size: 20, avatar: preferences.avatar, animates: false) }
+                            else { Image(systemName: item.symbol).font(.system(size: 16)) }
+                        }.frame(maxWidth: .infinity).frame(height: 34)
+                            .foregroundStyle(page == item ? CompanionStyle.accent : CompanionStyle.muted)
+                            .background(page == item ? .white.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10))
+                    }.buttonStyle(.plain).help(item.rawValue).accessibilityLabel(item.rawValue).accessibilityAddTraits(page == item ? .isSelected : [])
                 }
-                if assistant.hasActiveSession {
-                    GeometryReader { geometry in
-                        Capsule().fill(CompanionStyle.separator)
-                            .overlay(alignment: .leading) {
-                                Capsule().fill(CompanionStyle.accent)
-                                    .frame(width: geometry.size.width * assistant.pomodoroProgress)
+            }.padding(4).modifier(WorkspaceSurface(radius: 14))
+            Group {
+                switch page {
+                case .companion:
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack(spacing: 14) {
+                            CompanionCharacter(size: 60, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(assistant.hasActiveSession ? assistant.activityTitle : "Ready when you are.").font(.headline)
+                                Text(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "A little company for your day.").font(.callout).foregroundStyle(CompanionStyle.muted)
+                                Text("\(assistant.completedSessions) sessions done").font(.caption).foregroundStyle(CompanionStyle.accent)
                             }
-                    }.frame(height: 3)
-                        .accessibilityLabel("Time remaining")
-                        .accessibilityValue("\(Int(assistant.pomodoroProgress * 100)) percent")
-                } else {
-                    Text("Make room for one thing.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                        }
+                        HStack(spacing: 10) {
+                            Button("Show companion") { notch.show() }.buttonStyle(CompanionButtonStyle(primary: true, compact: true))
+                            Button(activation.isListening || activation.isPreparing ? "Cancel voice" : "Speak a command") { activation.toggleListening() }.buttonStyle(CompanionButtonStyle(compact: true))
+                        }
+                    }.frame(maxWidth: .infinity, alignment: .topLeading)
+                case .timers: TimerToolsView(compact: true, onStart: { notch.showIsland() })
+                case .ai:
+                    AIUsageSummary(compact: true)
+                case .audio:
+                    if preview { AudioControlsView(compact: true).environmentObject(notch.audio) }
+                    else { AudioControlsView(compact: true).environmentObject(notch.audio) }
+                case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
                 }
-                Button("Choose focus session") { notch.showFocusSetup() }
-                    .buttonStyle(CompanionButtonStyle(primary: !assistant.hasActiveSession)).focusEffectDisabled()
-            }.padding(16).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
-            AIUsageSummary(compact: true)
-            VStack(spacing: 8) {
-                actionRow(notch.presentation == .island || !notch.isVisible ? "Show companion" : "Tuck away widget", symbol: "rectangle.topthird.inset.filled") { notch.toggle() }
-                actionRow(activation.isListening || activation.isPreparing ? "Cancel voice" : "Speak a command", symbol: "mic.fill", detail: activation.voiceShortcut?.label) {
-                    if activation.isListening || activation.isPreparing { activation.cancelVoiceCommand() }
-                    else { activation.toggleListening() }
-                }
-                actionRow("Open Sieghart", symbol: "macwindow") { openWindow(id: "main"); notch.focusMainWindow() }
-            }
+            }.fixedSize(horizontal: false, vertical: true)
+            Divider().overlay(.white.opacity(0.1))
             HStack {
-                Text("\(assistant.completedSessions) sessions completed").font(.caption).foregroundStyle(CompanionStyle.muted)
+                Button { openWindow(id: "main"); notch.focusMainWindow() } label: { Label("Open Sieghart", systemImage: "gearshape") }.buttonStyle(.plain)
                 Spacer()
-                Button("Quit") { NSApp.terminate(nil) }.buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.muted).focusEffectDisabled()
-            }
-        }
-        .padding(20).frame(width: 320)
-        .foregroundStyle(.white)
-        .background(CompanionStyle.background)
-        .tint(CompanionStyle.accent).preferredColorScheme(.dark)
-    }
-
-    private func actionRow(_ title: String, symbol: String, detail: String? = nil, action: @escaping () -> Void) -> some View {
-        CompanionInteraction(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: symbol).frame(width: 18).foregroundStyle(CompanionStyle.accent)
-                Text(title).font(.callout.weight(.medium))
-                Spacer()
-                if let detail { Text(detail).font(.caption).foregroundStyle(CompanionStyle.muted) }
-            }.padding(12).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 12))
-        }.accessibilityLabel(title)
+                Button("Quit") { NSApp.terminate(nil) }.buttonStyle(.plain)
+            }.font(.caption).foregroundStyle(CompanionStyle.muted)
+        }.padding(20).frame(width: 380).foregroundStyle(.white)
+            .background { WorkspaceBackdrop() }.preferredColorScheme(.dark)
+            .environment(\.workspaceGlass, true).environment(\.islandReduceMotion, preferences.usesReducedMotion).focusEffectDisabled()
     }
 }

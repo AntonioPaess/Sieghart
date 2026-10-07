@@ -23,6 +23,7 @@ xcrun swiftc -swift-version 6 \
   Sieghart/Sieghart/AIActivity.swift Sieghart/Sieghart/AIActivityView.swift Sieghart/Sieghart/OnboardingView.swift \
   Sieghart/Sieghart/ActivationCore.swift Sieghart/Sieghart/KeyboardShortcuts.swift \
   Sieghart/Sieghart/VoiceCommands.swift Sieghart/Sieghart/VoiceCallbacks.swift \
+  Sieghart/Sieghart/AudioEngine.swift Sieghart/Sieghart/AudioControlsView.swift \
   Sieghart/Sieghart/FocusSessionView.swift Sieghart/Tests/InteractionChecks.swift \
   -o "$check_dir/interactions"
 "$check_dir/interactions"
@@ -46,3 +47,7 @@ xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
   Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift \
   Sieghart/Sieghart/AIActivity.swift Sieghart/Tests/PricingChecks.swift -o "$check_dir/pricing"
 "$check_dir/pricing"
+
+xcrun swiftc -swift-version 6 Sieghart/Sieghart/AudioEngine.swift \
+  Sieghart/Tests/AudioChecks.swift -o "$check_dir/audio"
+"$check_dir/audio"

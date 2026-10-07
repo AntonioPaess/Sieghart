@@ -6,10 +6,10 @@ import UniformTypeIdentifiers
 // Render native artwork offscreen. Never instantiate the app, live adapters,
 // shortcut registrations, sensor or microphone for a design preview.
 @main struct CompanionPreview {
-    @MainActor static func board(time: Double? = nil, dark: Bool = true) -> some View {
+    @MainActor static func board(time: Double? = nil, dark: Bool = true, sleeping: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 22) {
             Text("SIEGHART — SIMPLE COMPANIONS").font(.system(size: 24, weight: .semibold))
-            Text(time == nil ? "Native artwork · Small shapes, expressive eyes" : "Native movement · Breathing, gaze and soft blinking")
+            Text(sleeping ? "Sleeping · Soft breathing and floating z" : time == nil ? "Native artwork · Small shapes, expressive eyes" : "Native movement · Breathing, gaze and soft blinking")
                 .font(.callout).foregroundStyle(CompanionStyle.muted)
             Grid(horizontalSpacing: 18, verticalSpacing: 18) {
                 ForEach(0..<2) { row in
@@ -17,7 +17,7 @@ import UniformTypeIdentifiers
                         ForEach(Array(CompanionAvatar.allCases[row * 3 ..< row * 3 + 3])) { avatar in
                             VStack(spacing: 14) {
                                 CompanionCharacter(size: 94, avatar: avatar, animates: time != nil,
-                                    gaze: CGSize(width: sin((time ?? 0) * 1.3) * 3, height: cos((time ?? 0) * 1.1) * 1.5), previewTime: time)
+                                    gaze: CGSize(width: sin((time ?? 0) * 1.3) * 3, height: cos((time ?? 0) * 1.1) * 1.5), mood: sleeping ? .asleep : .idle, previewTime: time)
                                 Text(avatar.name).font(.headline)
                                 HStack(spacing: 28) {
                                     CompanionCharacter(size: 28, avatar: avatar, animates: false, mood: .happy)
@@ -51,6 +51,14 @@ import UniformTypeIdentifiers
             CGImageDestinationAddImage(gif, frame, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.05]] as CFDictionary)
         }
         guard CGImageDestinationFinalize(gif) else { throw NSError(domain: "Preview", code: 4) }
+        guard let sleep = CGImageDestinationCreateWithURL(directory.appendingPathComponent("simple-companions-sleep.gif") as CFURL, UTType.gif.identifier as CFString, 90, nil) else { throw NSError(domain: "Preview", code: 6) }
+        CGImageDestinationSetProperties(sleep, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for index in 0..<90 {
+            let renderer = ImageRenderer(content: board(time: Double(index) / 20, sleeping: true)); renderer.scale = 1
+            guard let frame = renderer.cgImage else { throw NSError(domain: "Preview", code: 7) }
+            CGImageDestinationAddImage(sleep, frame, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.05]] as CFDictionary)
+        }
+        guard CGImageDestinationFinalize(sleep) else { throw NSError(domain: "Preview", code: 8) }
         print("Rendered six native companions and a 20 fps preview. Runtime motion updates at 60 Hz.")
     }
 }

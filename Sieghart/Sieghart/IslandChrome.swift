@@ -116,6 +116,8 @@ struct IslandCanvasGeometry {
 // even when another application owns keyboard focus.
 final class IslandHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var focusRingMaskBounds: NSRect { .zero }
+    override func drawFocusRingMask() {}
 }
 
 @MainActor final class IslandWindowCanvas<Content: View>: NSView {
@@ -135,7 +137,7 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
         backdrop.layer?.mask = maskLayer
         addSubview(backdrop); addSubview(host)
         host.focusRingType = .none; host.sizingOptions = []
-        outline.fillColor = nil; outline.strokeColor = NSColor.white.withAlphaComponent(0.055).cgColor; outline.lineWidth = 0.5
+        outline.fillColor = nil; outline.strokeColor = nil; outline.lineWidth = 0
         layer?.addSublayer(outline)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
