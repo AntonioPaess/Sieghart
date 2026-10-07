@@ -200,7 +200,7 @@ Provider logos appear only when readings or usage show that provider was used. M
 
 ## Useful companion options
 
-The proposed first additions are task handoff (open a completed AI/download result) and contextual quick actions (resume a clock, select AirPods, mute an app or keep awake). Other options are a local “where I stopped” note, verified meeting audio context and opt-in gentle reminders. Optional selected-repository PR/build alerts follow the core utilities. These are proposals, not shipped functionality. [Concrete experiences, dependencies and boundaries](Sieghart/Design/companion-capabilities.md).
+The proposed first additions are task handoff (open a completed AI/download result) and contextual quick actions (resume a clock, select AirPods, mute an app or keep awake). Other options are a local “where I stopped” note, verified meeting audio context and opt-in gentle reminders. The user also proposes a primary companion coordinating other avatar agents, and workflows that receive a file, upload it and prepare/send email with explicit authorization. Clear, resumable steps and fewer app switches support the user's ADHD-oriented product intention. Optional selected-repository PR/build alerts follow the core utilities. These are proposals, not shipped functionality. [Concrete experiences, dependencies and boundaries](Sieghart/Design/companion-capabilities.md).
 
 ## Next steps
 

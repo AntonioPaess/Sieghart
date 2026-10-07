@@ -1,6 +1,6 @@
 # Useful companions
 
-October 7, 2026. Product proposals requested by the user. These features are backlog options, not shipped capabilities. Complete the core Mac utilities and their acceptance checks first. All six companions should offer the same abilities; their expressions, motion and palette supply personality.
+October 7, 2026. Product proposals requested by the user. These features are backlog options, not shipped capabilities. Complete the core Mac utilities and their acceptance checks first. Any of the six companions can be the primary companion. Optional task roles let the other characters act as agents while retaining the same base capabilities.
 
 ## Recommended starting point
 
@@ -18,13 +18,44 @@ Combine **task handoff** and **contextual quick actions**. A task produces an ac
 
 A useful developer option is to watch **selected repositories** for a requested review, failing check or completed build. The companion expresses the event; clicking opens that exact PR/run. Start read-only, with separate sign-in and repository selection. Respect offline, revoked access and deduplication. This is not enabled or implemented, and does not delay system monitor, keep-awake, audio, calendar or downloads.
 
+## User direction — A companion that follows through
+
+The user wants practical attachment to Sieghart: a familiar companion that carries a task through several tools, with less switching between apps and fewer steps to remember. Supporting people with ADHD is an explicit product intention. The design goal is clear, resumable workflows; benefits must be checked with users rather than assumed from a diagnosis.
+
+### Receive a file, upload it and send it
+
+Example: drag a document onto the companion, then say “upload this and email it to Ana”. The same Companion surface keeps the file and the requested outcome visible.
+
+1. Receive the selected/dropped file; show its filename and an expressive receive-and-carry animation.
+2. Upload to the user-selected connected service and show actual progress. Retain the resulting link and access setting.
+3. Prepare the email with the intended recipient, subject/body and attachment or uploaded link. Ask for only genuinely missing information, such as which Ana or which destination.
+4. Show the finished message and sharing destination together. Send using explicit authorization through the user's command or final Send action. Prepare, upload and send are distinct recorded stages; no automatic send is inferred just from dropping a file.
+5. Report the real outcome and let the user open the file/message. Failed or interrupted stages remain resumable without silently repeating an upload or email.
+
+Dependencies: file handling, a connected upload adapter, email provider authorization, recipient resolution, access controls, persistent task state and cancellation/retry. This is a future product workflow, not implemented in Sprint 3. The Challenge's offline story can demonstrate local receive/carry organization without requiring email or cloud access.
+
+### One principal companion, others as task agents
+
+The chosen avatar remains the primary companion: it receives requests, keeps context and presents results. Other avatars can take optional, configurable roles such as files, communication, research, routines or development. A small agent indicator shows who is working and what stage it has reached; details open on click within the existing navigation.
+
+Roles represent real tasks and adapters, not six disconnected chat tabs. Any avatar can become the principal one. A task can use one agent or several steps while the primary companion maintains one coherent status. Specialist roles do not restrict basic tools to a particular character. This is an exploration direction; role assignments, concurrency and delegation are not implemented or finalized.
+
+### Attachment through usefulness
+
+- Let the companion remember user-chosen preferences and unfinished tasks, so it can offer a clear next step on return.
+- Keep one requested outcome visible, with a brief checklist and a calm explanation of what is waiting, done or blocked.
+- Offer Resume, Cancel and Undo where the action supports it. A retry should not repeat already completed external actions.
+- Use carrying, listening, working and completion gestures to explain actual state, with text equivalents and reduced-motion alternatives.
+- Keep optional reminders gentle and configurable. Avoid guilt, punitive streaks or forced focus when the user comes back.
+- Pair personality with reliable results; expressive motion should help explain the task and strengthen familiarity.
+
 ## Shared interaction rules
 
 - Hover gives a small expression; click opens the existing Companion surface.
 - Keep short status and one or two relevant actions in that surface. Details belong to the relevant tool page.
 - The avatar does not start focus because an AI task or another app is active.
 - Expressions always have text equivalents; reduced motion and disabled animation retain all actions.
-- Keep capabilities equivalent across the six characters. Customization changes personality rather than access to features.
+- Any of the six can be the principal companion. Optional agent roles organize tasks; core capabilities remain available regardless of character selection.
 - Each event must identify its source and expose unavailable/stale states. Avoid fabricated progress or completion.
 
 ## Already implemented in this round

@@ -132,6 +132,16 @@ This is a future product direction, not an active integration sprint. First deli
 
 GitHub makes sense as project context for people who develop software. It is optional and does not replace the primary Mac utilities or the offline companion journey. No GitHub connection is implemented or enabled in this round.
 
+### Task continuity and avatar agents — User proposal, October 7, 2026
+
+- **Product intention:** build attachment through useful, reliable assistance, with less switching between apps and fewer steps to remember. Supporting people with ADHD is a user-defined design goal; clear task status, resumable steps, gentle reminders and no forced focus guide the experience.
+- **File-to-outcome workflow:** receive a dropped/selected file, upload to a chosen connected service, prepare a recipient-specific email with the file/link, and send with explicit user authorization. Show actual progress, sharing destination and a final result; resume failures without duplicate uploads or sends. File handling, upload/email adapters, recipient resolution and task persistence are dependencies.
+- **Avatar organization:** a user-chosen primary companion receives requests and presents results; other avatars may take configurable task-agent roles for files, communication, research, routines or development. Keep one coherent task status in Companion, with small agent indicators rather than separate chat pages. Any avatar can be the principal one; roles do not lock basic utilities to a character.
+- **Attachment:** remembered user choices, a clear “where I stopped” state, useful next actions and expressive receiving/carrying/working/completion gestures. Reminders stay opt-in and avoid guilt or punitive streaks.
+- **Sequence:** record as a future companion-workflow milestone after core utilities and verified adapters. This proposal does not add new Sprint 3 exit requirements. Network-dependent email/upload stays outside the mandatory offline Challenge story. No upload, email sending or agent delegation is implemented/enabled here.
+
+Detailed experience and dependencies: [Useful companions](Sieghart/Design/companion-capabilities.md).
+
 ## Complete reference coverage — 77 modules
 
 Catalog: the 77 utility requirements retained from the supplied screenshots and catalog review. The screenshots show 73 installed-version modules; the current catalog adds four. Every entry below is retained, including advanced modules. A milestone is sequencing, not a delivery date.
