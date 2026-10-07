@@ -88,12 +88,13 @@ final class CompanionPreferences: ObservableObject {
 
 struct CompanionButtonStyle: ButtonStyle {
     var primary = false
+    var compact = false
     @Environment(\.workspaceGlass) private var workspace
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.callout.weight(.semibold))
-            .padding(.horizontal, 15)
-            .padding(.vertical, 10)
+            .font(.system(size: compact ? 11 : 13, weight: .semibold))
+            .padding(.horizontal, compact ? 11 : 15)
+            .padding(.vertical, compact ? 7 : 10)
             .foregroundStyle(primary ? Color.black : Color.white)
             .background(primary ? CompanionStyle.accent : workspace ? .white.opacity(0.09) : CompanionStyle.separator, in: RoundedRectangle(cornerRadius: 12))
             .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(primary ? 0.14 : workspace ? 0.11 : 0), lineWidth: 0.7).allowsHitTesting(false) }
@@ -135,7 +136,7 @@ struct CompanionInteraction<Content: View>: View {
             .focusable()
             .focused($keyboardFocused)
             .focusEffectDisabled()
-            .overlay { RoundedRectangle(cornerRadius: 16).stroke(CompanionStyle.accent.opacity(keyboardFocused && !pointerActivated ? 0.45 : 0), lineWidth: 1) }
+            .background(keyboardFocused && !pointerActivated ? .white.opacity(0.045) : .clear, in: RoundedRectangle(cornerRadius: 16))
             .onChange(of: keyboardFocused) { _, focused in if !focused { pointerActivated = false } }
             .onKeyPress(keys: [.space, .return]) { _ in pointerActivated = false; action(); return .handled }
             .accessibilityAddTraits(.isButton)

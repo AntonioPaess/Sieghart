@@ -49,7 +49,7 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 - User approval makes the minimal six-character board the current production direction. Native shapes and eye parameters replace raster pose swapping across every companion surface; no elaborate bodies or accessories. The motion preview is sampled at 20 fps from the 60 Hz native animation.
 - SG-002 follow-up: the activation header spans the complete current island width. Center/wings share native hit testing, with a bounded camera-click fallback when another app receives the event. Frame constraints no longer move overlays away from their requested camera band. A visible-only pointer point check covers missing tracking events.
 - Pointer exit grants 800 ms to cross between controls. Keyboard reveals grant four seconds to reach them; entering cancels the deadline. Explicit closure is immediate, and automatic completion retains its separate announcement duration.
-- SG-001 follow-up: healthy shortcut registrations stay installed across app/Space changes. Carbon dispatches through the global dispatcher target; permitted session/AppKit monitors handle regular keys even after successful Carbon setup. A per-action gate rejects duplicate backend delivery. Both overlays explicitly support full-screen auxiliary placement along with cross-app/all-Spaces presence.
+- SG-001 follow-up: healthy shortcut registrations stay installed across app/Space changes. Carbon dispatches through the application event target; permitted session/AppKit monitors handle regular keys even after successful Carbon setup. A per-action gate rejects duplicate backend delivery. Both overlays explicitly support full-screen auxiliary placement along with cross-app/all-Spaces presence.
 - Implementation checks cover center/wing native hit tests, AI/countdown/stopwatch opening, duplicate shortcut delivery, repeated gestures, entry cancellation and approach grace. Physical Mac acceptance remains open for full-screen/other-Space delivery and camera-area clicks.
 
 ### Companion depth, main app and borderless hover — October 6, 2026
@@ -70,13 +70,23 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 - Larger contour-aware horizontal margins; Companion no longer repeats grid/voice/settings/close controls inside its content. Seven implemented tools use a four-column launcher. Side audio access replaces the duplicated voice shortcut; Voice stays in the tool grid/menu and its global shortcut.
 - AI uses equal-width, equal-height limits/spending cards, current work, an hourly chart with exact hover detail, model/project rankings and 13-week activity. Connections/pricing details open in a separate sheet. The viewport stays bounded at 470 points rather than growing with details.
 - Timer, Pomodoro and Stopwatch share text tabs and a horizontal clock layout. Countdown/focus use a drag/VoiceOver-adjustable ruler. Pomodoro break/round/auto-break options fit one row. Explicit start, pause, reset and finish retain the existing persisted timer model.
-- Menu bar uses Companion / Timers / AI / Audio / Avatars subpages in one 300-point content area. All six companions are selectable there; the choice is shared with onboarding, app and island.
+- Menu bar uses Companion / Timers / AI / Audio / Avatars subpages in a 380-point-wide panel with natural page heights. All six companions are selectable there; the choice is shared with onboarding, app and island.
 - Core audio is implemented now: output volume, default input/output device selection, supported input gain/mute, app discovery with helper ownership, native installed app icons and AirPods/device identity, app volume/mute via private Core Audio process taps and aggregate playback. Explicit opt-in, local-only processing, saved gains but capture disabled on launch, incompatible-format errors and route teardown are implemented. Mixer/device/microphone subpages and horizontal app scrolling keep height bounded. Real device and permission acceptance remains open; pinning/order/device priorities are future S4 work.
 - Eight isolated check groups and production offscreen previews cover implementation. No app/Xcode window, sensor, microphone, system-audio capture or real shortcut is started by verification. Physical SG-001/SG-002 and audio acceptance are not claimed closed.
 
+### October 6 evening — User-reported corrections
+
+- Menu panel reduced from 560 × 548 to 380 wide and natural page heights (Companion about 297). Compact timers and audio avoid the previous empty vertical area.
+- Actual built-package omission of `NSAudioCaptureUsageDescription` fixed through an explicit merged Info.plist. Enable app mixer now starts the public macOS permission path; denial/retry/settings and stale-request cancellation are implemented. Mixer shows at most five real running apps plus Master, prioritizing playback/connected apps. Waiting apps have unavailable sliders until they connect to audio. No placeholder towers.
+- Stereo process mixdown replaces a single device stream; mono Bluetooth calls, planar outputs, unity passthrough and preserving an existing route on failed replacement are handled. WhatsApp playback and permission UI still require real Mac confirmation (SG-004).
+- Island top edge overscans one physical pixel; native contour and first-click focus strokes removed. All six avatars breathe/sway and float a fading “z” while asleep.
+- Installed-app voice launch implemented in English/Portuguese with exact local resolution, ambiguity/failure feedback and no shell execution. Isolated tests inject the launcher.
+- Repeated full-screen shortcut report remains open (SG-001). Menu-bar agent metadata, application-target Carbon dispatch and authorized event-tap health recovery address the setup. Actual input and visibility acceptance remains required.
+- Three additional issue photos archived with SHA-256 verification. README, production previews, bug tracker and Obsidian checkpoint updated. Sprint 3 remains active; Sprint 4 has not started.
+
 ### Next in Sprint 3
 
-1. Voice launch of installed applications with deterministic resolution, ambiguity handling and honest errors; browser search without sending arbitrary text through a shell. These actions are not implemented yet.
+1. Browser search through a deterministic action adapter. Installed-app voice launch is now implemented; physical speech/app-launch acceptance remains open.
 2. Billing/import adapters and broader historical coverage. Automatic price/FX sources are implemented; values are API equivalents and local history remains partial.
 3. Verified automatic individual Claude quota access; the dated report import remains available.
 4. Before Sprint 4: Mac acceptance of the refreshed bounded panels/menu tabs and audio mixer: speakers/AirPods, capture permission grant/denial, app mute, output changes and unplugging devices.

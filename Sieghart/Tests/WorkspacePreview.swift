@@ -33,7 +33,7 @@ import CoreAudio
         let usage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(points: points, work: [work], scannedFiles: 12), initialAccountActivity: account, initialPrices: PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/ModelTokenPrices.json")), read: { _ in nil })
 
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
-        let audio = AudioController(backend: PreviewAudio(), defaults: defaults); audio.refresh(); audio.enableApplications()
+        let audio = AudioController(backend: PreviewAudio(), defaults: defaults); audio.refresh(); await audio.enableApplications()
         for app in audio.state.apps { audio.setGain(app.id == "com.apple.Music" ? 0.7 : 1, app: app) }
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, audio: audio, managesWindows: false)
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
@@ -85,8 +85,9 @@ private final class PreviewAccelerometer: AccelerometerProviding {
 }
 
 @MainActor private final class PreviewAudio: AudioBackend {
-    var value = AudioSnapshot(devices: [AudioDeviceInfo(id: 1, name: "AirPods Pro", uid: "fixture.out", inputChannels: 1, outputChannels: 2, transport: kAudioDeviceTransportTypeBluetooth), AudioDeviceInfo(id: 2, name: "MacBook Pro Microphone", uid: "fixture.in", inputChannels: 1, outputChannels: 0), AudioDeviceInfo(id: 3, name: "MacBook Pro Speakers", uid: "fixture.speakers", inputChannels: 0, outputChannels: 2)], apps: [AudioApplicationInfo(id: "com.apple.Music", name: "Music", processes: [10], pid: 0), AudioApplicationInfo(id: "com.apple.Safari", name: "Safari", processes: [11], pid: 0), AudioApplicationInfo(id: "com.openai.codex", name: "ChatGPT", processes: [12], pid: 0)], output: 1, input: 2, outputVolume: 0.63, inputVolume: 0.8, inputMuted: false)
+    var value = AudioSnapshot(devices: [AudioDeviceInfo(id: 1, name: "AirPods Pro", uid: "fixture.out", inputChannels: 1, outputChannels: 2, transport: kAudioDeviceTransportTypeBluetooth), AudioDeviceInfo(id: 2, name: "MacBook Pro Microphone", uid: "fixture.in", inputChannels: 1, outputChannels: 0), AudioDeviceInfo(id: 3, name: "MacBook Pro Speakers", uid: "fixture.speakers", inputChannels: 0, outputChannels: 2)], apps: [AudioApplicationInfo(id: "com.apple.Music", name: "Music", processes: [10], pid: 0), AudioApplicationInfo(id: "com.apple.Safari", name: "Safari", processes: [11], pid: 0), AudioApplicationInfo(id: "com.openai.codex", name: "ChatGPT", processes: [12], pid: 0), AudioApplicationInfo(id: "net.whatsapp.WhatsApp", name: "WhatsApp", processes: [13], pid: 0), AudioApplicationInfo(id: "com.tinyspeck.slackmacgap", name: "Slack", processes: [14], pid: 0)], output: 1, input: 2, outputVolume: 0.63, inputVolume: 0.8, inputMuted: false)
     func snapshot() -> AudioSnapshot { value }
+    func prepareApplicationAudio() async throws {}
     func setVolume(_ volume: Float, device: UInt32, input: Bool) throws { if input { value.inputVolume = volume } else { value.outputVolume = volume } }
     func setDefault(_ device: UInt32, input: Bool) throws { if input { value.input = device } else { value.output = device } }
     func setInputMuted(_ muted: Bool, device: UInt32) throws { value.inputMuted = muted }

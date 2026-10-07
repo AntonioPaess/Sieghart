@@ -207,7 +207,7 @@ struct ContentView: View {
         }.companionCard()
         VStack(alignment: .leading, spacing: 18) {
             Label("Voice", systemImage: "waveform").font(.headline)
-            PreferenceRow("Voice", detail: "Use your shortcut and speak naturally. Focus commands run when you finish.") {
+            PreferenceRow("Voice", detail: "Say “start focus”, “open Safari” or “abra o WhatsApp”. Commands run when you finish.") {
                 Button(activation.isListening || activation.isPreparing ? "Cancel" : "Speak") {
                     if activation.isListening || activation.isPreparing { activation.cancelVoiceCommand() }
                     else { activation.toggleListening() }

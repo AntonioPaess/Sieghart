@@ -395,7 +395,7 @@ final class NotchWidgetController: ObservableObject {
         let bottom: CGFloat = geometry.compact ? 0 : 64
         let size = CGSize(width: max(canvas.currentSurface.width, geometry.width) + margin, height: max(canvas.currentSurface.height, geometry.height) + bottom)
         let centerX = notchCenterX(on: screen)
-        let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height)
+        let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.maxY - size.height + 1 / screen.backingScaleFactor, width: size.width, height: size.height)
         panel.setFrame(frame, display: true)
         canvas.prepare(target: geometry.canvasGeometry, reserved: size, animated: !preferences.usesReducedMotion, closing: false) { [weak self] in self?.settlePanel() }
     }
@@ -403,7 +403,7 @@ final class NotchWidgetController: ObservableObject {
     private func settlePanel() {
         guard let panel, let canvas, let screen = notchScreen, isVisible else { return }
         let size = CGSize(width: geometry.width + (geometry.compact ? 0 : 144), height: geometry.height + (geometry.compact ? 0 : 64))
-        panel.setFrame(NSRect(x: notchCenterX(on: screen) - size.width / 2, y: screen.frame.maxY - size.height, width: size.width, height: size.height), display: true)
+        panel.setFrame(NSRect(x: notchCenterX(on: screen) - size.width / 2, y: screen.frame.maxY - size.height + 1 / screen.backingScaleFactor, width: size.width, height: size.height), display: true)
         canvas.prepare(target: geometry.canvasGeometry, reserved: size, animated: false, closing: false, settled: {})
     }
 
@@ -1032,7 +1032,7 @@ struct NotchWidgetView: View {
                 Spacer()
                 iconButton("xmark", label: "Cancel voice command") { activation.cancelVoiceCommand() }
             }
-            Text(activation.transcript.isEmpty ? "Try “start focus” or “pause timer”." : "“\(activation.transcript)”")
+            Text(activation.transcript.isEmpty ? "Try “start focus”, “pause timer” or “open Safari”." : "“\(activation.transcript)”")
                 .font(activation.transcript.isEmpty ? .callout : .title3).lineLimit(2)
                 .foregroundStyle(activation.transcript.isEmpty ? CompanionStyle.muted : .white)
             HStack(spacing: 8) {

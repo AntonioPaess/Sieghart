@@ -5,6 +5,7 @@ struct TimerToolsView: View {
     @EnvironmentObject private var assistant: AssistantViewModel
     @EnvironmentObject private var preferences: CompanionPreferences
     @Environment(\.islandPreview) private var preview
+    var compact = false
     var onStart: () -> Void
     @State private var minutes = 15.0
     @State private var focusMinutes = 25.0
@@ -17,34 +18,34 @@ struct TimerToolsView: View {
     private var active: Bool { mode == .pomodoro ? assistant.hasActiveSession : clock.mode == mode && clock.phase != .idle }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            HStack(spacing: 22) {
+        VStack(alignment: .leading, spacing: compact ? 16 : 24) {
+            HStack(spacing: compact ? 12 : 22) {
                 ForEach(TimerToolMode.allCases, id: \.self) { option in
                     Button { assistant.selectTimerMode(option) } label: {
-                        Text(option.title).font(.system(size: 13, weight: .semibold))
+                        Text(option.title).font(.system(size: compact ? 11 : 13, weight: .semibold))
                             .foregroundStyle(mode == option ? .white : CompanionStyle.muted)
                             .padding(.vertical, 9)
                             .overlay(alignment: .bottom) { if mode == option { Capsule().fill(CompanionStyle.accent).frame(height: 2) } }
                     }.buttonStyle(.plain).accessibilityAddTraits(mode == option ? .isSelected : [])
                 }
                 Spacer(minLength: 4)
-                if !active { Button("Start", action: start).buttonStyle(CompanionButtonStyle(primary: true)) }
+                if !active { Button("Start", action: start).buttonStyle(CompanionButtonStyle(primary: true, compact: compact)) }
             }.accessibilityLabel("Timer mode")
             if active { activeSession }
             else {
-                HStack(spacing: 28) {
+                HStack(spacing: compact ? 12 : 28) {
                     if mode == .stopwatch {
-                        CompanionCharacter(size: 56, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
-                        Text("Count up at your own pace.").font(.callout).foregroundStyle(CompanionStyle.muted)
+                        CompanionCharacter(size: compact ? 32 : 56, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
+                        Text("Count up at your own pace.").font(compact ? .caption : .callout).foregroundStyle(CompanionStyle.muted)
                         Spacer()
                     } else {
-                        DurationRuler(value: mode == .pomodoro ? $focusMinutes : $minutes, range: mode == .pomodoro ? 5...60 : 1...180, step: mode == .pomodoro ? 5 : 1)
+                        DurationRuler(value: mode == .pomodoro ? $focusMinutes : $minutes, range: mode == .pomodoro ? 5...60 : 1...180, step: mode == .pomodoro ? 5 : 1, compact: compact)
                     }
                     digits(mode == .pomodoro ? String(format: "%02d:00", Int(focusMinutes)) : mode == .timer ? String(format: "%02d:00", Int(minutes)) : "00:00.0")
-                        .frame(width: mode == .stopwatch ? 145 : 120, alignment: .trailing)
+                        .frame(width: compact ? 82 : mode == .stopwatch ? 145 : 120, alignment: .trailing)
                 }.frame(height: 98)
                 if mode == .pomodoro {
-                    HStack(alignment: .top, spacing: 22) {
+                    HStack(alignment: .top, spacing: compact ? 10 : 22) {
                         choice("Short break", selection: $shortBreak, values: AssistantViewModel.shortBreakLengths, suffix: "min")
                         choice("Long break", selection: $longBreak, values: AssistantViewModel.longBreakLengths, suffix: "min")
                         choice("Rounds", selection: $rounds, values: AssistantViewModel.roundCounts, suffix: "")
@@ -80,16 +81,16 @@ struct TimerToolsView: View {
     private var activeSession: some View {
         let completed = mode != .pomodoro && clock.phase == .completed
         let running = mode == .pomodoro ? assistant.isRunning : clock.isRunning
-        return VStack(spacing: 22) {
+        return VStack(spacing: compact ? 14 : 22) {
             HStack(spacing: 22) {
-                CompanionCharacter(size: 58, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: mode == .pomodoro && assistant.interval == .focus, mood: completed ? .celebrating : .idle)
+                CompanionCharacter(size: compact ? 34 : 58, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: mode == .pomodoro && assistant.interval == .focus, mood: completed ? .celebrating : .idle)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(mode == .pomodoro ? assistant.activityTitle : completed ? "Timer complete" : running ? mode.title : "Paused").font(.headline)
                     Text(mode == .pomodoro ? assistant.sessionCaption : mode == .timer ? "\(clock.timerMinutes) minute countdown" : "Elapsed time").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }
                 Spacer()
                 digits(mode == .pomodoro ? assistant.pomodoroTimeLabel : clock.timeLabel)
-            }.frame(height: 88)
+            }.frame(height: compact ? 65 : 88)
             if mode != .stopwatch {
                 GeometryReader { geometry in
                     Capsule().fill(.white.opacity(0.12)).overlay(alignment: .leading) {
@@ -97,20 +98,20 @@ struct TimerToolsView: View {
                     }
                 }.frame(height: 5).accessibilityLabel("Time remaining").accessibilityValue("\(Int((mode == .pomodoro ? assistant.pomodoroProgress : clock.progress) * 100)) percent")
             }
-            HStack(spacing: 12) {
-                Button(completed ? "New timer" : "Reset") { if mode == .pomodoro { assistant.resetPomodoro() } else { clock.reset() } }.buttonStyle(CompanionButtonStyle())
+            HStack(spacing: compact ? 8 : 12) {
+                Button(completed ? "New timer" : "Reset") { if mode == .pomodoro { assistant.resetPomodoro() } else { clock.reset() } }.buttonStyle(CompanionButtonStyle(compact: compact))
                 if !completed {
-                    Button(running ? "Pause" : "Resume") { if mode == .pomodoro { assistant.togglePomodoro() } else { clock.togglePause() } }.buttonStyle(CompanionButtonStyle(primary: true))
+                    Button(running ? "Pause" : "Resume") { if mode == .pomodoro { assistant.togglePomodoro() } else { clock.togglePause() } }.buttonStyle(CompanionButtonStyle(primary: true, compact: compact))
                 }
                 Spacer()
                 if mode == .pomodoro {
-                    Text("\(assistant.shortBreakMinutes) / \(assistant.longBreakMinutes) min breaks").font(.caption).foregroundStyle(CompanionStyle.muted)
-                    Button("Finish") { assistant.finishPomodoroFromWidget() }.buttonStyle(CompanionButtonStyle())
+                    if !compact { Text("\(assistant.shortBreakMinutes) / \(assistant.longBreakMinutes) min breaks").font(.caption).foregroundStyle(CompanionStyle.muted) }
+                    Button("Finish") { assistant.finishPomodoroFromWidget() }.buttonStyle(CompanionButtonStyle(compact: compact))
                 }
             }
         }
     }
-    private func digits(_ value: String) -> some View { Text(value).font(.system(size: preferences.compactTimer ? 32 : 40, weight: .light, design: .rounded)).monospacedDigit().foregroundStyle(CompanionStyle.accent).lineLimit(1).minimumScaleFactor(0.7) }
+    private func digits(_ value: String) -> some View { Text(value).font(.system(size: compact ? 28 : preferences.compactTimer ? 32 : 40, weight: .light, design: .rounded)).monospacedDigit().foregroundStyle(CompanionStyle.accent).lineLimit(1).minimumScaleFactor(0.7) }
     private func choice(_ title: String, selection: Binding<Int>, values: [Int], suffix: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.caption2).foregroundStyle(CompanionStyle.muted)
@@ -128,11 +129,12 @@ struct DurationRuler: View {
     @Binding var value: Double
     let range: ClosedRange<Double>
     let step: Double
+    var compact = false
     private var fraction: Double { (value - range.lowerBound) / (range.upperBound - range.lowerBound) }
     var body: some View {
         VStack(spacing: 10) {
             GeometryReader { geometry in
-                let labels = range.upperBound == 60 ? [5, 15, 25, 35, 45, 60] : [1, 30, 60, 90, 120, 150, 180]
+                let labels = compact ? (range.upperBound == 60 ? [5, 25, 60] : [1, 60, 120, 180]) : range.upperBound == 60 ? [5, 15, 25, 35, 45, 60] : [1, 30, 60, 90, 120, 150, 180]
                 ForEach(labels, id: \.self) { minute in
                     Text("\(minute)").font(.caption.weight(.medium)).foregroundStyle(CompanionStyle.muted)
                         .position(x: min(geometry.size.width - 10, max(10, geometry.size.width * (Double(minute) - range.lowerBound) / (range.upperBound - range.lowerBound))), y: 8)

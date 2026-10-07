@@ -7,6 +7,15 @@ import CoreAudio
     var stopped = 0
     var fail = false
     var calls = 0
+    var permissionRequests = 0
+    var permissionFailure: OSStatus?
+    var pending: CheckedContinuation<Void, Never>?
+    var holdsRequest = false
+    func prepareApplicationAudio() async throws {
+        permissionRequests += 1
+        if holdsRequest { await withCheckedContinuation { pending = $0 } }
+        if let status = permissionFailure { throw AudioFailure(operation: "Permission fixture", status: status) }
+    }
     func snapshot() -> AudioSnapshot { reading }
     func setVolume(_ value: Float, device: AudioObjectID, input: Bool) throws { if input { reading.inputVolume = value } else { reading.outputVolume = value } }
     func setDefault(_ device: AudioObjectID, input: Bool) throws { if fail { throw AudioFailure(operation: "Fixture", status: -1) }; if input { reading.input = device } else { reading.output = device } }
@@ -33,7 +42,7 @@ private final class Buffers {
     deinit { for sample in samples { sample.deallocate() }; list.unsafeMutablePointer.deallocate() }
 }
 @main struct AudioChecks {
-    @MainActor static func main() {
+    @MainActor static func main() async {
         let parents: [pid_t: pid_t] = [77: 50, 50: 12, 90: 91, 91: 90]
         precondition(AudioAppIdentity.ancestor(of: 77, isApplication: { $0 == 12 }, parent: { parents[$0] ?? 0 }) == 12, "Audio helpers must resolve to the visible app")
         precondition(AudioAppIdentity.ancestor(of: 90, isApplication: { _ in false }, parent: { parents[$0] ?? 0 }) == nil, "Cycles and daemons must not become mixer apps")
@@ -45,22 +54,43 @@ private final class Buffers {
         precondition(backend.calls == 0 && !audio.perAppEnabled)
         audio.refresh(); let app = audio.state.apps[0]
         audio.setGain(0.4, app: app); precondition(backend.calls == 0, "No app capture before explicit enable")
-        audio.enableApplications(); precondition(backend.calls == 0)
+        await audio.enableApplications(); precondition(backend.calls == 0 && backend.permissionRequests == 1 && audio.access == .ready)
+        let waiting = AudioApplicationInfo(id: "waiting", name: "Waiting app", processes: [], pid: 100, isPlaying: false)
+        let beforeWaiting = backend.calls; audio.setGain(0.4, app: waiting)
+        precondition(backend.calls == beforeWaiting && audio.gains[waiting.id] == nil, "An open app without an audio connection must never claim an effective mix")
         audio.setGain(0.4, app: app); precondition(audio.routedApps == [app.id] && backend.routes[app.id] == 0.4)
         audio.setGain(0, app: app); precondition(backend.routes[app.id] == 0)
         audio.setGain(4, app: app); precondition(backend.routes[app.id] == 1)
         audio.setVolume(-1); audio.setVolume(2, input: true); audio.muteInput(true)
         precondition(audio.state.outputVolume == 0 && audio.state.inputVolume == 1 && audio.state.inputMuted == true)
         backend.fail = true; audio.setGain(0.2, app: app)
-        precondition(audio.gains[app.id] == 1 && audio.error != nil && !audio.routedApps.contains(app.id), "Failed controls must not claim applied gain")
+        precondition(audio.gains[app.id] == 1 && audio.error != nil && audio.routedApps.contains(app.id), "A failed replacement retains its last applied gain")
         audio.selectDevice(3); precondition(audio.state.output == 1 && audio.error != nil && backend.routes.isEmpty)
         let calls = backend.calls; audio.refresh(); precondition(backend.calls == calls, "Failed saved routes aren't repeatedly retried")
         backend.fail = false; audio.selectDevice(3); precondition(audio.state.output == 3 && backend.routes[app.id] == 1)
         backend.reading.output = 1; let stopped = backend.stopped; audio.refresh(); precondition(backend.stopped > stopped)
         backend.reading.apps = []; audio.refresh(); precondition(backend.routes.isEmpty && audio.routedApps.isEmpty)
+        backend.reading.apps = (0..<8).map { AudioApplicationInfo(id: "app.\($0)", name: "App \($0)", processes: [UInt32($0 + 10)], pid: pid_t($0 + 100)) }
+        audio.refresh(); precondition(audio.visibleApps.count == 5 && audio.visibleApps.map(\.id) == ["app.0", "app.1", "app.2", "app.3", "app.4"])
+        backend.reading.apps = Array(backend.reading.apps.prefix(2)); audio.refresh()
+        precondition(audio.visibleApps.count == 2, "The mixer never fills missing apps with placeholder columns")
         audio.disableApplications(); precondition(!audio.perAppEnabled && backend.routes.isEmpty)
         let restored = AudioController(backend: MockAudio(), defaults: defaults)
         precondition(restored.gains[app.id] == 1 && !restored.perAppEnabled, "Saved gain must not authorize a new capture session")
+
+        let deniedBackend = MockAudio(); deniedBackend.permissionFailure = kAudioDevicePermissionsError
+        let denied = AudioController(backend: deniedBackend, defaults: defaults)
+        await denied.enableApplications()
+        precondition(!denied.perAppEnabled && denied.access == .permissionRequired && deniedBackend.calls == 0, "No saved mix before the real permission request succeeds")
+        deniedBackend.permissionFailure = nil; await denied.enableApplications()
+        precondition(denied.perAppEnabled && deniedBackend.permissionRequests == 2)
+        let delayedBackend = MockAudio(); delayedBackend.holdsRequest = true
+        let delayed = AudioController(backend: delayedBackend, defaults: defaults)
+        let request = Task { await delayed.enableApplications() }
+        while delayedBackend.pending == nil { await Task.yield() }
+        precondition(delayed.access == .requesting && !delayed.perAppEnabled)
+        delayed.disableApplications(); delayedBackend.pending?.resume(); await request.value
+        precondition(delayed.access == .off && !delayed.perAppEnabled && delayedBackend.calls == 0, "An obsolete permission request must not enable capture")
 
         let stereo = Buffers([[1, -1, 0.5, -0.5, 0.2, -0.2]], channels: [2])
         let planar = Buffers([[9, 9], [9, 9]], channels: [1, 1])
@@ -74,6 +104,13 @@ private final class Buffers {
         let combined = Buffers([[0.99, 0.99], [0.6, -0.6, 0.2, -0.2]], channels: [1, 2])
         AudioPCM.render(input: combined.list.unsafePointer, output: interleaved.list.unsafeMutablePointer, gain: 0.5, sourceBufferOffset: 1)
         precondition(interleaved.values(0, count: 6) == [0.3, -0.3, 0.1, -0.1, 0, 0], "Hardware microphone buffers must never be mixed into app playback")
+        let callStereo = Buffers([[0.8, 0.4, -0.6, -0.2]], channels: [2])
+        let mono = Buffers([[9, 9]], channels: [1])
+        AudioPCM.render(input: callStereo.list.unsafePointer, output: mono.list.unsafeMutablePointer, gain: 0.5)
+        precondition(abs(mono.values(0, count: 2)[0] - 0.3) < 0.0001 && abs(mono.values(0, count: 2)[1] + 0.2) < 0.0001, "A Bluetooth call folds stereo channels without changing playback speed")
+        let monoSource = Buffers([[0.4, -0.4]], channels: [1])
+        AudioPCM.render(input: monoSource.list.unsafePointer, output: planar.list.unsafeMutablePointer, gain: 1)
+        precondition(planar.values(0, count: 2) == [0.4, -0.4] && planar.values(1, count: 2) == [0.4, -0.4])
         print("Audio checks passed: app/helper identity, AirPods/device symbols, explicit capture, routing failures, device switching, teardown, gain persistence, mute and bounded PCM layouts. No hardware used.")
     }
 }

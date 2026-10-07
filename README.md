@@ -20,7 +20,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 | Feature | What it does |
 | --- | --- |
 | **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance or the menu-bar Avatars tab. It also becomes your menu-bar icon. |
-| **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Native eye expressions, smooth blinking, gaze and gentle shape motion and short messages explain each response. |
+| **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Native eye expressions, smooth blinking, gaze, sleeping breath and floating “z” and short messages explain each response. |
 | **Audio controls** | Master output volume, default output/input selection, supported microphone gain/mute, and an opt-in per-app mixer on the selected output. Stereo/mono Float32 routes are implemented with Core Audio process taps; real-device acceptance remains open. |
 | **Menu-bar subpages** | Companion, Timers, AI, Audio and Avatars replace the long stacked panel. Avatar changes save immediately. |
 | **Three timer modes** | The app and notch share a standalone countdown, Pomodoro with breaks/rounds, and stopwatch. Each supports pause, resume and reset; choosing a mode never starts a session. |
@@ -28,7 +28,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
 | **Persistent sessions** | Restores running deadlines, paused timers, completed sessions, and focus preferences after relaunch. |
 | **Configurable activation** | Record separate companion and voice shortcuts, including modifier-only combinations, plus optional hover and impacts. |
-| **Voice on demand** | Supported commands execute automatically in English or Portuguese. A nod, checkmark, and message acknowledge an understood command. |
+| **Voice on demand** | Focus and installed-app launch commands execute automatically in English or Portuguese (for example, “open Safari” or “abra o WhatsApp”). A nod, checkmark, and message acknowledge an understood command. |
 | **AI work nearby** | With one local-monitoring consent, follow Codex/Claude Code activity automatically, see limits and charts, and keep the active provider beside your avatar. |
 | **Size and motion** | Choose Small, Medium or Large expanded widgets, compact timer density and character motion; macOS Reduce Motion is always respected. |
 
@@ -48,7 +48,7 @@ First launch presents all six companions in a three-column onboarding gallery, w
 
 ![Companion with comfortable margins and no duplicated action row](Sieghart/Design/Concepts/island-companion-preview.png)
 
-*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses five fixed-height subpages.*
+*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses five compact subpages with natural content heights.*
 
 The compact island and camera strip stay sRGB black (`#000000`). Expanded pages use glass with dark translucent cards, an attached shoulder contour and circular quick controls around the surface. macOS 26 uses Liquid Glass; older supported systems use behind-window blur. Reduce Transparency keeps an opaque surface. Native transitions reserve their full bounds so the moving silhouette does not resize or crop its content.
 
@@ -64,7 +64,7 @@ The compact island and camera strip stay sRGB black (`#000000`). Expanded pages 
 
 [Appearance](Sieghart/Design/Concepts/app-appearance-preview.png) · [Timers](Sieghart/Design/Concepts/app-timers-preview.png) · [Activation](Sieghart/Design/Concepts/app-activation-preview.png) · [AI dashboard](Sieghart/Design/Concepts/app-ai-preview.png) · [Audio](Sieghart/Design/Concepts/app-audio-preview.png)
 
-[Companion depth](Sieghart/Design/Concepts/simple-companions-depth-preview.png) · [Compact hover without an outline](Sieghart/Design/Concepts/compact-hover-preview.png)
+[Sleeping motion](Sieghart/Design/Concepts/simple-companions-sleep.gif) · [Companion depth](Sieghart/Design/Concepts/simple-companions-depth-preview.png) · [Compact hover without an outline](Sieghart/Design/Concepts/compact-hover-preview.png)
 
 [Explore the design prototype](Sieghart/Design/Prototype) · [Read the implementation notes](Sieghart/README.md)
 
@@ -72,11 +72,11 @@ The compact island and camera strip stay sRGB black (`#000000`). Expanded pages 
 
 ![Audio mixer with illustrative apps and levels](Sieghart/Design/Concepts/island-audio-preview.png)
 
-Output selection, master volume and input-device controls use Core Audio hardware properties. Devices without writable volume/mute show unavailable controls. The per-app mixer is off after launch. **Enable app mixer** opts in; macOS requests system-audio access when restoring a saved mix or first adjusting an app. The mixer processes audio locally without saving it or recording the microphone. It groups audio helpers into their visible installed app, keeps connected silent apps available between sounds, loads native app icons, identifies the selected device (including AirPods), adjusts each with a private process tap and aggregate playback route, and restores normal playback when disabled. Encoded, multichannel or incompatible formats are rejected explicitly. Real speakers, AirPods, permission denial and disconnects still require Mac acceptance.
+Output selection, master volume and input-device controls use Core Audio hardware properties. Devices without writable volume/mute show unavailable controls. The per-app mixer is off after launch. **Enable app mixer** opts in; the button immediately starts the public macOS system-audio permission path before enabling app sliders. A failure provides Retry and Audio permission settings. The mixer processes audio locally without saving it or recording the microphone. It shows up to five actual running apps plus Master, prioritizes apps currently playing audio, groups helpers into their visible installed app, waits for an audio connection before enabling its slider, loads native app icons, identifies the selected device (including AirPods), adjusts each with a private process tap and aggregate playback route, and restores normal playback when disabled. Stereo process mixdown supports mono Bluetooth calls and planar/interleaved Float32 outputs; encoded/incompatible formats are rejected explicitly. Real speakers, AirPods, permission denial and disconnects still require Mac acceptance.
 
 ![Choose a companion from the menu bar](Sieghart/Design/Concepts/menu-avatars-preview.png)
 
-Each menu-bar tab replaces the content within one fixed-height area. The island's tool grid opens Companion, Audio, AI agents, Timers, Voice, Avatars and Preferences. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
+The menu-bar panel is 380 points wide. Each tab replaces its content and fits its height, eliminating the empty 300-point content area. The island's tool grid opens Companion, Audio, AI agents, Timers, Voice, Avatars and Preferences. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
 
 ## Swift Student Challenge
 

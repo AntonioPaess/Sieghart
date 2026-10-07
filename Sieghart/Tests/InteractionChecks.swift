@@ -25,8 +25,12 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Start focus for -5 minutes") == nil)
         precondition(FocusVoiceParser.parse("Start focus for twenty-five minutes") == .start(minutes: 25))
         precondition(FocusVoiceParser.parse("Show and hide") == nil)
-        precondition(FocusVoiceParser.parse("Open Warp") == nil)
+        precondition(FocusVoiceParser.parse("Open Warp") == .openApp(name: "warp"))
         precondition(FocusVoiceParser.parse("Open Safari and search YouTube") == nil)
+        precondition(FocusVoiceParser.parse("Abra o WhatsApp") == .openApp(name: "whatsapp"))
+        precondition(FocusVoiceParser.parse("Open Safari") == .openApp(name: "safari"))
+        precondition(FocusVoiceParser.parse("Open Safari; rm -rf something") == nil)
+        precondition(FocusVoiceParser.parse("Não abra o WhatsApp") == nil)
         precondition(FocusVoiceParser.parse("Open Sieghart") == .show)
         precondition(FocusVoiceParser.parse("What is my ai limits") == .aiLimits)
         precondition(FocusVoiceParser.parse("What are my AI limits?") == .aiLimits)
@@ -60,6 +64,11 @@ struct InteractionChecks {
                 let still = CompanionMotion.sample(time: 0, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
                 let later = CompanionMotion.sample(time: 100, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
                 precondition(still == later) // Motion disabled never depends on the clock.
+                if mood == .asleep {
+                    let asleepA = CompanionMotion.sample(time: 0.2, size: 96, avatar: avatar, mood: .asleep, listening: false, strolling: false, animates: true)
+                    let asleepB = CompanionMotion.sample(time: 1.5, size: 96, avatar: avatar, mood: .asleep, listening: false, strolling: false, animates: true)
+                    precondition(asleepA != asleepB && asleepA.eyeOpen == 0.07 && asleepB.eyeOpen == 0.07, "All sleeping avatars must breathe while their eyes remain closed")
+                }
                 let moving = CompanionMotion.sample(time: 0.14, size: 24, avatar: avatar, mood: mood, listening: false, strolling: false, animates: true)
                 precondition(moving.eyeOpen.isFinite && moving.scaleX > 0 && moving.scaleY > 0)
             }
@@ -98,7 +107,7 @@ struct InteractionChecks {
         preferences.avatar = .crtBuddy
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle)
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name })
         notch.activation = activation
         // A first click from another app must reach both native activation and
         // the SwiftUI controls. These views stay offscreen; no window is opened.
@@ -207,6 +216,9 @@ struct InteractionChecks {
         activation.setShortcut(activation.companionShortcut, for: .voice)
         precondition(activation.voiceShortcut == custom) // Duplicate bindings are rejected.
 
+        activation.executeVoiceCommand("Open Safari")
+        try await Task.sleep(for: .milliseconds(20))
+        precondition(activation.commandAcknowledged && activation.voiceStatus == "Opened Fixture safari", "App launch commands use the injected local launcher, never a real app in tests")
         activation.executeVoiceCommand("Start focus for 50 minutes")
         precondition(assistant.isRunning && assistant.focusMinutes == 50)
         precondition(activation.commandAcknowledged)

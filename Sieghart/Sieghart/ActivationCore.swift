@@ -26,6 +26,7 @@ final class ActivationController: ObservableObject {
     private var voiceRequestGeneration = 0
     private let defaults: UserDefaults
     private let registersShortcuts: Bool
+    private let openApplication: @MainActor (String) async throws -> String
     private let assistant: AssistantViewModel
     private let notch: NotchWidgetController
     private var hotkeys: [EventHotKeyRef] = []
@@ -52,11 +53,12 @@ final class ActivationController: ObservableObject {
     private var settleTask: Task<Void, Never>?
     private var feedbackTask: Task<Void, Never>?
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetController, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open) {
         self.assistant = assistant
         self.notch = notch
         self.defaults = defaults
         self.registersShortcuts = registersShortcuts
+        self.openApplication = openApplication
         func saved(_ action: ShortcutAction, fallback: ShortcutChord) -> ShortcutChord? {
             if defaults.bool(forKey: "activation.\(action.rawValue).disabled") { return nil }
             if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { return chord }
@@ -130,6 +132,7 @@ final class ActivationController: ObservableObject {
         // A release can be lost while the system protects keyboard input.
         if NSEvent.modifierFlags.intersection(ShortcutChord.allowedModifiers).isEmpty { modifierTracker.reset() }
         eventTap?.ensureEnabled()
+        if eventTap?.isValid == false { registrationNeedsRetry = true }
         if trusted != lastShortcutTrust || CGPreflightListenEventAccess() != lastInputTrust || secureInput != lastSecureInput || registrationNeedsRetry {
             registerHotkeys()
         }
@@ -171,7 +174,7 @@ final class ActivationController: ObservableObject {
         guard recordingShortcut == nil else { return }
         Self.activeHotkeyOwner = self
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        let target = GetEventDispatcherTarget()
+        let target = GetApplicationEventTarget()
         let installed = InstallEventHandler(target, { _, event, _ in
             guard let event else { return OSStatus(eventNotHandledErr) }
             var identifier = EventHotKeyID()
@@ -204,7 +207,7 @@ final class ActivationController: ObservableObject {
         }
         guard companionShortcut != nil || voiceShortcut != nil else { return }
         guard lastInputTrust || trusted || voiceShortcut?.isModifierOnly == true || companionShortcut?.isModifierOnly == true || !fallbackActions.isEmpty else { return }
-        if lastInputTrust {
+        if lastInputTrust || trusted {
             let tap = ShortcutEventTap { [weak self] key, flags, repeated in
                 self?.receiveShortcutEvent(keyCode: key, flags: flags, isRepeat: repeated)
             }
@@ -386,7 +389,7 @@ final class ActivationController: ObservableObject {
         feedbackTask?.cancel()
         commandAcknowledged = false
         guard let command = FocusVoiceParser.parse(text) else {
-            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try one focus command, such as “start focus for 25 minutes”."
+            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try “start focus for 25 minutes” or “open Safari”."
             notch.showVoice()
             return
         }
@@ -420,6 +423,22 @@ final class ActivationController: ObservableObject {
             voiceStatus = "Choose your focus settings"; commandAcknowledged = true; notch.showFocusSetup(); scheduleFeedback(closeWidget: false); return
         case .aiLimits:
             voiceStatus = "Here are your AI limits"; commandAcknowledged = true; notch.showAILimits(); scheduleFeedback(closeWidget: false); return
+        case .openApp(let name):
+            let generation = voiceRequestGeneration
+            voiceStatus = "Opening \(name)…"; notch.showVoice()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                do {
+                    let app = try await self.openApplication(name)
+                    guard generation == self.voiceRequestGeneration else { return }
+                    self.voiceStatus = "Opened \(app)"; self.commandAcknowledged = true
+                } catch {
+                    guard generation == self.voiceRequestGeneration else { return }
+                    self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false
+                }
+                self.scheduleFeedback(closeWidget: true)
+            }
+            return
         }
         commandAcknowledged = succeeded
         notch.showVoice()
@@ -446,7 +465,7 @@ final class ActivationController: ObservableObject {
     private let receive: (UInt32?, NSEvent.ModifierFlags, Bool) -> Void
     init(receive: @escaping (UInt32?, NSEvent.ModifierFlags, Bool) -> Void) { self.receive = receive }
     func start() -> Bool {
-        guard CGPreflightListenEventAccess() else { return false }
+        guard CGPreflightListenEventAccess() || AXIsProcessTrusted() else { return false }
         let mask = (CGEventMask(1) << CGEventType.flagsChanged.rawValue) | (CGEventMask(1) << CGEventType.keyDown.rawValue)
         port = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .listenOnly, eventsOfInterest: mask, callback: { _, type, event, pointer in
             guard let pointer else { return Unmanaged.passUnretained(event) }
@@ -465,6 +484,7 @@ final class ActivationController: ObservableObject {
         CGEvent.tapEnable(tap: port, enable: true)
         return true
     }
+    var isValid: Bool { port.map { CFMachPortIsValid($0) } ?? false }
     func ensureEnabled() { if let port, !CGEvent.tapIsEnabled(tap: port) { CGEvent.tapEnable(tap: port, enable: true) } }
     func stop() {
         if let source { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }

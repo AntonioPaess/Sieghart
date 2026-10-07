@@ -244,8 +244,8 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
-				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "Sieghart adjusts audio from apps you choose. Audio is processed locally and never saved.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Sieghart listens only when you press the voice button.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Sieghart transcribes your spoken focus commands after you start listening.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -272,8 +272,8 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
-				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "Sieghart adjusts audio from apps you choose. Audio is processed locally and never saved.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Sieghart listens only when you press the voice button.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Sieghart transcribes your spoken focus commands after you start listening.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -298,7 +298,6 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
-				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "Sieghart adjusts audio from apps you choose. Audio is processed locally and never saved.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Sieghart listens only when you press the voice button.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Sieghart transcribes your spoken focus commands after you start listening.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -320,7 +319,6 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Sieghart;
-				INFOPLIST_KEY_NSAudioCaptureUsageDescription = "Sieghart adjusts audio from apps you choose. Audio is processed locally and never saved.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Sieghart listens only when you press the voice button.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Sieghart transcribes your spoken focus commands after you start listening.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";

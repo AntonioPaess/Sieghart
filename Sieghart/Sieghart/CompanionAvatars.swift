@@ -96,8 +96,12 @@ struct CompanionMotion: Equatable {
             result.offset.width = sin(t * 13) * size * 0.012
             result.rotation = sin(t * 8) * 1.5
         case .asleep:
-            result.eyeOpen = 0.07; result.scaleY -= 0.04
-            result.rotation = 4; result.offset.height = size * 0.025
+            let inhale = (1 - cos(t * 1.45)) * 0.5
+            result.eyeOpen = 0.07
+            result.scaleX = 1 + inhale * 0.025
+            result.scaleY = 0.94 + inhale * 0.055
+            result.rotation = 4 + sin(t * 0.72) * 1.2
+            result.offset.height = size * (0.025 - inhale * 0.014)
         case .waking:
             result.scaleY += 0.04
         case .understood:
@@ -344,7 +348,10 @@ struct CompanionCharacter: View {
                     if reaction == .understood {
                         Image(systemName: "checkmark.circle.fill").font(.system(size: size * 0.17)).foregroundStyle(.mint)
                     } else if reaction == .asleep && size >= 42 {
-                        Text("z").font(.system(size: size * 0.14, weight: .medium, design: .rounded)).foregroundStyle(avatar.tint.opacity(0.7))
+                        let phase = moves ? (time + Double(CompanionAvatar.allCases.firstIndex(of: avatar) ?? 0) * 0.61).truncatingRemainder(dividingBy: 3) / 3 : 0.4
+                        Text("z").font(.system(size: size * (0.12 + phase * 0.04), weight: .medium, design: .rounded)).foregroundStyle(avatar.tint)
+                            .opacity(moves ? sin(phase * .pi) * 0.8 : 0.7)
+                            .offset(x: size * phase * 0.08, y: -size * phase * 0.2)
                     }
                 }
                 .animation(moves ? .spring(response: 0.36, dampingFraction: 0.82) : nil, value: mood)

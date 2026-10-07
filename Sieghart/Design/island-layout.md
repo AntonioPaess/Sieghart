@@ -12,7 +12,7 @@ October 6, 2026. Selective reference influence, Sieghart companions and palette.
 | AI agents | 800 × 470 maximum | Scroll within the bounded viewport; details sheet |
 | Audio | 760 × 460 | Mixer / Devices / Microphone; horizontal app columns |
 | Avatar picker | 620 × 340 | Six saved companions |
-| Menu-bar panel | 560 wide, content 300 high | Five replacing subpages |
+| Menu-bar panel | 380 wide, natural page height; Companion ≈297 high | Five replacing subpages |
 
 Expanded island content has 44-point horizontal and 28-point vertical padding measured from the full contour. The shoulder's 16-point inset leaves 28 points of usable wall clearance. Small/Medium/Large scale the presentation; screen bounds reserve external controls. Compact camera height and black shell are unchanged. Native menu tracking counts as interaction until a choice is selected/dismissed; pointer exit then collapses normally.
 
@@ -38,7 +38,7 @@ Images render actual production views offscreen. Example quota/token/audio data 
 - Close/reopen an audio app, switch its output, connect/disconnect AirPods, sleep/wake and relaunch Sieghart. A new launch must not enable capture automatically.
 - Confirm readable sliders, horizontal overflow, submenu selection and collapse timing on all three widget sizes.
 
-Sources are documented in AudioEngine and the installed Core Audio SDK. Device taps are available in the supported macOS 14.6 deployment range. Multichannel/encoded/incompatible formats are explicitly unsupported in this first slice. Input mute works only if the hardware exposes that property. Audio app pinning, ordering, priorities and route shortcuts remain S4.
+Sources are documented in AudioEngine and the installed Core Audio SDK. Device taps are available in the supported macOS 14.6 deployment range. Non-Float32/encoded formats are explicitly unsupported. Process stereo mixdown maps to mono and planar/interleaved device outputs. Input mute works only if the hardware exposes that property. Audio app pinning, ordering, priorities and route shortcuts remain S4.
 
 ## October 6 source review and corrections
 
@@ -47,3 +47,14 @@ Quota/spending cards share a fixed 96-point island / 192-point workspace outer h
 The reviewed reference uses fixed-height card rows, local agent log readers and owner-app icons from macOS. Sieghart retains its own parser and existing Codex account adapter: monitoring refreshes local analytics every five seconds, counters/limits every minute and account activity every five minutes. Detection is enabled by the onboarding choice; provider marks depend on observed usage or quota readings. Claude local activity is automatic; verified individual Claude quotas remain a separate Sprint 3 task. Local Codex/Claude records are distinct from browser ChatGPT conversation usage.
 
 Audio uses public process ancestry and app bundle ownership, never a private responsibility symbol. Native installed app icons are loaded at display resolution. Core Audio supplies the actual selected device name and transport; AirPods Pro/Max and Bluetooth headphones use corresponding device symbols. Connected regular apps stay listed while silent; system daemons do not become app mixer rows. Icon reads do not start an app or capture audio.
+
+
+## October 6 evening correction round
+
+The supplied screenshot exposed oversized menu bounds. Width is now 380 points (previously 560), with natural page heights and compact child controls. Companion is about 297 points high (previously 548). No fixed empty 300-point area remains. The island mixer displays up to five **real** running apps plus Master, never filler columns; active audio apps sort first. Compact menu overflow scrolls horizontally within its reduced width. Waiting apps keep their native identity and disabled slider until they own an audio connection.
+
+The generated bundle lacked the system-audio privacy string. The explicit merged Info.plist now supplies it; the signed bundle is checked after building. Enable uses a temporary unmuted tap-only aggregate to invoke the public Core Audio permission path immediately, before enabling gains. A denied/failed request offers Retry and Audio permission settings. The empty inclusion list captures no app audio; the probe contains no physical microphone/output subdevice and retains no samples. Private stereo process mixdown covers all app output streams, maps stereo into mono Bluetooth calls and leaves unity gain as normal playback. This follows documented public APIs and source-reviewed mechanics; no reference runtime code is included. [Apple’s tap and privacy requirements](https://developer.apple.com/documentation/coreaudio/capturing-system-audio-with-core-audio-taps).
+
+The native panel overlaps the top screen edge by one backing pixel and has no contour stroke. The first-click interaction outline is removed; keyboard focus keeps a soft surface cue. All six companions breathe/sway while asleep and float a fading “z”; motion preferences remain respected. [Production sleep motion](Concepts/simple-companions-sleep.gif).
+
+Installed-app voice launch and menu-bar agent/full-screen input setup are implemented. Build/mocked tests/offscreen previews confirm implementation; permission prompts, WhatsApp/AirPods playback, actual full-screen shortcuts and physical top-edge alignment remain Mac acceptance gates. No app window, microphone, system-audio capture or real shortcut registration was started for verification.

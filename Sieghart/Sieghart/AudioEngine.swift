@@ -39,12 +39,16 @@ enum AudioAppIdentity {
         }
         return nil
     }
-    @MainActor static func owner(of pid: pid_t) -> NSRunningApplication? {
+    @MainActor static func owner(of pid: pid_t, bundleID: String = "") -> NSRunningApplication? {
         if let id = ancestor(of: pid, isApplication: { NSRunningApplication(processIdentifier: $0)?.activationPolicy == .regular }, parent: { id in
             var info = proc_bsdinfo()
             let size = Int32(MemoryLayout<proc_bsdinfo>.size)
             return proc_pidinfo(id, PROC_PIDTBSDINFO, 0, &info, size) == size ? pid_t(info.pbi_ppid) : 0
         }) { return NSRunningApplication(processIdentifier: id) }
+        if !bundleID.isEmpty, let app = NSWorkspace.shared.runningApplications.filter({ app in
+            guard app.activationPolicy == .regular, let id = app.bundleIdentifier else { return false }
+            return bundleID == id || bundleID.hasPrefix(id + ".")
+        }).max(by: { ($0.bundleIdentifier?.count ?? 0) < ($1.bundleIdentifier?.count ?? 0) }) { return app }
         var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
         guard proc_pidpath(pid, &path, UInt32(path.count)) > 0 else { return nil }
         let executable = String(decoding: path.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
@@ -70,6 +74,7 @@ struct AudioSnapshot {
 }
 @MainActor protocol AudioBackend: AnyObject {
     func snapshot() -> AudioSnapshot
+    func prepareApplicationAudio() async throws
     func setVolume(_ volume: Float, device: AudioObjectID, input: Bool) throws
     func setDefault(_ device: AudioObjectID, input: Bool) throws
     func setInputMuted(_ muted: Bool, device: AudioObjectID) throws
@@ -78,12 +83,17 @@ struct AudioSnapshot {
     func stopApplications()
 }
 
+enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired, failed }
+
 @MainActor final class AudioController: ObservableObject {
     @Published private(set) var state = AudioSnapshot()
     @Published private(set) var perAppEnabled = false
+    @Published private(set) var access: AppMixerAccess = .off
+    private var enableGeneration = 0
     @Published private(set) var routedApps: Set<String> = []
     @Published private(set) var gains: [String: Float] = [:]
     @Published private(set) var error: String?
+    var visibleApps: [AudioApplicationInfo] { Array(state.apps.prefix(5)) }
     private let backend: any AudioBackend
     private let defaults: UserDefaults
     private var poll: Task<Void, Never>?
@@ -102,7 +112,7 @@ struct AudioSnapshot {
         let alive = Set(state.apps.map(\.id))
         backend.retainApplications(alive); routedApps.formIntersection(alive)
         guard perAppEnabled, let output = state.devices.first(where: { $0.id == state.output }) else { return }
-        for app in state.apps where gains[app.id] != nil && !failedApps.contains(app.id) {
+        for app in state.apps where !app.processes.isEmpty && gains[app.id] != nil && !failedApps.contains(app.id) {
             do { try backend.setApplication(app, gain: gains[app.id]!, output: output); routedApps.insert(app.id) }
             catch { routedApps.remove(app.id); failedApps.insert(app.id); self.error = error.localizedDescription }
         }
@@ -120,8 +130,30 @@ struct AudioSnapshot {
         }
     }
     func stopObserving() { observers = max(0, observers - 1) }
-    func enableApplications() { perAppEnabled = true; failedApps = []; error = nil; refresh() }
-    func disableApplications() { backend.stopApplications(); perAppEnabled = false; routedApps = []; failedApps = []; error = nil }
+    func enableApplications() async {
+        guard access != .requesting, !perAppEnabled else { return }
+        enableGeneration += 1
+        let generation = enableGeneration
+        access = .requesting; error = nil
+        do {
+            try await backend.prepareApplicationAudio()
+            guard generation == enableGeneration else { return }
+            perAppEnabled = true; access = .ready; failedApps = []; refresh()
+        } catch {
+            guard generation == enableGeneration else { return }
+            perAppEnabled = false
+            access = (error as? AudioFailure)?.status == kAudioDevicePermissionsError ? .permissionRequired : .failed
+            self.error = error.localizedDescription
+        }
+    }
+    func disableApplications() {
+        enableGeneration += 1; backend.stopApplications(); perAppEnabled = false
+        access = .off; routedApps = []; failedApps = []; error = nil
+    }
+    func openAudioPermissionSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AudioCapture") else { return }
+        NSWorkspace.shared.open(url)
+    }
     func setVolume(_ value: Float, input: Bool = false) {
         perform { try backend.setVolume(min(1, max(0, value)), device: input ? state.input : state.output, input: input) }; state = backend.snapshot()
     }
@@ -131,13 +163,19 @@ struct AudioSnapshot {
     }
     func muteInput(_ muted: Bool) { perform { try backend.setInputMuted(muted, device: state.input) }; state = backend.snapshot() }
     func setGain(_ value: Float, app: AudioApplicationInfo) {
-        guard perAppEnabled, let output = state.devices.first(where: { $0.id == state.output }) else { return }
+        guard perAppEnabled, !app.processes.isEmpty, let output = state.devices.first(where: { $0.id == state.output }) else { return }
         let gain = min(1, max(0, value))
         do {
             try backend.setApplication(app, gain: gain, output: output)
             gains[app.id] = gain; routedApps.insert(app.id); failedApps.remove(app.id); error = nil
             defaults.set(gains, forKey: "audio.appGains")
-        } catch { routedApps.remove(app.id); self.error = error.localizedDescription }
+        } catch {
+            // A replacement can fail while an existing route still works.
+            self.error = error.localizedDescription
+            if (error as? AudioFailure)?.status == kAudioDevicePermissionsError {
+                disableApplications(); access = .permissionRequired; self.error = error.localizedDescription
+            }
+        }
     }
     private func perform(_ action: () throws -> Void) { do { try action(); error = nil } catch { self.error = error.localizedDescription } }
 }
@@ -145,7 +183,10 @@ struct AudioSnapshot {
 struct AudioFailure: LocalizedError {
     let operation: String
     let status: OSStatus
-    var errorDescription: String? { "\(operation) failed (\(status)). Playback keeps its normal route. Check the device and macOS audio permission." }
+    var errorDescription: String? {
+        if status == kAudioDevicePermissionsError { return "Allow Sieghart in System Settings → Privacy & Security → Screen & System Audio Recording, then retry the app mixer." }
+        return "\(operation) failed (\(status)). Check the selected audio device and retry."
+    }
 }
 
 // No file, microphone, network or UI work occurs in the real-time callback.
@@ -155,26 +196,37 @@ enum AudioPCM {
         let source = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
         let destination = UnsafeMutableAudioBufferListPointer(output)
         for buffer in destination { if let data = buffer.mData { memset(data, 0, Int(buffer.mDataByteSize)) } }
-        var sourceChannel = 0
-        for index in source.indices where index >= max(0, sourceBufferOffset) {
-            let sourceBuffer = source[index]
-            guard let sourceData = sourceBuffer.mData?.assumingMemoryBound(to: Float.self), sourceBuffer.mNumberChannels > 0 else { continue }
-            let sourceChannels = Int(sourceBuffer.mNumberChannels)
-            let sourceFrames = Int(sourceBuffer.mDataByteSize) / MemoryLayout<Float>.size / sourceChannels
-            for channel in 0..<sourceChannels {
-                var offset = 0
-                for target in destination {
-                    let channels = Int(target.mNumberChannels)
-                    if sourceChannel >= offset && sourceChannel < offset + channels,
-                       let targetData = target.mData?.assumingMemoryBound(to: Float.self), channels > 0 {
-                        let targetChannel = sourceChannel - offset
-                        let frames = min(sourceFrames, Int(target.mDataByteSize) / MemoryLayout<Float>.size / channels)
-                        for frame in 0..<frames { targetData[frame * channels + targetChannel] = sourceData[frame * sourceChannels + channel] * min(1, max(0, gain)) }
-                        break
+        let offset = max(0, sourceBufferOffset)
+        guard offset < source.count else { return }
+        var inputChannels = 0
+        for index in source.indices where index >= offset { inputChannels += Int(source[index].mNumberChannels) }
+        let outputChannels = destination.reduce(0) { $0 + Int($1.mNumberChannels) }
+        guard inputChannels > 0, outputChannels > 0 else { return }
+        var targetChannelBase = 0
+        for buffer in destination {
+            let channels = Int(buffer.mNumberChannels)
+            defer { targetChannelBase += channels }
+            guard channels > 0, let data = buffer.mData?.assumingMemoryBound(to: Float.self) else { continue }
+            let outputFrames = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size / channels
+            var sourceChannelBase = 0
+            for index in source.indices where index >= offset {
+                let incoming = source[index], count = Int(incoming.mNumberChannels)
+                defer { sourceChannelBase += count }
+                guard count > 0, let samples = incoming.mData?.assumingMemoryBound(to: Float.self) else { continue }
+                let frames = min(outputFrames, Int(incoming.mDataByteSize) / MemoryLayout<Float>.size / count)
+                for channel in 0..<count {
+                    let number = sourceChannelBase + channel
+                    for outputChannel in 0..<channels {
+                        let target = targetChannelBase + outputChannel
+                        // Stereo calls fold into a mono headset; mono fills
+                        // both front speakers. Additional device channels stay silent.
+                        let foldsToMono = outputChannels == 1 && inputChannels > 1
+                        if foldsToMono || target == number || (inputChannels == 1 && target == 1) {
+                            let level = min(1, max(0, gain)) / (foldsToMono ? Float(inputChannels) : 1)
+                            for frame in 0..<frames { data[frame * channels + outputChannel] += samples[frame * count + channel] * level }
+                        }
                     }
-                    offset += channels
                 }
-                sourceChannel += 1
             }
         }
     }
@@ -183,14 +235,60 @@ enum AudioPCM {
 private final class AudioGainState: @unchecked Sendable {
     let gain = OSAllocatedUnfairLock(initialState: Float(1))
     let tapBuffers: Int
-    init(tapBuffers: Int = 1) { self.tapBuffers = tapBuffers }
+    let tapChannels: Int
+    init(tapBuffers: Int = 1, tapChannels: Int = 2) { self.tapBuffers = tapBuffers; self.tapChannels = tapChannels }
 }
 private let audioMixerCallback: AudioDeviceIOProc = { _, _, input, _, output, _, context in
     guard let context else { return noErr }
     let state = Unmanaged<AudioGainState>.fromOpaque(context).takeUnretainedValue()
-    let count = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input)).count
-    AudioPCM.render(input: input, output: output, gain: state.gain.withLock { $0 }, sourceBufferOffset: max(0, count - state.tapBuffers))
+    let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
+    // If the tap is absent, do not fall back to a hardware microphone buffer.
+    guard buffers.count >= state.tapBuffers,
+          (state.tapBuffers > 1 || Int(buffers[buffers.count - 1].mNumberChannels) == state.tapChannels) else {
+        for buffer in UnsafeMutableAudioBufferListPointer(output) { if let data = buffer.mData { memset(data, 0, Int(buffer.mDataByteSize)) } }
+        return noErr
+    }
+    AudioPCM.render(input: input, output: output, gain: state.gain.withLock { $0 }, sourceBufferOffset: buffers.count - state.tapBuffers)
     return noErr
+}
+
+// Starting an aggregate with a tap invokes the public macOS permission path.
+// An empty inclusion list captures no app audio; the unmuted probe has no
+// physical input/output subdevice and never changes another app's playback.
+private enum SystemAudioPermissionProbe {
+    static func run() throws {
+        guard let purpose = Bundle.main.object(forInfoDictionaryKey: "NSAudioCaptureUsageDescription") as? String, !purpose.isEmpty else {
+            throw AudioFailure(operation: "System audio permission description is missing", status: kAudioHardwareIllegalOperationError)
+        }
+        let description = CATapDescription(stereoMixdownOfProcesses: [])
+        description.name = "Sieghart audio access"; description.isPrivate = true; description.muteBehavior = .unmuted
+        var tap: AudioObjectID = 0, device: AudioObjectID = 0
+        var io: AudioDeviceIOProcID?
+        defer {
+            if let io { AudioDeviceStop(device, io); AudioDeviceDestroyIOProcID(device, io) }
+            if device != 0 { AudioHardwareDestroyAggregateDevice(device) }
+            if tap != 0 { AudioHardwareDestroyProcessTap(tap) }
+        }
+        try audioCheck(AudioHardwareCreateProcessTap(description, &tap), "Prepare system audio access")
+        let spec: [String: Any] = [
+            kAudioAggregateDeviceNameKey: "Sieghart audio access",
+            kAudioAggregateDeviceUIDKey: UUID().uuidString,
+            kAudioAggregateDeviceIsPrivateKey: true,
+            kAudioAggregateDeviceTapListKey: [[kAudioSubTapUIDKey: description.uuid.uuidString, kAudioSubTapDriftCompensationKey: true]],
+            kAudioAggregateDeviceTapAutoStartKey: true
+        ]
+        try audioCheck(AudioHardwareCreateAggregateDevice(spec as CFDictionary, &device), "Prepare system audio permission")
+        try audioCheck(AudioDeviceCreateIOProcID(device, { _, _, _, _, output, _, _ in
+            for buffer in UnsafeMutableAudioBufferListPointer(output) {
+                if let data = buffer.mData { memset(data, 0, Int(buffer.mDataByteSize)) }
+            }
+            return noErr
+        }, nil, &io), "Prepare audio permission request")
+        try audioCheck(AudioDeviceStart(device, io), "Request system audio permission")
+    }
+}
+private func audioCheck(_ status: OSStatus, _ operation: String) throws {
+    if status != noErr { throw AudioFailure(operation: operation, status: status) }
 }
 
 private final class ApplicationAudioRoute {
@@ -202,52 +300,33 @@ private final class ApplicationAudioRoute {
     private var state = AudioGainState()
     init(app: AudioApplicationInfo, device: AudioDeviceInfo, gain: Float) throws {
         processes = app.processes; output = device.id
-        // Device-specific taps avoid sample-rate conversion and encoded audio.
-        let description = CATapDescription(processes: app.processes, deviceUID: device.uid, stream: 0)
+        // A stereo process mix includes all of an app's output streams, also
+        // when a call changes a Bluetooth headset's stream/rate/channel layout.
+        let description = CATapDescription(stereoMixdownOfProcesses: app.processes)
         description.name = "Sieghart — \(app.name)"; description.isPrivate = true
         description.muteBehavior = .mutedWhenTapped
         do {
-            try check(AudioHardwareCreateProcessTap(description, &tap), "Create app audio tap")
-            var format = AudioStreamBasicDescription()
-            var address = AudioObjectPropertyAddress(mSelector: kAudioTapPropertyFormat, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-            var size = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
-            try check(AudioObjectGetPropertyData(tap, &address, 0, nil, &size, &format), "Read app audio format")
-            guard format.mFormatID == kAudioFormatLinearPCM, format.mFormatFlags & kAudioFormatFlagIsFloat != 0,
-                  format.mBitsPerChannel == 32, (1...2).contains(format.mChannelsPerFrame), device.outputChannels <= 2 else {
-                throw AudioFailure(operation: "This device's audio format is not supported", status: kAudioHardwareUnsupportedOperationError)
-            }
+            try audioCheck(AudioHardwareCreateProcessTap(description, &tap), "Create app audio tap")
+            let format = try readFormat(of: tap, selector: kAudioTapPropertyFormat)
+            try validatePCM(format)
             let spec: [String: Any] = [
                 kAudioAggregateDeviceUIDKey: UUID().uuidString,
                 kAudioAggregateDeviceNameKey: "Sieghart private mixer",
                 kAudioAggregateDeviceIsPrivateKey: true,
-                kAudioAggregateDeviceIsStackedKey: false,
                 kAudioAggregateDeviceMainSubDeviceKey: device.uid,
-                kAudioAggregateDeviceClockDeviceKey: device.uid,
-                kAudioAggregateDeviceSubDeviceListKey: [[kAudioSubDeviceUIDKey: device.uid, kAudioSubDeviceInputChannelsKey: 0, kAudioSubDeviceOutputChannelsKey: device.outputChannels]],
+                kAudioAggregateDeviceSubDeviceListKey: [[kAudioSubDeviceUIDKey: device.uid, kAudioSubDeviceInputChannelsKey: 0]],
                 kAudioAggregateDeviceTapListKey: [[kAudioSubTapUIDKey: description.uuid.uuidString, kAudioSubTapDriftCompensationKey: true]],
                 kAudioAggregateDeviceTapAutoStartKey: true
             ]
-            try check(AudioHardwareCreateAggregateDevice(spec as CFDictionary, &aggregate), "Create private mixer")
-            // Aggregate hardware inputs precede the tap. Validate only the
-            // tap's stream and disable every hardware input for this IOProc.
-            let inputStreams = try streamIDs(scope: kAudioDevicePropertyScopeInput)
-            guard let tapStream = inputStreams.last else { throw AudioFailure(operation: "Missing app audio stream", status: kAudioHardwareBadStreamError) }
-            var inputFormat = AudioStreamBasicDescription()
-            var inputProperty = AudioObjectPropertyAddress(mSelector: kAudioStreamPropertyVirtualFormat, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-            var inputBytes = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
-            try check(AudioObjectGetPropertyData(tapStream, &inputProperty, 0, nil, &inputBytes, &inputFormat), "Read tap stream format")
-            try validate(inputFormat, rate: format.mSampleRate)
-            guard inputFormat.mChannelsPerFrame == format.mChannelsPerFrame else { throw AudioFailure(operation: "Tap channel mismatch", status: kAudioHardwareUnsupportedOperationError) }
-            state = AudioGainState(tapBuffers: inputFormat.mFormatFlags & kAudioFormatFlagIsNonInterleaved != 0 ? Int(inputFormat.mChannelsPerFrame) : 1)
-            var outputFormat = AudioStreamBasicDescription()
-            var outputProperty = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreamFormat, mScope: kAudioDevicePropertyScopeOutput, mElement: kAudioObjectPropertyElementMain)
-            var outputBytes = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
-            try check(AudioObjectGetPropertyData(aggregate, &outputProperty, 0, nil, &outputBytes, &outputFormat), "Read playback format")
-            try validate(outputFormat, rate: format.mSampleRate)
+            try audioCheck(AudioHardwareCreateAggregateDevice(spec as CFDictionary, &aggregate), "Create private mixer")
+            let playback = try readFormat(of: aggregate, selector: kAudioDevicePropertyStreamFormat, scope: kAudioDevicePropertyScopeOutput)
+            try validatePCM(playback)
+            // HAL performs the tap/device clock conversion. Equality of nominal
+            // rates is not required and changes during AirPods calls are normal.
+            state = AudioGainState(tapBuffers: format.mFormatFlags & kAudioFormatFlagIsNonInterleaved != 0 ? Int(format.mChannelsPerFrame) : 1, tapChannels: Int(format.mChannelsPerFrame))
             setGain(gain)
-            try check(AudioDeviceCreateIOProcID(aggregate, audioMixerCallback, Unmanaged.passUnretained(state).toOpaque(), &callback), "Prepare mixer playback")
-            if inputStreams.count > 1 { try disableHardwareInputs(streams: inputStreams.count) }
-            try check(AudioDeviceStart(aggregate, callback), "Start mixer playback")
+            try audioCheck(AudioDeviceCreateIOProcID(aggregate, audioMixerCallback, Unmanaged.passUnretained(state).toOpaque(), &callback), "Prepare mixer playback")
+            try audioCheck(AudioDeviceStart(aggregate, callback), "Start mixer playback")
         } catch { close(); throw error }
     }
     func setGain(_ value: Float) { state.gain.withLock { $0 = min(1, max(0, value)) } }
@@ -257,57 +336,48 @@ private final class ApplicationAudioRoute {
         if tap != 0 { AudioHardwareDestroyProcessTap(tap); tap = 0 }
     }
     deinit { close() }
-    private func validate(_ format: AudioStreamBasicDescription, rate: Double) throws {
+    private func validatePCM(_ format: AudioStreamBasicDescription) throws {
         guard format.mFormatID == kAudioFormatLinearPCM, format.mFormatFlags & kAudioFormatFlagIsFloat != 0,
-              format.mBitsPerChannel == 32, format.mSampleRate == rate else { throw AudioFailure(operation: "Mixer format mismatch", status: kAudioHardwareUnsupportedOperationError) }
+              format.mBitsPerChannel == 32, format.mChannelsPerFrame > 0 else {
+            throw AudioFailure(operation: "This device's audio format is not supported", status: kAudioDeviceUnsupportedFormatError)
+        }
     }
-    private func streamIDs(scope: AudioObjectPropertyScope) throws -> [AudioObjectID] {
-        var property = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams, mScope: scope, mElement: kAudioObjectPropertyElementMain)
-        var size: UInt32 = 0
-        try check(AudioObjectGetPropertyDataSize(aggregate, &property, 0, nil, &size), "Read mixer streams")
-        var streams = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
-        try check(AudioObjectGetPropertyData(aggregate, &property, 0, nil, &size, &streams), "Read mixer streams")
-        return streams
+    private func readFormat(of object: AudioObjectID, selector: AudioObjectPropertySelector, scope: AudioObjectPropertyScope = kAudioObjectPropertyScopeGlobal) throws -> AudioStreamBasicDescription {
+        var property = AudioObjectPropertyAddress(mSelector: selector, mScope: scope, mElement: kAudioObjectPropertyElementMain)
+        var format = AudioStreamBasicDescription(), size = UInt32(MemoryLayout<AudioStreamBasicDescription>.size)
+        try audioCheck(AudioObjectGetPropertyData(object, &property, 0, nil, &size, &format), "Read mixer audio format")
+        return format
     }
-    private func disableHardwareInputs(streams: Int) throws {
-        guard let callback else { return }
-        let size = MemoryLayout<AudioHardwareIOProcStreamUsage>.size + (streams - 1) * MemoryLayout<UInt32>.size
-        let raw = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: MemoryLayout<AudioHardwareIOProcStreamUsage>.alignment)
-        defer { raw.deallocate() }
-        raw.initializeMemory(as: UInt8.self, repeating: 0, count: size)
-        let usage = raw.assumingMemoryBound(to: AudioHardwareIOProcStreamUsage.self)
-        usage.pointee.mIOProc = unsafeBitCast(callback, to: UnsafeMutableRawPointer.self)
-        usage.pointee.mNumberStreams = UInt32(streams)
-        let offset = MemoryLayout<AudioHardwareIOProcStreamUsage>.offset(of: \.mStreamIsOn)!
-        let flags = raw.advanced(by: offset).assumingMemoryBound(to: UInt32.self)
-        flags[streams - 1] = 1 // Only the final device-specific process tap.
-        var property = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyIOProcStreamUsage, mScope: kAudioDevicePropertyScopeInput, mElement: kAudioObjectPropertyElementMain)
-        try check(AudioObjectSetPropertyData(aggregate, &property, 0, nil, UInt32(size), raw), "Isolate app audio from microphone inputs")
-    }
-    private func check(_ status: OSStatus, _ action: String) throws { if status != noErr { throw AudioFailure(operation: action, status: status) } }
 }
 
 @MainActor final class CoreAudioBackend: AudioBackend {
     private var routes: [String: ApplicationAudioRoute] = [:]
+    func prepareApplicationAudio() async throws {
+        try await Task.detached(priority: .userInitiated) { try SystemAudioPermissionProbe.run() }.value
+    }
     func snapshot() -> AudioSnapshot {
         let devices = ids(kAudioHardwarePropertyDevices).compactMap { id -> AudioDeviceInfo? in
             // Our aggregate devices are private but can appear in this process's list.
             let uid = string(id, kAudioDevicePropertyDeviceUID)
             guard !uid.isEmpty else { return nil }
             let name = string(id, kAudioObjectPropertyName)
-            guard name != "Sieghart private mixer" else { return nil }
+            guard name != "Sieghart private mixer", name != "Sieghart audio access" else { return nil }
             return AudioDeviceInfo(id: id, name: name, uid: uid, inputChannels: channels(id, input: true), outputChannels: channels(id, input: false), transport: scalar(id, kAudioDevicePropertyTransportType) ?? 0)
         }
         let output: UInt32 = scalar(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultOutputDevice) ?? 0
         let input: UInt32 = scalar(AudioObjectID(kAudioObjectSystemObject), kAudioHardwarePropertyDefaultInputDevice) ?? 0
         var grouped: [String: [AudioObjectID]] = [:], owners: [String: NSRunningApplication] = [:], playing: Set<String> = []
+        // All visible running apps stay discoverable. Apps without an audio
+        // connection are listed as waiting, never given an ineffective tap.
+        for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular && app.processIdentifier != ProcessInfo.processInfo.processIdentifier {
+            let key = app.bundleIdentifier ?? app.bundleURL?.path ?? "process.\(app.processIdentifier)"
+            owners[key] = app; grouped[key] = []
+        }
         for process in ids(kAudioHardwarePropertyProcessObjectList) {
             let running: UInt32 = scalar(process, kAudioProcessPropertyIsRunningOutput) ?? 0
             let pid: pid_t = scalar(process, kAudioProcessPropertyPID) ?? 0
             guard pid > 0, pid != ProcessInfo.processInfo.processIdentifier,
-                  let app = AudioAppIdentity.owner(of: pid), app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { continue }
-            let devices = ids(kAudioProcessPropertyDevices, object: process)
-            guard devices.contains(output) || (running == 0 && devices.isEmpty) else { continue }
+                  let app = AudioAppIdentity.owner(of: pid, bundleID: string(process, kAudioProcessPropertyBundleID)), app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { continue }
             let key = app.bundleIdentifier ?? app.bundleURL?.path ?? "process.\(app.processIdentifier)"
             grouped[key, default: []].append(process); owners[key] = app
             if running != 0 { playing.insert(key) }
@@ -315,7 +385,11 @@ private final class ApplicationAudioRoute {
         let apps = grouped.compactMap { key, processes -> AudioApplicationInfo? in
             guard let owner = owners[key] else { return nil }
             return AudioApplicationInfo(id: key, name: owner.localizedName ?? key, processes: processes.sorted(), pid: owner.processIdentifier, bundlePath: owner.bundleURL?.path, isPlaying: playing.contains(key))
-        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        }.sorted {
+            if $0.isPlaying != $1.isPlaying { return $0.isPlaying }
+            if $0.processes.isEmpty != $1.processes.isEmpty { return !$0.processes.isEmpty }
+            return $0.name.localizedStandardCompare($1.name) == .orderedAscending
+        }
         return AudioSnapshot(devices: devices, apps: apps, output: output, input: input, outputVolume: volume(output, input: false), inputVolume: volume(input, input: true), inputMuted: scalar(input, kAudioDevicePropertyMute, scope: kAudioDevicePropertyScopeInput).map { ( $0 as UInt32 ) != 0 })
     }
     func setVolume(_ volume: Float, device: AudioObjectID, input: Bool) throws {
@@ -327,9 +401,12 @@ private final class ApplicationAudioRoute {
     func setDefault(_ device: AudioObjectID, input: Bool) throws { try write(AudioObjectID(kAudioObjectSystemObject), input ? kAudioHardwarePropertyDefaultInputDevice : kAudioHardwarePropertyDefaultOutputDevice, device) }
     func setInputMuted(_ muted: Bool, device: AudioObjectID) throws { try write(device, kAudioDevicePropertyMute, UInt32(muted ? 1 : 0), scope: kAudioDevicePropertyScopeInput) }
     func setApplication(_ app: AudioApplicationInfo, gain: Float, output: AudioDeviceInfo) throws {
+        // Unity is passthrough; no tap is needed to play at normal volume.
+        if gain >= 1 { routes.removeValue(forKey: app.id)?.close(); return }
         if let existing = routes[app.id], existing.processes == app.processes, existing.output == output.id { existing.setGain(gain); return }
+        let replacement = try ApplicationAudioRoute(app: app, device: output, gain: gain)
         routes.removeValue(forKey: app.id)?.close()
-        routes[app.id] = try ApplicationAudioRoute(app: app, device: output, gain: gain)
+        routes[app.id] = replacement
     }
     func retainApplications(_ ids: Set<String>) { for id in Array(routes.keys) where !ids.contains(id) { routes.removeValue(forKey: id)?.close() } }
     func stopApplications() { for route in routes.values { route.close() }; routes.removeAll() }

@@ -1,40 +1,58 @@
 [
   {
     "file": "2026-10-05-22-14-49-provider-summary-before.png",
-    "source_filename": "Captura de Tela 2026-10-05 às 22.14.49.png",
+    "source_filename": "Captura de Tela 2026-10-05 a\u0300s 22.14.49.png",
     "sha256": "61392ebd81ae8471aec95a98a8fb61e621a09d8b6c6cf78bda863f715d83cbcc"
   },
   {
     "file": "2026-10-05-22-16-53-stale-focus-before.png",
-    "source_filename": "Captura de Tela 2026-10-05 às 22.16.53.png",
+    "source_filename": "Captura de Tela 2026-10-05 a\u0300s 22.16.53.png",
     "sha256": "6168566b3e8c5fd337a05efeb0f8ba628bfbee53ffd7dab20565367501cc6e1d"
   },
   {
     "file": "2026-10-05-22-18-20-model-counters-before.png",
-    "source_filename": "Captura de Tela 2026-10-05 às 22.18.20.png",
+    "source_filename": "Captura de Tela 2026-10-05 a\u0300s 22.18.20.png",
     "sha256": "0ab16afb66568301fcded925889584a511eb50737d40edf6a05cef9f035db417"
   },
   {
     "file": "2026-10-05-22-18-31-hourly-chart-before.png",
-    "source_filename": "Captura de Tela 2026-10-05 às 22.18.31.png",
+    "source_filename": "Captura de Tela 2026-10-05 a\u0300s 22.18.31.png",
     "sha256": "9d0be62ce78076ac60a430e6a02ce138e8b1d0b2c32de21644c875bf77e0ef4c"
   },
   {
     "file": "2026-10-06-20-51-05-companion-before.png",
-    "source_filename": "Captura de Tela 2026-10-06 às 20.51.05.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 20.51.05.png",
     "description": "Cramped companion layout and duplicate action row",
     "sha256": "2e7190bfd5f7a9b3009a0b58fd2e6eeca9f5670d286536fe18252f9796e28e36"
   },
   {
     "file": "2026-10-06-21-16-21-ai-card-heights-before.png",
-    "source_filename": "Captura de Tela 2026-10-06 às 21.16.21.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 21.16.21.png",
     "description": "Unequal quota and spending card heights",
     "sha256": "bb3c7b5d8a9050e8c3e95d8126ff7493e88ceff3d24f9d181eff7372fe5fb31e"
   },
   {
     "file": "2026-10-06-21-17-10-companion-tile-before.png",
-    "source_filename": "Captura de Tela 2026-10-06 às 21.17.10.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 21.17.10.png",
     "description": "Generic Companion tile instead of the selected avatar",
     "sha256": "6e501a2709efeb392ac6e578741b7f2807ec179fecd2ad4d7663d29bdc11822c"
+  },
+  {
+    "file": "2026-10-06-21-45-49-oversized-menu-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 21.45.49.png",
+    "description": "Oversized menu panel; reported app-audio permission/control failure",
+    "sha256": "ccad8681974efe5d951ffa7ce3f26788738750fdc05823c24ee8a338a49553ce"
+  },
+  {
+    "file": "2026-10-06-21-48-44-top-edge-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 21.48.44.png",
+    "description": "Bright line along the island screen edge",
+    "sha256": "dcd9dd48e9716dc67a444d310a0da30e9486f7b50b5b1ff3ff1f928b54f1a8e6"
+  },
+  {
+    "file": "2026-10-06-21-49-36-sleep-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 21.49.36.png",
+    "description": "Sleeping avatar appears static; repeated fullscreen shortcut and focus-border report",
+    "sha256": "e98b7dce6876a881c80312de15ef424ed596a4e024aa5129ab84557a9d89f53b"
   }
 ]

@@ -1,7 +1,9 @@
 import Foundation
+import AppKit
 
 enum FocusVoiceCommand: Equatable {
     case start(minutes: Int?), resume, pause, finish, reset, startBreak, show, hide, configure, aiLimits
+    case openApp(name: String)
 }
 
 enum FocusVoiceParser {
@@ -14,6 +16,16 @@ enum FocusVoiceParser {
         if has(["ai", "ia", "codex", "claude"]) && has(["limits", "limit", "limites", "limite", "usage", "consumo", "tokens", "cost", "costs", "gasto", "gastos"]) {
             guard !has(["pause", "stop", "start", "begin", "resume", "finish", "reset", "hide", "close", "focus", "pomodoro", "pausar", "iniciar", "retomar", "finalizar", "zerar", "esconder", "fechar", "focar"]) else { return nil }
             return .aiLimits
+        }
+        if has(["open", "launch", "abrir", "abra", "abre"]) && !has(["sieghart", "companion", "widget", "companheiro"]) {
+            guard !has(["and", "then", "search", "pesquisar", "pesquise", "depois", "tambem"]), !text.contains(" e ") else { return nil }
+            let pattern = #"^(?:please\s+|por favor\s+)?(?:open|launch|abrir|abra|abre)\s+(?:(?:the|o|a|app|aplicativo)\s+)*([\p{L}\p{N} ._-]+)[.!?]?$"#
+            guard let expression = try? NSRegularExpression(pattern: pattern),
+                  let match = expression.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                  let range = Range(match.range(at: 1), in: text) else { return nil }
+            let name = String(text[range]).trimmingCharacters(in: CharacterSet.whitespaces.union(.punctuationCharacters))
+            guard !name.isEmpty, name.count <= 80 else { return nil }
+            return .openApp(name: name)
         }
         let pause = has(["pause", "pausar", "pausa", "stop", "parar"])
         let start = has(["start", "begin", "iniciar", "comecar", "comece", "focar", "focus", "pomodoro"])
@@ -55,4 +67,34 @@ enum FocusVoiceParser {
         }
         return .start(minutes: nil)
     }
+}
+
+// Resolve exact installed app names/bundle aliases; transcripts are never
+// evaluated as shell code, URLs, scripts, or search queries.
+@MainActor enum LocalAppLauncher {
+    static func open(_ spokenName: String) async throws -> String {
+        let aliases = ["chatgpt": "com.openai.codex", "chat gpt": "com.openai.codex", "codex": "com.openai.codex", "whatsapp": "net.whatsapp.WhatsApp", "safari": "com.apple.Safari", "chrome": "com.google.Chrome", "google chrome": "com.google.Chrome", "finder": "com.apple.finder", "calendario": "com.apple.iCal", "calendar": "com.apple.iCal", "music": "com.apple.Music", "musica": "com.apple.Music"]
+        func normalized(_ name: String) -> String { name.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US")) }
+        let name = normalized(spokenName)
+        let manager = FileManager.default
+        var matches: Set<URL> = []
+
+        for root in ["/Applications", "/Applications/Utilities", "/System/Applications", "/System/Applications/Utilities", manager.homeDirectoryForCurrentUser.appendingPathComponent("Applications").path] {
+            for url in (try? manager.contentsOfDirectory(at: URL(fileURLWithPath: root), includingPropertiesForKeys: nil)) ?? [] where url.pathExtension == "app" {
+                let bundle = Bundle(url: url)
+                let labels = [url.deletingPathExtension().lastPathComponent, bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String, bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String].compactMap { $0 }
+                if labels.contains(where: { normalized($0) == name }) { matches.insert(url) }
+            }
+        }
+        if matches.isEmpty, let id = aliases[name], let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) { matches.insert(url) }
+        guard matches.count == 1, let url = matches.first else { throw AppLaunchFailure(name: spokenName, ambiguous: matches.count > 1) }
+        let configuration = NSWorkspace.OpenConfiguration(); configuration.activates = true
+        let app = try await NSWorkspace.shared.openApplication(at: url, configuration: configuration)
+        return app.localizedName ?? url.deletingPathExtension().lastPathComponent
+    }
+}
+private struct AppLaunchFailure: LocalizedError {
+    let name: String
+    let ambiguous: Bool
+    var errorDescription: String? { ambiguous ? "More than one app matches \(name). Say its full name." : "Couldn't find an installed app named \(name). Say its full name." }
 }

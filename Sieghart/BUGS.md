@@ -24,7 +24,7 @@ The user also observed shortcuts only activating with Sieghart foreground. Modif
 
 ### Renewed full-screen report — October 6
 
-The user again reported both shortcuts unavailable in full-screen apps on another Space. Healthy registrations now stay installed through foreground/Space transitions instead of being torn down on every event. Carbon handlers use the dispatcher target; existing permitted monitoring routes ordinary keys even after successful registration. A per-action delivery gate prevents two backends from toggling the same action twice. Both overlay panels declare full-screen auxiliary capability and preserve screen-edge frames, separating visibility recovery from input recovery. Explicit Restore shortcuts still rebuilds registration.
+The user again reported both shortcuts unavailable in full-screen apps on another Space. Healthy registrations now stay installed through foreground/Space transitions instead of being torn down on every event. Carbon handlers initially used the dispatcher target; existing permitted monitoring routes ordinary keys even after successful registration. A per-action delivery gate prevents two backends from toggling the same action twice. Both overlay panels declare full-screen auxiliary capability and preserve screen-edge frames, separating visibility recovery from input recovery. Explicit Restore shortcuts still rebuilds registration.
 
 Headless checks exercise both backend orders, exact chord matching, repeated gestures and Space recovery without installing actual shortcuts or opening a window. Actual full-screen delivery remains unverified.
 
@@ -56,3 +56,26 @@ Pointer exit tolerance is now 800 ms; a keyboard reveal provides four seconds to
 **Reported:** October 6, 2026, in IMG_6234.HEIC. **Status:** contour removed; offscreen hover render verified.
 
 The blue/lilac edge was the SwiftUI hover stroke around the compact shell. That stroke is removed, and the native canvas hides its outline whenever compact or departing. Hover now uses a subtle happy companion expression in idle, AI and timer states. The camera band stays black; click and keyboard actions retain their existing routes. [Production hover preview](Design/Concepts/compact-hover-preview.png). Physical notch and full-screen behavior remain tracked in SG-001/SG-002.
+
+
+## October 6 evening — SG-001/SG-003 follow-up
+
+Both shortcuts were again reported unavailable in full-screen apps. The built app is now a menu-bar agent (`LSUIElement`) and Carbon uses its application event target. Existing Accessibility/Input Monitoring grants are accepted by the session tap; invalid tap ports trigger recovery. The physical full-screen case stays open. No real shortcuts were registered for verification.
+
+The avatar's initial focus stroke is removed from custom interaction; the native hosting view provides an empty focus-ring mask. Keyboard navigation retains a soft surface cue. Physical first-click acceptance remains tied to SG-002.
+
+## SG-004 — App mixer does not request permission / WhatsApp gain ineffective
+
+**Reported:** October 6, 2026. **Status:** concrete packaging and routing corrections implemented; real playback acceptance pending.
+
+The compiled Info.plist omitted the system-audio privacy description even though the project contained an INFOPLIST_KEY setting. Enable only flipped a Boolean and first tap creation could fail during rigid device-stream format checks before reaching the permission path. The explicit Info.plist is now merged into Debug/Release. A temporary unmuted tap-only aggregate starts the public permission flow on Enable, with request/failure/retry/settings state and cancellation protection. No saved gain applies before that succeeds.
+
+Per-app routes now use stereo process mixdown across the app's output streams rather than one device stream. Drift compensation handles the aggregate clock; mono headset calls fold stereo samples without changing frame timing. Exact sample-rate equality and unnecessary hardware-input stream checks no longer block startup. The callback selects only the tap's trailing buffers, never hardware microphone buffers. Unity gain tears down the tap; failed replacement keeps the existing route. Public process bundle identity also resolves app helpers. Five actual running app rows maximum are selected with playing/connected apps first; waiting apps are disabled rather than showing an ineffective adjustment.
+
+Mocked checks cover permission request, denial/retry/cancel, saved gain gating, no empty-process routing, five/two app counts, mono/stereo/planar buffer mapping, errors and teardown. The built signed universal bundle contains the audio privacy key. Actual first permission prompt, denial/recovery, WhatsApp voice/call volume, AirPods mode changes, devices disconnecting and latency must be confirmed on the Mac before closing this bug.
+
+## SG-005 — Oversized menu, bright top seam, static sleep
+
+**Reported:** October 6, 2026. **Status:** corrections implemented and offscreen previews verified; physical seam acceptance pending.
+
+Menu width decreased from 560 to 380 points; natural subpage heights replace the fixed content area. Companion height is about 297 versus 548 points. Compact child controls preserve navigation and timer actions. Native island positioning overlaps the screen edge by one backing pixel and removes the contour stroke that could expose the bright seam. Sleeping motion now visibly breathes/sways and floats a fading “z” for every avatar. Isolated motion checks cover all six and disabled/reduced-motion stillness. The production sleep GIF demonstrates the new movement; it is design documentation outside app resources.
