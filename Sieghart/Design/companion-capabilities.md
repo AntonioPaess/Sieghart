@@ -72,20 +72,26 @@ Prerequisites: semantic request interpretation, a persistent task/state model, p
 | Actual state | Proposed characteristic motion | Required evidence |
 | --- | --- | --- |
 | Preparing voice | Small expectant lean; brief preparation text | Actual permission/input preparation. |
-| Listening | Cups or unfolds a small stylized ear; eyes attend to the user | Live microphone capture, with a clear recording indicator. |
-| Interpreting | Thought bubbles, a curious tilt and a small head glow | A real command interpretation/planning operation; not a timer pretending to be thought. |
+| Listening | Attentive gaze and gentle lean; the added ear was rejected in visual review | Live microphone capture, with a clear recording indicator. |
+| Interpreting | Small corner processing signal matched to the avatar silhouette and palette | A real command interpretation/planning operation; not a timer pretending to be thought. |
 | Understood | Short nod or tiny hop | An understood request, even if execution is still pending. |
 | Working | Role-specific gesture: carrying a file, holding an envelope, moving a calendar card | Real adapter events; show stage/counts or a spinner, never invented percentages. |
 | Speaking | Eyes/body pulse with speech phrasing; optional mouth on characters that suit it | Actual spoken-response playback; transcript remains available. |
 | Waiting | Holds the relevant item and presents one decision | A real missing choice, approval or unavailable source. |
-| Completed | Brief hop, turn and celebratory landing | Verified task completion, distinct from merely understanding the request. |
+| Completed | Short avatar-specific smile, nod, wink or restrained lift; pending visual approval | Verified task completion, distinct from merely understanding the request. |
 | Failed/cancelled | Recoverable puzzled expression or quiet return | Actual error/cancel event and Resume/Retry where supported. |
 
-Each character uses its own silhouette, palette and timing: CRT visor/antenna, Arcade pixel accents, Minimal Spirit face-only cues, Coast curl, Paper folds and Ink's capsule. Temporary ear/hand props preserve the approved minimal 2.5D family. Crossfades and body transitions must begin from the visible current pose when interrupted. Reduced-motion and quiet-intensity settings retain state text and controls. Celebration does not force the island open or obscure a current decision.
+Each character uses its own silhouette, palette and timing: CRT visor/antenna, Arcade pixel accents, Minimal Spirit face-only cues, Coast curl, Paper folds and Ink's capsule. The October 8 visual review rejects the extra listening ear, floating dots and full-turn celebration. Preserve the simple 2.5D family; new props require visual review. Crossfades and body transitions must begin from the visible current pose when interrupted. Reduced-motion and quiet-intensity settings retain state text and controls. Celebration does not force the island open or obscure a current decision.
 
 Recommended sequencing: evolve this shared state vocabulary alongside S5's real calendar/reminder/file events; implement connected specialist workflows after the required core tools and adapters are verified. This recommendation does not expand Sprint 4's acceptance gate or claim S5 has started.
 
 October 8 follow-up implements expectant preparation, an attentive listening ear/tilt, processing dots/gaze during recognition and actual pending actions, successful hop/turn/landing, and failure shake in all six. Interrupted transitions start from the visible pose; Reduce Motion/disabled motion retains static cues. [Native motion preview](Concepts/simple-companions-voice.gif). Speaking/lip-sync, role-specific working props, agent reasoning/planning and specialist delegation remain unimplemented. Processing gestures describe actual recognition/action state, not invented thinking.
+
+### Visual refinement before implementation — October 8
+
+The user requests a preview before changing the current gestures. [Revised standalone study](Concepts/expressive-study-v2/README.md) shows shape-matched corner loading, attentive listening and distinct short completion responses. The Arcade stays stepped/pixelated. Use the eventual approved loading cue for every verified thinking/loading operation, not just voice recognition.
+
+The first Coast cap/headband/hair design was rejected; the objection was primarily to Coast. A revised minimal seafoam face/curl with relaxed eyelids is shown alongside the approved family. Personality direction: relaxed reggae-loving digital nomad, with user-written bios later. These remain design proposals; the app retains the previous implementation until visual approval.
 
 ### Wellbeing feasibility and boundaries
 

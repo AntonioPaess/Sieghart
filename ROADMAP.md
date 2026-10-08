@@ -53,6 +53,13 @@ Numeric temperatures/fan control, XDR desktop boost, per-process network/speed t
 - [x] Real voice/action phases drive expectant preparation, listening ear/tilt, processing dots/gaze, successful hop/turn/landing and failure shake in all six native avatars. Interrupted transitions retain the visible pose; reduced/disabled motion keeps static cues. [Production animation preview](Sieghart/Design/Concepts/simple-companions-voice.gif).
 - [ ] User verifies topic searches and expressive motion with Mac microphone/AirPods. Speaking/lip-sync, Megabrain, specialist delegation and role-specific file/email/calendar props remain planned.
 
+### October 8 — Motion visual review before implementation
+
+- User rejected the listening ear, floating processing dots and full-turn completion, requesting a preview before replacing them. Production remains unchanged at this review step.
+- [x] [Standalone visual study](Sieghart/Design/Concepts/expressive-study-v2/README.md): attentive listening, shape-specific corner loading badges and distinct short acknowledgements. Arcade keeps its pixel geometry. The cap/headband Coast was rejected; a revised minimal seafoam Coast with relaxed eyelids is shown in the family and native motion preview.
+- [ ] Visual approval, then runtime replacement and interruption/Reduce Motion verification. Apply the approved processing signal to all verified thinking/loading operations, not only voice. The prior gestures are implementation history, not an accepted final visual direction.
+- [ ] Define each avatar's biography/personality with the user. Coast direction: relaxed, reggae-loving digital nomad; communicate personality through expression/timing while preserving the family's simple style.
+
 ## Sprint 3 — First-run companion and live AI
 
 ### Dated implementation record

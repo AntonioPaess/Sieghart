@@ -21,6 +21,8 @@ Sources and Xcode groups now use **Features / Core / Shared**, with screen Views
 
 Voice closes audio and drains recognition before executing commands. Topic searches now include questions and bare terms, with a bounded recovery for a settled search whose final recognition callback never arrives; app/timer commands retain strict final recognition. Expanded Companion stays visible during busy voice/action states. All six now have a listening ear/tilt, processing dots and a successful hop/turn/landing, driven by actual lifecycle state. [Animated production gestures](Sieghart/Design/Concepts/simple-companions-voice.gif) · [Changes, tests and Mac checklist](Sieghart/Design/voice-search-regression-checks.md). Physical voice/AirPods acceptance remains pending.
 
+The user has requested visual revisions to those gestures. A [preview-only study](Sieghart/Design/Concepts/expressive-study-v2/README.md) now shows revised listening/loading/completion and a simpler Coast Buddy. Final appearance approval and runtime replacement are pending.
+
 The user will provide onboarding storytelling. A [three-minute experience brief](Sieghart/Design/challenge-onboarding-brief.md) is recorded; the final judging flow is not yet delivered.
 
 ## Sprint 4 — System utilities and greeting
