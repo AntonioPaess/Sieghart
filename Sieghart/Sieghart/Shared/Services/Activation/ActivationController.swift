@@ -58,22 +58,21 @@ final class ActivationController: ObservableObject {
     private var registrationNeedsRetry = false
     private var modifierTracker = ModifierShortcutTracker()
     private var deliveryGate = ShortcutDeliveryGate()
-    private var audioEngine = AVAudioEngine()
-    private var voiceEngineObserver: NSObjectProtocol?
-    private var speechRequest: SFSpeechAudioBufferRecognitionRequest?
-    private var audioFeed: SpeechAudioFeed?
-    private var speechTask: SFSpeechRecognitionTask?
+    private let voiceCapture: any VoiceCapturing
+    private let voiceNow: @MainActor () -> TimeInterval
     private var stopTask: Task<Void, Never>?
     private var voiceSession = VoiceCommandSession()
     private var feedbackTask: Task<Void, Never>?
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetViewModel, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetViewModel, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open, voiceCapture: (any VoiceCapturing)? = nil, voiceNow: @escaping @MainActor () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
         self.assistant = assistant
         self.notch = notch
         self.defaults = defaults
         self.registersShortcuts = registersShortcuts
         self.openApplication = openApplication
         self.searchBrowser = searchBrowser
+        self.voiceCapture = voiceCapture ?? NativeVoiceCapture()
+        self.voiceNow = voiceNow
         func saved(_ action: ShortcutAction, fallback: ShortcutChord) -> ShortcutChord? {
             if defaults.bool(forKey: "activation.\(action.rawValue).disabled") { return nil }
             if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { return chord }
@@ -324,9 +323,8 @@ final class ActivationController: ObservableObject {
 
     // Onboarding can request access without starting recognition or audio.
     func prepareVoiceAccess() async -> String {
-        guard await SpeechAuthorizationBridge.request() == .authorized else { return "Allow Speech Recognition in System Settings" }
-        guard await AVCaptureDevice.requestAccess(for: .audio) else { return "Allow Microphone in System Settings" }
-        return "Voice access is ready"
+        do { try await voiceCapture.prepareAccess(); return "Voice access is ready" }
+        catch { return error.localizedDescription }
     }
 
     func toggleListening() {
@@ -348,87 +346,76 @@ final class ActivationController: ObservableObject {
         guard !isListening, generation == voiceRequestGeneration else { return }
         voiceRetryPending = false
         isPreparing = true
-        defer { if generation == voiceRequestGeneration, !voiceRetryPending { isPreparing = false } }
-        let speechAccess = await SpeechAuthorizationBridge.request()
-        guard generation == voiceRequestGeneration else { return }
-        guard speechAccess == .authorized else { voiceStatus = "Allow speech recognition in System Settings"; return }
-        let microphoneAccess = await AVCaptureDevice.requestAccess(for: .audio)
-        guard generation == voiceRequestGeneration else { return }
-        guard microphoneAccess else { voiceStatus = "Allow microphone access in System Settings"; return }
-        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: voiceLanguage)), recognizer.isAvailable else { voiceStatus = "Speech recognition is unavailable"; return }
-        speechTask?.cancel()
-        let request = SFSpeechAudioBufferRecognitionRequest()
-        request.shouldReportPartialResults = true
-        // Prefer the local recognizer where supported, keeping the core timer independent of speech availability.
-        if recognizer.supportsOnDeviceRecognition { request.requiresOnDeviceRecognition = true }
-        speechRequest = request
-        // A new engine binds to the current default microphone, including a
-        // Bluetooth headset whose rate/channels changed since the last command.
-        audioEngine = AVAudioEngine()
-        let input = audioEngine.inputNode
-        let hardwareFormat = input.inputFormat(forBus: 0)
-        let format = input.outputFormat(forBus: 0)
-        guard hardwareFormat.sampleRate > 0, hardwareFormat.channelCount > 0, format.sampleRate > 0, format.channelCount > 0 else { speechRequest = nil; recoverVoiceInput(generation: generation, error: "No microphone input is available"); return }
-        voiceCaptureGeneration += 1
-        let captureGeneration = voiceCaptureGeneration
-        voiceSession.start(at: ProcessInfo.processInfo.systemUptime)
-        let feed = SpeechAudioFeed(request) { @Sendable [weak self] level in
-            Task { @MainActor [weak self] in
-                guard let self, self.isListening, generation == self.voiceRequestGeneration, captureGeneration == self.voiceCaptureGeneration else { return }
-                self.voiceSession.observe(decibels: level.decibels, duration: level.duration, at: level.time)
+        defer {
+            if generation == voiceRequestGeneration, !voiceRetryPending {
+                isPreparing = false
+                notch.voiceActivityDidChange()
             }
         }
-        audioFeed = feed
-        audioEngine.inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { @Sendable buffer, _ in feed.append(buffer) }
-        voiceEngineObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: audioEngine, queue: .main) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self, self.isListening, generation == self.voiceRequestGeneration, captureGeneration == self.voiceCaptureGeneration else { return }
-                self.recoverVoiceInput(generation: generation)
-            }
-        }
-        do { audioEngine.prepare(); try audioEngine.start() }
+        do { try await voiceCapture.prepareAccess() }
         catch {
-            audioEngine.inputNode.removeTap(onBus: 0); feed.finish(); audioFeed = nil; speechRequest = nil
-            removeVoiceEngineObserver()
-            recoverVoiceInput(generation: generation, error: error.localizedDescription)
+            guard generation == voiceRequestGeneration else { return }
+            voiceStatus = error.localizedDescription
             return
         }
+        guard generation == voiceRequestGeneration else { return }
+        voiceCaptureGeneration += 1
+        let captureGeneration = voiceCaptureGeneration
+        voiceSession.start(at: voiceNow())
         isListening = true
         voiceStatus = "Listening — your command runs when you finish speaking"
         notch.showVoice()
-        speechTask = recognizer.recognitionTask(with: request) { @Sendable [weak self] result, error in
-            let text = result?.bestTranscription.formattedString
-            let isFinal = result?.isFinal ?? false
-            let errorMessage = error?.localizedDescription
-            Task { @MainActor [weak self] in
-                guard let self, self.isListening || self.isFinalizing, generation == self.voiceRequestGeneration, captureGeneration == self.voiceCaptureGeneration else { return }
-                if let text {
+        do {
+            try voiceCapture.start(language: voiceLanguage) { [weak self] event in
+                guard let self, self.isListening || self.isFinalizing,
+                      generation == self.voiceRequestGeneration,
+                      captureGeneration == self.voiceCaptureGeneration else { return }
+                switch event {
+                case .level(let level):
+                    self.voiceSession.observe(decibels: level.decibels, duration: level.duration, at: level.time)
+                    self.checkVoiceEndpoint()
+                case .recognition(let text, let final):
                     self.transcript = text
-                    self.voiceSession.recognize(text, final: isFinal, at: ProcessInfo.processInfo.systemUptime)
-                    if self.isFinalizing { self.dispatchFinalVoiceCommand() }
-                }
-                if let errorMessage, self.isListening || self.isFinalizing {
+                    self.voiceSession.recognize(text, final: final, at: self.voiceNow())
+                    // isFinal completes the request, even if capture has not
+                    // already seen quiet. Don't wait for silence after a final.
+                    if final && self.isListening { self.finishListening() }
+                    else if self.isFinalizing { self.dispatchFinalVoiceCommand() }
+                case .inputChanged:
+                    guard self.isListening else { return }
+                    self.recoverVoiceInput(generation: generation)
+                case .failure(let message):
                     self.stopListening()
-                    self.voiceStatus = "Speech recognition stopped. Please try again. \(errorMessage)"
+                    self.voiceStatus = "Speech recognition stopped. Please try again. \(message)"
                 }
             }
+        } catch {
+            if let failure = error as? VoiceCaptureFailure, !failure.permitsInputRetry {
+                stopListening(); voiceStatus = failure.localizedDescription
+            } else { recoverVoiceInput(generation: generation, error: error.localizedDescription) }
+            return
         }
+        guard captureGeneration == voiceCaptureGeneration else { return }
         stopTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(100))
-                guard !Task.isCancelled, let self, generation == self.voiceRequestGeneration, captureGeneration == self.voiceCaptureGeneration else { return }
-                let decision = self.voiceSession.decision(at: ProcessInfo.processInfo.systemUptime)
-                if decision == .endAudio { self.finishListening() }
-                else if decision != .wait {
-                    self.stopListening()
-                    switch decision {
-                    case .noSpeech: self.voiceStatus = "No speech heard. Try again."
-                    case .limitReached: self.voiceStatus = "That command was too long. Try a shorter command; nothing was run."
-                    case .inputLost: self.voiceStatus = "Microphone input stopped. Try again."
-                    default: self.voiceStatus = "Couldn't finish recognizing your command. Try again; nothing was run."
-                    }
-                    return
-                }
+                guard !Task.isCancelled, let self, generation == self.voiceRequestGeneration,
+                      captureGeneration == self.voiceCaptureGeneration else { return }
+                self.checkVoiceEndpoint()
+            }
+        }
+    }
+
+    private func checkVoiceEndpoint() {
+        let decision = voiceSession.decision(at: voiceNow())
+        if decision == .endAudio { finishListening() }
+        else if decision != .wait {
+            stopListening()
+            switch decision {
+            case .noSpeech: voiceStatus = "No speech heard. Try again."
+            case .limitReached: voiceStatus = "That command was too long. Try a shorter command; nothing was run."
+            case .inputLost: voiceStatus = "Microphone input stopped. Try again."
+            default: voiceStatus = "Couldn't finish recognizing your command. Try again; nothing was run."
             }
         }
     }
@@ -453,13 +440,11 @@ final class ActivationController: ObservableObject {
 
     func finishListening() {
         guard isListening else { return }
-        voiceSession.endAudio(at: ProcessInfo.processInfo.systemUptime)
+        voiceSession.endAudio(at: voiceNow())
         isListening = false; isFinalizing = true
-        removeVoiceEngineObserver()
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        audioFeed?.finish(); audioFeed = nil; speechRequest = nil
         voiceStatus = "Finishing your command…"
+        notch.voiceActivityDidChange()
+        voiceCapture.finish()
         dispatchFinalVoiceCommand()
     }
 
@@ -482,23 +467,13 @@ final class ActivationController: ObservableObject {
         if keepCompanionVisible { notch.show() } else { notch.hide() }
     }
 
-    private func removeVoiceEngineObserver() {
-        if let voiceEngineObserver { NotificationCenter.default.removeObserver(voiceEngineObserver) }
-        voiceEngineObserver = nil
-    }
-
     func stopListening() {
-        removeVoiceEngineObserver()
         voiceCaptureGeneration += 1
         stopTask?.cancel(); stopTask = nil
-        if isListening {
-            audioEngine.stop()
-            audioEngine.inputNode.removeTap(onBus: 0)
-        }
-        isListening = false; isFinalizing = false
+        isListening = false; isFinalizing = false; isPreparing = false
         voiceSession.cancel()
-        audioFeed?.finish(); audioFeed = nil; speechRequest = nil
-        speechTask?.cancel(); speechTask = nil
+        voiceCapture.cancel()
+        notch.voiceActivityDidChange()
     }
 
     // Only local, reversible commands are executed by this intent parser.

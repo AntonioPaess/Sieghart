@@ -28,6 +28,7 @@ check() {
 check timer "$source_root/Core/Helpers/TimerModels.swift" "$source_root/Features/Timers/ViewModels/AssistantViewModel.swift" \
   "$source_root/Core/Services/Input/SensorEngine.swift" "$source_root/Features/ImpactGestures/ViewModels/SensorViewModel.swift" Sieghart/Tests/PomodoroChecks.swift
 check callbacks "$source_root/Core/Services/Voice/VoiceCapture.swift" Sieghart/Tests/VoiceCallbackChecks.swift
+check voice-integration "${all_sources[@]}" Sieghart/Tests/VoiceIntegrationChecks.swift
 check interactions "${all_sources[@]}" Sieghart/Tests/InteractionChecks.swift
 check usage "${codex_sources[@]}" Sieghart/Tests/CodexUsageChecks.swift
 check spending "${ai_sources[@]}" Sieghart/Tests/TokenSpendingChecks.swift

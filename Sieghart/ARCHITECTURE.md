@@ -24,7 +24,7 @@ Sieghart/Sieghart/
 │       └── ViewModels/         Observable state and user actions
 ├── Core/
 │   ├── Services/               Platform/data adapters and their value contracts
-│   │   ├── Voice/              PCM activity, speech authorization and session policy
+│   │   ├── Voice/              Native injected capture, PCM activity, authorization and session policy
 │   │   ├── Audio/              Core Audio devices/process-tap adapter
 │   │   ├── AI/                 Local usage readers, imports and pricing
 │   │   ├── Clipboard/          Pasteboard access and bounded local storage
@@ -55,3 +55,7 @@ Native AppKit presentation still needs a coordinator. `NotchWidgetViewModel` coo
 ## Verification
 
 `Tests/run-checks.sh` resolves the new hierarchy and excludes App composition. Existing timer, AI, clipboard, audio and utility fixtures use injected dependencies; no app window or live permission/hardware activation is needed. The Xcode source/resource references follow real paths. Stored preference keys and bundled resource names are unchanged.
+
+## Voice verification boundary — October 8 evening
+
+`VoiceCapturing` exposes prepare/start/finish/cancel and small Sendable audio/recognition events. `NativeVoiceCapture` owns AVAudioEngine, the tap, speech request/task and configuration observer in Core. `ActivationController` owns the session, published state and command delivery; it accepts the capture adapter and monotonic clock. Unit fixtures verify PCM/endpoint/drain policy. Integration fixtures drive the actual controller, parser, Google URL builder and island coordinator with simulated framework events and injected launch closures. No simulated fixture is presented as a live microphone/AirPods acceptance result.

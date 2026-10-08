@@ -5,7 +5,7 @@ import Speech
 // never dispatches a partial command; only a final recognition result can.
 struct VoiceCommandSession {
     enum Phase { case idle, listening, finalizing }
-    enum Decision: Equatable { case wait, endAudio, noSpeech, inputLost, limitReached, recognitionInterrupted, finalResultTimedOut }
+    enum Decision: Equatable { case wait, endAudio, noSpeech, inputLost, limitReached, finalResultTimedOut }
     private(set) var phase: Phase = .idle
     private(set) var transcript = ""
     private var startedAt = 0.0
@@ -16,8 +16,8 @@ struct VoiceCommandSession {
     private var voicedDuration = 0.0
     private var heardSpeech = false
     private var finalText: String?
-    private var finalReceivedAt: Double?
-    private var interrupted = false
+    private var speechPeak = -100.0
+    private var initialLevels: [Double] = []
     let silenceInterval = 1.4
     var hasDetectedSpeech: Bool { heardSpeech }
 
@@ -29,17 +29,27 @@ struct VoiceCommandSession {
     mutating func observe(decibels: Double, duration: Double, at time: Double) {
         guard phase == .listening, decibels.isFinite, duration > 0, time >= lastAudioAt else { return }
         lastAudioAt = time
-        let threshold = max(-62, noiseFloor + 10)
+        // Calibrate the initial room/headset floor even when it is louder
+        // than our default. Previously only already-quiet samples could update
+        // it, permanently classifying a raised microphone floor as speech.
+        if time - startedAt <= 0.3, transcript.isEmpty {
+            initialLevels.append(decibels)
+            noiseFloor = min(-45, initialLevels.min() ?? decibels)
+        }
+        // A drop from the spoken envelope also counts as quiet. This handles
+        // immediate speech before there was a chance to sample room noise.
+        speechPeak -= min(duration, 0.1) * 3
+        let threshold = max(-90, noiseFloor + 8, speechPeak - 12)
         if decibels >= threshold {
+            speechPeak = max(speechPeak, decibels)
             voicedDuration += min(duration, 0.1)
-            lastActivityAt = time
-            if voicedDuration >= 0.1 { heardSpeech = true }
-            if let finalReceivedAt, time > finalReceivedAt + 0.1 { interrupted = true }
+            if voicedDuration >= 0.1 {
+                heardSpeech = true
+                lastActivityAt = time
+            }
         } else {
             voicedDuration = 0
-            // Follow quiet room/microphone noise, without learning the voice as
-            // background noise or reacting to one transient as a whole phrase.
-            noiseFloor = min(-45, noiseFloor * 0.96 + decibels * 0.04)
+            noiseFloor = min(-35, noiseFloor * 0.9 + decibels * 0.1)
         }
     }
     mutating func recognize(_ text: String, final: Bool, at time: Double) {
@@ -50,7 +60,7 @@ struct VoiceCommandSession {
             heardSpeech = true
             lastActivityAt = max(lastActivityAt, time)
         }
-        if final { finalText = text; finalReceivedAt = time }
+        if final { finalText = text }
     }
     func decision(at time: Double) -> Decision {
         switch phase {
@@ -58,11 +68,11 @@ struct VoiceCommandSession {
         case .finalizing:
             return time - finalizationAt >= 4 && finalText == nil ? .finalResultTimedOut : .wait
         case .listening:
-            if interrupted { return .recognitionInterrupted }
+            if finalText != nil { return .endAudio }
             if time - startedAt >= 55 { return .limitReached }
             if time - lastAudioAt >= 3 { return .inputLost }
+            if transcript.isEmpty, time - startedAt >= 12 { return .noSpeech }
             if heardSpeech, time - lastActivityAt >= silenceInterval { return .endAudio }
-            if !heardSpeech, time - startedAt >= 12 { return .noSpeech }
             return .wait
         }
     }
@@ -71,7 +81,7 @@ struct VoiceCommandSession {
         phase = .finalizing; finalizationAt = time
     }
     mutating func takeFinalCommand() -> String? {
-        guard phase == .finalizing, let finalText, !interrupted else { return nil }
+        guard phase == .finalizing, let finalText else { return nil }
         phase = .idle
         return finalText
     }
@@ -150,5 +160,129 @@ enum SpeechAuthorizationBridge {
         await withCheckedContinuation { continuation in
             requester { @Sendable status in continuation.resume(returning: status) }
         }
+    }
+}
+
+// Native capture is replaceable at the framework boundary. Integration checks
+// drive the same controller/session/action path without touching a microphone.
+enum VoiceCaptureEvent: Sendable {
+    case level(SpeechAudioLevel)
+    case recognition(text: String, final: Bool)
+    case inputChanged
+    case failure(String)
+}
+
+@MainActor protocol VoiceCapturing: AnyObject {
+    func prepareAccess() async throws
+    func start(language: String, receive: @escaping @MainActor (VoiceCaptureEvent) -> Void) throws
+    func finish()
+    func cancel()
+}
+
+enum VoiceCaptureFailure: LocalizedError {
+    case speechAccess, microphoneAccess, unavailable, inputUnavailable
+    var errorDescription: String? {
+        switch self {
+        case .speechAccess: "Allow speech recognition in System Settings"
+        case .microphoneAccess: "Allow microphone access in System Settings"
+        case .unavailable: "Speech recognition is unavailable"
+        case .inputUnavailable: "No microphone input is available"
+        }
+    }
+    var permitsInputRetry: Bool { if case .inputUnavailable = self { return true }; return false }
+}
+
+// Closing request audio alone is insufficient for every buffer-based recognizer.
+// Apple's task.finish() drains accepted audio; task.cancel() discards the task.
+// Keep these operations separate, and make the drain sequence checkable.
+@MainActor struct SpeechRecognitionDrain {
+    private var finished = false
+    mutating func finish(endAudio: () -> Void, finishTask: () -> Void) {
+        guard !finished else { return }
+        finished = true
+        endAudio()
+        finishTask()
+    }
+}
+
+@MainActor final class NativeVoiceCapture: VoiceCapturing {
+    private var engine: AVAudioEngine?
+    private var engineObserver: NSObjectProtocol?
+    private var feed: SpeechAudioFeed?
+    private var task: SFSpeechRecognitionTask?
+    private var hasTap = false
+    private var generation = 0
+    private var drain = SpeechRecognitionDrain()
+
+    func prepareAccess() async throws {
+        guard await SpeechAuthorizationBridge.request() == .authorized else { throw VoiceCaptureFailure.speechAccess }
+        guard await AVCaptureDevice.requestAccess(for: .audio) else { throw VoiceCaptureFailure.microphoneAccess }
+    }
+
+    func start(language: String, receive: @escaping @MainActor (VoiceCaptureEvent) -> Void) throws {
+        cancel()
+        guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: language)), recognizer.isAvailable else { throw VoiceCaptureFailure.unavailable }
+        let token = generation
+        let request = SFSpeechAudioBufferRecognitionRequest()
+        request.shouldReportPartialResults = true
+        if recognizer.supportsOnDeviceRecognition { request.requiresOnDeviceRecognition = true }
+        let engine = AVAudioEngine()
+        self.engine = engine
+        let input = engine.inputNode
+        let hardware = input.inputFormat(forBus: 0), format = input.outputFormat(forBus: 0)
+        guard hardware.sampleRate > 0, hardware.channelCount > 0, format.sampleRate > 0, format.channelCount > 0 else {
+            cancel(); throw VoiceCaptureFailure.inputUnavailable
+        }
+        let feed = SpeechAudioFeed(request) { @Sendable [weak self] level in
+            Task { @MainActor [weak self] in
+                guard self?.generation == token else { return }
+                receive(.level(level))
+            }
+        }
+        self.feed = feed
+        input.installTap(onBus: 0, bufferSize: 1024, format: format) { @Sendable buffer, _ in feed.append(buffer) }
+        hasTap = true
+        engineObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard self?.generation == token else { return }
+                receive(.inputChanged)
+            }
+        }
+        do { engine.prepare(); try engine.start() }
+        catch { cancel(); throw error }
+        task = recognizer.recognitionTask(with: request) { @Sendable [weak self] result, error in
+            let text = result?.bestTranscription.formattedString
+            let final = result?.isFinal ?? false
+            let message = error?.localizedDescription
+            Task { @MainActor [weak self] in
+                guard self?.generation == token else { return }
+                if let text { receive(.recognition(text: text, final: final)) }
+                // A final result is complete, even if the framework reports a
+                // teardown error in the same callback. Never replace success.
+                if !final, let message { receive(.failure(message)) }
+            }
+        }
+    }
+
+    private func stopInput() {
+        if let engineObserver { NotificationCenter.default.removeObserver(engineObserver) }
+        engineObserver = nil
+        engine?.stop()
+        if hasTap { engine?.inputNode.removeTap(onBus: 0); hasTap = false }
+    }
+
+    func finish() {
+        stopInput()
+        drain.finish(endAudio: { feed?.finish() }, finishTask: { task?.finish() })
+        feed = nil
+    }
+
+    func cancel() {
+        generation += 1
+        stopInput()
+        feed?.finish(); feed = nil
+        task?.cancel(); task = nil
+        engine = nil
+        drain = SpeechRecognitionDrain()
     }
 }

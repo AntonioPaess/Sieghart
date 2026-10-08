@@ -17,6 +17,19 @@ struct VoiceCallbackChecks {
             precondition(status == expected)
         }
         var session = VoiceCommandSession()
+        // Regression: headset/room noise remains audible after the phrase.
+        // The old floor never learned this noise and listened indefinitely.
+        session.start(at: 0)
+        for tick in 1...10 { session.observe(decibels: -42, duration: 0.1, at: Double(tick) / 10) }
+        session.recognize("Pesquise por ChatGPT no Google", final: false, at: 1)
+        for tick in 11...25 { session.observe(decibels: -20, duration: 0.1, at: Double(tick) / 10) }
+        for tick in 26...41 { session.observe(decibels: -42, duration: 0.1, at: Double(tick) / 10) }
+        precondition(session.decision(at: 4.1) == .endAudio, "Trailing microphone noise must not keep listening forever")
+
+        session.start(at: 0)
+        session.recognize("Pesquise por ChatGPT no Google", final: true, at: 1)
+        precondition(session.decision(at: 1) == .endAudio, "An authoritative final result must finish capture")
+
         session.start(at: 0)
         session.recognize("pesquisa no Google", final: false, at: 0.1)
         // Speech continues for forty seconds, even when the transcript stalls.
@@ -65,9 +78,16 @@ struct VoiceCallbackChecks {
         session.start(at: 0)
         session.recognize("open", final: true, at: 0.1)
         session.observe(decibels: -25, duration: 0.1, at: 0.4)
-        precondition(session.decision(at: 0.4) == .recognitionInterrupted)
+        precondition(session.decision(at: 0.4) == .endAudio)
         session.endAudio(at: 0.4)
+        precondition(session.takeFinalCommand() == "open")
         precondition(session.takeFinalCommand() == nil)
+
+        var drain = SpeechRecognitionDrain()
+        var drainCalls: [String] = []
+        drain.finish(endAudio: { drainCalls.append("endAudio") }, finishTask: { drainCalls.append("task.finish") })
+        drain.finish(endAudio: { drainCalls.append("duplicate endAudio") }, finishTask: { drainCalls.append("duplicate finish") })
+        precondition(drainCalls == ["endAudio", "task.finish"], "Drain must close the request and finish the recognizer, in order, once")
 
         session.start(at: 0)
         for tick in 1...20 { session.observe(decibels: -80, duration: 0.1, at: Double(tick) / 10) }

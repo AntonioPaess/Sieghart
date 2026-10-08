@@ -113,11 +113,13 @@ SG-004 follow-up: permission preparation now uses a temporary unmuted global tap
 Voice search has a real encoded default-browser action, actual charges have a reviewed CSV/JSON import/export adapter, expanded history includes archives, and automatic Claude desktop percentages have validated versioned parsing/freshness. Those implementation items are complete; actual speech and file-picker interaction join the user acceptance pass.
 
 
-## SG-006 — Voice finishes before the user stops speaking
+## SG-006 — Voice endpoint finishes too early or remains Listening
 
-**Reported:** October 8, 2026. **Status:** implementation verified with synthetic inputs; user speech acceptance pending.
+**Reported:** October 8, 2026, including an evening reproduction showing complete text still in Listening. **Status:** reopened physical acceptance; corrected implementation passes unit and capture-to-command integration checks.
 
-Automatic island collapse also cancelled voice; it now keeps an explicitly started session alive with a compact microphone/status indicator, while explicit Cancel/Close still cancels. The original capture always ended after ten seconds, or 1.2 seconds after the last changed transcript, and cancelled recognition before final words could arrive. PCM activity now keeps capture alive; quiet ends audio and final recognition dispatches once. Cancellation, input loss and the session/final-result safety limits run no partial command. See [changes, bounds and Mac tests](Design/voice-search-regression-checks.md).
+The previous implementation learned noise only below its own threshold and could treat a raised microphone floor as ongoing speech. It also ended request audio without explicitly finishing the buffer-recognition task, and did not act on `isFinal` while capture was active. The correction calibrates initial background, detects a speech-envelope drop, calls `endAudio` plus `task.finish`, and accepts final completion immediately. Only final text dispatches once; cancelled/stale/failed sessions run nothing. A failing old-code regression demonstrates the noise-floor defect. The new integration exercises actual ActivationController/session/parser/Google URL/action flow with injected capture and launch boundaries.
+
+The user now requires expanded Companion to remain visible while listening. Busy preparation/capture/finalization bypass automatic pointer/approach collapse; explicit Cancel/Close still cancels. This supersedes the earlier compact-status behavior. [Changes, evidence and exact physical checks](Design/voice-search-regression-checks.md). Live Apple recognition/AirPods behavior remains unverified.
 
 ## SG-007 — Restricted search wording and wrong engine
 

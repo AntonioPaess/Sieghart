@@ -277,12 +277,23 @@ final class NotchWidgetViewModel: ObservableObject {
 
     func showVoice(resetCollapse: Bool = false) {
         finishWelcome()
-        if resetCollapse { voiceCollapsed = false }
+        if resetCollapse || activation?.isVoiceBusy == true { voiceCollapsed = false }
         presentation = voiceCollapsed ? .island : .home
         reveal(approachGrace: !voiceCollapsed)
     }
 
+    func voiceActivityDidChange() {
+        if activation?.isVoiceBusy == true { showVoice(resetCollapse: true) }
+        else if isVisible && !pointerInsideInteractiveArea {
+            revealGraceDeadline = .now.advanced(by: keyboardRevealDelay)
+            scheduleHide(delay: keyboardRevealDelay)
+        }
+    }
+
     func collapseAfterPointerExit() {
+        // Explicit Cancel/Close still works. Automatic pointer departure never
+        // hides the transcript or controls during preparation/capture/draining.
+        guard activation?.isVoiceBusy != true else { return }
         guard activation?.voicePresented == true else { hide(); return }
         guard !voiceCollapsed || presentation != .island else { return }
         voiceCollapsed = true
@@ -635,6 +646,7 @@ final class NotchWidgetViewModel: ObservableObject {
 
     private func scheduleHide(delay: Duration) {
         hideTask?.cancel()
+        guard activation?.isVoiceBusy != true else { hideTask = nil; return }
         let grace = revealGraceDeadline.map { ContinuousClock.now.duration(to: $0) } ?? .zero
         let delay = max(delay, grace)
         hideTask = Task { @MainActor [weak self] in
