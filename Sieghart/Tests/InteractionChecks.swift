@@ -284,6 +284,13 @@ struct InteractionChecks {
         notch.showTools()
         precondition(notch.presentation == .tools && notch.isVisible)
         notch.showAudio(); precondition(notch.presentation == .audio)
+        activation.receiveHotkey(.clipboard); precondition(notch.presentation == .clipboard && notch.isVisible)
+        activation.receiveHotkey(.clipboard, eventTime: ProcessInfo.processInfo.systemUptime + 1); precondition(!notch.isVisible || notch.presentation == .island)
+        if let companionChord = activation.companionShortcut {
+            activation.setShortcut(companionChord, for: .clipboard); precondition(activation.clipboardShortcut == .clipboard)
+        }
+        activation.setShortcut(nil, for: .clipboard); precondition(activation.clipboardShortcut == nil)
+        activation.setShortcut(.clipboard, for: .clipboard)
         notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
         try await Task.sleep(for: .milliseconds(320))
         precondition(!notch.isVisible || notch.presentation == .island)
@@ -327,7 +334,7 @@ struct InteractionChecks {
         try await Task.sleep(for: .milliseconds(1200))
         precondition(notch.presentation == .island) // Leaving expanded controls tucks them away.
         // Every expanded page obeys pointer exit, including former sticky pages.
-        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, notch.showVoice] {
+        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, notch.showVoice, notch.showClipboard] {
             open(); notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
             try await Task.sleep(for: .milliseconds(320))
             precondition(notch.presentation == .island && assistant.hasActiveSession)

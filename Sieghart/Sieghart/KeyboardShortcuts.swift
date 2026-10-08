@@ -3,8 +3,9 @@ import Carbon
 import SwiftUI
 
 enum ShortcutAction: String, CaseIterable, Identifiable {
-    case companion, voice
+    case companion, voice, clipboard
     var id: String { rawValue }
+    var title: String { switch self { case .companion: "Companion"; case .voice: "Voice"; case .clipboard: "Clipboard" } }
 }
 
 enum ShortcutDeliverySource { case carbon, monitor }
@@ -30,6 +31,7 @@ struct ShortcutChord: Codable, Equatable {
 
     static let companion = ShortcutChord(keyCode: 1, modifiers: NSEvent.ModifierFlags([.control, .option]).rawValue, keyLabel: "S")
     static let voice = ShortcutChord(keyCode: 9, modifiers: NSEvent.ModifierFlags([.control, .option]).rawValue, keyLabel: "V")
+    static let clipboard = ShortcutChord(keyCode: 8, modifiers: NSEvent.ModifierFlags([.control, .option]).rawValue, keyLabel: "C")
     static let legacyVoice = ShortcutChord(keyCode: nil, modifiers: NSEvent.ModifierFlags([.option, .command]).rawValue, keyLabel: "")
 
     var flags: NSEvent.ModifierFlags { NSEvent.ModifierFlags(rawValue: modifiers).intersection(Self.allowedModifiers) }
@@ -89,7 +91,7 @@ struct ShortcutRecorder: View {
                 Button("Off") { activation.setShortcut(nil, for: action) }.buttonStyle(.plain).focusEffectDisabled()
             }
         }
-        .accessibilityLabel(action == .voice ? "Voice shortcut" : "Companion shortcut")
+        .accessibilityLabel("\(action.title) shortcut")
         .onDisappear { activation.cancelShortcutRecording(for: action) }
     }
 }

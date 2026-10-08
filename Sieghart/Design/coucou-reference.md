@@ -18,3 +18,7 @@ October 8, 2026. The user supplied the [animated demo](https://github.com/Louis-
 | Primary companion and task agents | Keep the chosen avatar primary; small indicators show other real tasks and open their details on click. | Persistent task state and optional agent roles. |
 
 Retain CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Opening remains click-only, hover gives feedback, pointer exit collapses and Glass remains configurable. Prioritize S4 system monitor, keep awake and audio/device essentials before connected companion workflows. The Challenge keeps an offline companion path. These are design proposals for [Useful companions](companion-capabilities.md), not new Sprint 3 requirements.
+
+## Sprint 4 application — October 8
+
+The new welcome and post-onboarding widget reveal use original native choreography: shell opening, delayed selected-avatar arrival, eyes opening and a soft nod, with reduced-motion fallback. No code or artwork was copied. Clipboard and editable rails remain real local tools. File/upload/email, chat connections and specialist agents are recorded after core utilities in the Sprint 4 checkpoint and Useful companions note.

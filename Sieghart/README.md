@@ -2,9 +2,9 @@
 
 ## Current status — October 8, 2026
 
-**Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report; Sprint 4 has not started. Nine isolated groups and the signed universal build passed at implementation closeout. The assistant continues to keep the app closed; this acceptance is user-reported. The dated records below preserve earlier pending states as history.
+**Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report. **Sprint 4 is in progress** with clipboard/cleanup, configurable side buttons, a native arrival, optional middle click and spending data corrections. The new [checkpoint and manual tests](Design/sprint-4-checkpoint.md) define remaining work. Eleven isolated groups and the signed universal build/package checks passed for this slice. The assistant continues to keep the app closed; physical acceptance of the new cases remains with the user. The dated records below preserve earlier pending states as history.
 
-The new [Coucou reference study](Design/coucou-reference.md) records future companion/task/motion ideas while keeping the six approved avatars and interaction rules. S4 core utilities remain the next scope.
+The new [Coucou reference study](Design/coucou-reference.md) records future companion/task/motion ideas while keeping the six approved avatars and interaction rules. The welcome and final widget reveal now use original native choreography inspired by that study. Core utilities remain the rest of S4.
 
 Native macOS SwiftUI companion with a configurable notch island and local Pomodoro timer.
 
@@ -12,12 +12,13 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 
 ## App and notch
 
-First launch shows a two-step onboarding: choose one of all six avatars with its name/personality, then choose local AI monitoring. Finish saves both preferences. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** or the menu-bar **Avatars** subpage changes the avatar later.
+First launch shows Welcome → choose one of six avatars → optional local AI/clipboard tools. Optional voice and direct-paste access setup does not start listening. Finish saves the choices and opens Companion with its special arrival. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** or the menu-bar **Avatars** subpage changes the avatar later.
 
 - **Overview** shows the current session and completed count.
 - **Timers** opens Timer, Pomodoro and Stopwatch in the app, menu bar and widget. Pomodoro shares these settings: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.
-- **Activation** records separate companion and voice shortcuts, controls hover, and exposes optional impact mappings.
-- **Appearance** selects System, Light or Dark, with two independent Glass switches (Other windows and panels / Dynamic Island), both off by default. Reduce Transparency overrides Glass. It also offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal, and Ink Buddy. Selection saves immediately and applies throughout the app and notch. Small, Medium and Large expanded widget sizes, timer density, character motion, and reduced motion are configurable. Compact height always follows the physical camera cutout. macOS Reduce Motion is always respected.
+- **Activation** records companion, voice and clipboard shortcuts, controls hover, and exposes optional impacts and three-finger middle click. Clipboard defaults to Control + Option + C.
+- **Clipboard** shares local history with the island/menu. Settings choose 5/10/20 items and age/shutdown/lid cleanup; search/pins/copy/paste and exclusions stay local.
+- **Appearance** also edits six fixed side-button slots and three presets. It selects System, Light or Dark, with two independent Glass switches (Other windows and panels / Dynamic Island), both off by default. Reduce Transparency overrides Glass. It also offers six companions in a three-column gallery: CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal, and Ink Buddy. Selection saves immediately and applies throughout the app and notch. Small, Medium and Large expanded widget sizes, timer density, character motion, and reduced motion are configurable. Compact height always follows the physical camera cutout. macOS Reduce Motion is always respected.
 
 Normal reveal opens the selected avatar beside a contextual message and session time. Speak uses this same panel for listening, transcript and feedback. The user-approved Simple Companions family is drawn with native paths: lilac CRT square, amber pixel silhouette, floating eyes, seafoam pebble, folded diamond and charcoal capsule. Numeric eye/shape parameters interpolate blinks, gaze and moods; subtle breathing, listening pulses, nods and squash/stretch add movement. All six keep their stable saved identities. Native renders also supply the selected menu-bar icon. Legacy sprite sheets are archived in the repository and excluded from the app bundle.
 
@@ -175,3 +176,7 @@ Global registration starts after AppKit launch, using the system dispatcher; the
 - Audio Enable requests capture through a temporary unmuted global tap; no audio is saved. Routes rebuild for same-device sample rate/channel/UID changes and helper restarts. Real permission/playback acceptance remains pending.
 - Nine isolated groups and the universal signed build/package checks pass. Offscreen reference screens are regenerated. Real read-only Codex quotas/counter metadata succeeded; Claude has no fresh local reading on this Mac.
 - The user reconfirmed **keep the app closed; I will test**. No Sieghart/Xcode UI, real shortcut registration, microphone, sensor or system audio was started. Full-screen/red-close delivery, actual speech, audio playback and physical notch fit remain acceptance gates; Sprint 4 has not begun.
+
+## Sprint 4 — October 8 implementation slice
+
+See [checkpoint](Design/sprint-4-checkpoint.md) for storage/capture boundaries, optional Mac-only touch support, side slots, 60 Hz arrival, request-record/Fast/history corrections, user tests and remaining utilities. Eleven isolated groups pass; new tests never read the live clipboard or start a contact device. Native permission UI, lid/shutdown, cross-app Paste, trackpad taps and the new final-onboarding reveal await user acceptance. Sprint 3 remains accepted.

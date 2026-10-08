@@ -111,7 +111,7 @@ struct AIUsageView: View {
                 } else { Text(period.rawValue).font(detail).foregroundStyle(CompanionStyle.muted) }
             }
             if estimate.hasValue {
-                Text(estimate.label).font(.system(size: dense ? 22 : 32, weight: .semibold)).monospacedDigit()
+                Text(estimate.label).font(.system(size: dense ? 27 : 32, weight: .medium)).monospacedDigit()
             } else {
                 Text("Estimate unavailable").font(dense ? .system(size: 12, weight: .medium) : .title3.weight(.medium))
                 Button("Prices & sources") { details = true }.buttonStyle(.plain).foregroundStyle(CompanionStyle.accentInk).font(detail)
@@ -120,9 +120,9 @@ struct AIUsageView: View {
             Text(points.isEmpty ? "No token records for this period" : "\(short(input + output)) tokens · \(input > 0 ? Int(Double(cache) / Double(input) * 100) : 0)% input cache")
                 .font(detail).foregroundStyle(CompanionStyle.muted)
             HStack(spacing: 6) {
-                Text("API equivalent · Not a bill").font(dense ? .system(size: 8) : .caption2).foregroundStyle(CompanionStyle.muted)
-                if estimate.unpricedTokens > 0 { Text("Partial").font(.caption2).foregroundStyle(.orange) }
-            }.help(usage.pricingDescription(provider) + " · Input \(input.formatted()) · Output \(output.formatted()) · Cache \(cache.formatted()) · Unpriced \(estimate.unpricedTokens.formatted()) tokens")
+                Text("API equivalent").font(dense ? .system(size: 8) : .caption2).foregroundStyle(CompanionStyle.muted)
+                if estimate.unpricedTokens > 0 { Text("\(short(estimate.unpricedTokens)) unpriced").font(dense ? .system(size: 8) : .caption2).foregroundStyle(CompanionStyle.muted) }
+            }.help("API token value, not your subscription bill. " + usage.pricingDescription(provider) + " · Input \(input.formatted()) · Output \(output.formatted()) · Cache \(cache.formatted()) · Unpriced \(estimate.unpricedTokens.formatted()) tokens")
         }.companionCard(height: summaryHeight, padding: cardPadding)
     }
     private func metric(_ label: String, _ value: Int64) -> some View {

@@ -42,6 +42,10 @@ The chosen avatar remains the primary companion: it receives requests, keeps con
 
 Roles represent real tasks and adapters, not six disconnected chat tabs. Any avatar can become the principal one. A task can use one agent or several steps while the primary companion maintains one coherent status. Specialist roles do not restrict basic tools to a particular character. This is an exploration direction; role assignments, concurrency and delegation are not implemented or finalized.
 
+### Connect existing chats
+
+Let the user choose a supported chat connection and hand off a selected file or task from Companion. Keep the destination and current stage visible, then offer Return to chat or Open result when a real provider event confirms completion. Each connection requires a supported adapter, explicit sign-in and destination selection; local Codex usage monitoring does not grant access to arbitrary ChatGPT chats. Retry and cancellation must preserve completed stages. This is recorded after core Mac utilities, not implemented in the current Sprint 4 slice.
+
 ### Attachment through usefulness
 
 - Let the companion remember user-chosen preferences and unfinished tasks, so it can offer a clear next step on return.

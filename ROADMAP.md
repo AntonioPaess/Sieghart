@@ -7,9 +7,32 @@ Updated October 8, 2026. This is the current execution plan; older Obsidian chec
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
 - **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
-- **Mac acceptance:** the user confirmed “Todos passaram” after receiving the test instructions. SG-001 through SG-005 are resolved on that report; no Sprint 3 blocker remains reported. The assistant keeps the app closed during its work. CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed. Sprint 4 has not started.
+- **Mac acceptance:** the user confirmed “Todos passaram” after receiving the test instructions. SG-001 through SG-005 are resolved on that report; no Sprint 3 blocker remains reported. The assistant keeps the app closed during its work. CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed. Sprint 4 is in progress; its new cases need a separate user acceptance check.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
+
+## Sprint 4 — In progress, October 8, 2026
+
+The user moved clipboard history and an optional three-finger middle click forward, requested configurable side buttons and a coordinated onboarding arrival, and reported a spending discrepancy. [Implementation and Mac checklist](Sieghart/Design/sprint-4-checkpoint.md).
+
+### Delivered first slice
+
+- Shared local Clipboard in app/menu/island; a default side button and global **Control + Option + C**. Search/filter, pins, previews, copy/paste fallback, pause, exclusions and delete/clear. Choose 5/10/20 copies and cleanup after chosen days, Mac shutdown or lid close. Local bounded storage; pins count toward the cap. Shutdown/lid cleanup includes pins. Direct paste uses explicit Accessibility access.
+- Six editable fixed side-button slots and Essentials/Focus/Work presets. Choose supported actions or hide a slot; duplicate selection swaps positions. Preferences persist.
+- Three-step onboarding with native 60 Hz six-avatar arrival, symmetric pointer gaze, no black strip above the avatar, optional voice/direct-paste access preparation and a special widget reveal on Finish. Existing approved artwork, offline core and Reduce Motion remain.
+- Optional three-finger tap generates middle mouse click; default off, explicit Accessibility, unsupported state, drag/long/more-finger rejection and teardown. Uses an undocumented Mac contact capability; must be omitted from future Challenge packaging and awaits real trackpad checks.
+- AI response usage records, response-ID deduplication, recorded Fast changes and initial bounded full-file scanning with retained earlier counters correct the previous spending data path. Cleaner spending typography and exact unpriced disclosure. Internal models without published prices remain unpriced; API value remains separate from paid charges.
+
+### Sprint 4 exit checklist
+
+- [ ] User tests this new slice: clipboard/limits/cleanup, direct paste/full-screen shortcut, side presets, real three-finger taps, onboarding final reveal/gaze and same-period spending comparison.
+- [ ] System monitor: CPU, supported GPU, memory pressure, network, disks, power and supported peripherals/fans.
+- [ ] Keep awake: duration/deadline/conditions and supported lid behavior, with persistence/restoration.
+- [ ] Audio priorities, app pins/order, global output/microphone shortcuts and route recovery.
+- [ ] Supported display brightness/power/XDR, Bluetooth sleep and Music auto-launch controls.
+- [ ] Companion reactions tied to the new utility events; interrupted motion and accessibility validation.
+
+Sprint 3 acceptance remains closed. The assistant keeps the app closed and validates this implementation using CLI builds, injected checks and offscreen renders. S4 physical acceptance has not yet been reported. Upload/email, chat connections, a principal companion with task agents and optional GitHub stay recorded after core utilities.
 
 ## Sprint 3 — First-run companion and live AI
 
@@ -128,8 +151,8 @@ The user reported all checks passed. The original checklist is retained below; t
 | --- | --- |
 | Challenge track | Three-minute offline companion/focus story, accepted playground destination, physical-sensor compatibility, local resources under edition size limit. Reference screenshots and network integrations stay outside its package. |
 | Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. User Mac acceptance passed October 8. |
-| S4 | System monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Expand and validate the audio foundation. |
-| S5 | Calendar repair/reminders, notifications, selected-folder downloads, clipboard/shelf and core capture tools. |
+| S4 | Clipboard/cleanup, side-button customization, optional middle click and companion arrival first; then system monitor, keep awake, audio priorities/shortcuts and power/display essentials. |
+| S5 | Calendar repair/reminders, notifications, selected-folder downloads, file shelf and core capture tools. Clipboard history moved to S4. |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
 
@@ -190,7 +213,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `mouseAcceleration` | Mouse acceleration control | Planned | S6 |
 | `mouseNavigation` | Side-button navigation | Planned | S6 |
 | `mouseButtonShortcuts` | Extra mouse button bindings | Planned | S6 |
-| `middleClick` | Three-finger middle click | Planned | S6 |
+| `middleClick` | Three-finger middle click | Implemented optional tap; Accessibility and supported trackpad required; new Mac acceptance pending | S4 (Mac only) |
 | `mouseClickDebounce` | Mouse click debounce | Planned | S6 |
 | `keyboardDebounce` | Keyboard debounce | Planned | S6 |
 | `textSnippets` | Text expansion snippets | Planned | S6 |
@@ -201,7 +224,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `clipboardHistory` | Local clipboard history | Planned | S5 |
+| `clipboardHistory` | Local clipboard history | Implemented — local text/images/files, 5/10/20, cleanup, search/pins, direct paste fallback; new Mac acceptance pending | S4 |
 | `pastePlain` | Paste plain text | Planned | S5 |
 | `finderCutPaste` | Finder cut and paste | Planned | S5 |
 | `finderRename` | Rename shortcut | Planned | S5 |
@@ -232,7 +255,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `quickLauncher` | Quick tool panel | Partial — Seven widget routes with selected companion artwork; customizable launch panel pending | S5–S7 |
+| `quickLauncher` | Quick tool panel | Partial — Shared clipboard route, avatar artwork and six customizable side slots; broader launcher pending | S5–S7 |
 | `quickToggles` | Quick actions | Planned | S5–S7 |
 | `colorPicker` | Screen color picker | Planned | S5–S7 |
 | `screenOCR` | Screen text/QR copy | Planned | S5–S7 |

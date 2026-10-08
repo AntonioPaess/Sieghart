@@ -334,6 +334,7 @@ struct CompanionCharacter: View {
     var strolling = false
     // Deterministic offscreen previews use this without starting an app window.
     var previewTime: Double? = nil
+    var entrance: CompanionEntranceMotion? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -342,13 +343,14 @@ struct CompanionCharacter: View {
             let reaction = joyful ? CompanionMood.happy : mood
             let time = previewTime ?? context.date.timeIntervalSinceReferenceDate
             let motion = CompanionMotion.sample(time: time, size: size, avatar: avatar, mood: reaction, listening: listening, strolling: strolling, animates: moves)
-            CompanionFace(renderSize: size, avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? gaze : .zero, eyeOpen: motion.eyeOpen,
+            CompanionFace(renderSize: size, avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? gaze : .zero, eyeOpen: motion.eyeOpen * (entrance?.eyeOpen ?? 1),
                           listening: listening, motionTime: time, mood: reaction, animates: moves)
-                .scaleEffect(x: motion.scaleX, y: motion.scaleY)
+                .scaleEffect(x: motion.scaleX * (entrance?.scaleX ?? 1), y: motion.scaleY * (entrance?.scaleY ?? 1))
                 .rotation3DEffect(.degrees(moves ? -gaze.height * 1.5 : 0), axis: (x: 1, y: 0, z: 0), perspective: 0.35)
                 .rotation3DEffect(.degrees(moves ? gaze.width * 1.4 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.35)
-                .rotationEffect(.degrees(motion.rotation))
-                .offset(motion.offset)
+                .rotationEffect(.degrees(motion.rotation + (entrance?.rotation ?? 0)))
+                .offset(x: motion.offset.width, y: motion.offset.height + (entrance?.offset ?? 0) * size)
+                .opacity(entrance?.opacity ?? 1)
                 .frame(width: size, height: size)
                 .overlay(alignment: .topTrailing) {
                     if reaction == .understood {

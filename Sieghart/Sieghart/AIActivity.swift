@@ -42,27 +42,28 @@ struct AIAnalytics: Sendable {
 // Only select metadata, usage counters and lifecycle types from JSON records.
 // No prompts, tool arguments, responses, credentials or conversation bodies are retained.
 enum AIActivityParser {
-    static func parse(_ url: URL, provider: AIProvider, now: Date = .now, knownWork: AIWork? = nil, fullHistory: Bool = false) -> AIAnalytics {
+    static func parse(_ url: URL, provider: AIProvider, now: Date = .now, knownWork: AIWork? = nil, fullHistory: Bool = false, usesResponseRecords: Bool = false) -> AIAnalytics {
         guard let handle = try? FileHandle(forReadingFrom: url) else { return AIAnalytics() }
         defer { try? handle.close() }
         guard let length = try? handle.seekToEnd() else { return AIAnalytics() }
         let offset = !fullHistory && length > 2_097_152 ? length - 2_097_152 : 0
-        var project = "Local project"
+        var project = "Local project", headerSession: String?
         // The first record identifies a Codex project; only its basename survives.
         try? handle.seek(toOffset: 0)
         if let head = try? handle.read(upToCount: 65_536), let first = head.split(separator: 10).first,
            let record = object(first), let payload = record["payload"] as? [String: Any], let cwd = payload["cwd"] as? String {
             project = URL(fileURLWithPath: cwd).lastPathComponent
+            headerSession = payload["id"] as? String
         }
         // Recover the context immediately before the tail for historical
         // counters too, even when the turn is already complete.
         let older = provider == .codex && offset > 0 ? olderCodexState(handle, before: offset, length: length) : nil
         try? handle.seek(toOffset: offset)
-        guard let data = try? handle.readToEnd() else { return AIAnalytics() }
+        guard let data = try? handle.read(upToCount: fullHistory ? 67_108_864 : 2_097_152) else { return AIAnalytics() }
         let lines = data.split(separator: 10)
-        let session = UUID(uuidString: String(url.deletingPathExtension().lastPathComponent.suffix(36)))?.uuidString ?? url.path
+        var session = headerSession ?? UUID(uuidString: String(url.deletingPathExtension().lastPathComponent.suffix(36)))?.uuidString ?? url.path
         var model = older?.model ?? "Unknown model", started: Date?, turnID: String?, lastSeen = Date.distantPast
-        var sawLifecycle = false, serviceTier = older?.tier
+        var sawLifecycle = false, serviceTier = older?.tier, sawResponseRecords = usesResponseRecords
         var output: Int64 = 0, previous: [Int64]?, points: [String: AIUsagePoint] = [:]
         let cutoff = now.addingTimeInterval(-(fullHistory ? 365 : 91) * 86400)
         for line in offset > 0 ? lines.dropFirst() : lines[...] {
@@ -71,26 +72,46 @@ enum AIActivityParser {
             let type = record["type"] as? String
             if provider == .codex {
                 guard let payload = record["payload"] as? [String: Any] else { continue }
+                if type == "session_meta", let identifier = payload["id"] as? String, !identifier.isEmpty { session = String(identifier.prefix(128)) }
+                if type == "token_usage_record", let fields = payload["usage"] as? [String: Any] {
+                    sawResponseRecords = true
+                    lastSeen = max(lastSeen, date)
+                    let values = counts(fields, claude: false)
+                    if let recordedModel = payload["model"] as? String, !recordedModel.isEmpty { model = recordedModel }
+                    let tier = payload["service_tier"] as? String ?? serviceTier
+                    let response = payload["response_id"] as? String
+                    let key = response.flatMap { $0.isEmpty ? nil : "codex:response:" + $0 } ?? "codex:response:\(session):\(timestamp)"
+                    if date >= cutoff, date <= now, values[0] + values[1] > 0 {
+                        if let old = points[key], old.total > values[0] + values[1] { continue }
+                        let prior = points[key]?.output ?? 0
+                        points[key] = AIUsagePoint(id: key, provider: provider, date: date, model: model, project: project, input: values[0], output: values[1], cached: values[2], cacheCreation: values[3], serviceTier: tier, perRequest: true)
+                        output += max(0, values[1] - prior)
+                    }
+                    continue
+                }
                 if type == "turn_context" {
                     model = payload["model"] as? String ?? model
-                    serviceTier = payload["service_tier"] as? String
+                    serviceTier = payload["service_tier"] as? String ?? serviceTier
                     if let cwd = payload["cwd"] as? String { project = URL(fileURLWithPath: cwd).lastPathComponent }
                 }
                 guard type == "event_msg", let event = payload["type"] as? String else { continue }
+                if event == "thread_settings_applied", let settings = payload["thread_settings"] as? [String: Any], let tier = settings["service_tier"] as? String { serviceTier = tier }
                 if event == "task_started" { sawLifecycle = true; started = date; turnID = payload["turn_id"] as? String; output = 0 }
                 if ["task_complete", "turn_aborted"].contains(event) { sawLifecycle = true; started = nil; turnID = nil }
                 lastSeen = max(lastSeen, date)
-                guard event == "token_count", let info = payload["info"] as? [String: Any], let cumulative = info["total_token_usage"] as? [String: Any] else { continue }
+                guard !sawResponseRecords, event == "token_count", let info = payload["info"] as? [String: Any], let cumulative = info["total_token_usage"] as? [String: Any] else { continue }
                 let current = counts(cumulative, claude: false)
                 if previous == current { continue }
-                let delta: [Int64]
+                var delta: [Int64]
                 if let last = info["last_token_usage"] as? [String: Any] { delta = counts(last, claude: false) }
                 else if let previous { delta = zip(current, previous).map { max(0, $0 - $1) } }
                 else { delta = offset == 0 ? current : [0, 0, 0, 0] }
+                if let previous, current[0] + current[1] <= previous[0] + previous[1] { continue }
                 previous = current
+                delta[2] = min(delta[0], delta[2]); delta[3] = min(delta[3], max(0, delta[0] - delta[2]))
                 output += delta[1]
                 guard date >= cutoff, date <= now, delta[0] + delta[1] > 0 else { continue }
-                let id = "\(session):\(timestamp):\(current[0]):\(current[1])"
+                let id = "codex:total:\(session):\(current[0] + current[1])"
                 points[id] = AIUsagePoint(id: id, provider: provider, date: date, model: model, project: project, input: delta[0], output: delta[1], cached: delta[2], cacheCreation: delta[3], serviceTier: serviceTier, perRequest: info["last_token_usage"] != nil)
             } else {
                 if let cwd = record["cwd"] as? String { project = URL(fileURLWithPath: cwd).lastPathComponent }
@@ -137,9 +158,10 @@ enum AIActivityParser {
             let lines = chunk.split(separator: 10)
             for line in (begin > 0 ? lines.dropFirst() : lines[...]).reversed() {
                 guard begin + UInt64(line.startIndex) < cursor else { continue }
-                guard line.range(of: Data("task_started".utf8)) != nil || line.range(of: Data("task_complete".utf8)) != nil || line.range(of: Data("turn_aborted".utf8)) != nil || line.range(of: Data("turn_context".utf8)) != nil else { continue }
+                guard line.range(of: Data("task_started".utf8)) != nil || line.range(of: Data("task_complete".utf8)) != nil || line.range(of: Data("turn_aborted".utf8)) != nil || line.range(of: Data("turn_context".utf8)) != nil || line.range(of: Data("thread_settings_applied".utf8)) != nil else { continue }
                 guard let record = object(line), let payload = record["payload"] as? [String: Any] else { continue }
-                if model == nil, record["type"] as? String == "turn_context" { model = payload["model"] as? String; tier = payload["service_tier"] as? String }
+                if tier == nil, (payload["type"] as? String) == "thread_settings_applied" { tier = (payload["thread_settings"] as? [String: Any])?["service_tier"] as? String }
+                if model == nil, record["type"] as? String == "turn_context" { model = payload["model"] as? String; tier = tier ?? payload["service_tier"] as? String }
                 if state == nil, record["type"] as? String == "event_msg", let type = payload["type"] as? String {
                     if type == "task_started", let stamp = record["timestamp"] as? String, let date = parseDate(stamp) { state = (date, payload["turn_id"] as? String) }
                     else if ["task_complete", "turn_aborted"].contains(type) { state = (nil, nil) }
@@ -182,6 +204,7 @@ actor AIAnalyticsReader {
         self.home = home; self.codexHome = codexHome
     }
     func read(providers: [AIProvider], now: Date = .now) -> AIAnalytics {
+        var scannedBytes = 0
         var result = AIAnalytics(), unique = history.filter { providers.contains($0.value.provider) && now.timeIntervalSince($0.value.date) <= 365 * 86400 }, work: [String: AIWork] = [:]
         for provider in providers {
             if discovered[provider].map({ now.timeIntervalSince($0) >= 60 }) ?? true {
@@ -202,7 +225,20 @@ actor AIAnalyticsReader {
                 guard let info = try? freshURL.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]) else { continue }
                 let modified = info.contentModificationDate ?? .distantPast, size = info.fileSize ?? 0
                 if cache[url]?.modified != modified || cache[url]?.size != size {
-                    cache[url] = Cached(modified: modified, size: size, value: AIActivityParser.parse(url, provider: provider, now: now, knownWork: cache[url]?.value.work.first))
+                    let old = cache[url]
+                    let initial = old == nil || size < (old?.size ?? 0)
+                    let scanAll = initial && size <= 67_108_864 && scannedBytes + size <= 536_870_912
+                    scannedBytes += scanAll ? size : min(size, 2_097_152)
+                    var updated = AIActivityParser.parse(url, provider: provider, now: now, knownWork: old?.value.work.first, fullHistory: scanAll, usesResponseRecords: !initial && (old?.value.points.contains { $0.id.hasPrefix("codex:response:") } ?? false))
+                    if !initial, let old {
+                        var retained = Dictionary(old.value.points.filter { now.timeIntervalSince($0.date) <= 365 * 86400 }.map { ($0.id, $0) }, uniquingKeysWith: { a, b in a.total >= b.total ? a : b })
+                        for point in updated.points {
+                            if let prior = retained[point.id], prior.total > point.total { continue }
+                            retained[point.id] = point
+                        }
+                        updated.points = Array(retained.values.prefix(30000))
+                    }
+                    cache[url] = Cached(modified: modified, size: size, value: updated)
                 }
                 guard let reading = cache[url]?.value else { continue }
                 result.scannedFiles += 1

@@ -27,6 +27,8 @@ struct SieghartApp: App {
         aiUsage.startMonitoring(codex: codexUsage)
         notch.observeAIActivity()
         notch.restoreSessionPresence()
+        notch.clipboard.start()
+        notch.middleClick.start()
         sensor.onImpact = { impact in
             guard preferences.impactsEnabled else { return }
             assistant.registerImpact(impact)
@@ -42,6 +44,7 @@ struct SieghartApp: App {
         _codexUsage = StateObject(wrappedValue: codexUsage)
         _aiUsage = StateObject(wrappedValue: aiUsage)
         appDelegate.activation = activation
+        appDelegate.clipboard = notch.clipboard
     }
 
     var body: some Scene {

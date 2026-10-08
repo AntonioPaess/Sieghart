@@ -40,8 +40,10 @@ struct PriceCatalog: Codable, Sendable {
     func price(model: String, provider: AIProvider, tier: String? = nil) -> ModelPrice? {
         // Only documented snapshot suffixes may inherit a base price. Internal
         // models (including auto-review) remain unpriced unless documented.
-        let normalized = model.lowercased().replacingOccurrences(of: ".", with: provider == .claude ? "-" : ".")
-        let requestedTier = tier == "priority" || tier == "fast" ? "fast" : tier == "flex" || tier == "batch" ? tier : nil
+        let base = model.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "/").last.map(String.init)?.lowercased() ?? model.lowercased()
+        let normalized = provider == .claude ? base.replacingOccurrences(of: ".", with: "-") : base
+        let speed = tier?.lowercased()
+        let requestedTier = speed == "priority" || speed == "fast" ? "fast" : ["flex", "batch", "ultrafast"].contains(speed ?? "") ? speed : nil
         let candidates = entries.filter { $0.provider == provider && $0.tier == requestedTier }
         if let exact = candidates.first(where: { $0.id == normalized }) { return exact }
         return candidates.sorted { $0.id.count > $1.id.count }.first { entry in
@@ -56,7 +58,7 @@ struct PriceCatalog: Codable, Sendable {
         for line in markdown.components(separatedBy: .newlines) {
             if line.hasPrefix("#") {
                 if provider == .codex {
-                    section = ["Standard", "Fast", "Flex", "Batch"].first { line == "### \($0) pricing data" }?.lowercased()
+                    section = ["Standard", "Fast", "Flex", "Batch", "Ultrafast"].first { line == "### \($0) pricing data" }?.lowercased()
                 } else { section = nil }
                 headers = []
             }

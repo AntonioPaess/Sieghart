@@ -1,8 +1,8 @@
 import SwiftUI
 
 private enum MenuPage: String, CaseIterable {
-    case companion = "Companion", timers = "Timers", ai = "AI", audio = "Audio", avatars = "Avatars"
-    var symbol: String { switch self { case .companion: "face.smiling"; case .timers: "timer"; case .ai: "sparkles"; case .audio: "speaker.wave.2"; case .avatars: "person.crop.square" } }
+    case companion = "Companion", timers = "Timers", ai = "AI", audio = "Audio", clipboard = "Clipboard", avatars = "Avatars"
+    var symbol: String { switch self { case .companion: "face.smiling"; case .timers: "timer"; case .ai: "sparkles"; case .audio: "speaker.wave.2"; case .clipboard: "doc.on.clipboard"; case .avatars: "person.crop.square" } }
 }
 struct MenuBarView: View {
     @EnvironmentObject private var assistant: AssistantViewModel
@@ -60,6 +60,7 @@ struct MenuBarView: View {
                 case .audio:
                     if preview { AudioControlsView(compact: true).environmentObject(notch.audio) }
                     else { AudioControlsView(compact: true).environmentObject(notch.audio) }
+                case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, compact: true, dismiss: { notch.hide() })
                 case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
                 }
             }.fixedSize(horizontal: false, vertical: true)

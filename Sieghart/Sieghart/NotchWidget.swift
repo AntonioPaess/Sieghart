@@ -35,7 +35,7 @@ struct NotchGeometry: Equatable {
 }
 
 enum NotchPresentation: Equatable {
-    case home, focusSetup, timer, completion, island, celebration, aiLimits, tools, audio, avatars
+    case home, focusSetup, timer, completion, island, celebration, aiLimits, tools, audio, avatars, clipboard
 }
 
 enum NotchOverlayPolicy {
@@ -58,6 +58,7 @@ final class NotchWidgetController: ObservableObject {
 
     @Published private(set) var presentation: NotchPresentation = .home
 
+    @Published private(set) var welcomeStartedAt: Date?
     @Published private(set) var latestCompletion: SessionCompletion?
     private var shownCompletionID: UUID?
     private let managesWindows: Bool
@@ -74,6 +75,8 @@ final class NotchWidgetController: ObservableObject {
     var activation: ActivationController?
     var codexUsage: CodexUsageModel?
     var aiUsage: AIUsageModel?
+    let clipboard: ClipboardController
+    let middleClick: MiddleClickController
     let audio: AudioController
     private var activityObservation: AnyCancellable?
     private var panel: NSPanel?
@@ -118,9 +121,11 @@ final class NotchWidgetController: ObservableObject {
         }
     }
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioController? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetController.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetController.keyboardRevealDelay) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioController? = nil, clipboard: ClipboardController? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetController.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetController.keyboardRevealDelay) {
         self.assistant = assistant
+        self.middleClick = MiddleClickController()
         self.audio = audio ?? AudioController()
+        self.clipboard = clipboard ?? ClipboardController(monitorsSystem: managesWindows)
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay
@@ -215,6 +220,10 @@ final class NotchWidgetController: ObservableObject {
         reveal()
     }
 
+    func showWelcome() {
+        welcomeStartedAt = Date().addingTimeInterval(0.35); presentation = .home; reveal()
+    }
+
     func showCurrentTask() {
         if !(aiUsage?.analytics.work.isEmpty ?? true) { presentation = .aiLimits }
         else if assistant.hasTimerActivity { assistant.selectTimerMode(assistant.activeTimerMode); presentation = .timer }
@@ -258,6 +267,9 @@ final class NotchWidgetController: ObservableObject {
         presentation = .aiLimits
         reveal()
     }
+
+    func showClipboard() { clipboard.preparePasteTarget(); presentation = .clipboard; reveal() }
+    func toggleClipboard() { if isVisible && presentation == .clipboard { hide() } else { showClipboard() } }
 
     func showAudio() { presentation = .audio; reveal() }
     func showAvatars() { presentation = .avatars; reveal() }
@@ -447,7 +459,7 @@ final class NotchWidgetController: ObservableObject {
         let centerX = notchCenterX(on: screen)
         let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.maxY - size.height + 1 / screen.backingScaleFactor, width: size.width, height: size.height)
         panel.setFrame(frame, display: true)
-        canvas.prepare(target: geometry.canvasGeometry, reserved: size, animated: !preferences.usesReducedMotion, closing: false, appearance: preferences.appearance, glassEnabled: preferences.islandGlass) { [weak self] in self?.settlePanel() }
+        canvas.prepare(target: geometry.canvasGeometry, reserved: size, animated: !preferences.usesReducedMotion, closing: false, appearance: preferences.appearance, glassEnabled: preferences.islandGlass, welcome: welcomeStartedAt.map { Date().timeIntervalSince($0) < 1 } == true) { [weak self] in self?.settlePanel() }
     }
 
     private func settlePanel() {
@@ -555,6 +567,7 @@ final class NotchWidgetController: ObservableObject {
         case .island: height = 42
         case .celebration: height = 270
         case .tools: height = 350
+        case .clipboard: height = 480
         case .audio: height = 460
         case .avatars: height = 340
         case .aiLimits: height = min(470, (notchScreen?.visibleFrame.height ?? 700) - 80)
@@ -563,7 +576,7 @@ final class NotchWidgetController: ObservableObject {
         switch presentation {
         case .island: width = 240
         case .aiLimits: width = 800
-        case .tools, .audio: width = 760
+        case .tools, .audio, .clipboard: width = 760
         case .focusSetup, .timer: width = 720
         default: width = 620
         }
@@ -722,6 +735,7 @@ struct NotchWidgetView: View {
                 case .island: island
                 case .celebration: celebration
                 case .tools: tools
+                case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, showsTitle: false, listHeight: 180, dismiss: { notch.hide() })
                 case .audio: pageScroll { AudioControlsView().environmentObject(notch.audio) }
                 case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: animates, compact: true)
                 case .aiLimits:
@@ -758,6 +772,7 @@ struct NotchWidgetView: View {
                 Button("Timers") { notch.showTimer() }
                 Button("AI agents") { notch.showAILimits() }
                 Button("Audio") { notch.showAudio() }
+                Button("Clipboard") { notch.showClipboard() }
                 Button("Change companion") { notch.showAvatars() }
                 Button("Tools") { notch.showTools() }
                 Divider()
@@ -775,6 +790,7 @@ struct NotchWidgetView: View {
         case .aiLimits: "AI agents"
         case .tools: "Your tools"
         case .audio: "Audio"
+        case .clipboard: "Clipboard"
         case .avatars: "Choose your companion"
         case .completion, .celebration: "Session complete"
         case .island: ""
@@ -784,13 +800,13 @@ struct NotchWidgetView: View {
     private var quickAccess: some View {
         let width = notch.geometry.width + 144
         return ZStack(alignment: .topLeading) {
-            floatingButton("square.grid.2x2", label: "Controls") { notch.showTools() }
-                .position(x: 28, y: notch.geometry.contentTop + 52)
-            floatingButton("timer", label: "Timer, Pomodoro and stopwatch") { notch.showTimer() }.position(x: 28, y: notch.geometry.contentTop + 106)
-            floatingButton("gearshape", label: "Preferences") { notch.focusMainWindow() }
-                .position(x: width - 28, y: notch.geometry.contentTop + 52)
-            floatingButton("speaker.wave.2", label: "Audio mixer") { notch.showAudio() }
-                .position(x: width - 28, y: notch.geometry.contentTop + 106)
+            ForEach(0..<6) { slot in
+                let action = preferences.railActions[slot]
+                if action != .none {
+                    floatingButton(action.symbol, label: action.rawValue) { activateRail(action) }
+                        .position(x: slot < 3 ? 28 : width - 28, y: notch.geometry.contentTop + 52 + CGFloat(slot % 3) * 54)
+                }
+            }
             Button { notch.show() } label: {
                 CompanionCharacter(size: 32, avatar: preferences.avatar, animates: animates)
                     .frame(width: 44, height: 44).background(.black.opacity(0.6), in: Circle())
@@ -798,6 +814,21 @@ struct NotchWidgetView: View {
             }.buttonStyle(IslandButtonStyle()).focusEffectDisabled().accessibilityLabel("Your companion")
                 .position(x: width / 2, y: notch.geometry.height + 32)
         }.frame(width: width, height: notch.geometry.height + 64)
+    }
+
+    private func activateRail(_ action: IslandRailAction) {
+        switch action {
+        case .tools: notch.showTools()
+        case .timer: notch.showTimer()
+        case .clipboard: notch.showClipboard()
+        case .preferences: notch.focusMainWindow()
+        case .audio: notch.showAudio()
+        case .ai: notch.showAILimits()
+        case .avatars: notch.showAvatars()
+        case .voice: activation.toggleListening()
+        case .companion: notch.show()
+        case .none: break
+        }
     }
 
     private func floatingButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
@@ -819,10 +850,10 @@ struct NotchWidgetView: View {
         VStack(spacing: 12) {
             HStack(spacing: 18) {
                 CompanionInteraction(action: reactToTouch) {
-                    TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
+                    TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animates)) { context in
                         let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
                         let walking = animates && reactions.mood == .idle && !activation.voicePresented && phase < 4
-                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isListening || activation.isPreparing ? .idle : reactions.mood, strolling: walking)
+                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isListening || activation.isPreparing ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
                             .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
                     }.frame(width: 124, height: 96)
                 }
@@ -831,7 +862,7 @@ struct NotchWidgetView: View {
                 .help("Say hello. Repeated taps make Sieghart grumpy, then sleepy. Tap again to wake.")
                 .onContinuousHover { phase in
                     switch phase {
-                    case .active(let location): avatarPointer = animates ? CGSize(width: min(3, max(-3, (location.x - 62) / 16)), height: min(2, max(-2, (location.y - 48) / 24))) : .zero
+                    case .active(let location): avatarPointer = animates ? CompanionGaze.sample(point: location, in: CGSize(width: 124, height: 96)) : .zero
                     case .ended: avatarPointer = .zero
                     }
                 }
@@ -859,6 +890,7 @@ struct NotchWidgetView: View {
             toolTile("Audio", subtitle: "Apps & devices", symbol: "speaker.wave.2") { notch.showAudio() }
             toolTile("AI agents", subtitle: "Limits & activity", symbol: "sparkles") { notch.showAILimits() }
             toolTile("Timers", subtitle: "Three ways to time", symbol: "timer") { notch.showTimer() }
+            toolTile("Clipboard", subtitle: "Copies, kept nearby", symbol: "doc.on.clipboard") { notch.showClipboard() }
             toolTile("Avatars", subtitle: "Find your companion", symbol: "person.crop.square") { notch.showAvatars() }
             toolTile("Preferences", subtitle: "Your workspace", symbol: "gearshape") { notch.focusMainWindow() }
         }

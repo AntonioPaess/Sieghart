@@ -77,8 +77,48 @@ enum WidgetSize: String, CaseIterable, Identifiable {
     var scale: CGFloat { self == .small ? 0.85 : self == .large ? 1.2 : 1 }
 }
 
+enum IslandRailAction: String, CaseIterable, Identifiable {
+    case tools = "All tools", timer = "Timers", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Avatars", voice = "Speak", companion = "Companion", none = "Hidden"
+    var id: String { rawValue }
+    var symbol: String {
+        switch self {
+        case .tools: "square.grid.2x2"
+        case .timer: "timer"
+        case .clipboard: "doc.on.clipboard"
+        case .preferences: "gearshape"
+        case .audio: "speaker.wave.2"
+        case .ai: "sparkles"
+        case .avatars: "person.crop.square"
+        case .voice: "mic"
+        case .companion: "face.smiling"
+        case .none: "minus"
+        }
+    }
+}
+enum IslandRailPreset: String, CaseIterable, Identifiable {
+    case essentials = "Essentials", focus = "Focus", work = "Work"
+    var id: String { rawValue }
+    var actions: [IslandRailAction] {
+        switch self {
+        case .essentials: [.tools, .timer, .clipboard, .preferences, .audio, .ai]
+        case .focus: [.timer, .companion, .clipboard, .preferences, .audio, .voice]
+        case .work: [.ai, .clipboard, .tools, .preferences, .audio, .voice]
+        }
+    }
+}
+
 @MainActor
 final class CompanionPreferences: ObservableObject {
+    @Published private(set) var railActions: [IslandRailAction]
+    func setRail(_ action: IslandRailAction, at slot: Int) {
+        guard railActions.indices.contains(slot) else { return }
+        var next = railActions
+        if action != .none, let other = next.firstIndex(of: action), other != slot { next[other] = next[slot] }
+        next[slot] = action; railActions = next; defaults.set(next.map(\.rawValue), forKey: "island.rails")
+    }
+    func applyRailPreset(_ preset: IslandRailPreset) {
+        railActions = preset.actions; defaults.set(railActions.map(\.rawValue), forKey: "island.rails")
+    }
     @Published var appearance: AppAppearance { didSet { defaults.set(appearance.rawValue, forKey: "appearance.theme") } }
     @Published var windowGlass: Bool { didSet { save(windowGlass, "windowGlass") } }
     @Published var islandGlass: Bool { didSet { save(islandGlass, "islandGlass") } }
@@ -94,6 +134,8 @@ final class CompanionPreferences: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        let savedRails = defaults.stringArray(forKey: "island.rails")?.compactMap(IslandRailAction.init(rawValue:))
+        railActions = savedRails?.count == 6 ? savedRails! : IslandRailPreset.essentials.actions
         appearance = defaults.string(forKey: "appearance.theme").flatMap(AppAppearance.init(rawValue:)) ?? .system
         windowGlass = defaults.object(forKey: "appearance.windowGlass") as? Bool ?? false
         islandGlass = defaults.object(forKey: "appearance.islandGlass") as? Bool ?? false

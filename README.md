@@ -13,7 +13,19 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
-> **In development.** The app compiles and its timer, voice-intent, shortcut, and presentation checks pass. Physical notch layout, microphone permissions, and hardware gestures still need validation on the Mac. Conversational AI is planned.
+> **Sprint 4 in progress.** Sprint 3 passed the user’s Mac checklist. Clipboard, configurable side buttons, companion arrival and spending corrections are implemented; new physical checks remain. Conversational AI and connected email/upload workflows are planned.
+
+## Sprint 4 — First slice
+
+- **Clipboard:** local text, image and file-reference history; search, pins, preview, copy/paste, exclusions and pause. Choose **5, 10 or 20** saved copies and cleanup after chosen days, Mac shutdown or lid close. Open with **⌃⌥C**, the side button, app tab or menu subpage. Direct Paste needs Accessibility; Copy/⌘V works without it.
+- **Side buttons:** Appearance → Island side buttons offers six fixed slots, hide/swap controls and Essentials/Focus/Work presets.
+- **Companion arrival:** Welcome → avatar → local tools, native fluid animation, balanced left/right gaze, optional permission setup and a distinct widget entrance on Finish. No black band above the avatar.
+- **Optional middle click:** Activation → Three-finger middle click. Off by default; tap with three fingers, grant Accessibility and retry. Unsupported trackpads show unavailable. Future Challenge packaging must omit this Mac-only contact adapter.
+- **AI spending:** response-record deduplication, Fast tier changes, first full bounded scan and retained counters from long files. Internal models without official prices remain explicitly unpriced. API-equivalent value is separate from paid charges.
+
+![Six companions arriving](Sieghart/Design/Concepts/companion-welcome-motion.gif)
+
+[Clipboard preview](Sieghart/Design/Concepts/island-clipboard-preview.png) · [onboarding](Sieghart/Design/Concepts/onboarding-welcome-preview.png) · [full changes, manual tests and remaining Sprint 4](Sieghart/Design/sprint-4-checkpoint.md).
 
 ## The experience
 
@@ -22,7 +34,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 | **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance or the menu-bar Avatars tab. It also becomes your menu-bar icon. |
 | **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Native eye expressions, smooth blinking, gaze, sleeping breath and floating “z” and short messages explain each response. |
 | **Audio controls** | Master output volume, default output/input selection, supported microphone gain/mute, and an opt-in per-app mixer on the selected output. Stereo/mono Float32 routes use Core Audio process taps; the user accepted the Sprint 3 Mac checklist October 8. |
-| **Menu-bar subpages** | Companion, Timers, AI, Audio and Avatars replace the long stacked panel. Avatar changes save immediately. |
+| **Menu-bar subpages** | Companion, Timers, AI, Audio, Clipboard and Avatars replace the long stacked panel. Avatar changes save immediately. |
 | **Three timer modes** | The app and notch share a standalone countdown, Pomodoro with breaks/rounds, and stopwatch. Each supports pause, resume and reset; choosing a mode never starts a session. |
 | **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover for a visual highlight; the first click opens controls even with another app active. The full activation strip, including the camera gap, toggles controls. Pointer exit allows 800 ms to cross between controls; keyboard reveal allows four seconds to reach them. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
@@ -42,13 +54,13 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 *Offscreen 20 fps preview of native gaze, blinking and breathing. The app’s motion updates at 60 Hz and respects Reduce Motion.*
 
-First launch presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** or the menu-bar **Avatars** tab to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
+First launch opens an animated welcome, then presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** or the menu-bar **Avatars** tab to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
 
 ### A companion with context
 
 ![Companion with comfortable margins and no duplicated action row](Sieghart/Design/Concepts/island-companion-preview.png)
 
-*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses five compact subpages with natural content heights.*
+*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses six compact subpages with natural content heights.*
 
 The compact island and camera strip stay sRGB black (`#000000`). Expanded pages offer optional Glass, an attached shoulder contour and circular quick controls around the surface. Appearance selects System, Light or Dark; separate switches control Glass in other windows/panels and in the expanded island. Both switches default off. macOS 26 uses Liquid Glass; older supported systems use behind-window blur. Reduce Transparency keeps an opaque surface. Native transitions reserve their full bounds so the moving silhouette does not resize or crop its content.
 
@@ -109,7 +121,7 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 ### Start your first session
 
-1. Complete the two-step onboarding: choose one of six avatars, then decide whether to follow local AI usage automatically. Focus works with monitoring off.
+1. Complete Welcome → choose one of six avatars → optional local AI/Clipboard tools. Optional voice/paste access setup is available there. Finish opens the companion with a special arrival; focus remains explicit.
 2. Click the compact island or press **Control + Option + S** to reveal the companion. Hover gives a subtle companion reaction without outlining or opening the island.
 3. Open **Timers** in the app or widget. Choose Timer for a countdown, Pomodoro for focus/break rounds, or Stopwatch for elapsed time.
 4. Press **Start** for the selected mode. The widget tucks into the island; click it for pause/resume/reset controls. Pomodoro also offers Finish.
@@ -149,7 +161,7 @@ These checks do not open the app, activate the sensor, register system shortcuts
 
 ## Sprint 3 closeout
 
-Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 has not started.
+Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 is in progress; its first slice and new Mac checklist are documented below.
 
 [Delivered scope and exact Mac checklist](Sieghart/Design/sprint-3-closeout.md) · [Charge import format](Sieghart/Design/charge-imports.md) · [Sources preview](Sieghart/Design/Concepts/ai-data-sources-preview.png) · [Search in Companion](Sieghart/Design/Concepts/island-companion-search-preview.png)
 

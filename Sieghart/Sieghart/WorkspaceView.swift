@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", aiLimits = "AI agents", audio = "Audio"
+    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -11,6 +11,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .appearance: "slider.horizontal.3"
         case .aiLimits: "chart.bar.xaxis"
         case .audio: "speaker.wave.2"
+        case .clipboard: "doc.on.clipboard"
         }
     }
 }
@@ -34,7 +35,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if preferences.onboardingComplete { workspace }
-            else { CompanionOnboardingView() }
+            else { CompanionOnboardingView(clipboard: notch.clipboard, onFinish: { notch.showWelcome() }, prepareVoice: { await activation.prepareVoiceAccess() }) }
         }
         .frame(minWidth: 840, minHeight: 660)
         .preferredColorScheme(preferences.appearance.colorScheme)
@@ -76,6 +77,9 @@ struct ContentView: View {
             case .focus: focusSettings
             case .activation: activationSettings
             case .appearance: appearanceSettings
+            case .clipboard:
+                heading("Copies, kept nearby.", subtitle: "Find, pin and reuse what you copied on this Mac.")
+                ClipboardHistoryView(clipboard: notch.clipboard, dismiss: { notch.hide() }).companionCard()
             case .audio:
                 heading("Sound, your way.", subtitle: "Your devices and audio apps in one quiet space.")
                 AudioControlsView().companionCard()
@@ -178,6 +182,7 @@ struct ContentView: View {
 
     @ViewBuilder private var activationSettings: some View {
         heading("Bring Sieghart into view.", subtitle: "Choose the inputs that fit your day.")
+        MiddleClickSettings(controller: notch.middleClick).companionCard()
         VStack(alignment: .leading, spacing: 18) {
             Label("Keyboard", systemImage: "keyboard").font(.headline)
             PreferenceRow("Companion shortcut", detail: "Record any key combination to reveal Sieghart.") { ShortcutRecorder(action: .companion) }
@@ -185,6 +190,9 @@ struct ContentView: View {
             Divider()
             PreferenceRow("Voice shortcut", detail: "Record keys, or press and release only modifiers such as Option + Command.") { ShortcutRecorder(action: .voice) }
             Text(activation.voiceShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+            Divider()
+            PreferenceRow("Clipboard shortcut", detail: "Find a saved copy from any app, even after closing this window.") { ShortcutRecorder(action: .clipboard) }
+            Text(activation.clipboardShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
             if activation.voiceShortcut?.isModifierOnly == true {
                 Button("Use Control + Option + V") { activation.setShortcut(.voice, for: .voice) }
                     .buttonStyle(.plain).focusEffectDisabled().font(.caption)
@@ -277,6 +285,7 @@ struct ContentView: View {
                 Toggle("Glass in Dynamic Island", isOn: $preferences.islandGlass).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
             }
         }.companionCard()
+        IslandRailSettings(preferences: preferences).companionCard()
         HStack(spacing: 18) {
             CompanionCharacter(size: 86, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
             VStack(alignment: .leading, spacing: 4) {
@@ -393,5 +402,53 @@ private struct ImpactActionPicker: View {
         Picker(title, selection: $selection) {
             ForEach(ImpactAction.allCases) { action in Text(action.title).tag(action) }
         }.pickerStyle(.menu)
+    }
+}
+
+struct IslandRailSettings: View {
+    @ObservedObject var preferences: CompanionPreferences
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label("Island side buttons", systemImage: "sidebar.left").font(.headline)
+            Text("Choose six fixed positions. Selecting a button already used elsewhere swaps their positions.").font(.caption).foregroundStyle(CompanionStyle.muted)
+            HStack {
+                ForEach(IslandRailPreset.allCases) { preset in Button(preset.rawValue) { preferences.applyRailPreset(preset) }.buttonStyle(CompanionButtonStyle(compact: true)) }
+            }
+            HStack(alignment: .top, spacing: 24) {
+                ForEach(0..<2) { side in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(side == 0 ? "Left" : "Right").font(.caption.weight(.semibold))
+                        ForEach(0..<3) { row in
+                            let slot = side * 3 + row
+                            Picker(["Top", "Middle", "Bottom"][row], selection: Binding(get: { preferences.railActions[slot] }, set: { preferences.setRail($0, at: slot) })) {
+                                ForEach(IslandRailAction.allCases) { action in Label(action.rawValue, systemImage: action.symbol).tag(action) }
+                            }
+                        }
+                    }.frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+}
+
+struct MiddleClickSettings: View {
+    @ObservedObject var controller: MiddleClickController
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Three-finger middle click", systemImage: "hand.point.up.left").font(.headline)
+                Spacer()
+                Toggle("Three-finger middle click", isOn: $controller.isEnabled).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            Text("Tap the trackpad with three fingers to press the mouse wheel button. Apps decide what that button does, such as opening a link in a new tab.").font(.caption).foregroundStyle(CompanionStyle.muted)
+            if controller.isEnabled {
+                Text(controller.status).font(.caption)
+                HStack {
+                    Button("Allow Accessibility") { controller.allowAccess() }.buttonStyle(CompanionButtonStyle(compact: true))
+                    Button("Retry") { controller.configure() }.buttonStyle(CompanionButtonStyle(compact: true))
+                }
+                Text("Disable conflicting three-finger Look Up or Drag gestures in macOS settings. This optional gesture depends on trackpad support.").font(.caption2).foregroundStyle(CompanionStyle.muted)
+            }
+        }
     }
 }

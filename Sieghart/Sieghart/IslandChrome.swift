@@ -157,7 +157,7 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
         backdrop.rootView = AnyView(IslandBackdrop(compact: compact, stripHeight: stripHeight, glassEnabled: glassEnabled).preferredColorScheme(appearance.colorScheme))
     }
 
-    func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, appearance: AppAppearance = .system, glassEnabled: Bool = false, settled: @escaping @MainActor () -> Void) {
+    func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, appearance: AppAppearance = .system, glassEnabled: Bool = false, welcome: Bool = false, settled: @escaping @MainActor () -> Void) {
         completion?.cancel()
         isDeparting = closing
         let previous = surface == .zero ? CGSize(width: max(180, target.cutoutWidth), height: max(1, target.cutoutHeight)) : surface
@@ -181,12 +181,13 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
             maskLayer.removeAllAnimations(); outline.removeAllAnimations(); host.layer?.removeAllAnimations()
             host.alphaValue = closing ? 0 : 1; settled(); return
         }
-        let duration = target.height > previous.height ? 0.46 : 0.28
+        let duration = welcome && !closing ? 0.9 : target.height > previous.height ? 0.46 : 0.28
         let animation = CAKeyframeAnimation(keyPath: "path")
         // Sample the contour itself so corner radii stay circular while resizing.
         animation.values = (0...60).map { index -> CGPath in
             if index == 0, let visiblePath { return visiblePath }
-            let t = Double(index) / 60, eased = t * t * (3 - 2 * t)
+            let t = Double(index) / 60
+            let eased = welcome ? 1 - pow(1 - t, 3) : t * t * (3 - 2 * t)
             let size = CGSize(width: previous.width + (target.width - previous.width) * eased, height: previous.height + (target.height - previous.height) * eased)
             return Self.path(size: size, canvasWidth: reserved.width)
         }

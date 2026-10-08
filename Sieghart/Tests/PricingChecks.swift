@@ -9,6 +9,7 @@ import Foundation
         expect(catalog.price(model: "codex-auto-review", provider: .codex) == nil, "Internal models never inherit an invented price")
         expect(catalog.price(model: "gpt-6.1-sol-unknown", provider: .codex) == nil, "Unverified aliases remain unpriced")
         expect(catalog.price(model: "gpt-6.1-sol", provider: .codex, tier: "priority")?.rates.inputUSD == 4, "Known fast tier uses published tier rate")
+        expect(catalog.price(model: "openai/gpt-6.1-sol", provider: .codex, tier: "FAST")?.rates.inputUSD == 4, "Router prefix and case preserve the recorded Fast price")
         let markdown = """
         ### Standard pricing data
         | Model | Short context input | Short context cached input | Short context cache writes | Short context output | Long context input | Long context cached input | Long context cache writes | Long context output |
