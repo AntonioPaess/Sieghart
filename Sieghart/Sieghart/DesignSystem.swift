@@ -119,6 +119,11 @@ final class CompanionPreferences: ObservableObject {
     func applyRailPreset(_ preset: IslandRailPreset) {
         railActions = preset.actions; defaults.set(railActions.map(\.rawValue), forKey: "island.rails")
     }
+    func moveRail(from source: Int, to destination: Int) {
+        guard railActions.indices.contains(source), railActions.indices.contains(destination), source != destination,
+              railActions[source] != .none else { return }
+        setRail(railActions[source], at: destination)
+    }
     @Published var appearance: AppAppearance { didSet { defaults.set(appearance.rawValue, forKey: "appearance.theme") } }
     @Published var windowGlass: Bool { didSet { save(windowGlass, "windowGlass") } }
     @Published var islandGlass: Bool { didSet { save(islandGlass, "islandGlass") } }

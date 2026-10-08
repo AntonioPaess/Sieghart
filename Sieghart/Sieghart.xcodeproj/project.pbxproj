@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000090 /* IslandLayoutEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000091 /* IslandLayoutEditor.swift */; };
 		A10000000000000000000086 /* CompanionArrival.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000087 /* CompanionArrival.swift */; };
 		A10000000000000000000089 /* MiddleClick.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000088 /* MiddleClick.swift */; };
 		A10000000000000000000084 /* ClipboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000085 /* ClipboardHistoryView.swift */; };
@@ -44,6 +45,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000091 /* IslandLayoutEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandLayoutEditor.swift; sourceTree = "<group>"; };
 		A10000000000000000000087 /* CompanionArrival.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionArrival.swift; sourceTree = "<group>"; };
 		A10000000000000000000088 /* MiddleClick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddleClick.swift; sourceTree = "<group>"; };
 		A10000000000000000000085 /* ClipboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryView.swift; sourceTree = "<group>"; };
@@ -110,6 +112,7 @@
 				A10000000000000000000081 /* UsageImports.swift */,
 				A10000000000000000000087 /* CompanionArrival.swift */,
 				A10000000000000000000088 /* MiddleClick.swift */,
+				A10000000000000000000091 /* IslandLayoutEditor.swift */,
 				A10000000000000000000085 /* ClipboardHistoryView.swift */,
 				A10000000000000000000083 /* ClipboardHistory.swift */,
 				A10000000000000000000073 /* WorkspaceView.swift */,
@@ -223,6 +226,7 @@
 				A10000000000000000000080 /* UsageImports.swift in Sources */,
 				A10000000000000000000086 /* CompanionArrival.swift in Sources */,
 				A10000000000000000000089 /* MiddleClick.swift in Sources */,
+				A10000000000000000000090 /* IslandLayoutEditor.swift in Sources */,
 				A10000000000000000000084 /* ClipboardHistoryView.swift in Sources */,
 				A10000000000000000000082 /* ClipboardHistory.swift in Sources */,
 				A10000000000000000000072 /* WorkspaceView.swift in Sources */,

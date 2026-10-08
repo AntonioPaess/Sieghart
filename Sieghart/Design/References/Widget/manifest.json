@@ -262,5 +262,11 @@
     "original": "Captura de Tela 2026-10-07 às 09.41.26.png",
     "description": "Appearance choices and independent optional Glass switches for windows/panels and Dynamic Island",
     "sha256": "b880388247254bd4e54751bd2877ff1a2cbc9437fcdcb02ea08aeb59453c8014"
+  },
+  {
+    "file": "2026-10-08-13-32-54-island-layout-editor-reference.png",
+    "original": "Captura de Tela 2026-10-08 às 13.32.54.png",
+    "description": "Visual Dynamic Island editor: central preview, draggable surrounding buttons, add/edit controls and size cards",
+    "sha256": "37ee604ed890681d4c6d139e3d8de838bd188be49f27ac18f823be17ab0bd9a0"
   }
 ]

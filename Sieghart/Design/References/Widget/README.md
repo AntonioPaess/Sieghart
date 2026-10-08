@@ -1,6 +1,12 @@
 # Widget reference gallery
 
-43 screenshots supplied by the user on October 5–6, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
+45 screenshots supplied by the user on October 5–8, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
+
+## October 8 — Visual island editor
+
+![Visual editor with surrounding controls and size cards](2026-10-08-13-32-54-island-layout-editor-reference.png)
+
+Applied in Sieghart’s [visual editor](../../island-layout-editor.md), retaining the selected native companion and existing size preferences.
 
 The user requests functional coverage across the reference app, improved usability, and an integrated Sieghart companion. See [the roadmap](../../../../ROADMAP.md). The installed reference shows version 3.4.0 and 73 modules; its current public catalog contains 77.
 

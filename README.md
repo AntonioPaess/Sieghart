@@ -18,7 +18,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 ## Sprint 4 — First slice
 
 - **Clipboard:** local text, image and file-reference history; search, pins, preview, copy/paste, exclusions and pause. Choose **5, 10 or 20** saved copies and cleanup after chosen days, Mac shutdown or lid close. Open with **⌃⌥C**, the side button, app tab or menu subpage. Direct Paste needs Accessibility; Copy/⌘V works without it.
-- **Side buttons:** Appearance → Island side buttons offers six fixed slots, hide/swap controls and Essentials/Focus/Work presets.
+- **Side buttons:** Dynamic Island offers a visual island preview with six surrounding positions. Click to add/edit/remove, drag to move or swap, and choose Essentials/Focus/Work from Layout. Size cards and optional Glass sit below the editor.
 - **Companion arrival:** Welcome → avatar → local tools, native fluid animation, balanced left/right gaze, optional permission setup and a distinct widget entrance on Finish. No black band above the avatar.
 - **Optional middle click:** Activation → Three-finger middle click. Off by default; tap with three fingers, grant Accessibility and retry. Unsupported trackpads show unavailable. Future Challenge packaging must omit this Mac-only contact adapter.
 - **AI spending:** response-record deduplication, Fast tier changes, first full bounded scan and retained counters from long files. Internal models without official prices remain explicitly unpriced. API-equivalent value is separate from paid charges.

@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard"
+    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", dynamicIsland = "Dynamic Island", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -9,6 +9,7 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .focus: "timer"
         case .activation: "keyboard"
         case .appearance: "slider.horizontal.3"
+        case .dynamicIsland: "rectangle.topthird.inset.filled"
         case .aiLimits: "chart.bar.xaxis"
         case .audio: "speaker.wave.2"
         case .clipboard: "doc.on.clipboard"
@@ -77,6 +78,8 @@ struct ContentView: View {
             case .focus: focusSettings
             case .activation: activationSettings
             case .appearance: appearanceSettings
+            case .dynamicIsland:
+                IslandLayoutEditor(preferences: preferences, onPreview: { notch.show() })
             case .clipboard:
                 heading("Copies, kept nearby.", subtitle: "Find, pin and reuse what you copied on this Mac.")
                 ClipboardHistoryView(clipboard: notch.clipboard, dismiss: { notch.hide() }).companionCard()
@@ -103,10 +106,10 @@ struct ContentView: View {
             }.padding(.horizontal, 8).padding(.top, 12).padding(.bottom, 25)
             Text("YOUR SPACE").font(.system(size: 9, weight: .semibold)).tracking(1.6)
                 .foregroundStyle(CompanionStyle.muted.opacity(0.7)).padding(.horizontal, 12).padding(.bottom, 4)
-            ForEach(AppSection.allCases) { item in
-                sidebarButton(item.rawValue, symbol: item.symbol, selected: section == item) { section = item }
-            }
-            Spacer(minLength: 24)
+            Group {
+                if preview { sidebarNavigation }
+                else { ScrollView { sidebarNavigation }.scrollIndicators(.hidden) }
+            }.frame(maxHeight: .infinity, alignment: .top)
             VStack(alignment: .leading, spacing: 12) {
                 Label("Ready when you are", systemImage: "sparkle").font(.caption.weight(.medium))
                 Text("A little space for your time, your tools and your companion.")
@@ -120,6 +123,14 @@ struct ContentView: View {
         .frame(maxHeight: .infinity)
         .background(CompanionStyle.edge.opacity(0.025))
         .overlay(alignment: .trailing) { Rectangle().fill(CompanionStyle.edge.opacity(0.07)).frame(width: 0.7).allowsHitTesting(false) }
+    }
+
+    private var sidebarNavigation: some View {
+        VStack(spacing: 8) {
+            ForEach(AppSection.allCases) { item in
+                sidebarButton(item.rawValue, symbol: item.symbol, selected: section == item) { section = item }
+            }
+        }
     }
 
     private func sidebarButton(_ title: String, symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
@@ -285,7 +296,15 @@ struct ContentView: View {
                 Toggle("Glass in Dynamic Island", isOn: $preferences.islandGlass).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
             }
         }.companionCard()
-        IslandRailSettings(preferences: preferences).companionCard()
+        HStack(spacing: 14) {
+            Image(systemName: "rectangle.topthird.inset.filled").font(.title2).foregroundStyle(CompanionStyle.accentInk)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Dynamic Island").font(.headline)
+                Text("Arrange buttons around a visual preview and choose your widget size.").font(.caption).foregroundStyle(CompanionStyle.muted)
+            }
+            Spacer()
+            Button("Edit layout") { section = .dynamicIsland }.buttonStyle(CompanionButtonStyle(compact: true))
+        }.companionCard()
         HStack(spacing: 18) {
             CompanionCharacter(size: 86, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
             VStack(alignment: .leading, spacing: 4) {
@@ -300,19 +319,6 @@ struct ContentView: View {
         Text("Your choice is saved automatically and follows you into the island, voice, and celebrations.")
             .font(.caption).foregroundStyle(CompanionStyle.muted)
         VStack(spacing: 20) {
-            PreferenceRow("Widget size", detail: "Scale the expanded panels. The compact island keeps the camera's physical height.") {
-                HStack(spacing: 3) {
-                    ForEach(WidgetSize.allCases) { size in
-                        Button { preferences.widgetSize = size } label: {
-                            Text(size.rawValue).font(.caption.weight(.medium)).frame(maxWidth: .infinity).padding(.vertical, 8)
-                                .foregroundStyle(preferences.widgetSize == size ? CompanionStyle.ink : CompanionStyle.muted)
-                                .background(preferences.widgetSize == size ? CompanionStyle.edge.opacity(0.13) : .clear, in: RoundedRectangle(cornerRadius: 8))
-                        }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("\(size.rawValue) widget")
-                            .accessibilityValue(preferences.widgetSize == size ? "Selected" : "")
-                    }
-                }.padding(3).frame(width: 224).background(.black.opacity(0.12), in: RoundedRectangle(cornerRadius: 11))
-            }
-            Divider()
             PreferenceRow("Compact active timer", detail: "Keep remaining time and controls close together.") {
                 Toggle("Compact active timer", isOn: $preferences.compactTimer).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
             }
@@ -402,32 +408,6 @@ private struct ImpactActionPicker: View {
         Picker(title, selection: $selection) {
             ForEach(ImpactAction.allCases) { action in Text(action.title).tag(action) }
         }.pickerStyle(.menu)
-    }
-}
-
-struct IslandRailSettings: View {
-    @ObservedObject var preferences: CompanionPreferences
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Label("Island side buttons", systemImage: "sidebar.left").font(.headline)
-            Text("Choose six fixed positions. Selecting a button already used elsewhere swaps their positions.").font(.caption).foregroundStyle(CompanionStyle.muted)
-            HStack {
-                ForEach(IslandRailPreset.allCases) { preset in Button(preset.rawValue) { preferences.applyRailPreset(preset) }.buttonStyle(CompanionButtonStyle(compact: true)) }
-            }
-            HStack(alignment: .top, spacing: 24) {
-                ForEach(0..<2) { side in
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(side == 0 ? "Left" : "Right").font(.caption.weight(.semibold))
-                        ForEach(0..<3) { row in
-                            let slot = side * 3 + row
-                            Picker(["Top", "Middle", "Bottom"][row], selection: Binding(get: { preferences.railActions[slot] }, set: { preferences.setRail($0, at: slot) })) {
-                                ForEach(IslandRailAction.allCases) { action in Label(action.rawValue, systemImage: action.symbol).tag(action) }
-                            }
-                        }
-                    }.frame(maxWidth: .infinity)
-                }
-            }
-        }
     }
 }
 
