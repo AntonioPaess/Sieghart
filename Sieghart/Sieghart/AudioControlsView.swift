@@ -38,14 +38,14 @@ struct AudioControlsView: View {
                 }
             }
             if let error = audio.error { Text(error).font(.caption).foregroundStyle(.orange).fixedSize(horizontal: false, vertical: true).lineLimit(3).help(error) }
-        }.foregroundStyle(.white)
+        }.foregroundStyle(CompanionStyle.ink)
             .onAppear { if !preview { audio.observe() } }
             .onDisappear { if !preview { audio.stopObserving() } }
     }
     private var audioTabs: some View {
         HStack(spacing: 14) {
             ForEach(AudioPage.allCases, id: \.self) { choice in
-                Button(choice.rawValue) { page = choice }.buttonStyle(.plain).font(.caption.weight(.semibold)).foregroundStyle(page == choice ? .white : CompanionStyle.muted)
+                Button(choice.rawValue) { page = choice }.buttonStyle(.plain).font(.caption.weight(.semibold)).foregroundStyle(page == choice ? CompanionStyle.ink : CompanionStyle.muted)
                     .padding(.vertical, 7).overlay(alignment: .bottom) { if page == choice { Capsule().fill(CompanionStyle.accent).frame(height: 2) } }
             }
         }
@@ -54,7 +54,7 @@ struct AudioControlsView: View {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top, spacing: compact ? 14 : 24) {
                 volumeColumn("Master", symbol: "speaker.wave.2", value: audio.state.outputVolume, height: compact ? 80 : 160) { audio.setVolume($0) }
-                Rectangle().fill(.white.opacity(0.1)).frame(width: 1, height: compact ? 145 : 225)
+                Rectangle().fill(CompanionStyle.edge.opacity(0.1)).frame(width: 1, height: compact ? 145 : 225)
                 Group {
                     if preview { GeometryReader { geometry in applicationColumns.frame(width: geometry.size.width, alignment: .leading).clipped() } }
                     else { ScrollView(.horizontal) { applicationColumns }.scrollIndicators(.hidden) }
@@ -68,7 +68,7 @@ struct AudioControlsView: View {
                         else { Task { await audio.enableApplications() } }
                     }.buttonStyle(CompanionButtonStyle(primary: !audio.perAppEnabled, compact: compact)).disabled(audio.access == .requesting)
                     if audio.access == .requesting { ProgressView().controlSize(.small) }
-                    if audio.access == .permissionRequired || audio.access == .failed {
+                    if audio.access == .permissionRequired || audio.access == .failed || audio.perAppEnabled {
                         Button("Audio permission") { audio.openAudioPermissionSettings() }.buttonStyle(.plain).font(.caption)
                     }
                 }
@@ -99,7 +99,7 @@ struct AudioControlsView: View {
                             else { audio.setGain(unmutedGains[app.id] ?? 1, app: app) }
                         } label: { Image(systemName: gain == 0 ? "speaker.slash" : "speaker.wave.2") }.buttonStyle(.plain).disabled(!audio.perAppEnabled || app.processes.isEmpty).accessibilityLabel(gain == 0 ? "Unmute \(app.name)" : "Mute \(app.name)")
                     }.foregroundStyle(CompanionStyle.muted)
-                    Text(app.name).font(.caption2).foregroundStyle(app.processes.isEmpty ? CompanionStyle.muted : .white).lineLimit(1).frame(width: compact ? 62 : 85).help(app.name + (app.isPlaying ? " · Playing" : app.processes.isEmpty ? " · Play audio to connect" : " · Connected, currently silent"))
+                    Text(app.name).font(.caption2).foregroundStyle(app.processes.isEmpty ? CompanionStyle.muted : CompanionStyle.ink).lineLimit(1).frame(width: compact ? 62 : 85).help(app.name + (app.isPlaying ? " · Playing" : app.processes.isEmpty ? " · Play audio to connect" : " · Connected, currently silent"))
                 }.frame(width: compact ? 62 : 85)
             }
         }.padding(.horizontal, 2)
@@ -134,8 +134,8 @@ struct VerticalAudioSlider: View {
     var enabled = true
     var onChange: (Float) -> Void
     var body: some View {
-        Capsule().fill(.white.opacity(0.12))
-            .overlay(alignment: .bottom) { Rectangle().fill(enabled ? .white.opacity(0.95) : .white.opacity(0.18)).frame(height: height * CGFloat(value)) }
+        Capsule().fill(CompanionStyle.edge.opacity(0.12))
+            .overlay(alignment: .bottom) { Rectangle().fill(enabled ? CompanionStyle.edge.opacity(0.95) : CompanionStyle.edge.opacity(0.18)).frame(height: height * CGFloat(value)) }
             .frame(width: 36, height: height).clipShape(Capsule()).contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { event in if enabled { onChange(Float(min(1, max(0, 1 - event.location.y / height)))) } })
             .accessibilityElement(children: .ignore).accessibilityValue(enabled ? "\(Int(value * 100)) percent" : "Unavailable")

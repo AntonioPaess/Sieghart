@@ -32,8 +32,8 @@ struct MenuBarView: View {
                             if item == .companion { CompanionCharacter(size: 20, avatar: preferences.avatar, animates: false) }
                             else { Image(systemName: item.symbol).font(.system(size: 16)) }
                         }.frame(maxWidth: .infinity).frame(height: 34)
-                            .foregroundStyle(page == item ? CompanionStyle.accent : CompanionStyle.muted)
-                            .background(page == item ? .white.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10))
+                            .foregroundStyle(page == item ? CompanionStyle.accentInk : CompanionStyle.muted)
+                            .background(page == item ? CompanionStyle.edge.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10))
                     }.buttonStyle(.plain).help(item.rawValue).accessibilityLabel(item.rawValue).accessibilityAddTraits(page == item ? .isSelected : [])
                 }
             }.padding(4).modifier(WorkspaceSurface(radius: 14))
@@ -46,7 +46,7 @@ struct MenuBarView: View {
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(assistant.hasActiveSession ? assistant.activityTitle : "Ready when you are.").font(.headline)
                                 Text(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "A little company for your day.").font(.callout).foregroundStyle(CompanionStyle.muted)
-                                Text("\(assistant.completedSessions) sessions done").font(.caption).foregroundStyle(CompanionStyle.accent)
+                                Text("\(assistant.completedSessions) sessions done").font(.caption).foregroundStyle(CompanionStyle.accentInk)
                             }
                         }
                         HStack(spacing: 10) {
@@ -63,14 +63,14 @@ struct MenuBarView: View {
                 case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
                 }
             }.fixedSize(horizontal: false, vertical: true)
-            Divider().overlay(.white.opacity(0.1))
+            Divider().overlay(CompanionStyle.edge.opacity(0.1))
             HStack {
                 Button { openWindow(id: "main"); notch.focusMainWindow() } label: { Label("Open Sieghart", systemImage: "gearshape") }.buttonStyle(.plain)
                 Spacer()
                 Button("Quit") { NSApp.terminate(nil) }.buttonStyle(.plain)
             }.font(.caption).foregroundStyle(CompanionStyle.muted)
-        }.padding(20).frame(width: 380).foregroundStyle(.white)
-            .background { WorkspaceBackdrop() }.preferredColorScheme(.dark)
-            .environment(\.workspaceGlass, true).environment(\.islandReduceMotion, preferences.usesReducedMotion).focusEffectDisabled()
+        }.padding(20).frame(width: 380).foregroundStyle(CompanionStyle.ink)
+            .background { WorkspaceBackdrop() }.preferredColorScheme(preferences.appearance.colorScheme)
+            .environment(\.workspaceGlass, true).environment(\.surfaceGlassEnabled, preferences.windowGlass).environment(\.islandReduceMotion, preferences.usesReducedMotion).focusEffectDisabled()
     }
 }

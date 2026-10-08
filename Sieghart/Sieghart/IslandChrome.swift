@@ -37,9 +37,10 @@ struct IslandControlSurface: ViewModifier {
     var selected = false
     @Environment(\.accessibilityReduceTransparency) private var opaque
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.surfaceGlassEnabled) private var glass
     func body(content: Content) -> some View {
-        content.background(opaque ? Color(white: 0.13) : .white.opacity(selected ? 0.13 : 0.055), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay { RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(.white.opacity(contrast == .increased ? 0.5 : selected ? 0.2 : 0.09), lineWidth: 0.75).allowsHitTesting(false) }
+        content.background(!glass || opaque ? CompanionStyle.surface : CompanionStyle.edge.opacity(selected ? 0.13 : 0.055), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay { RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(CompanionStyle.edge.opacity(contrast == .increased ? 0.5 : selected ? 0.2 : 0.09), lineWidth: 0.75).allowsHitTesting(false) }
     }
 }
 
@@ -62,23 +63,30 @@ struct IslandButtonStyle: ButtonStyle {
 struct IslandBackdrop: View {
     var compact: Bool
     var stripHeight: CGFloat
+    var glassEnabled = false
     @Environment(\.accessibilityReduceTransparency) private var opaque
     @Environment(\.islandPreview) private var preview
+    @Environment(\.colorScheme) private var scheme
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                if compact || opaque { Color.black }
+                if compact { Color.black }
+                else if !glassEnabled || opaque {
+                    (scheme == .dark ? Color.black : CompanionStyle.background)
+                    VStack(spacing: 0) { Color.black.frame(height: stripHeight); Spacer(minLength: 0) }
+                }
                 else {
-                    if preview { Color(white: 0.34) }
+                    if preview { Color(white: scheme == .dark ? 0.34 : 0.85) }
                     else { IslandGlassLens() }
-                    LinearGradient(stops: Self.stops(height: geometry.size.height, strip: stripHeight), startPoint: .top, endPoint: .bottom)
+                    LinearGradient(stops: Self.stops(height: geometry.size.height, strip: stripHeight, light: scheme == .light), startPoint: .top, endPoint: .bottom)
                 }
             }
         }.allowsHitTesting(false).accessibilityHidden(true)
     }
-    static func stops(height: CGFloat, strip: CGFloat) -> [Gradient.Stop] {
+    static func stops(height: CGFloat, strip: CGFloat, light: Bool = false) -> [Gradient.Stop] {
         let camera = min(1, max(0, strip / max(1, height)))
-        return [.init(color: .black, location: 0), .init(color: .black, location: camera), .init(color: .black.opacity(0.88), location: min(1, camera + 0.12)), .init(color: .black.opacity(0.52), location: 1)]
+        let tint = light ? Color.white : .black
+        return [.init(color: .black, location: 0), .init(color: .black, location: camera), .init(color: tint.opacity(0.88), location: min(1, camera + 0.12)), .init(color: tint.opacity(0.52), location: 1)]
     }
 }
 
@@ -92,13 +100,14 @@ private struct IslandGlassLens: View {
 }
 
 private struct IslandBlur: NSViewRepresentable {
+    @Environment(\.colorScheme) private var scheme
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
         view.material = .hudWindow; view.blendingMode = .behindWindow; view.state = .active
-        view.appearance = NSAppearance(named: .darkAqua)
+        view.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua)
         return view
     }
-    func updateNSView(_ view: NSVisualEffectView, context: Context) { }
+    func updateNSView(_ view: NSVisualEffectView, context: Context) { view.appearance = NSAppearance(named: scheme == .dark ? .darkAqua : .aqua) }
 }
 
 // The native window reserves the whole transition. Only the silhouette moves:
@@ -122,7 +131,7 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
 
 @MainActor final class IslandWindowCanvas<Content: View>: NSView {
     private let host: NSHostingView<Content>
-    private let backdrop = NSHostingView(rootView: IslandBackdrop(compact: true, stripHeight: 0))
+    private let backdrop = NSHostingView(rootView: AnyView(IslandBackdrop(compact: true, stripHeight: 0)))
     private let outline = CAShapeLayer()
     private let maskLayer = CAShapeLayer()
     private var surface: CGSize = .zero
@@ -144,7 +153,11 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
     var currentSurface: CGSize { surface }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
-    func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, settled: @escaping @MainActor () -> Void) {
+    func updateAppearance(compact: Bool, stripHeight: CGFloat, appearance: AppAppearance, glassEnabled: Bool) {
+        backdrop.rootView = AnyView(IslandBackdrop(compact: compact, stripHeight: stripHeight, glassEnabled: glassEnabled).preferredColorScheme(appearance.colorScheme))
+    }
+
+    func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, appearance: AppAppearance = .system, glassEnabled: Bool = false, settled: @escaping @MainActor () -> Void) {
         completion?.cancel()
         isDeparting = closing
         let previous = surface == .zero ? CGSize(width: max(180, target.cutoutWidth), height: max(1, target.cutoutHeight)) : surface
@@ -156,7 +169,7 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
         setFrameSize(reserved)
         backdrop.frame = bounds
         host.frame = CGRect(x: (reserved.width - target.width - gutter * 2) / 2, y: 0, width: target.width + gutter * 2, height: target.height + extra)
-        backdrop.rootView = IslandBackdrop(compact: target.compact || closing, stripHeight: target.cutoutHeight)
+        updateAppearance(compact: target.compact || closing, stripHeight: target.cutoutHeight, appearance: appearance, glassEnabled: glassEnabled)
         let endPath = Self.path(size: target.size, canvasWidth: reserved.width)
         var translation = CGAffineTransform(translationX: (reserved.width - previousCanvasWidth) / 2, y: 0)
         let visiblePath = maskLayer.presentation()?.path?.copy(using: &translation)

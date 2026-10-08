@@ -19,7 +19,7 @@ xcrun swiftc -swift-version 6 \
   Sieghart/Sieghart/AssistantCore.swift Sieghart/Sieghart/SensorEngine.swift \
   Sieghart/Sieghart/IslandChrome.swift Sieghart/Sieghart/DesignSystem.swift Sieghart/Sieghart/CompanionAvatars.swift \
   Sieghart/Sieghart/NotchWidget.swift Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/CodexUsageView.swift Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/AIUsageView.swift \
+  Sieghart/Sieghart/CodexUsageView.swift Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift Sieghart/Sieghart/AIUsageView.swift \
   Sieghart/Sieghart/AIActivity.swift Sieghart/Sieghart/AIActivityView.swift Sieghart/Sieghart/OnboardingView.swift \
   Sieghart/Sieghart/ActivationCore.swift Sieghart/Sieghart/KeyboardShortcuts.swift \
   Sieghart/Sieghart/VoiceCommands.swift Sieghart/Sieghart/VoiceCallbacks.swift \
@@ -33,21 +33,27 @@ xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
 "$check_dir/usage"
 
 xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/AIActivity.swift Sieghart/Tests/TokenSpendingChecks.swift \
+  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift Sieghart/Sieghart/AIActivity.swift Sieghart/Tests/TokenSpendingChecks.swift \
   -o "$check_dir/spending"
 "$check_dir/spending"
 
 xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/AIActivity.swift \
+  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift Sieghart/Sieghart/AIActivity.swift \
   Sieghart/Sieghart/IslandChrome.swift Sieghart/Sieghart/DesignSystem.swift Sieghart/Sieghart/CompanionAvatars.swift \
   Sieghart/Tests/AIActivityChecks.swift -o "$check_dir/activity"
 "$check_dir/activity"
 
 xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift \
+  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift \
   Sieghart/Sieghart/AIActivity.swift Sieghart/Tests/PricingChecks.swift -o "$check_dir/pricing"
 "$check_dir/pricing"
 
 xcrun swiftc -swift-version 6 Sieghart/Sieghart/AudioEngine.swift \
   Sieghart/Tests/AudioChecks.swift -o "$check_dir/audio"
 "$check_dir/audio"
+
+xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
+  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift \
+  Sieghart/Sieghart/AIActivity.swift Sieghart/Sieghart/UsageImports.swift \
+  Sieghart/Tests/UsageImportChecks.swift -o "$check_dir/imports"
+"$check_dir/imports"

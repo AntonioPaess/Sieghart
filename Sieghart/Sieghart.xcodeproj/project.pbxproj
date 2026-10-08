@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000080 /* UsageImports.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000081 /* UsageImports.swift */; };
+		A10000000000000000000078 /* AppLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000079 /* AppLifecycle.swift */; };
 		A10000000000000000000076 /* AudioControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000077 /* AudioControlsView.swift */; };
 		A10000000000000000000074 /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000075 /* AudioEngine.swift */; };
 		A10000000000000000000072 /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000073 /* WorkspaceView.swift */; };
@@ -38,6 +40,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000081 /* UsageImports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageImports.swift; sourceTree = "<group>"; };
+		A10000000000000000000079 /* AppLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLifecycle.swift; sourceTree = "<group>"; };
 		A10000000000000000000077 /* AudioControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioControlsView.swift; sourceTree = "<group>"; };
 		A10000000000000000000075 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		A10000000000000000000073 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
@@ -94,6 +98,8 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000005 /* SieghartApp.swift */,
+				A10000000000000000000079 /* AppLifecycle.swift */,
+				A10000000000000000000081 /* UsageImports.swift */,
 				A10000000000000000000073 /* WorkspaceView.swift */,
 				A10000000000000000000077 /* AudioControlsView.swift */,
 				A10000000000000000000075 /* AudioEngine.swift */,
@@ -201,6 +207,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* SieghartApp.swift in Sources */,
+				A10000000000000000000078 /* AppLifecycle.swift in Sources */,
+				A10000000000000000000080 /* UsageImports.swift in Sources */,
 				A10000000000000000000072 /* WorkspaceView.swift in Sources */,
 				A10000000000000000000076 /* AudioControlsView.swift in Sources */,
 				A10000000000000000000074 /* AudioEngine.swift in Sources */,

@@ -1,8 +1,12 @@
 # Sieghart bug tracker
 
+## Acceptance — October 8, 2026
+
+After receiving the manual test instructions, the user reported “Todos passaram” (all passed). SG-001 through SG-005 are resolved on this report. The assistant did not run live shortcuts, microphone or audio tests. Investigation notes below preserve the earlier pending statuses as dated history; reopen the specific issue if a regression occurs. See [Sprint 3 accepted closeout](Design/sprint-3-closeout.md).
+
 ## SG-001 — Shortcut intermittently stops responding
 
-**Priority:** high. **Reported:** October 5, 2026. **Status:** recovery improvements and listen-only session event tap implemented; the reported intermittent case remains open for validation on the Mac.
+**Priority:** high. **Reported:** October 5, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 **Observed:** both the companion and voice shortcuts sometimes stop working and do not recover, confirmed by the user. The user confirmed switching desktops/Spaces and entering full-screen on the same Mac as a trigger. The investigation prioritizes shared capture/registration state and overlay visibility; a modifier-monitor-only interruption would not explain the default regular-key companion binding by itself.
 
@@ -32,10 +36,29 @@ Headless checks exercise both backend orders, exact chord matching, repeated ges
 
 Use each configured shortcut before and after leaving an unfinished recorder, switching apps and full-screen Spaces, locking/unlocking, and sleep/wake. If it stops again, record which binding failed, the foreground app, and the status shown in Activation. Confirm both regular-key and modifier-only bindings recover. Keep this issue open until the reported failure is reproduced or the recovery is confirmed on the Mac.
 
+### Red window-close clarification — October 7
+
+The user confirmed closing the main window with its red button, rather than Quit. `ResidentAppDelegate` now retains activation independently of that window and explicitly returns false for last-window termination. Closing/hiding a window cancels an abandoned recorder and checks shortcut recovery. The app stays resident; explicit Quit still stops it. Isolated checks post window-close notifications and route the companion through Carbon and monitor entry points without registering live shortcuts. The actual window-close/voice/full-screen case remains open until user acceptance. This is lifecycle hardening, not a proven reproduction of the physical failure.
+
+[Apple's last-window lifecycle contract](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/applicationshouldterminateafterlastwindowclosed(_:)).
+
+
+
+### Renewed whole-Mac report — October 7
+
+The user reports that global delivery is still not resolved after the previous lifecycle changes. No physical reproduction was performed. This round separates input setup from overlay visibility:
+
+- Install/register on the system dispatcher after AppKit launch; the resident delegate sets accessory policy and owns activation after main-window close.
+- Default voice changes to Control + Option + V, using a regular-key system hotkey without a keyboard-monitoring grant. Saved custom modifier-only chords remain intact; a default-key button is offered explicitly. Foreground-only/unavailable monitoring is shown accurately.
+- Carbon, CG and AppKit delivery use event timestamps rather than queued callback arrival, with received source shown in Activation. Reverse timestamp delivery is also deduplicated, preventing a second backend from immediately closing the island. The CG callback queues work instead of running speech preparation in its callback.
+- Both overlays choose the higher screen-saver window level while the foreground window bounds cover the notch display; normal desktop ordering uses statusBar + 1. Only window bounds metadata is examined, not screen pixels. Lock/session resignation and sleep stop voice and order out both panels. Space/app changes refresh ordering without reopening a dismissed page. This follows [Apple DTS's tested full-screen overlay setup](https://developer.apple.com/forums/thread/826308).
+
+Tests cover default-key and saved modifier choices, simulated window-close delivery, deduplication, and fabricated full-display bounds/levels. They do not register physical shortcuts or test WindowServer delivery. User acceptance must confirm Control + Option + S and Control + Option + V after red window-close, in a different desktop and with another app full screen. Compare the Last received/backend status when diagnosing a remaining failure. If a saved modifier-only chord is retained, verify its grant/status separately. SG-001 remains open.
+
 
 ## SG-002 — Island click remains unreliable
 
-**Priority:** high. **Reported:** October 6, 2026. **Status:** native first-click and toggle corrections implemented; physical Mac acceptance pending.
+**Priority:** high. **Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 The user reported that clicking still did not behave as expected. The previous activation handler always opened rather than toggled, queued its action asynchronously, used a nearly invisible window alpha, and did not explicitly accept first mouse when another app held focus. The native target covered only the camera gap rather than both compact wings. SwiftUI button labels did not explicitly cover transparent spacing.
 
@@ -53,7 +76,7 @@ Pointer exit tolerance is now 800 ms; a keyboard reveal provides four seconds to
 
 ## SG-003 — Compact island resembles a selected control
 
-**Reported:** October 6, 2026, in IMG_6234.HEIC. **Status:** contour removed; offscreen hover render verified.
+**Reported:** October 6, 2026, in IMG_6234.HEIC. **Status:** resolved — contour removed; user confirmed all manual acceptance tests passed October 8, 2026.
 
 The blue/lilac edge was the SwiftUI hover stroke around the compact shell. That stroke is removed, and the native canvas hides its outline whenever compact or departing. Hover now uses a subtle happy companion expression in idle, AI and timer states. The camera band stays black; click and keyboard actions retain their existing routes. [Production hover preview](Design/Concepts/compact-hover-preview.png). Physical notch and full-screen behavior remain tracked in SG-001/SG-002.
 
@@ -66,7 +89,7 @@ The avatar's initial focus stroke is removed from custom interaction; the native
 
 ## SG-004 — App mixer does not request permission / WhatsApp gain ineffective
 
-**Reported:** October 6, 2026. **Status:** concrete packaging and routing corrections implemented; real playback acceptance pending.
+**Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 The compiled Info.plist omitted the system-audio privacy description even though the project contained an INFOPLIST_KEY setting. Enable only flipped a Boolean and first tap creation could fail during rigid device-stream format checks before reaching the permission path. The explicit Info.plist is now merged into Debug/Release. A temporary unmuted tap-only aggregate starts the public permission flow on Enable, with request/failure/retry/settings state and cancellation protection. No saved gain applies before that succeeds.
 
@@ -76,6 +99,15 @@ Mocked checks cover permission request, denial/retry/cancel, saved gain gating, 
 
 ## SG-005 — Oversized menu, bright top seam, static sleep
 
-**Reported:** October 6, 2026. **Status:** corrections implemented and offscreen previews verified; physical seam acceptance pending.
+**Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 Menu width decreased from 560 to 380 points; natural subpage heights replace the fixed content area. Companion height is about 297 versus 548 points. Compact child controls preserve navigation and timer actions. Native island positioning overlaps the screen edge by one backing pixel and removes the contour stroke that could expose the bright seam. Sleeping motion now visibly breathes/sways and floats a fading “z” for every avatar. Isolated motion checks cover all six and disabled/reduced-motion stillness. The production sleep GIF demonstrates the new movement; it is design documentation outside app resources.
+
+
+## Sprint 3 implementation closeout — October 7, 2026
+
+The user reconfirmed **keep the app closed; I will test**. Nine isolated groups, signed universal build/package checks and offscreen screens pass. Real read-only Codex quota/counter sources are available; no fresh Claude desktop plan history exists here. [Exact manual acceptance](Design/sprint-3-closeout.md) now lists the remaining checks. SG-001/SG-002/SG-004 remain open for those results, and SG-005's physical top seam remains unverified.
+
+SG-004 follow-up: permission preparation now uses a temporary unmuted global tap, replacing an empty inclusion list that captures no processes. Same-ID output sample-rate/channel/UID changes tear down and rebuild routes. A restarted helper clears a previous failed-route suppression; disappearing audio processes release stale routes. Permission settings remain accessible after Enable, because startup success alone is not proof of audible gain control. Mock denial/retry/format-change cases pass; actual macOS permission and WhatsApp/AirPods playback have not been tested.
+
+Voice search has a real encoded default-browser action, actual charges have a reviewed CSV/JSON import/export adapter, expanded history includes archives, and automatic Claude desktop percentages have validated versioned parsing/freshness. Those implementation items are complete; actual speech and file-picker interaction join the user acceptance pass.

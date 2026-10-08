@@ -54,5 +54,17 @@
     "source_filename": "Captura de Tela 2026-10-06 a\u0300s 21.49.36.png",
     "description": "Sleeping avatar appears static; repeated fullscreen shortcut and focus-border report",
     "sha256": "e98b7dce6876a881c80312de15ef424ed596a4e024aa5129ab84557a9d89f53b"
+  },
+  {
+    "file": "2026-10-06-22-39-27-avatar-quality-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 22.39.27.png",
+    "description": "Appearance gallery appears flat or enlarged from low-resolution artwork",
+    "sha256": "e2b864689e50f8586817f951844f1a2a5c56d25867fa4b17843ee09a996a572a"
+  },
+  {
+    "file": "2026-10-06-22-39-37-companion-quality-before.png",
+    "source_filename": "Captura de Tela 2026-10-06 a\u0300s 22.39.37.png",
+    "description": "Companion surface lacks the depth and sharp finish of the approved white board",
+    "sha256": "3df074052420f304e631b040616b9f37d4bebc1e3ff555f97ff5574b79d98654"
   }
 ]

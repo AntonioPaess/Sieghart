@@ -25,6 +25,15 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Start focus for -5 minutes") == nil)
         precondition(FocusVoiceParser.parse("Start focus for twenty-five minutes") == .start(minutes: 25))
         precondition(FocusVoiceParser.parse("Show and hide") == nil)
+        precondition(FocusVoiceParser.parse("search for Open Safari and start focus") == .search(query: "Open Safari and start focus"))
+        precondition(FocusVoiceParser.parse("Pesquise receitas de pão & café") == .search(query: "receitas de pão & café"))
+        precondition(FocusVoiceParser.parse("Não pesquise receitas") == nil)
+        let query = "C++ & café #5; $(touch /tmp/nope)"
+        let search = BrowserSearch.url(for: query)!
+        precondition(URLComponents(url: search, resolvingAgainstBaseURL: false)?.queryItems?.first?.value == query)
+        precondition(search.host == "duckduckgo.com" && search.scheme == "https")
+        precondition(BrowserSearch.url(for: String(repeating: "a", count: 501)) == nil)
+        precondition(BrowserSearch.url(for: "a\nb") == nil)
         precondition(FocusVoiceParser.parse("Open Warp") == .openApp(name: "warp"))
         precondition(FocusVoiceParser.parse("Open Safari and search YouTube") == nil)
         precondition(FocusVoiceParser.parse("Abra o WhatsApp") == .openApp(name: "whatsapp"))
@@ -43,12 +52,12 @@ struct InteractionChecks {
         precondition(tracker.update(.option) == nil)
         precondition(tracker.update([.option, .command]) == nil)
         precondition(tracker.update(.command) == nil)
-        precondition(tracker.update([]) == ShortcutChord.voice.modifiers)
+        precondition(tracker.update([]) == ShortcutChord.legacyVoice.modifiers)
         precondition(tracker.update([]) == nil) // One release, one activation.
         _ = tracker.update([.option, .command]); tracker.keyPressed()
         precondition(tracker.update([]) == nil) // A regular keyboard shortcut isn't a voice trigger.
         _ = tracker.update([.option, .command, .shift])
-        precondition(tracker.update([]) != ShortcutChord.voice.modifiers)
+        precondition(tracker.update([]) != ShortcutChord.legacyVoice.modifiers)
 
         let suite = "Sieghart.InteractionChecks.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
@@ -56,6 +65,23 @@ struct InteractionChecks {
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
         let assistant = AssistantViewModel(defaults: defaults, now: { clock }, schedulesTimer: false)
         let preferences = CompanionPreferences(defaults: defaults)
+        precondition(preferences.appearance == .system && !preferences.windowGlass && !preferences.islandGlass)
+        for theme in AppAppearance.allCases {
+            preferences.appearance = theme
+            precondition(CompanionPreferences(defaults: defaults).appearance == theme)
+        }
+        preferences.windowGlass = true
+        precondition(CompanionPreferences(defaults: defaults).windowGlass && !CompanionPreferences(defaults: defaults).islandGlass)
+        preferences.windowGlass = false; preferences.islandGlass = true
+        precondition(!CompanionPreferences(defaults: defaults).windowGlass && CompanionPreferences(defaults: defaults).islandGlass)
+        preferences.islandGlass = false; preferences.appearance = .system
+        let display = CGRect(x: -1440, y: 0, width: 1440, height: 900)
+        precondition(NotchOverlayPolicy.coversDisplay(display, display: display))
+        precondition(!NotchOverlayPolicy.coversDisplay(CGRect(x: 0, y: 0, width: 1440, height: 900), display: display))
+        precondition(!NotchOverlayPolicy.coversDisplay(CGRect(x: -1440, y: 24, width: 1440, height: 876), display: display))
+        precondition(!NotchOverlayPolicy.coversDisplay(.zero, display: display))
+        precondition(NotchOverlayPolicy.level(fullScreen: true) == .screenSaver)
+        precondition(NotchOverlayPolicy.level(fullScreen: false).rawValue > NSWindow.Level.statusBar.rawValue)
         for avatar in CompanionAvatar.allCases {
             guard let icon = CompanionArtwork.menuBarImage(for: avatar) else { fatalError("Missing vector menu image") }
             precondition(icon.size == NSSize(width: 22, height: 22))
@@ -107,8 +133,9 @@ struct InteractionChecks {
         preferences.avatar = .crtBuddy
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name })
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query })
         notch.activation = activation
+        precondition(activation.voiceShortcut == .voice && activation.voiceShortcut?.keyCode != nil)
         // A first click from another app must reach both native activation and
         // the SwiftUI controls. These views stay offscreen; no window is opened.
         let hitZone = HoverZoneView(frame: NSRect(x: 0, y: 0, width: 240, height: 36))
@@ -202,6 +229,18 @@ struct InteractionChecks {
         precondition(notch.isVisible && activation.lastShortcutActivation != nil)
         notch.hide()
         activation.recordingShortcut = .companion
+        // Closing the settings surface during recording must restore both
+        // event backends. Feed its notification without opening a real window.
+        NotificationCenter.default.post(name: NSWindow.willCloseNotification, object: nil)
+        try await Task.sleep(for: .milliseconds(220))
+        precondition(activation.recordingShortcut == nil)
+        activation.receiveHotkey(.companion, eventTime: 210)
+        precondition(notch.isVisible, "Companion activation must survive closing the settings window")
+        notch.hide()
+        activation.receiveShortcutEvent(keyCode: ShortcutChord.companion.keyCode, flags: ShortcutChord.companion.flags, eventTime: 211)
+        precondition(notch.isVisible, "The monitor fallback must survive window closure too")
+        notch.hide()
+        activation.recordingShortcut = .companion
         activation.recoverShortcuts()
         precondition(activation.recordingShortcut == nil)
         precondition(activation.companionShortcut == .companion && activation.voiceShortcut == .voice)
@@ -210,13 +249,19 @@ struct InteractionChecks {
         notch.hide()
 
         let custom = ShortcutChord(keyCode: 18, modifiers: NSEvent.ModifierFlags([.command, .option, .shift]).rawValue, keyLabel: "1")
+        activation.setShortcut(.legacyVoice, for: .voice)
+        precondition(ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false).voiceShortcut == .legacyVoice)
         activation.setShortcut(custom, for: .voice)
         let restored = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
         precondition(restored.voiceShortcut == custom)
         activation.setShortcut(activation.companionShortcut, for: .voice)
         precondition(activation.voiceShortcut == custom) // Duplicate bindings are rejected.
 
+        activation.executeVoiceCommand("search for café & Swift")
+        try await Task.sleep(for: .milliseconds(80))
+        precondition(activation.commandAcknowledged && activation.voiceStatus == "Search opened · Fixture café & Swift" && notch.presentation == .home)
         activation.executeVoiceCommand("Open Safari")
+        precondition(notch.presentation == .home && activation.voicePresented && activation.transcript == "Open Safari")
         try await Task.sleep(for: .milliseconds(20))
         precondition(activation.commandAcknowledged && activation.voiceStatus == "Opened Fixture safari", "App launch commands use the injected local launcher, never a real app in tests")
         activation.executeVoiceCommand("Start focus for 50 minutes")
@@ -229,6 +274,12 @@ struct InteractionChecks {
         activation.executeVoiceCommand("Don't start focus for 10 minutes")
         precondition(assistant.focusMinutes == 50) // Unsupported speech never changes the session.
         precondition(!activation.commandAcknowledged)
+        precondition(notch.presentation == .home && activation.voicePresented)
+        activation.cancelVoiceCommand(keepCompanionVisible: true)
+        precondition(notch.presentation == .home && notch.isVisible && !activation.voicePresented)
+        activation.executeVoiceCommand("Unsupported fixture command")
+        notch.hide()
+        precondition(!activation.voicePresented && activation.transcript.isEmpty)
 
         notch.showTools()
         precondition(notch.presentation == .tools && notch.isVisible)
@@ -311,6 +362,8 @@ struct InteractionChecks {
         activation.receiveHotkey(.companion, eventTime: 101.01)
         precondition(!notch.isVisible)
         var gate = ShortcutDeliveryGate()
+        precondition(gate.accept(.companion, source: .monitor, at: 90.01))
+        precondition(!gate.accept(.companion, source: .carbon, at: 90), "Reverse timestamp delivery must not immediately close a just-opened island")
         precondition(gate.accept(.voice, source: .monitor, at: 1))
         precondition(!gate.accept(.voice, source: .carbon, at: 1.01))
         precondition(gate.accept(.voice, source: .monitor, at: 1.1))

@@ -23,7 +23,7 @@ struct TimerToolsView: View {
                 ForEach(TimerToolMode.allCases, id: \.self) { option in
                     Button { assistant.selectTimerMode(option) } label: {
                         Text(option.title).font(.system(size: compact ? 11 : 13, weight: .semibold))
-                            .foregroundStyle(mode == option ? .white : CompanionStyle.muted)
+                            .foregroundStyle(mode == option ? CompanionStyle.ink : CompanionStyle.muted)
                             .padding(.vertical, 9)
                             .overlay(alignment: .bottom) { if mode == option { Capsule().fill(CompanionStyle.accent).frame(height: 2) } }
                     }.buttonStyle(.plain).accessibilityAddTraits(mode == option ? .isSelected : [])
@@ -58,7 +58,7 @@ struct TimerToolsView: View {
                     HStack(spacing: 12) {
                         ForEach([5, 15, 30, 60], id: \.self) { value in
                             Button("\(value) min") { minutes = Double(value) }
-                                .buttonStyle(.plain).font(.caption.weight(.medium)).foregroundStyle(Int(minutes) == value ? CompanionStyle.accent : CompanionStyle.muted)
+                                .buttonStyle(.plain).font(.caption.weight(.medium)).foregroundStyle(Int(minutes) == value ? CompanionStyle.accentInk : CompanionStyle.muted)
                         }
                         Spacer()
                         if clock.hasSession && clock.mode != mode { Text("Start replaces the active stopwatch.").font(.caption2).foregroundStyle(CompanionStyle.muted) }
@@ -93,7 +93,7 @@ struct TimerToolsView: View {
             }.frame(height: compact ? 65 : 88)
             if mode != .stopwatch {
                 GeometryReader { geometry in
-                    Capsule().fill(.white.opacity(0.12)).overlay(alignment: .leading) {
+                    Capsule().fill(CompanionStyle.edge.opacity(0.12)).overlay(alignment: .leading) {
                         Capsule().fill(CompanionStyle.accent).frame(width: geometry.size.width * (mode == .pomodoro ? assistant.pomodoroProgress : clock.progress))
                     }
                 }.frame(height: 5).accessibilityLabel("Time remaining").accessibilityValue("\(Int((mode == .pomodoro ? assistant.pomodoroProgress : clock.progress) * 100)) percent")
@@ -111,14 +111,14 @@ struct TimerToolsView: View {
             }
         }
     }
-    private func digits(_ value: String) -> some View { Text(value).font(.system(size: compact ? 28 : preferences.compactTimer ? 32 : 40, weight: .light, design: .rounded)).monospacedDigit().foregroundStyle(CompanionStyle.accent).lineLimit(1).minimumScaleFactor(0.7) }
+    private func digits(_ value: String) -> some View { Text(value).font(.system(size: compact ? 28 : preferences.compactTimer ? 32 : 40, weight: .light, design: .rounded)).monospacedDigit().foregroundStyle(CompanionStyle.accentInk).lineLimit(1).minimumScaleFactor(0.7) }
     private func choice(_ title: String, selection: Binding<Int>, values: [Int], suffix: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.caption2).foregroundStyle(CompanionStyle.muted)
-            if preview { Text("\(selection.wrappedValue)\(suffix) ⌄").font(.callout.weight(.semibold)).foregroundStyle(CompanionStyle.accent) }
+            if preview { Text("\(selection.wrappedValue)\(suffix) ⌄").font(.callout.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk) }
             else {
                 Menu { ForEach(values, id: \.self) { value in Button("\(value)\(suffix)") { selection.wrappedValue = value } } } label: {
-                    HStack(spacing: 5) { Text("\(selection.wrappedValue)\(suffix)"); Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold)) }.font(.callout.weight(.semibold)).foregroundStyle(CompanionStyle.accent)
+                    HStack(spacing: 5) { Text("\(selection.wrappedValue)\(suffix)"); Image(systemName: "chevron.down").font(.system(size: 8, weight: .semibold)) }.font(.callout.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk)
                 }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel(title)
             }
         }.frame(maxWidth: .infinity, alignment: .leading)
@@ -148,7 +148,7 @@ struct DurationRuler: View {
                                 .frame(width: 3, height: index.isMultiple(of: 5) ? 40 : 32).frame(maxWidth: .infinity)
                         }
                     }
-                    Image(systemName: "triangle.fill").font(.system(size: 10)).foregroundStyle(CompanionStyle.accent)
+                    Image(systemName: "triangle.fill").font(.system(size: 10)).foregroundStyle(CompanionStyle.accentInk)
                         .offset(x: max(0, (geometry.size.width - 10) * fraction), y: 30)
                 }.frame(height: 44).contentShape(Rectangle())
                     .gesture(DragGesture(minimumDistance: 0).onChanged { event in

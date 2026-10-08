@@ -111,6 +111,8 @@ struct RecordedCharge: Codable, Identifiable {
     let amount: Decimal
     let currency: SpendCurrency
     let kind: SpendKind
+    var externalID: String? = nil
+    var source: String? = nil
 }
 
 struct AIUsageLedger: Codable {
@@ -128,29 +130,31 @@ struct AIUsageLedger: Codable {
     }
 }
 
-// Claude's individual subscription quotas have no public local equivalent to
-// Codex's account/rateLimits/read. An explicit dated report can supply them.
-struct ClaudeLimitsReport: Codable {
+// Claude desktop history supplies measured percentages; renewal dates are
+// absent in that source. Dated reports can supply explicit renewal dates.
+struct ClaudeLimitsReport: Codable, Sendable {
     let capturedAt: Date
     let primary: ReportWindow?
     let secondary: ReportWindow?
-    struct ReportWindow: Codable {
+    var scoped: [ReportWindow]? = nil
+    struct ReportWindow: Codable, Sendable {
         let usedPercent: Double
         let windowDurationMins: Int
-        let resetsAt: TimeInterval
+        let resetsAt: TimeInterval?
+        var scope: String? = nil
         var window: CodexQuotaWindow { CodexQuotaWindow(usedPercent: usedPercent, windowDurationMins: windowDurationMins, resetsAt: resetsAt) }
     }
     func isValid(now: Date = .now) -> Bool {
-        let windows = [primary, secondary].compactMap { $0 }
+        let windows = [primary, secondary].compactMap { $0 } + (scoped ?? [])
         return capturedAt <= now.addingTimeInterval(300) && !windows.isEmpty && windows.allSatisfy {
-            $0.usedPercent.isFinite && (0...100).contains($0.usedPercent) && $0.windowDurationMins > 0 && $0.resetsAt.isFinite && $0.resetsAt > 0
+            $0.usedPercent.isFinite && (0...100).contains($0.usedPercent) && $0.windowDurationMins > 0 && ($0.resetsAt.map { $0.isFinite && $0 > 0 } ?? true)
         }
     }
 }
 
 @MainActor final class AIUsageModel: ObservableObject {
     @Published var claudeEnabled: Bool {
-        didSet { readRevision += 1; defaults.set(claudeEnabled, forKey: "integrations.claudeUsage"); if !claudeEnabled { tokens[.claude] = nil } }
+        didSet { readRevision += 1; defaults.set(claudeEnabled, forKey: "integrations.claudeUsage"); if !claudeEnabled { tokens[.claude] = nil; automaticClaudeReport = nil; claudeHistoryStatus = "Claude monitoring is off" } }
     }
     @Published var automaticDetection: Bool { didSet { defaults.set(automaticDetection, forKey: "integrations.autoDetect") } }
     @Published private(set) var analytics = AIAnalytics()
@@ -168,16 +172,29 @@ struct ClaudeLimitsReport: Codable {
     private var priceAttempts: [AIProvider: Date] = [:]
     private var exchangeAttempt = Date.distantPast
     @Published private(set) var claudeReport: ClaudeLimitsReport?
+    @Published private(set) var automaticClaudeReport: ClaudeLimitsReport?
+    @Published private(set) var claudeHistoryStatus = "No recent Claude desktop reading"
+    @Published private(set) var historyIsReading = false
+    @Published private(set) var historyStatus = "Recent sessions · Partial local history"
+    private let readClaude: @Sendable () throws -> ClaudeLimitsReport?
+    var effectiveClaudeReport: ClaudeLimitsReport? {
+        guard claudeEnabled else { return nil }
+        if let automatic = automaticClaudeReport, Date().timeIntervalSince(automatic.capturedAt) < 1800,
+           claudeReport.map({ $0.capturedAt <= automatic.capturedAt }) ?? true { return automatic }
+        return claudeReport
+    }
+    var claudeSource: String { effectiveClaudeReport?.capturedAt == automaticClaudeReport?.capturedAt && effectiveClaudeReport != nil ? "Claude desktop · Local history · Renewal time unavailable" : "Imported dated report" }
+    private var historyTask: Task<Void, Never>?
     private var readRevision = 0
     private var monitorTask: Task<Void, Never>?
     private let analyticsReader = AIAnalyticsReader()
     private let defaults: UserDefaults
     private let read: @Sendable (AIProvider) -> LocalTokenUsage?
-    init(defaults: UserDefaults = .standard, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
+    init(defaults: UserDefaults = .standard, readClaude: @escaping @Sendable () throws -> ClaudeLimitsReport? = { try ClaudePlanHistory.read() }, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
         let configured = ProcessInfo.processInfo.environment["CODEX_HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
         return LocalTokenReader.read(provider, codexHome: configured)
     }) {
-        self.defaults = defaults; self.read = read
+        self.defaults = defaults; self.read = read; self.readClaude = readClaude
         let cache = defaults.data(forKey: "integrations.modelPrices").flatMap { try? JSONDecoder().decode(PriceCatalog.self, from: $0) }
         priceCatalog = initialPrices ?? cache ?? PriceCatalog.bundled()
         exchangeQuote = defaults.data(forKey: "integrations.exchangeQuote").flatMap { try? JSONDecoder().decode(ExchangeQuote.self, from: $0) }.flatMap { $0.valid ? $0 : nil }
@@ -192,14 +209,19 @@ struct ClaudeLimitsReport: Codable {
         guard !isRefreshing else { return }
         isRefreshing = true; defer { isRefreshing = false }
         let revision = readRevision
-        let reader = read, providers = AIProvider.allCases.filter { $0 == .codex ? codexEnabled : claudeEnabled }
+        let reader = read, claudeReader = readClaude, readsClaude = claudeEnabled, providers = AIProvider.allCases.filter { $0 == .codex ? codexEnabled : claudeEnabled }
         let result = await Task.detached(priority: .utility) {
             var result: [AIProvider: LocalTokenUsage] = [:]
             for provider in providers { result[provider] = reader(provider) }
-            return result
+            let quota: ClaudeLimitsReport?, failure: String?
+            do { quota = readsClaude ? try claudeReader() : nil; failure = nil }
+            catch { quota = nil; failure = error.localizedDescription }
+            return (result, quota, failure)
         }.value
         guard !Task.isCancelled, revision == readRevision else { return }
-        tokens = result.filter { $0.key != .claude || claudeEnabled }; updatedAt = .now
+        automaticClaudeReport = claudeEnabled ? result.1 : nil
+        claudeHistoryStatus = result.2 ?? (result.1 == nil ? "No recent Claude desktop reading. Open Claude and enable its usage menu to refresh the local history." : "Claude desktop local history")
+        tokens = result.0.filter { $0.key != .claude || claudeEnabled }; updatedAt = .now
     }
 
     func startMonitoring(codex: CodexUsageModel) {
@@ -238,7 +260,22 @@ struct ClaudeLimitsReport: Codable {
             }
         }
     }
-    func stopMonitoring() { monitorTask?.cancel(); monitorTask = nil }
+    func stopMonitoring() { monitorTask?.cancel(); monitorTask = nil; historyTask?.cancel(); historyTask = nil }
+    func expandHistory(codexEnabled: Bool) {
+        guard !historyIsReading else { return }
+        historyIsReading = true
+        let revision = readRevision, providers = AIProvider.allCases.filter { $0 == .codex ? codexEnabled : claudeEnabled }
+        historyTask = Task { [weak self] in
+            guard let self else { return }
+            let result = await self.analyticsReader.readFullHistory(providers: providers)
+            defer { self.historyIsReading = false; self.historyTask = nil }
+            guard !Task.isCancelled, revision == self.readRevision else { return }
+            self.analytics = result
+            self.activityUpdatedAt = .now
+            self.historyStatus = "Up to 1 year · \(result.scannedFiles) local files · \(result.points.count.formatted()) records · Partial local history"
+        }
+    }
+    func cancelHistory() { historyTask?.cancel() }
     func disable(_ provider: AIProvider, codex: CodexUsageModel) {
         automaticDetection = false; readRevision += 1
         if provider == .codex { codex.enabled = false; tokens[.codex] = nil; accountActivity = nil; accountUpdatedAt = nil; accountRefreshFailed = false }
@@ -259,7 +296,7 @@ struct ClaudeLimitsReport: Codable {
             let enabled = provider == .codex ? codex.enabled : claudeEnabled
             guard enabled else { return false }
             return (tokens[provider]?.total ?? 0) > 0 || analytics.points.contains { $0.provider == provider && $0.total > 0 } || analytics.work.contains { $0.provider == provider }
-                || (provider == .codex ? codex.bucket != nil : claudeReport != nil)
+                || (provider == .codex ? codex.bucket != nil : effectiveClaudeReport != nil)
         }
     }
     func usesCustomPrices(_ provider: AIProvider) -> Bool { ledger.customPriceProviders?.contains(provider) == true }
@@ -315,6 +352,11 @@ struct ClaudeLimitsReport: Codable {
         return "Automatic model prices" + (date.map { " · \($0)" } ?? " · unavailable")
     }
 
+    @discardableResult func importCharges(_ charges: [RecordedCharge]) throws -> Int {
+        let additions = try ChargeFile.additions(charges, existing: ledger.charges)
+        ledger.charges.append(contentsOf: additions); persist()
+        return additions.count
+    }
     func record(_ charge: RecordedCharge) {
         guard charge.amount > 0, charge.amount < 1_000_000_000 else { return }
         ledger.charges.append(charge); persist()

@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import CoreAudio
 @main struct WorkspacePreview {
-    @MainActor static func save<V: View>(_ content: V, path: String) throws {
-        let renderer = ImageRenderer(content: content.environment(\.colorScheme, .dark)); renderer.scale = 2
+    @MainActor static func save<V: View>(_ content: V, path: String, scheme: ColorScheme = .dark) throws {
+        let renderer = ImageRenderer(content: content.environment(\.colorScheme, scheme)); renderer.scale = 2
         guard let cg = renderer.cgImage, let png = NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:]) else { throw NSError(domain: "Preview", code: 1) }
         try png.write(to: URL(fileURLWithPath: path))
     }
@@ -12,6 +12,7 @@ import CoreAudio
         let suite = "Sieghart.WorkspacePreview.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let preferences = CompanionPreferences(defaults: defaults); preferences.avatar = .paperPal; preferences.onboardingComplete = true; preferences.characterMotion = false
+        preferences.appearance = .dark
         let now = Date(), calendar = Calendar.current
         let data = Data("{\"rateLimitsByLimitId\":{\"codex\":{\"limitId\":\"codex\",\"planType\":\"plus\",\"primary\":{\"usedPercent\":36,\"windowDurationMins\":300,\"resetsAt\":\(now.addingTimeInterval(3600).timeIntervalSince1970)},\"secondary\":{\"usedPercent\":33,\"windowDurationMins\":10080,\"resetsAt\":\(now.addingTimeInterval(518400).timeIntervalSince1970)}}}}".utf8)
         let codex = CodexUsageModel(defaults: defaults, load: { try JSONDecoder().decode(CodexUsageResponse.self, from: data) }); codex.enabled = true; await codex.refresh()
@@ -30,18 +31,18 @@ import CoreAudio
             return CodexAccountActivity.Day(startDate: formatter.string(from: date), tokens: Int64(index % 11 + 1) * 1000000)
         }
         let account = CodexAccountActivity(summary: .init(lifetimeTokens: 800000000, peakDailyTokens: 11000000, currentStreakDays: 2), dailyUsageBuckets: days)
-        let usage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(points: points, work: [work], scannedFiles: 12), initialAccountActivity: account, initialPrices: PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/ModelTokenPrices.json")), read: { _ in nil })
+        let usage = AIUsageModel(defaults: defaults, readClaude: { nil }, initialAnalytics: AIAnalytics(points: points, work: [work], scannedFiles: 12), initialAccountActivity: account, initialPrices: PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/ModelTokenPrices.json")), read: { _ in nil })
 
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
         let audio = AudioController(backend: PreviewAudio(), defaults: defaults); audio.refresh(); await audio.enableApplications()
         for app in audio.state.apps { audio.setGain(app.id == "com.apple.Music" ? 0.7 : 1, app: app) }
         let notch = NotchWidgetController(assistant: assistant, preferences: preferences, audio: audio, managesWindows: false)
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, openApplication: { _ in "Safari (example)" }, searchBrowser: { _ in "Swift tutorials (example)" })
         let sensor = SensorViewModel(reader: PreviewAccelerometer())
         let gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)
         notch.activation = activation; notch.codexUsage = codex; notch.aiUsage = usage
         for section in AppSection.allCases {
-            let height: CGFloat = section == .appearance ? 990 : section == .activation ? 1000 : section == .aiLimits ? 1320 : 800
+            let height: CGFloat = section == .appearance ? 1420 : section == .activation ? 1000 : section == .aiLimits ? 1320 : 800
             let name = section == .aiLimits ? "ai" : section == .focus ? "timers" : section.rawValue.lowercased()
             let view = ContentView(initialSection: section, scrollable: false)
                 .frame(width: 1050, height: height)
@@ -72,8 +73,36 @@ import CoreAudio
             let view = MenuBarView(initialPage: page).environmentObject(assistant).environmentObject(notch).environmentObject(activation).environmentObject(preferences).environmentObject(codex).environmentObject(usage).environment(\.islandPreview, true)
             try save(view, path: "Sieghart/Design/Concepts/menu-\(page.lowercased())-preview.png")
         }
+        activation.executeVoiceCommand("Open Safari")
+        try await Task.sleep(for: .milliseconds(20))
+        try save(widget().padding(30).background(Color(white: 0.3)), path: "Sieghart/Design/Concepts/island-companion-voice-preview.png")
+        activation.cancelVoiceCommand(keepCompanionVisible: true)
+        activation.executeVoiceCommand("search for Swift tutorials")
+        try await Task.sleep(for: .milliseconds(20))
+        try save(widget().padding(30).background(Color(white: 0.3)), path: "Sieghart/Design/Concepts/island-companion-search-preview.png")
+        activation.cancelVoiceCommand(keepCompanionVisible: true)
+        try save(AIUsageDetailsView().padding(24).frame(width: 760).environmentObject(codex).environmentObject(usage).environment(\.islandPreview, true), path: "Sieghart/Design/Concepts/ai-data-sources-preview.png")
+        for (theme, glass) in [(AppAppearance.light, false), (.light, true), (.dark, true)] {
+            preferences.appearance = theme; preferences.windowGlass = glass; preferences.islandGlass = glass
+            let scheme: ColorScheme = theme == .light ? .light : .dark
+            let suffix = "\(theme.rawValue.lowercased())-\(glass ? "glass" : "solid")"
+            let view = ContentView(initialSection: .appearance, scrollable: false).frame(width: 1050, height: 1420)
+                .environmentObject(sensor).environmentObject(assistant).environmentObject(notch)
+                .environmentObject(gestures).environmentObject(activation).environmentObject(preferences)
+                .environmentObject(codex).environmentObject(usage).environmentObject(audio).environment(\.islandPreview, true)
+            try save(view, path: "Sieghart/Design/Concepts/app-appearance-\(suffix)-preview.png", scheme: scheme)
+            notch.show()
+            try save(widget().padding(30).background(Color(white: theme == .light ? 0.7 : 0.3)), path: "Sieghart/Design/Concepts/island-companion-\(suffix)-preview.png", scheme: scheme)
+            if theme == .light && !glass {
+                let menu = MenuBarView().environmentObject(assistant).environmentObject(notch).environmentObject(activation).environmentObject(preferences).environmentObject(codex).environmentObject(usage).environment(\.islandPreview, true)
+                try save(menu, path: "Sieghart/Design/Concepts/menu-companion-light-preview.png", scheme: scheme)
+                notch.showAILimits()
+                try save(widget().padding(30).background(Color(white: 0.7)), path: "Sieghart/Design/Concepts/island-ai-light-preview.png", scheme: scheme)
+            }
+        }
+        preferences.appearance = .dark; preferences.windowGlass = false; preferences.islandGlass = false
         try save(AIUsageView(initialHour: 14).environmentObject(preferences).environmentObject(codex).environmentObject(usage).environment(\.islandGlass, true).frame(width: 712).padding(28).background(Color(white: 0.07)), path: "Sieghart/Design/Concepts/ai-dashboard-detail-preview.png")
-        print("Rendered six workspace pages, eight island panels, five menu tabs, onboarding and AI charts. Illustrative data only; no app window or hardware started.")
+        print("Rendered workspace, island and menu pages; separate light/dark and optional glass examples; voice in Companion. Illustrative data only; no app window or hardware started.")
     }
 }
 

@@ -35,14 +35,14 @@ struct AIUsageView: View {
                 Spacer()
                 if providers.count > 1 {
                     ForEach(providers) { choice in
-                        Button(choice.title) { provider = choice }.buttonStyle(.plain).font(.caption.weight(.medium)).foregroundStyle(provider == choice ? CompanionStyle.accent : CompanionStyle.muted)
+                        Button(choice.title) { provider = choice }.buttonStyle(.plain).font(.caption.weight(.medium)).foregroundStyle(provider == choice ? CompanionStyle.accentInk : CompanionStyle.muted)
                     }
                 }
                 HStack(spacing: 3) {
                     ForEach(UsagePeriod.allCases, id: \.self) { choice in
                         Button(choice == .today ? "Today" : choice == .week ? "Week" : "Month") { period = choice }
                             .buttonStyle(.plain).font(.caption.weight(.medium)).padding(.horizontal, 10).padding(.vertical, 7)
-                            .foregroundStyle(period == choice ? .white : CompanionStyle.muted)
+                            .foregroundStyle(period == choice ? CompanionStyle.ink : CompanionStyle.muted)
                             .background(period == choice ? CompanionStyle.separator : .clear, in: RoundedRectangle(cornerRadius: 8))
                             .accessibilityValue(period == choice ? "Selected" : "")
                     }
@@ -64,14 +64,14 @@ struct AIUsageView: View {
                 Spacer()
                 if let updated = usage.activityUpdatedAt { Text("Updated \(updated.formatted(date: .omitted, time: .shortened))").font(.caption2) }
             }.foregroundStyle(CompanionStyle.muted)
-            Button("Tokens, charges & connections") { details = true }.buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.accent)
+            Button("Tokens, charges & connections") { details = true }.buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.accentInk)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(CompanionStyle.ink)
         .sheet(isPresented: $details) {
             VStack(spacing: 16) {
                 HStack { Text("AI data & connections").font(.title3.weight(.semibold)); Spacer(); Button("Done") { details = false }.buttonStyle(CompanionButtonStyle()) }
                 ScrollView { AIUsageDetailsView() }.scrollIndicators(.hidden)
-            }.padding(28).frame(width: 720, height: 580).background { WorkspaceBackdrop() }.preferredColorScheme(.dark)
+            }.padding(28).frame(width: 720, height: 580).background { WorkspaceBackdrop() }.preferredColorScheme(preferences.appearance.colorScheme).environment(\.surfaceGlassEnabled, preferences.windowGlass).environment(\.workspaceGlass, true)
         }
         .onAppear { if let first = providers.first { provider = first } }
         .onChange(of: providers) { _, choices in
@@ -85,15 +85,15 @@ struct AIUsageView: View {
         if provider == .codex { CodexUsageView(compact: true, dashboard: true, cardHeight: summaryHeight) }
         else {
             VStack(alignment: .leading, spacing: dense ? 5 : 10) {
-                Label { Text("Claude Code").font(heading) } icon: { ProviderMark(provider: .claude, size: dense ? 18 : 28) }
-                if let report = usage.claudeReport {
+                Label { Text("Claude").font(heading) } icon: { ProviderMark(provider: .claude, size: dense ? 18 : 28) }
+                if let report = usage.effectiveClaudeReport {
                     TimelineView(.periodic(from: .now, by: 60)) { context in
                         VStack(spacing: 8) {
                             if let window = report.primary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
                             if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
                         }
                     }
-                    if !dense { Text("Dated report").font(.caption2).foregroundStyle(CompanionStyle.muted) }
+                    if !dense { Text(usage.claudeSource).font(.caption2).foregroundStyle(CompanionStyle.muted) }
                 } else { Text("Subscription limits unavailable").font(.callout).foregroundStyle(CompanionStyle.muted) }
             }.companionCard(height: summaryHeight, padding: cardPadding)
         }
@@ -114,7 +114,7 @@ struct AIUsageView: View {
                 Text(estimate.label).font(.system(size: dense ? 22 : 32, weight: .semibold)).monospacedDigit()
             } else {
                 Text("Estimate unavailable").font(dense ? .system(size: 12, weight: .medium) : .title3.weight(.medium))
-                Button("Prices & sources") { details = true }.buttonStyle(.plain).foregroundStyle(CompanionStyle.accent).font(detail)
+                Button("Prices & sources") { details = true }.buttonStyle(.plain).foregroundStyle(CompanionStyle.accentInk).font(detail)
             }
             Capsule().fill(CompanionStyle.accent).frame(height: dense ? 3 : 4)
             Text(points.isEmpty ? "No token records for this period" : "\(short(input + output)) tokens · \(input > 0 ? Int(Double(cache) / Double(input) * 100) : 0)% input cache")
@@ -147,7 +147,7 @@ struct AIUsageView: View {
                                 Text("\(modelName(task.model)) · \(task.output.formatted()) recent output").font(detail).foregroundStyle(CompanionStyle.muted).lineLimit(1)
                             }
                             Spacer()
-                            Text(task.elapsed(at: context.date)).font(dense ? .system(size: 13, weight: .semibold) : .title3.weight(.semibold)).monospacedDigit().foregroundStyle(CompanionStyle.accent)
+                            Text(task.elapsed(at: context.date)).font(dense ? .system(size: 13, weight: .semibold) : .title3.weight(.semibold)).monospacedDigit().foregroundStyle(CompanionStyle.accentInk)
                         }
                     }
                 }
@@ -195,7 +195,7 @@ struct AIUsageView: View {
             ForEach(Array(groups.prefix(3).enumerated()), id: \.offset) { _, item in
                 HStack(spacing: 8) {
                     Text(title == "Models" ? modelName(item.0) : item.0).font(dense ? .system(size: 10.5, weight: .medium) : .callout.weight(.medium)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-                    GeometryReader { geometry in Capsule().fill(title == "Models" ? CompanionStyle.accent : .white).frame(width: max(3, geometry.size.width * Double(item.1) / Double(max(1, groups.first?.1 ?? 1)))) }.frame(width: 64, height: 4)
+                    GeometryReader { geometry in Capsule().fill(title == "Models" ? CompanionStyle.accent : CompanionStyle.ink).frame(width: max(3, geometry.size.width * Double(item.1) / Double(max(1, groups.first?.1 ?? 1)))) }.frame(width: 64, height: 4)
                     Text(short(item.1)).font(detail).monospacedDigit().foregroundStyle(CompanionStyle.muted).fixedSize()
                 }.accessibilityElement(children: .combine)
                 .help("\(item.0): \(item.1.formatted()) tokens · \(period.rawValue)")
@@ -228,7 +228,7 @@ struct AIUsageView: View {
                         VStack(spacing: dense ? 3 : 4) {
                             ForEach(0..<7) { day in
                                 let date = dates[week * 7 + day], count = values[date] ?? 0
-                                RoundedRectangle(cornerRadius: 3).fill(count == 0 ? CompanionStyle.separator.opacity(0.5) : Color.white.opacity(0.25 + 0.75 * Double(count) / Double(max(1, peak))))
+                                RoundedRectangle(cornerRadius: 3).fill(count == 0 ? CompanionStyle.separator.opacity(0.5) : CompanionStyle.edge.opacity(0.25 + 0.75 * Double(count) / Double(max(1, peak))))
                                     .frame(width: dense ? 7 : 12, height: dense ? 7 : 12)
                                     .contentShape(Rectangle())
                                     .onHover { inside in selectedDay = inside ? date : (selectedDay == date ? nil : selectedDay) }

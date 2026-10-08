@@ -69,6 +69,9 @@ private final class Buffers {
         let calls = backend.calls; audio.refresh(); precondition(backend.calls == calls, "Failed saved routes aren't repeatedly retried")
         backend.fail = false; audio.selectDevice(3); precondition(audio.state.output == 3 && backend.routes[app.id] == 1)
         backend.reading.output = 1; let stopped = backend.stopped; audio.refresh(); precondition(backend.stopped > stopped)
+        let oldStops = backend.stopped
+        backend.reading.devices[0].sampleRate = 16000
+        audio.refresh(); precondition(backend.stopped > oldStops, "An AirPods format change rebuilds routes even with the same device ID")
         backend.reading.apps = []; audio.refresh(); precondition(backend.routes.isEmpty && audio.routedApps.isEmpty)
         backend.reading.apps = (0..<8).map { AudioApplicationInfo(id: "app.\($0)", name: "App \($0)", processes: [UInt32($0 + 10)], pid: pid_t($0 + 100)) }
         audio.refresh(); precondition(audio.visibleApps.count == 5 && audio.visibleApps.map(\.id) == ["app.0", "app.1", "app.2", "app.3", "app.4"])

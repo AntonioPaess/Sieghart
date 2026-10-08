@@ -1,17 +1,21 @@
 # Sieghart roadmap
 
-Updated October 6, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 8, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 ## Status and release gates
 
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
-- **Sprint 3:** in progress. First slice implemented: initial six-avatar onboarding, one-time local AI monitoring consent, installed-provider detection, background refresh, live AI island and the full reference dashboard. Automatic model pricing/FX, exact chart details, island interaction corrections and the glass presentation with smoother avatars are also implemented. Voice app launch/search and billing imports remain next.
-- **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The assistant does not run the app or open Xcode.
+- **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
+- **Mac acceptance:** the user confirmed “Todos passaram” after receiving the test instructions. SG-001 through SG-005 are resolved on that report; no Sprint 3 blocker remains reported. The assistant keeps the app closed during its work. CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed. Sprint 4 has not started.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
-- **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Invoice imports remain planned.
+- **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
 
 ## Sprint 3 — First-run companion and live AI
+
+### Dated implementation record
+
+The October 5–7 entries below retain the findings and pending checks as they stood at each checkpoint. The October 8 acceptance record supersedes those pending statuses.
 
 ### Implemented first slice — October 5, 2026
 
@@ -84,26 +88,77 @@ Updated October 6, 2026. This is the current execution plan; older Obsidian chec
 - Repeated full-screen shortcut report remains open (SG-001). Menu-bar agent metadata, application-target Carbon dispatch and authorized event-tap health recovery address the setup. Actual input and visibility acceptance remains required.
 - Three additional issue photos archived with SHA-256 verification. README, production previews, bug tracker and Obsidian checkpoint updated. Sprint 3 remains active; Sprint 4 has not started.
 
-### Next in Sprint 3
+### Window-close activation and companion quality — October 7, 2026
 
-1. Browser search through a deterministic action adapter. Installed-app voice launch is now implemented; physical speech/app-launch acceptance remains open.
-2. Billing/import adapters and broader historical coverage. Automatic price/FX sources are implemented; values are API equivalents and local history remains partial.
-3. Verified automatic individual Claude quota access; the dated report import remains available.
-4. Before Sprint 4: Mac acceptance of the refreshed bounded panels/menu tabs and audio mixer: speakers/AirPods, capture permission grant/denial, app mute, output changes and unplugging devices.
-5. User Mac acceptance for onboarding, activity/island behavior, permissions and companion/voice shortcuts across Spaces/full-screen.
+- The user clarified that “closed” means the red window-close button. A resident app delegate owns activation independently of the settings window and explicitly refuses last-window termination. Window-close/hide lifecycle recovery clears abandoned shortcut recording; Quit remains explicit termination. Isolated event tests cover both companion delivery routes after a simulated window close. Real window-close, voice and full-screen delivery remain SG-001 acceptance.
+- The artwork previously rendered on a 42-point Canvas and scaled up. Every companion now draws at its final display size; only the small breathing/squash transform remains. Diffuse light, clipped edge shading, a recessed visor and a lit paper fold improve matte depth while retaining the approved silhouettes/palette and all motion/accessibility behavior.
+- Main-window, island and menu production previews refreshed offscreen; the two latest avatar-quality photos are archived with hashes. Build, eight isolated groups and built-package checks passed without running the app or hardware.
 
-**Exit:** implemented first run and live AI pass the real Mac checks; voice launch/search have actual action adapters; each automatic source has provenance and unavailable states. Calendar remains hidden until its S5 repair.
+### Optional appearance, Companion voice and renewed shortcuts — October 7, 2026
+
+- System / Light / Dark apply to app, onboarding, menu, sheets and expanded island. Two independent persisted Glass switches, Other windows and panels / Dynamic Island, default off. The compact camera band stays black; Reduce Transparency overrides both. Adaptive text and stronger light-theme status contrast are implemented.
+- Voice preparation, listening, transcript and acknowledgement/error now use Companion. The separate Voice page and launcher tile are removed; Cancel/Back stays in Companion without starting focus. Existing bounded geometry is retained.
+- Renewed SG-001: system-dispatcher hotkeys start after AppKit launch; the resident app sets accessory policy. Default voice is Control + Option + V, requiring no monitoring grant; saved custom modifier-only chords remain. Status distinguishes registration from foreground-only monitoring, with a default-key option and received-backend detail. Delivery uses physical event timestamps and rejects duplicate backend callbacks even when their timestamps arrive in reverse order. Foreground full-display bounds select a higher overlay level; session lock/sleep removes both panels. Apple DTS guidance informs visibility, but real input/window-close/full-screen acceptance remains open.
+- Eight isolated groups, universal signed build, package checks and offscreen production previews verify implementation. No app/Xcode window, real shortcut, microphone, sensor or audio capture is started by these checks. The new appearance reference is archived with its SHA-256 digest.
+- Concrete future companion options and dependencies are recorded in [Useful companions](Sieghart/Design/companion-capabilities.md). Task handoff and contextual quick actions are the recommended first combination after core utilities; no speculative integration is enabled.
+
+### Implementation closeout — October 7, 2026
+
+- Voice search in English/Portuguese opens an encoded DuckDuckGo query in the default browser through NSWorkspace. Query words are data, never executable commands. Cancellation/generation checks and injected test actions keep execution/feedback coherent in Companion.
+- Actual charge import/export: versioned JSON and UTF-8 CSV, downloadable template, review with provider/currency totals, exact Decimal values, reference/source provenance, atomic validation, conflict detection and duplicate protection including exported manual charges. No automatic invoice charge is fabricated from token estimates.
+- **Expand history** reads up to a year of available Codex sessions/archives and Claude projects. It uses bounded files/bytes/counters, keeps metadata in memory for subsequent polling, permits cancellation and deduplicates cloned sessions/streamed messages. Coverage stays labeled partial; it does not claim account lifetime completeness or persist conversation content.
+- Claude desktop plan-history versions 1/2 supply automatic percentages, including scoped Opus/Sonnet allowances when present. Only the latest self-contained reading is used; older than 30 minutes is unavailable. No credential is read and no renewal date is inferred. Dated manual reports remain a fallback.
+- Audio permission preparation uses an unmuted temporary global tap rather than an empty process inclusion list. Output format/UID/channel changes rebuild routes even when the device ID is unchanged; restarted helpers can recover failed routes. Permission settings remain available while the mixer is enabled.
+- Verification: all nine isolated groups pass; signed universal build/package checks pass; updated production screens render offscreen. Real read-only source check: Codex quota available, 80 local files / 852 counter records / zero missing models. No fresh Claude desktop plan history is available on this Mac; its missing-source state and both supported formats are verified.
+
+### Mac acceptance — passed October 8, 2026
+
+The user reported all checks passed. The original checklist is retained below; this is user-reported acceptance, not assistant-observed hardware verification.
+
+1. **Interaction / SG-001, SG-002, SG-005:** single-click entire compact notch and close/crossing behavior; Control + Option + S / V after red window-close, across desktops and another app in full screen; correct placement without the bright top seam. Saved custom modifier-only chords require their separate monitoring grant.
+2. **Voice:** actual microphone/speech grant and recognition, open an installed app, open a browser query, cancel and deny permission. Voice feedback must remain in Companion; focus starts only on request.
+3. **Audio / SG-004:** actual capture grant/denial/retry, master plus up to five real apps, WhatsApp/media gain and mute, speakers/AirPods, headset call format changes, unplug/reconnect and mixer disable restoring normal playback.
+4. **First run / AI / appearance:** save one of six avatars, accept/decline local monitoring, verify current provider and chart details against source, verify System/Light/Dark and independent Glass switches, reduced motion/transparency. Claude absence should stay unavailable; if used, enable its desktop usage menu and verify a fresh reading.
+
+**Exit:** Sprint 3 is complete and accepted on October 8 following the user’s all-passed report. SG-001 through SG-005 are resolved; no Sprint 3 acceptance gate remains open. The last implementation check found no fresh Claude history, so absence remains unavailable. Sprint 4 has not started. Calendar remains hidden until S5.
 
 ## Following delivery order
 
 | Milestone | Outcome |
 | --- | --- |
 | Challenge track | Three-minute offline companion/focus story, accepted playground destination, physical-sensor compatibility, local resources under edition size limit. Reference screenshots and network integrations stay outside its package. |
-| Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. Real Mac audio/interaction acceptance pending. |
+| Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. User Mac acceptance passed October 8. |
 | S4 | System monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Expand and validate the audio foundation. |
 | S5 | Calendar repair/reminders, notifications, selected-folder downloads, clipboard/shelf and core capture tools. |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
+
+## Companion usefulness after core utilities
+
+This is a future product direction, not an active integration sprint. First deliver and validate the utility sequence above. The user requested concrete differentiating options: [Useful companions](Sieghart/Design/companion-capabilities.md) spells out each experience, its real event source and its dependencies. Prioritize task handoff plus contextual quick actions, then consider work-resume notes, meeting audio context and optional gentle routines.
+
+| Future companion role | Behavior | Dependency |
+| --- | --- | --- |
+| Quiet context | Express focus/break progress, AI working/completed and download completion through small gestures and optional brief messages. | Real timer, AI and download events; no fabricated activity. |
+| Quick actions | Companion entry to open an app, control audio, keep the Mac awake and revisit a completed task. | Verified utility actions and explicit user interaction. |
+| Calm reminders | Optional break/reminder nudges with quiet hours and a dismiss action; never starts focus automatically. | Reminder module and notification preferences. |
+| Optional GitHub | Selected-repository PR review requests and build results, with a direct link to the relevant item. Read-only first; opt-in and unavailable/offline states. | Core utilities complete, separate account consent and adapter. |
+
+GitHub makes sense as project context for people who develop software. It is optional and does not replace the primary Mac utilities or the offline companion journey. No GitHub connection is implemented or enabled in this round.
+
+### Task continuity and avatar agents — User proposal, October 7, 2026
+
+- **Product intention:** build attachment through useful, reliable assistance, with less switching between apps and fewer steps to remember. Supporting people with ADHD is a user-defined design goal; clear task status, resumable steps, gentle reminders and no forced focus guide the experience.
+- **File-to-outcome workflow:** receive a dropped/selected file, upload to a chosen connected service, prepare a recipient-specific email with the file/link, and send with explicit user authorization. Show actual progress, sharing destination and a final result; resume failures without duplicate uploads or sends. File handling, upload/email adapters, recipient resolution and task persistence are dependencies.
+- **Avatar organization:** a user-chosen primary companion receives requests and presents results; other avatars may take configurable task-agent roles for files, communication, research, routines or development. Keep one coherent task status in Companion, with small agent indicators rather than separate chat pages. Any avatar can be the principal one; roles do not lock basic utilities to a character.
+- **Attachment:** remembered user choices, a clear “where I stopped” state, useful next actions and expressive receiving/carrying/working/completion gestures. Reminders stay opt-in and avoid guilt or punitive streaks.
+- **Sequence:** record as a future companion-workflow milestone after core utilities and verified adapters. This proposal does not add new Sprint 3 exit requirements. Network-dependent email/upload stays outside the mandatory offline Challenge story. No upload, email sending or agent delegation is implemented/enabled here.
+
+Detailed experience and dependencies: [Useful companions](Sieghart/Design/companion-capabilities.md).
+
+### New companion reference — October 8, 2026
+
+The user supplied Coucou’s animated demo after accepting Sprint 3. [Reference study](Sieghart/Design/coucou-reference.md): task/result hierarchy, coordinated avatar/surface motion, file receive/carry gestures and small task-agent indicators. Use these for the future companion workflow while retaining the approved six-character family, click-only opening, pointer-exit collapse and configurable Glass. Core S4 utilities remain first; this research introduces no runtime integration or new Sprint 3 gate.
 
 ## Complete reference coverage — 77 modules
 
@@ -158,7 +213,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `mixer` | Per-app volume mixer | Implemented core; Mac acceptance pending | Before S4 / S4 |
+| `mixer` | Per-app volume mixer | Implemented core; user Mac acceptance passed; S4 priorities/order remain | Before S4 / S4 |
 | `soundOutputSwitcher` | Output switcher | Device picker implemented; global shortcut pending | Before S4 / S4 |
 | `audioPriority` | Preferred audio devices | Planned | S4 |
 | `micMute` | Global microphone mute | Supported hardware mute implemented; global shortcut pending | Before S4 / S4 |
@@ -205,13 +260,13 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `notchCalendar` | Week/month agenda and meeting links | Planned | S3–S5 |
 | `notchNotifications` | New notification cards | Planned | S3–S5 |
 | `notchGestures` | Island scroll/swipe gestures | Planned | S3–S5 |
-| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro implemented; real Mac acceptance pending | S3 + S5 |
+| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro core implemented and user accepted; S5 extensions remain | S3 + S5 |
 | `notchAccessories` | Accessory status and battery alerts | Planned | S3–S5 |
 | `notchLyrics` | Lyrics | Planned | S3–S5 |
 | `notchQueue` | Playback queue | Planned | S3–S5 |
 | `notchLiveEqualizer` | Live audio bars | Planned | S3–S5 |
 | `notchDownloads` | Selected-folder downloads | Planned | S3–S5 |
-| `notchAgents` | AI limits/tokens/cost/live work | Partial — Live work, Codex quotas, charts, automatic price/FX estimates implemented; broader adapters/acceptance pending | S3 + S5 |
+| `notchAgents` | AI limits/tokens/cost/live work | Partial — S3 live work, quota/history/import adapters, charts and price/FX estimates delivered and user accepted; broader S5 scope remains | S3 + S5 |
 | `notchWatch` | Selected screen-area monitoring | Planned | S3–S5 |
 | `notchMascot` | Companion interaction | Partial — Six original companions and reactions; feature-specific interactions expand per module | S3 + S5 |
 
