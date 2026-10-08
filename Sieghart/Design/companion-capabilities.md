@@ -85,7 +85,7 @@ Each character uses its own silhouette, palette and timing: CRT visor/antenna, A
 
 Recommended sequencing: evolve this shared state vocabulary alongside S5's real calendar/reminder/file events; implement connected specialist workflows after the required core tools and adapters are verified. This recommendation does not expand Sprint 4's acceptance gate or claim S5 has started.
 
-Current implementation has basic voice preparation/listening/transcript/acknowledgement, native breathing/gaze/sleep, utility reactions and the greeting. Dedicated interpreting/working/speaking choreography, speech responses and specialist delegation are not yet implemented.
+October 8 follow-up implements expectant preparation, an attentive listening ear/tilt, processing dots/gaze during recognition and actual pending actions, successful hop/turn/landing, and failure shake in all six. Interrupted transitions start from the visible pose; Reduce Motion/disabled motion retains static cues. [Native motion preview](Concepts/simple-companions-voice.gif). Speaking/lip-sync, role-specific working props, agent reasoning/planning and specialist delegation remain unimplemented. Processing gestures describe actual recognition/action state, not invented thinking.
 
 ### Wellbeing feasibility and boundaries
 

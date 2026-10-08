@@ -89,6 +89,7 @@ import Foundation
         f.recognize(final, final: true) // Duplicate/stale callback.
         try await Task.sleep(for: .milliseconds(10))
         precondition(!f.controller.isVoiceBusy && f.controller.commandAcknowledged)
+        precondition(f.controller.companionVoicePhase == .success)
         precondition(f.queries == ["ChatGPT API + Swift"] && f.urls.count == 1)
         let parts = URLComponents(url: f.urls[0], resolvingAgainstBaseURL: false)!
         precondition(parts.host == "www.google.com" && parts.queryItems?.first?.value == "ChatGPT API + Swift")
@@ -102,6 +103,7 @@ import Foundation
         f.time = 10; try await f.start()
         f.level(-20, at: 10.1)
         f.recognize("Open Safari", final: true)
+        precondition(f.controller.isExecutingVoiceCommand && f.controller.companionVoicePhase == .working)
         try await Task.sleep(for: .milliseconds(10))
         precondition(f.apps == ["safari"] && !f.controller.isVoiceBusy)
         precondition(f.capture.finishCount == 2)
@@ -136,7 +138,7 @@ import Foundation
         f.assistant.resetPomodoro()
 
         f.time = 50; try await f.start()
-        f.recognize("Search for incomplete command")
+        f.recognize("Start focus for 40 minutes")
         f.controller.finishListening()
         f.time = 54.1
         try await Task.sleep(for: .milliseconds(120)) // Poll tests the real final-drain timeout.
@@ -169,6 +171,36 @@ import Foundation
         f.capture.accessContinuation?.resume()
         try await Task.sleep(for: .milliseconds(10))
         precondition(f.capture.receivers.count == starts && !f.controller.isVoiceBusy)
-        print("PASS: capture → quiet/final drain → parser → Google/app/timer; pinned voice UI; exact-once/trailing words; cancellation/replacement; timeout/input loss; permission cancellation")
+        f.capture.holdsAccess = false
+        f.controller.cancelVoiceCommand()
+        // Exact user reproductions, through audio endpoint and production
+        // dispatch. Also cover the framework stopping without isFinal.
+        for (index, pair) in [
+            ("pesquise por arquiteturas de mac", "arquiteturas de mac"),
+            ("pesquisa github", "github"),
+            ("GitHub", "GitHub"),
+            ("meu Mac não liga", "meu Mac não liga"),
+            ("procure astrofísica e buracos negros", "astrofísica e buracos negros")
+        ].enumerated() {
+            let base = 100.0 + Double(index) * 10
+            f.time = base; try await f.start()
+            precondition(f.controller.companionVoicePhase == .listening)
+            f.level(-65, at: base + 0.1)
+            f.recognize(pair.0)
+            for tick in 2...10 { f.level(-20, at: base + Double(tick) / 10) }
+            for tick in 11...26 { f.level(-65, at: base + Double(tick) / 10) }
+            precondition(f.controller.isFinalizing && f.controller.companionVoicePhase == .thinking)
+            let count = f.queries.count
+            if index == 1 {
+                f.capture.emit(.failure("fixture: recognizer stopped without final result"))
+                precondition(f.controller.isFinalizing && f.queries.count == count)
+                f.time = base + 6.5
+                try await Task.sleep(for: .milliseconds(120))
+            } else { f.recognize(pair.0, final: true); try await Task.sleep(for: .milliseconds(10)) }
+            precondition(f.queries.count == count + 1 && f.queries.last == pair.1, pair.0)
+            precondition(f.controller.commandAcknowledged && !f.controller.isVoiceBusy)
+            f.controller.cancelVoiceCommand()
+        }
+        print("PASS: capture → quiet/final drain → parser → Google/app/timer; pinned voice UI; exact-once/trailing words; cancellation/replacement; search topics and missing-final search recovery; strict tool finalization; voice phases; timeout/input loss; permission cancellation")
     }
 }

@@ -2,7 +2,8 @@ import AVFoundation
 import Speech
 
 // Pure session state shared by capture and recognition. Elapsed capture time
-// never dispatches a partial command; only a final recognition result can.
+// never dispatches on a capture cutoff. Tools require final recognition; only
+// a settled browser search can recover after a bounded finalization drain.
 struct VoiceCommandSession {
     enum Phase { case idle, listening, finalizing }
     enum Decision: Equatable { case wait, endAudio, noSpeech, inputLost, limitReached, finalResultTimedOut }
@@ -12,6 +13,7 @@ struct VoiceCommandSession {
     private var lastAudioAt = 0.0
     private var lastActivityAt = 0.0
     private var finalizationAt = 0.0
+    private var lastRecognitionAt = 0.0
     private var noiseFloor = -65.0
     private var voicedDuration = 0.0
     private var heardSpeech = false
@@ -56,6 +58,7 @@ struct VoiceCommandSession {
         guard phase != .idle else { return }
         let changed = text != transcript
         transcript = text
+        if changed { lastRecognitionAt = time }
         if phase == .listening, changed, !text.isEmpty {
             heardSpeech = true
             lastActivityAt = max(lastActivityAt, time)
@@ -66,7 +69,9 @@ struct VoiceCommandSession {
         switch phase {
         case .idle: return .wait
         case .finalizing:
-            return time - finalizationAt >= 4 && finalText == nil ? .finalResultTimedOut : .wait
+            guard finalText == nil else { return .wait }
+            let waited = time - finalizationAt
+            return waited >= 6 || (waited >= 4 && time - lastRecognitionAt >= silenceInterval) ? .finalResultTimedOut : .wait
         case .listening:
             if finalText != nil { return .endAudio }
             if time - startedAt >= 55 { return .limitReached }
@@ -84,6 +89,16 @@ struct VoiceCommandSession {
         guard phase == .finalizing, let finalText else { return nil }
         phase = .idle
         return finalText
+    }
+    // Search alone can use settled text after an audio-confirmed end and a
+    // bounded recognizer drain. The caller must reject app/timer/tool actions.
+    // Some recognition tasks stop without delivering an isFinal callback.
+    mutating func takeSettledSearchText(at time: Double) -> String? {
+        guard phase == .finalizing, finalText == nil, !transcript.isEmpty,
+              decision(at: time) == .finalResultTimedOut,
+              time - lastRecognitionAt >= silenceInterval else { return nil }
+        phase = .idle
+        return transcript
     }
     mutating func cancel() { self = Self() }
 }

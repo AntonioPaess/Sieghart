@@ -46,6 +46,13 @@ Numeric temperatures/fan control, XDR desktop boost, per-process network/speed t
 - [ ] User Mac acceptance of the new voice/search/AirPods fixes: [exact regression checklist](Sieghart/Design/voice-search-regression-checks.md). This supplements the pending new utility/greeting acceptance above; prior Sprint 3 acceptance stays recorded.
 - [ ] Challenge onboarding storytelling and a timed three-minute judging path. The user will write the story; [experience brief](Sieghart/Design/challenge-onboarding-brief.md) records goals, accessible/offline equivalents and a proposed time budget. The final storyline/judging flow is not implemented yet.
 
+### October 8 — Free topic search and expressive voice
+
+- [x] Search request grammar supports questions and direct topics; no topic whitelist. Exact reported phrases “pesquise por arquiteturas de mac” and “pesquisa github” are covered by capture-to-command integration.
+- [x] Missing-final search recovery after ended audio and a stable transcription, with bounded drain and last-word/cancellation guards. App/timer actions retain strict final-result gating. Physical search acceptance remains open on the user's renewed report.
+- [x] Real voice/action phases drive expectant preparation, listening ear/tilt, processing dots/gaze, successful hop/turn/landing and failure shake in all six native avatars. Interrupted transitions retain the visible pose; reduced/disabled motion keeps static cues. [Production animation preview](Sieghart/Design/Concepts/simple-companions-voice.gif).
+- [ ] User verifies topic searches and expressive motion with Mac microphone/AirPods. Speaking/lip-sync, Megabrain, specialist delegation and role-specific file/email/calendar props remain planned.
+
 ## Sprint 3 — First-run companion and live AI
 
 ### Dated implementation record

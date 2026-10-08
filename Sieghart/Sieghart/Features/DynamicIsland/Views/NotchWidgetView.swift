@@ -190,7 +190,7 @@ struct NotchWidgetView: View {
                         let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
                         let greeting = notch.welcomeStartedAt.map { context.date.timeIntervalSince($0) < 4.2 } ?? false
                         let walking = !greeting && animates && reactions.mood == .idle && !activation.voicePresented && phase < 4
-                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isVoiceBusy ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
+                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: activation.companionVoicePhase, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isVoiceBusy ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
                             .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
                     }.frame(width: 124, height: 96)
                 }
@@ -264,7 +264,7 @@ struct NotchWidgetView: View {
         if activation.isPreparing { return "Getting ready…" }
         if activation.isListening { return "I’m listening." }
         if activation.isFinalizing { return "Finishing your command…" }
-        if activation.voicePresented && activation.voiceStatus.hasPrefix("Opening ") { return "On it." }
+        if activation.isExecutingVoiceCommand { return "On it." }
         if activation.voicePresented && !activation.commandAcknowledged { return "Let’s try that again." }
         if activation.commandAcknowledged { return "Got it." }
         switch reactions.mood {
@@ -317,7 +317,7 @@ struct NotchWidgetView: View {
             if activation.voicePresented {
                 Button { notch.clickIsland() } label: {
                     HStack(spacing: 0) {
-                        CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, listening: activation.isListening,
+                        CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: activation.companionVoicePhase,
                                            mood: activation.commandAcknowledged ? .understood : .idle).frame(maxWidth: .infinity)
                         Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
                         VStack(spacing: 1) {

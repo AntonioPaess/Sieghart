@@ -27,6 +27,23 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Show and hide") == nil)
         precondition(FocusVoiceParser.parse("search for Open Safari and start focus") == .search(query: "Open Safari and start focus"))
         precondition(FocusVoiceParser.parse("Pesquise receitas de pão & café") == .search(query: "receitas de pão & café"))
+        for (spoken, query) in [
+            ("pesquise por arquiteturas de mac", "arquiteturas de mac"),
+            ("pesquisa github", "github"),
+            ("procure receitas de pão", "receitas de pão"),
+            ("procure arquitetura de processadores ARM", "arquitetura de processadores ARM"),
+            ("Você pode pesquisar sobre astrofísica?", "astrofísica?"),
+            ("Por favor, pesquisa no Google sobre música brasileira", "música brasileira"),
+            ("Sig, pesquise por C++", "C++"),
+            ("GitHub", "GitHub"),
+            ("Como funcionam os tokens do Claude?", "Como funcionam os tokens do Claude?"),
+            ("arquiteturas de Mac", "arquiteturas de Mac"),
+            ("meu Mac não liga", "meu Mac não liga"),
+            ("Quanto custa um Mac?", "Quanto custa um Mac?"),
+            ("arquiteturas que pausam processos", "arquiteturas que pausam processos")
+        ] { precondition(FocusVoiceParser.parse(spoken) == .search(query: query), spoken) }
+        precondition(FocusVoiceParser.parse("envie um email") == nil)
+        precondition(FocusVoiceParser.parse("...") == nil)
         precondition(FocusVoiceParser.parse("Não pesquise receitas") == nil)
         for command in ["pesquisa", "pesquise", "pesquisar", "procura", "procure", "buscar", "busca", "busque", "faça uma pesquisa"] {
             precondition(FocusVoiceParser.parse(command + " no Google sobre C++ & café") == .search(query: "C++ & café"))
@@ -122,6 +139,33 @@ struct InteractionChecks {
         let compactNotch = NotchGeometry(width: 328, cutoutWidth: 180, cutoutHeight: 32, compact: true)
         precondition(compactNotch.height == 32 && compactNotch.contentTop == 0)
         precondition(compactNotch.width > compactNotch.cutoutWidth)
+
+        // Voice has distinct physical gestures and interrupted transitions
+        // retain the displayed pose. Reduced Motion keeps static state cues.
+        for size: CGFloat in [24, 60, 96] {
+            let listen = CompanionVoiceMotion.sample(phase: .listening, elapsed: 0.4, size: size, animates: true)
+            let think = CompanionVoiceMotion.sample(phase: .thinking, elapsed: 0.4, size: size, animates: true)
+            let win = CompanionVoiceMotion.sample(phase: .success, elapsed: 0.55, size: size, animates: true)
+            precondition(listen.ear > 0 && think.thoughts > 0 && win.offset.height < -size * 0.15)
+            precondition(listen != think && think != win)
+            for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
+                precondition(CompanionVoiceMotion.sample(phase: phase, elapsed: 0.2, size: size, animates: false)
+                    == CompanionVoiceMotion.sample(phase: phase, elapsed: 3.8, size: size, animates: false))
+            }
+            var animator = CompanionVoiceAnimator()
+            animator.transition(to: .listening, at: 0, size: size, animates: true)
+            let before = animator.sample(at: 0.6, size: size, animates: true)
+            animator.transition(to: .thinking, at: 0.6, size: size, animates: true)
+            let after = animator.sample(at: 0.6, size: size, animates: true)
+            precondition(before.offset == after.offset && before.gaze == after.gaze && before.scaleX == after.scaleX && abs(before.rotation - after.rotation) < 0.00001, "Listening interruption must start at the visible pose")
+            animator.transition(to: .success, at: 1, size: size, animates: true)
+            let midJump = animator.sample(at: 1.45, size: size, animates: true)
+            animator.transition(to: .inactive, at: 1.45, size: size, animates: true)
+            let cancelled = animator.sample(at: 1.45, size: size, animates: true)
+            precondition(midJump.offset == cancelled.offset && midJump.scaleX == cancelled.scaleX)
+            precondition(abs(sin(midJump.rotation * .pi / 180) - sin(cancelled.rotation * .pi / 180)) < 0.00001)
+            precondition(animator.sample(at: 2, size: size, animates: true) == CompanionVoicePose())
+        }
 
         let reactions = CompanionReactions(now: { clock }, recoveryDelay: .milliseconds(30), wakeDelay: .milliseconds(30))
         for _ in 0..<3 { reactions.touch(); precondition(reactions.mood == .happy) }

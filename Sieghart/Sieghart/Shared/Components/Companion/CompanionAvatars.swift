@@ -118,6 +118,104 @@ struct CompanionMotion: Equatable {
     }
 }
 
+// Actual voice lifecycle, independent of touch moods and avatar selection.
+enum CompanionVoicePhase: Equatable { case inactive, preparing, listening, thinking, working, success, failure }
+
+struct CompanionVoicePose: Equatable {
+    var scaleX: CGFloat = 1
+    var scaleY: CGFloat = 1
+    var rotation = 0.0
+    var offset = CGSize.zero
+    var gaze = CGSize.zero
+    var ear: CGFloat = 0
+    var thoughts: CGFloat = 0
+    var eyeMultiplier: CGFloat = 1
+
+    func blended(to target: Self, progress: Double) -> Self {
+        let p = CGFloat(min(1, max(0, progress)))
+        func mix(_ a: CGFloat, _ b: CGFloat) -> CGFloat { a + (b - a) * p }
+        return Self(scaleX: mix(scaleX, target.scaleX), scaleY: mix(scaleY, target.scaleY),
+                    rotation: rotation + (target.rotation - rotation) * Double(p),
+                    offset: CGSize(width: mix(offset.width, target.offset.width), height: mix(offset.height, target.offset.height)),
+                    gaze: CGSize(width: mix(gaze.width, target.gaze.width), height: mix(gaze.height, target.gaze.height)),
+                    ear: mix(ear, target.ear), thoughts: mix(thoughts, target.thoughts), eyeMultiplier: mix(eyeMultiplier, target.eyeMultiplier))
+    }
+}
+
+enum CompanionVoiceMotion {
+    static func sample(phase: CompanionVoicePhase, elapsed: Double, size: CGFloat, animates: Bool) -> CompanionVoicePose {
+        let t = max(0, elapsed)
+        var pose = CompanionVoicePose()
+        if !animates {
+            pose.ear = phase == .listening ? 1 : 0
+            pose.thoughts = phase == .thinking || phase == .working || phase == .preparing ? 1 : 0
+            return pose
+        }
+        switch phase {
+        case .inactive: break
+        case .preparing:
+            pose.rotation = -3 + sin(t * 2) * 1.5
+            pose.eyeMultiplier = 1.08; pose.thoughts = 0.55
+        case .listening:
+            pose.ear = 1; pose.eyeMultiplier = 1.12
+            pose.rotation = -7 + sin(t * 2.4) * 2
+            pose.scaleY = 1.02 + sin(t * 3) * 0.015
+            pose.gaze = CGSize(width: sin(t * 1.3) * 1.6, height: -0.6)
+            pose.offset.height = -size * 0.015
+        case .thinking, .working:
+            pose.thoughts = 1
+            pose.rotation = sin(t * 2) * 5
+            pose.gaze = CGSize(width: sin(t * 1.2) * 2, height: -1.5)
+            pose.offset.height = sin(t * 2.8) * size * 0.025
+        case .success:
+            let p = min(1, t / 1.1)
+            let jump = sin(p * .pi)
+            pose.offset.height = -size * 0.22 * jump
+            pose.rotation = 360 * (p * p * (3 - 2 * p))
+            pose.scaleX = 1 + cos(p * .pi * 2) * 0.035 * (1 - p)
+            pose.scaleY = 1 - cos(p * .pi * 2) * 0.06 * (1 - p)
+        case .failure:
+            pose.rotation = sin(t * 18) * 7 * max(0, 1 - t)
+            pose.eyeMultiplier = 0.88
+        }
+        return pose
+    }
+}
+
+// Interrupted phases start from the pose currently on screen. A completed
+// revolution is normalized without changing its orientation, avoiding a
+// second backwards spin when success returns to idle.
+struct CompanionVoiceAnimator {
+    private(set) var phase: CompanionVoicePhase = .inactive
+    private var started = 0.0
+    private var source = CompanionVoicePose()
+    func sample(at time: Double, size: CGFloat, animates: Bool) -> CompanionVoicePose {
+        let elapsed = max(0, time - started)
+        let target = CompanionVoiceMotion.sample(phase: phase, elapsed: elapsed, size: size, animates: animates)
+        guard animates else { return target }
+        let p = min(1, elapsed / 0.22)
+        return source.blended(to: target, progress: p * p * (3 - 2 * p))
+    }
+    mutating func transition(to next: CompanionVoicePhase, at time: Double, size: CGFloat, animates: Bool) {
+        guard phase != next else { return }
+        source = sample(at: time, size: size, animates: animates)
+        source.rotation = (source.rotation + 180).truncatingRemainder(dividingBy: 360) - 180
+        started = time; phase = next
+    }
+}
+
+private struct CompanionListeningEar: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: rect.width * 0.25, y: rect.height * 0.9))
+        p.addCurve(to: CGPoint(x: rect.width * 0.25, y: rect.height * 0.1),
+                   control1: CGPoint(x: rect.width * 1.05, y: rect.height), control2: CGPoint(x: rect.width * 1.05, y: 0))
+        p.addCurve(to: CGPoint(x: rect.width * 0.45, y: rect.height * 0.64),
+                   control1: CGPoint(x: -rect.width * 0.05, y: rect.height * 0.2), control2: CGPoint(x: rect.width * 0.62, y: rect.height * 0.36))
+        return p
+    }
+}
+
 struct CompanionFace: View {
     var renderSize: CGFloat = 42
     var avatar: CompanionAvatar = .crtBuddy
@@ -329,6 +427,7 @@ struct CompanionCharacter: View {
     var focusing = false
     var joyful = false
     var listening = false
+    var voicePhase: CompanionVoicePhase = .inactive
     var gaze = CGSize.zero
     var mood: CompanionMood = .idle
     var strolling = false
@@ -336,14 +435,17 @@ struct CompanionCharacter: View {
     var previewTime: Double? = nil
     var entrance: CompanionEntranceMotion? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var voiceAnimator = CompanionVoiceAnimator()
+    private var effectiveVoicePhase: CompanionVoicePhase { voicePhase == .inactive && listening ? .listening : voicePhase }
 
     var body: some View {
         let moves = animates && !reduceMotion
         TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !moves || previewTime != nil)) { context in
-            let reaction = joyful || entrance?.joy == true ? CompanionMood.happy : mood
+            let reaction = effectiveVoicePhase == .success ? CompanionMood.understood : effectiveVoicePhase == .failure ? .startled : effectiveVoicePhase != .inactive ? .idle : joyful || entrance?.joy == true ? .happy : mood
             let time = previewTime ?? context.date.timeIntervalSinceReferenceDate
-            let motion = CompanionMotion.sample(time: time, size: size, avatar: avatar, mood: reaction, listening: listening, strolling: strolling, animates: moves)
-            CompanionFace(renderSize: size, avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? gaze : .zero, eyeOpen: motion.eyeOpen * (entrance?.eyeOpen ?? 1),
+            let voice = previewTime != nil ? CompanionVoiceMotion.sample(phase: effectiveVoicePhase, elapsed: time, size: size, animates: moves) : voiceAnimator.sample(at: time, size: size, animates: moves)
+            let motion = CompanionMotion.sample(time: time, size: size, avatar: avatar, mood: effectiveVoicePhase == .inactive ? reaction : .idle, listening: false, strolling: strolling && effectiveVoicePhase == .inactive, animates: moves)
+            CompanionFace(renderSize: size, avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? CGSize(width: gaze.width + voice.gaze.width, height: gaze.height + voice.gaze.height) : .zero, eyeOpen: motion.eyeOpen * voice.eyeMultiplier * (entrance?.eyeOpen ?? 1),
                           listening: listening, motionTime: time, mood: reaction, animates: moves)
                 .overlay(alignment: .trailing) {
                     if let entrance, entrance.wave > 0 {
@@ -353,11 +455,26 @@ struct CompanionCharacter: View {
                             .offset(x: size * 0.06, y: -size * 0.05).opacity(entrance.wave)
                     }
                 }
-                .scaleEffect(x: motion.scaleX * (entrance?.scaleX ?? 1), y: motion.scaleY * (entrance?.scaleY ?? 1))
+                .overlay(alignment: .trailing) {
+                    CompanionListeningEar().stroke(avatar == .inkBuddy || avatar == .minimalSpirit ? Color.primary : avatar.tint,
+                                                    style: StrokeStyle(lineWidth: max(1.3, size * 0.03), lineCap: .round))
+                        .frame(width: size * 0.13, height: size * 0.24)
+                        .scaleEffect(x: max(0.01, voice.ear), y: 0.7 + voice.ear * 0.3, anchor: .leading)
+                        .offset(x: -size * 0.015, y: -size * 0.025).opacity(voice.ear)
+                }
+                .overlay(alignment: .top) {
+                    HStack(spacing: size * 0.04) {
+                        ForEach(0..<3) { dot in
+                            Circle().fill(avatar.tint).frame(width: size * 0.055, height: size * 0.055)
+                                .offset(y: moves ? sin(time * 5 - Double(dot) * 0.9) * size * 0.03 : 0)
+                        }
+                    }.offset(y: size * 0.06).opacity(size >= 40 ? voice.thoughts : 0)
+                }
+                .scaleEffect(x: motion.scaleX * voice.scaleX * (entrance?.scaleX ?? 1), y: motion.scaleY * voice.scaleY * (entrance?.scaleY ?? 1))
                 .rotation3DEffect(.degrees(moves ? -gaze.height * 1.5 : 0), axis: (x: 1, y: 0, z: 0), perspective: 0.35)
                 .rotation3DEffect(.degrees(moves ? gaze.width * 1.4 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.35)
-                .rotationEffect(.degrees(motion.rotation + (entrance?.rotation ?? 0)))
-                .offset(x: motion.offset.width + (entrance?.offsetX ?? 0) * size, y: motion.offset.height + (entrance?.offset ?? 0) * size)
+                .rotationEffect(.degrees(motion.rotation + voice.rotation + (entrance?.rotation ?? 0)))
+                .offset(x: motion.offset.width + voice.offset.width + (entrance?.offsetX ?? 0) * size, y: motion.offset.height + voice.offset.height + (entrance?.offset ?? 0) * size)
                 .opacity(entrance?.opacity ?? 1)
                 .frame(width: size, height: size)
                 .overlay(alignment: .topTrailing) {
@@ -374,6 +491,10 @@ struct CompanionCharacter: View {
                 .animation(moves ? .spring(response: 0.36, dampingFraction: 0.82) : nil, value: joyful)
                 .accessibilityHidden(true)
         }.frame(width: size, height: size)
+            .onAppear { voiceAnimator.transition(to: effectiveVoicePhase, at: Date.timeIntervalSinceReferenceDate, size: size, animates: moves) }
+            .onChange(of: effectiveVoicePhase) { _, phase in
+                voiceAnimator.transition(to: phase, at: Date.timeIntervalSinceReferenceDate, size: size, animates: moves)
+            }
     }
 }
 

@@ -95,6 +95,20 @@ struct VoiceCallbackChecks {
         for tick in 21...150 { session.observe(decibels: -58, duration: 0.1, at: Double(tick) / 10) }
         precondition(session.decision(at: 15) == .wait)
 
+        session.start(at: 0)
+        session.recognize("pesquisa github", final: false, at: 0.1)
+        session.endAudio(at: 2)
+        precondition(session.takeSettledSearchText(at: 3) == nil)
+        session.recognize("pesquisa github actions", final: false, at: 5.7)
+        precondition(session.decision(at: 6) == .wait, "New trailing words must be allowed to settle")
+        precondition(session.takeSettledSearchText(at: 6) == nil)
+        precondition(session.takeSettledSearchText(at: 7.2) == "pesquisa github actions")
+        precondition(session.takeSettledSearchText(at: 7.2) == nil)
+        session.start(at: 10)
+        session.recognize("pesquisa cancelada", final: false, at: 10.1)
+        session.cancel()
+        precondition(session.takeSettledSearchText(at: 20) == nil)
+
         var recovery = VoiceInputRecovery()
         precondition(recovery.retry(hasSpeech: false))
         precondition(!recovery.retry(hasSpeech: false))

@@ -25,7 +25,16 @@ final class ActivationController: ObservableObject {
     @Published private(set) var isListening = false
     @Published private(set) var isPreparing = false
     @Published private(set) var isFinalizing = false
-    var isVoiceBusy: Bool { isListening || isPreparing || isFinalizing }
+    @Published private(set) var isExecutingVoiceCommand = false
+    var isVoiceBusy: Bool { isListening || isPreparing || isFinalizing || isExecutingVoiceCommand }
+    var companionVoicePhase: CompanionVoicePhase {
+        if isPreparing { return .preparing }
+        if isListening { return .listening }
+        if isFinalizing { return .thinking }
+        if isExecutingVoiceCommand { return .working }
+        if commandAcknowledged { return .success }
+        return voicePresented ? .failure : .inactive
+    }
     @Published private(set) var commandAcknowledged = false
     @Published private(set) var voicePresented = false
     @Published var voiceLanguage: String {
@@ -385,6 +394,12 @@ final class ActivationController: ObservableObject {
                     guard self.isListening else { return }
                     self.recoverVoiceInput(generation: generation)
                 case .failure(let message):
+                    if self.isFinalizing, case .search = FocusVoiceParser.parse(self.transcript) {
+                        // Keep draining the settled search text. Local app/timer
+                        // actions still require an authoritative final result.
+                        self.voiceStatus = "Finishing your search…"
+                        return
+                    }
                     self.stopListening()
                     self.voiceStatus = "Speech recognition stopped. Please try again. \(message)"
                 }
@@ -410,6 +425,13 @@ final class ActivationController: ObservableObject {
         let decision = voiceSession.decision(at: voiceNow())
         if decision == .endAudio { finishListening() }
         else if decision != .wait {
+            if decision == .finalResultTimedOut,
+               case .search = FocusVoiceParser.parse(voiceSession.transcript),
+               let text = voiceSession.takeSettledSearchText(at: voiceNow()) {
+                stopListening()
+                executeVoiceCommand(text)
+                return
+            }
             stopListening()
             switch decision {
             case .noSpeech: voiceStatus = "No speech heard. Try again."
@@ -470,7 +492,7 @@ final class ActivationController: ObservableObject {
     func stopListening() {
         voiceCaptureGeneration += 1
         stopTask?.cancel(); stopTask = nil
-        isListening = false; isFinalizing = false; isPreparing = false
+        isListening = false; isFinalizing = false; isPreparing = false; isExecutingVoiceCommand = false
         voiceSession.cancel()
         voiceCapture.cancel()
         notch.voiceActivityDidChange()
@@ -480,11 +502,12 @@ final class ActivationController: ObservableObject {
     // Recognition text is never evaluated as code or an external instruction.
     func executeVoiceCommand(_ text: String) {
         feedbackTask?.cancel()
+        isExecutingVoiceCommand = false
         voicePresented = true
         transcript = text
         commandAcknowledged = false
         guard let command = FocusVoiceParser.parse(text) else {
-            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "Try “open Safari” or “pesquisa no Google sobre Swift”."
+            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "That action is not available. Say a search topic, or use an app or timer command."
             notch.showVoice()
             return
         }
@@ -519,6 +542,7 @@ final class ActivationController: ObservableObject {
         case .aiLimits:
             voiceStatus = "Here are your AI limits"; commandAcknowledged = true; notch.showAILimits(); scheduleFeedback(closeWidget: false); return
         case .openApp(let name):
+            isExecutingVoiceCommand = true
             let generation = voiceRequestGeneration
             voiceStatus = "Opening \(name)…"; notch.showVoice()
             Task { @MainActor [weak self] in
@@ -531,10 +555,13 @@ final class ActivationController: ObservableObject {
                     guard generation == self.voiceRequestGeneration else { return }
                     self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false
                 }
+                self.isExecutingVoiceCommand = false
+                self.notch.voiceActivityDidChange()
                 self.scheduleFeedback(closeWidget: true)
             }
             return
         case .search(let query):
+            isExecutingVoiceCommand = true
             let generation = voiceRequestGeneration
             voiceStatus = "Opening your search…"; notch.showVoice()
             Task { @MainActor [weak self] in
@@ -547,6 +574,8 @@ final class ActivationController: ObservableObject {
                     guard generation == self.voiceRequestGeneration else { return }
                     self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false
                 }
+                self.isExecutingVoiceCommand = false
+                self.notch.voiceActivityDidChange()
                 self.scheduleFeedback(closeWidget: true)
             }
             return

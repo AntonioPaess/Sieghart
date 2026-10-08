@@ -10,7 +10,7 @@ enum FocusVoiceCommand: Equatable {
 enum FocusVoiceParser {
     static func parse(_ transcript: String) -> FocusVoiceCommand? {
         // Parse search before interpreting words inside its query as actions.
-        let original = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        let original = SearchVoiceParser.requestText(transcript)
         if SearchVoiceParser.hasSearchIntent(original) {
             guard let query = SearchVoiceParser.query(in: original) else { return nil }
             return .search(query: query)
@@ -20,12 +20,22 @@ enum FocusVoiceParser {
         let negatedRequest = ["don't", "do not", "never", "nao", "not now"].contains(where: text.contains)
         let words = Set(text.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty })
         func has(_ options: [String]) -> Bool { !words.isDisjoint(with: options) }
-        if has(["ai", "ia", "codex", "claude"]) && has(["limits", "limit", "limites", "limite", "usage", "consumo", "tokens", "cost", "costs", "gasto", "gastos"]) {
+        let personalUsage = has(["my", "meu", "minha", "meus", "minhas"])
+            || text.range(of: #"^(?:show|mostre|mostrar|veja|exibir)\b"#, options: .regularExpression) != nil
+            || text.range(of: #"^(?:(?:ai|ia|codex|claude)\s+(?:limits|limites|usage|consumo)|(?:limits|limites|usage|consumo)\s+(?:ai|ia|codex|claude))[.!?]?$"#, options: .regularExpression) != nil
+        if personalUsage && has(["ai", "ia", "codex", "claude"]) && has(["limits", "limit", "limites", "limite", "usage", "consumo", "tokens", "cost", "costs", "gasto", "gastos"]) {
             guard !negatedRequest, !has(["pause", "stop", "start", "begin", "resume", "finish", "reset", "hide", "close", "focus", "pomodoro", "pausar", "iniciar", "retomar", "finalizar", "zerar", "esconder", "fechar", "focar"]) else { return nil }
             return .aiLimits
         }
         if SearchVoiceParser.hasQuestionIntent(original) {
             guard let query = SearchVoiceParser.question(in: original) else { return nil }
+            return .search(query: query)
+        }
+        // Free topics are browser queries. Local verbs only act when the
+        // sentence requests an action; words inside a topic are not commands.
+        if !SearchVoiceParser.hasLocalIntent(text) {
+            guard !SearchVoiceParser.hasNegatedIntent(original), !SearchVoiceParser.hasUnsupportedAction(text),
+                  let query = SearchVoiceParser.freeQuery(in: original) else { return nil }
             return .search(query: query)
         }
         guard !negatedRequest else { return nil }
@@ -81,16 +91,38 @@ enum FocusVoiceParser {
     }
 }
 
-// Explicit search intent only; the query is preserved verbatim and never
-// interpreted as a timer/app action or executed as shell code.
+// Search grammar describes the request, never a list of permitted topics.
+// Query words remain data; they are not interpreted as actions or shell code.
 enum SearchVoiceParser {
-    private static let prefix = #"(?:please\s+|por favor\s+|(?:can|could) you\s+|(?:quero|gostaria)(?:\s+que\s+voc[êe])?\s+)?"#
+    private static let prefix = #"(?:(?:please|por favor)[, ]+|(?:(?:can|could) you|(?:voc[êe]\s+)?(?:pode|poderia)|(?:quero|gostaria)(?:\s+que\s+voc[êe])?)[, ]+|me\s+)*"#
     private static let verb = #"(?:search(?:\s+the\s+web)?|look\s+up|google|pesquis[ae]|pesquisar|bus(?:que|ca|car)|procur(?:e|a|ar)|(?:fa[çc]a|fazer)\s+uma\s+pesquisa)"#
+    static func requestText(_ transcript: String) -> String {
+        let text = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        return text.replacingOccurrences(of: #"^(?:hey\s+|oi\s+)?(?:sig|sieghart)[, :]+"#, with: "", options: [.regularExpression, .caseInsensitive])
+    }
+    static func hasNegatedIntent(_ text: String) -> Bool {
+        text.range(of: #"^(?:please\s+|por favor\s+)?(?:n[ãa]o|don't|do not|never|not now)\b"#, options: [.regularExpression, .caseInsensitive]) != nil
+    }
+    static func hasLocalIntent(_ text: String) -> Bool {
+        let wrappers = #"(?:(?:please|por favor)[, ]+|(?:can|could) you\s+|(?:quero|preciso)(?:\s+que\s+voce)?\s+)*"#
+        let actions = #"(?:open|launch|abrir|abra|abre|start|begin|iniciar|comecar|comece|focar|pause|pausar|pausa|stop|parar|resume|continue|retomar|continuar|finish|complete|end|finalizar|terminar|concluir|reset|restart|reiniciar|zerar|configure|settings|adjust|configurar|ajustar|hide|close|esconder|fechar|recolher|show|mostrar|take|fazer)\b"#
+        return text.range(of: "^" + wrappers + actions, options: .regularExpression) != nil
+            || text.range(of: #"^(?:focus|pomodoro)(?:$|\s+(?:for|por)\b)"#, options: .regularExpression) != nil
+            || text.range(of: #"^(?:quero|preciso)\s+(?:um\s+)?(?:break|rest|descanso|intervalo)\b"#, options: .regularExpression) != nil
+    }
+    static func hasUnsupportedAction(_ text: String) -> Bool {
+        text.range(of: #"^(?:please\s+|por favor\s+)?(?:send|enviar|envie|mande|delete|apague|exclua|create|crie|upload|fa[çc]a\s+upload)\b"#, options: .regularExpression) != nil
+    }
+    static func freeQuery(in text: String) -> String? {
+        guard text.rangeOfCharacter(from: .alphanumerics) != nil,
+              BrowserSearch.url(for: text) != nil else { return nil }
+        return text
+    }
     static func hasSearchIntent(_ transcript: String) -> Bool {
         transcript.range(of: "^" + prefix + verb + #"\b"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
     static func hasQuestionIntent(_ transcript: String) -> Bool {
-        let pattern = #"^(?:o que|como|qual|quais|quem|onde|quando|por que|por quê|porque|what|who|where|when|why|how)\b"#
+        let pattern = #"^(?:o que|como|qual|quais|quem|onde|aonde|quando|quanto|quantos|quantas|por que|por quê|porque|ser[áa] que|what|who|where|when|why|how|is|are|does|should)\b"#
         return transcript.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
     static func question(in transcript: String) -> String? {
@@ -102,7 +134,7 @@ enum SearchVoiceParser {
     static func query(in transcript: String) -> String? {
         let engine = #"(?:\s+(?:no|na|pelo|pela|on|using)\s+(?:google|web|internet))?"#
         let subject = #"(?:\s+(?:for|about|sobre|por))?"#
-        let pattern = "^" + prefix + verb + engine + subject + #"\s+(.+)$"#
+        let pattern = "^" + prefix + verb + #"(?:,)?"# + engine + subject + #"\s+(.+)$"#
         guard let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
               let match = expression.firstMatch(in: transcript, range: NSRange(transcript.startIndex..., in: transcript)),
               let range = Range(match.range(at: 1), in: transcript) else { return nil }

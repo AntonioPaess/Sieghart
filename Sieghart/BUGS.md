@@ -123,9 +123,9 @@ The user now requires expanded Companion to remain visible while listening. Busy
 
 ## SG-007 — Restricted search wording and wrong engine
 
-**Reported:** October 8, 2026. **Status:** parser/URL and injected action checks passed; real voice/browser acceptance pending.
+**Reported:** October 8, 2026. **Status:** reopened by the user; parser and full injected capture-to-action checks pass; live voice/browser acceptance pending.
 
-DuckDuckGo was hard-coded and colloquial Portuguese/general question forms were missing. Google now opens in the default browser, with broader explicit search phrases and questions. Accents/query content are preserved; invalid queries cannot fall through into timer/app commands. Existing local AI-limit questions keep their panel route.
+Earlier engine/wording corrections used Google. The user subsequently reported “pesquise por arquiteturas de mac” and “pesquisa github” failing. Both were already accepted by the syntax parser; there was no topic whitelist, so the actual microphone/recognizer failure is not diagnosed from those phrases alone. New capture-to-command fixtures cover both and missing-final recovery. Questions and direct topics are supported without interpreting their words as local actions. After confirmed audio end plus bounded drain, a settled search can proceed without `isFinal`; app/timer actions still require final recognition. Cancellation, input loss and the capture safety limit never use this fallback. [Evidence, boundaries and physical checks](Design/voice-search-regression-checks.md). Live speech acceptance is reopened.
 
 ## SG-008 — Voice does not listen with AirPods
 
