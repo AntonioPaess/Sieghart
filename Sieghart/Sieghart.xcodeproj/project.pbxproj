@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000000000000000000098 /* UtilityViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000099 /* UtilityViews.swift */; };
+		A10000000000000000000096 /* DisplayPower.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000097 /* DisplayPower.swift */; };
+		A10000000000000000000094 /* KeepAwake.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000095 /* KeepAwake.swift */; };
+		A10000000000000000000092 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000093 /* SystemMonitor.swift */; };
 		A10000000000000000000090 /* IslandLayoutEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000091 /* IslandLayoutEditor.swift */; };
 		A10000000000000000000086 /* CompanionArrival.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000087 /* CompanionArrival.swift */; };
 		A10000000000000000000089 /* MiddleClick.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000088 /* MiddleClick.swift */; };
@@ -45,6 +49,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A10000000000000000000099 /* UtilityViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilityViews.swift; sourceTree = "<group>"; };
+		A10000000000000000000097 /* DisplayPower.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayPower.swift; sourceTree = "<group>"; };
+		A10000000000000000000095 /* KeepAwake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeepAwake.swift; sourceTree = "<group>"; };
+		A10000000000000000000093 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
 		A10000000000000000000091 /* IslandLayoutEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IslandLayoutEditor.swift; sourceTree = "<group>"; };
 		A10000000000000000000087 /* CompanionArrival.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompanionArrival.swift; sourceTree = "<group>"; };
 		A10000000000000000000088 /* MiddleClick.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddleClick.swift; sourceTree = "<group>"; };
@@ -112,6 +120,10 @@
 				A10000000000000000000081 /* UsageImports.swift */,
 				A10000000000000000000087 /* CompanionArrival.swift */,
 				A10000000000000000000088 /* MiddleClick.swift */,
+				A10000000000000000000093 /* SystemMonitor.swift */,
+				A10000000000000000000095 /* KeepAwake.swift */,
+				A10000000000000000000097 /* DisplayPower.swift */,
+				A10000000000000000000099 /* UtilityViews.swift */,
 				A10000000000000000000091 /* IslandLayoutEditor.swift */,
 				A10000000000000000000085 /* ClipboardHistoryView.swift */,
 				A10000000000000000000083 /* ClipboardHistory.swift */,
@@ -226,6 +238,10 @@
 				A10000000000000000000080 /* UsageImports.swift in Sources */,
 				A10000000000000000000086 /* CompanionArrival.swift in Sources */,
 				A10000000000000000000089 /* MiddleClick.swift in Sources */,
+				A10000000000000000000092 /* SystemMonitor.swift in Sources */,
+				A10000000000000000000094 /* KeepAwake.swift in Sources */,
+				A10000000000000000000096 /* DisplayPower.swift in Sources */,
+				A10000000000000000000098 /* UtilityViews.swift in Sources */,
 				A10000000000000000000090 /* IslandLayoutEditor.swift in Sources */,
 				A10000000000000000000084 /* ClipboardHistoryView.swift in Sources */,
 				A10000000000000000000082 /* ClipboardHistory.swift in Sources */,

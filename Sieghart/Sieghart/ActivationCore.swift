@@ -9,6 +9,8 @@ final class ActivationController: ObservableObject {
     @Published private(set) var companionShortcut: ShortcutChord?
     @Published private(set) var voiceShortcut: ShortcutChord?
     @Published private(set) var clipboardShortcut: ShortcutChord?
+    @Published private(set) var audioShortcuts: [ShortcutAction: ShortcutChord] = [:]
+    @Published private(set) var audioShortcutStatuses: [ShortcutAction: String] = [:]
     @Published private(set) var clipboardShortcutStatus = ""
     @Published var recordingShortcut: ShortcutAction? {
         didSet { modifierTracker.reset(); if registersShortcuts && shortcutsStarted { registerHotkeys() } }
@@ -80,6 +82,9 @@ final class ActivationController: ObservableObject {
         voiceShortcut = saved(.voice, fallback: .voice)
         clipboardShortcut = saved(.clipboard, fallback: .clipboard)
         voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
+        for action in [ShortcutAction.nextOutput, .muteMicrophone] {
+            if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), !defaults.bool(forKey: "activation.\(action.rawValue).disabled"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { audioShortcuts[action] = chord }
+        }
         clipboardShortcutStatus = clipboardShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
         shortcutStatus = companionShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
         voiceShortcutStatus = voiceShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
@@ -156,10 +161,10 @@ final class ActivationController: ObservableObject {
     }
 
     func shortcut(for action: ShortcutAction) -> ShortcutChord? {
-        switch action { case .companion: companionShortcut; case .voice: voiceShortcut; case .clipboard: clipboardShortcut }
+        switch action { case .companion: companionShortcut; case .voice: voiceShortcut; case .clipboard: clipboardShortcut; case .nextOutput, .muteMicrophone: audioShortcuts[action] }
     }
     private func setStatus(_ text: String, for action: ShortcutAction) {
-        switch action { case .companion: shortcutStatus = text; case .voice: voiceShortcutStatus = text; case .clipboard: clipboardShortcutStatus = text }
+        switch action { case .companion: shortcutStatus = text; case .voice: voiceShortcutStatus = text; case .clipboard: clipboardShortcutStatus = text; case .nextOutput, .muteMicrophone: audioShortcutStatuses[action] = text }
     }
 
     func setShortcut(_ chord: ShortcutChord?, for action: ShortcutAction) {
@@ -168,7 +173,7 @@ final class ActivationController: ObservableObject {
             setStatus("Already used for \(otherAction.title.lowercased())", for: action)
             return
         }
-        switch action { case .companion: companionShortcut = chord; case .voice: voiceShortcut = chord; case .clipboard: clipboardShortcut = chord }
+        switch action { case .companion: companionShortcut = chord; case .voice: voiceShortcut = chord; case .clipboard: clipboardShortcut = chord; case .nextOutput, .muteMicrophone: audioShortcuts[action] = chord }
         defaults.set(chord == nil, forKey: "activation.\(action.rawValue).disabled")
         if let chord, let data = try? JSONEncoder().encode(chord) { defaults.set(data, forKey: "activation.\(action.rawValue).chord") }
         else { defaults.removeObject(forKey: "activation.\(action.rawValue).chord") }
@@ -202,9 +207,9 @@ final class ActivationController: ObservableObject {
             var identifier = EventHotKeyID()
             let status = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID), nil, MemoryLayout<EventHotKeyID>.size, nil, &identifier)
             let id = identifier.id
-            if status == noErr, identifier.signature == 0x53494748, (1...3).contains(id) {
+            if status == noErr, identifier.signature == 0x53494748, (1...UInt32(ShortcutAction.allCases.count)).contains(id) {
                 let timestamp = GetEventTime(event)
-                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(id == 3 ? .clipboard : id == 2 ? .voice : .companion, eventTime: timestamp) }
+                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(ShortcutAction.allCases[Int(id) - 1], eventTime: timestamp) }
                 return noErr
             }
             return OSStatus(eventNotHandledErr)
@@ -214,7 +219,8 @@ final class ActivationController: ObservableObject {
         lastShortcutTrust = trusted
         lastSecureInput = IsSecureEventInputEnabled()
         needsShortcutPermission = !trusted && !lastInputTrust && ShortcutAction.allCases.contains { shortcut(for: $0)?.isModifierOnly == true }
-        for (action, id) in [(ShortcutAction.companion, UInt32(1)), (.voice, UInt32(2)), (.clipboard, UInt32(3))] {
+        for (index, action) in ShortcutAction.allCases.enumerated() {
+            let id = UInt32(index + 1)
             var statusText = "Shortcut off"
             if let chord = shortcut(for: action) {
                 if let code = chord.keyCode {
@@ -307,7 +313,7 @@ final class ActivationController: ObservableObject {
     func performShortcut(_ action: ShortcutAction) {
         guard recordingShortcut == nil else { return }
         lastShortcutActivation = Date()
-        switch action { case .voice: toggleListening(); case .companion: notch.toggle(); case .clipboard: notch.toggleClipboard() }
+        switch action { case .voice: toggleListening(); case .companion: notch.toggle(); case .clipboard: notch.toggleClipboard(); case .nextOutput: notch.audio.cycleOutput(); case .muteMicrophone: notch.audio.toggleMicrophoneMute() }
     }
 
     // Onboarding can request access without starting recognition or audio.

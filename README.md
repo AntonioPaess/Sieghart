@@ -13,7 +13,15 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
-> **Sprint 4 in progress.** Sprint 3 passed the user’s Mac checklist. Clipboard, configurable side buttons, companion arrival and spending corrections are implemented; new physical checks remain. Conversational AI and connected email/upload workflows are planned.
+> **Sprint 4 implementation delivered.** The first slice passed the user’s Mac checklist; new utilities and greeting have separate physical checks. Connected email/upload workflows and extended hardware capabilities remain planned.
+
+## Sprint 4 — System utilities and greeting
+
+The previous clipboard/island/editor slice passed the user's Mac tests. The remaining requested implementation now adds System, Keep awake, audio favorites/order/device priorities and optional global output/microphone shortcuts, compatible brightness/dimming/display sleep, optional Bluetooth restoration and a narrow Music launch guard. The six companions greet from the center, wave and dock into the island; motion is optional and interruptions keep the current contour.
+
+[Full implementation, new Mac checks and hardware boundaries](Sieghart/Design/sprint-4-utilities.md). New hardware acceptance is pending; XDR boost and temperature/fan control remain backlog.
+
+![Six native companions greeting](Sieghart/Design/Concepts/companion-launch-greeting.gif)
 
 ## Sprint 4 — First slice
 
@@ -25,7 +33,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 ![Six companions arriving](Sieghart/Design/Concepts/companion-welcome-motion.gif)
 
-[Clipboard preview](Sieghart/Design/Concepts/island-clipboard-preview.png) · [onboarding](Sieghart/Design/Concepts/onboarding-welcome-preview.png) · [full changes, manual tests and remaining Sprint 4](Sieghart/Design/sprint-4-checkpoint.md).
+[Clipboard preview](Sieghart/Design/Concepts/island-clipboard-preview.png) · [onboarding](Sieghart/Design/Concepts/onboarding-welcome-preview.png) · [first-slice changes and accepted checklist](Sieghart/Design/sprint-4-checkpoint.md).
 
 ## The experience
 
@@ -88,7 +96,7 @@ Output selection, master volume and input-device controls use Core Audio hardwar
 
 ![Choose a companion from the menu bar](Sieghart/Design/Concepts/menu-avatars-preview.png)
 
-The menu-bar panel is 380 points wide. Each tab replaces its content and fits its height, eliminating the empty 300-point content area. The island's tool grid opens Companion, Audio, AI agents, Timers, Avatars and Preferences; voice uses Companion. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
+The menu-bar panel is 380 points wide. Each tab replaces its content and fits its height, eliminating the empty 300-point content area. The island's ten-tile grid opens Companion, Audio, AI agents, Timers, Clipboard, Avatars, System, Keep awake, Display & power and Preferences; voice uses Companion. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
 
 ## Swift Student Challenge
 
@@ -161,7 +169,7 @@ These checks do not open the app, activate the sensor, register system shortcuts
 
 ## Sprint 3 closeout
 
-Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 is in progress; its first slice and new Mac checklist are documented below.
+Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 requested implementation is delivered; its new physical Mac checklist is linked at the top.
 
 [Delivered scope and exact Mac checklist](Sieghart/Design/sprint-3-closeout.md) · [Charge import format](Sieghart/Design/charge-imports.md) · [Sources preview](Sieghart/Design/Concepts/ai-data-sources-preview.png) · [Search in Companion](Sieghart/Design/Concepts/island-companion-search-preview.png)
 
@@ -226,7 +234,7 @@ The user supplied Coucou as inspiration after accepting Sprint 3. [Reference stu
 
 ## Next steps
 
-Sprint 3 is closed. The next execution scope is S4: system monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Later companion workflows follow the core utilities.
+Sprint 3 is closed and the requested Sprint 4 implementation is delivered. New utility/greeting hardware acceptance is the current release gate. S5 then introduces calendar/reminders, notifications, downloads, a file shelf and capture; connected companion workflows follow the core utilities.
 
 - Implement and validate the S4 utility scope when that sprint begins.
 - Validate real sensor interaction in the accepted Challenge submission environment.

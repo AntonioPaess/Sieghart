@@ -340,16 +340,24 @@ struct CompanionCharacter: View {
     var body: some View {
         let moves = animates && !reduceMotion
         TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !moves || previewTime != nil)) { context in
-            let reaction = joyful ? CompanionMood.happy : mood
+            let reaction = joyful || entrance?.joy == true ? CompanionMood.happy : mood
             let time = previewTime ?? context.date.timeIntervalSinceReferenceDate
             let motion = CompanionMotion.sample(time: time, size: size, avatar: avatar, mood: reaction, listening: listening, strolling: strolling, animates: moves)
             CompanionFace(renderSize: size, avatar: avatar, focusing: focusing, joyful: joyful, gaze: moves ? gaze : .zero, eyeOpen: motion.eyeOpen * (entrance?.eyeOpen ?? 1),
                           listening: listening, motionTime: time, mood: reaction, animates: moves)
+                .overlay(alignment: .trailing) {
+                    if let entrance, entrance.wave > 0 {
+                        Capsule().fill(avatar == .minimalSpirit || avatar == .inkBuddy ? Color.white : avatar.tint)
+                            .frame(width: size * 0.12, height: size * 0.19)
+                            .rotationEffect(.degrees(-28 + entrance.waveAngle), anchor: .bottom)
+                            .offset(x: size * 0.06, y: -size * 0.05).opacity(entrance.wave)
+                    }
+                }
                 .scaleEffect(x: motion.scaleX * (entrance?.scaleX ?? 1), y: motion.scaleY * (entrance?.scaleY ?? 1))
                 .rotation3DEffect(.degrees(moves ? -gaze.height * 1.5 : 0), axis: (x: 1, y: 0, z: 0), perspective: 0.35)
                 .rotation3DEffect(.degrees(moves ? gaze.width * 1.4 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.35)
                 .rotationEffect(.degrees(motion.rotation + (entrance?.rotation ?? 0)))
-                .offset(x: motion.offset.width, y: motion.offset.height + (entrance?.offset ?? 0) * size)
+                .offset(x: motion.offset.width + (entrance?.offsetX ?? 0) * size, y: motion.offset.height + (entrance?.offset ?? 0) * size)
                 .opacity(entrance?.opacity ?? 1)
                 .frame(width: size, height: size)
                 .overlay(alignment: .topTrailing) {
@@ -405,6 +413,11 @@ final class CompanionReactions: ObservableObject {
     func reset() {
         recovery?.cancel(); recovery = nil
         touchCount = 0; lastTouch = nil; mood = .idle
+    }
+    func utility(_ success: Bool) {
+        recovery?.cancel(); touchCount = 0; lastTouch = nil
+        mood = success ? .understood : .startled
+        recover(after: recoveryDelay)
     }
 
     private func recover(after delay: Duration) {

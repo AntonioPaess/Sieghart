@@ -4,6 +4,8 @@ import AppKit
 @MainActor
 final class ResidentAppDelegate: NSObject, NSApplicationDelegate {
     var clipboard: ClipboardController?
+    var onLaunch: (() -> Void)?
+    var onTerminate: (() -> Void)?
     private var finishedLaunching = false
     var activation: ActivationController? {
         didSet { if finishedLaunching { activation?.startGlobalShortcuts() } }
@@ -13,9 +15,11 @@ final class ResidentAppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         finishedLaunching = true
         activation?.startGlobalShortcuts()
+        onLaunch?()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        onTerminate?()
         guard let clipboard else { return .terminateNow }
         Task { await clipboard.flush(); sender.reply(toApplicationShouldTerminate: true) }
         return .terminateLater

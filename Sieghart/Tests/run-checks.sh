@@ -24,6 +24,7 @@ xcrun swiftc -swift-version 6 -module-cache-path "${CLANG_MODULE_CACHE_PATH:-/pr
   Sieghart/Sieghart/ActivationCore.swift Sieghart/Sieghart/KeyboardShortcuts.swift \
   Sieghart/Sieghart/VoiceCommands.swift Sieghart/Sieghart/VoiceCallbacks.swift \
   Sieghart/Sieghart/AudioEngine.swift Sieghart/Sieghart/AudioControlsView.swift \
+  Sieghart/Sieghart/SystemMonitor.swift Sieghart/Sieghart/KeepAwake.swift Sieghart/Sieghart/DisplayPower.swift Sieghart/Sieghart/UtilityViews.swift \
   Sieghart/Sieghart/FocusSessionView.swift Sieghart/Tests/InteractionChecks.swift \
   -o "$check_dir/interactions"
 "$check_dir/interactions"
@@ -67,3 +68,8 @@ xcrun swiftc -swift-version 6 -module-cache-path "${CLANG_MODULE_CACHE_PATH:-/pr
 xcrun swiftc -swift-version 6 -module-cache-path "${CLANG_MODULE_CACHE_PATH:-/private/tmp/sieghart-check-module-cache}" \
   Sieghart/Sieghart/MiddleClick.swift Sieghart/Tests/MiddleClickChecks.swift -o "$check_dir/middle-click"
 "$check_dir/middle-click"
+
+xcrun swiftc -swift-version 6 -module-cache-path "${CLANG_MODULE_CACHE_PATH:-/private/tmp/sieghart-check-module-cache}" \
+  Sieghart/Sieghart/SystemMonitor.swift Sieghart/Sieghart/KeepAwake.swift Sieghart/Sieghart/DisplayPower.swift \
+  Sieghart/Tests/UtilityChecks.swift -o "$check_dir/utilities"
+"$check_dir/utilities"

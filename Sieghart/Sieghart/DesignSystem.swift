@@ -78,7 +78,7 @@ enum WidgetSize: String, CaseIterable, Identifiable {
 }
 
 enum IslandRailAction: String, CaseIterable, Identifiable {
-    case tools = "All tools", timer = "Timers", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Avatars", voice = "Speak", companion = "Companion", none = "Hidden"
+    case tools = "All tools", timer = "Timers", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Avatars", voice = "Speak", companion = "Companion", system = "System", keepAwake = "Keep awake", displayPower = "Display & power", none = "Hidden"
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -91,6 +91,9 @@ enum IslandRailAction: String, CaseIterable, Identifiable {
         case .avatars: "person.crop.square"
         case .voice: "mic"
         case .companion: "face.smiling"
+        case .system: "cpu"
+        case .keepAwake: "cup.and.saucer"
+        case .displayPower: "sun.max"
         case .none: "minus"
         }
     }
@@ -130,6 +133,7 @@ final class CompanionPreferences: ObservableObject {
     @Published var hoverEnabled: Bool { didSet { save(hoverEnabled, "hover") } }
     @Published var impactsEnabled: Bool { didSet { save(impactsEnabled, "impacts") } }
     @Published var compactTimer: Bool { didSet { save(compactTimer, "compactTimer") } }
+    @Published var launchGreeting: Bool { didSet { save(launchGreeting, "launchGreeting") } }
     @Published var characterMotion: Bool { didSet { save(characterMotion, "characterMotion") } }
     @Published var reduceMotion: Bool { didSet { save(reduceMotion, "reduceMotion") } }
     @Published var widgetSize: WidgetSize { didSet { defaults.set(widgetSize.rawValue, forKey: "appearance.widgetSize") } }
@@ -149,6 +153,7 @@ final class CompanionPreferences: ObservableObject {
         hoverEnabled = defaults.object(forKey: "appearance.hover") as? Bool ?? true
         impactsEnabled = defaults.object(forKey: "appearance.impacts") as? Bool ?? false
         compactTimer = defaults.object(forKey: "appearance.compactTimer") as? Bool ?? true
+        launchGreeting = defaults.object(forKey: "appearance.launchGreeting") as? Bool ?? true
         characterMotion = defaults.object(forKey: "appearance.characterMotion") as? Bool ?? true
         reduceMotion = defaults.object(forKey: "appearance.reduceMotion") as? Bool ?? false
         let savedAvatar = defaults.string(forKey: "appearance.avatar")

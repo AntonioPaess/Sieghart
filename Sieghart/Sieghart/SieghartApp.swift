@@ -45,6 +45,11 @@ struct SieghartApp: App {
         _aiUsage = StateObject(wrappedValue: aiUsage)
         appDelegate.activation = activation
         appDelegate.clipboard = notch.clipboard
+        appDelegate.onLaunch = {
+            notch.startUtilities()
+            if preferences.onboardingComplete && preferences.launchGreeting { notch.showWelcome() }
+        }
+        appDelegate.onTerminate = { notch.stopUtilities() }
     }
 
     var body: some Scene {

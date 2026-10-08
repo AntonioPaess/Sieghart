@@ -3,9 +3,9 @@ import Carbon
 import SwiftUI
 
 enum ShortcutAction: String, CaseIterable, Identifiable {
-    case companion, voice, clipboard
+    case companion, voice, clipboard, nextOutput, muteMicrophone
     var id: String { rawValue }
-    var title: String { switch self { case .companion: "Companion"; case .voice: "Voice"; case .clipboard: "Clipboard" } }
+    var title: String { switch self { case .companion: "Companion"; case .voice: "Voice"; case .clipboard: "Clipboard"; case .nextOutput: "Switch output"; case .muteMicrophone: "Mute microphone" } }
 }
 
 enum ShortcutDeliverySource { case carbon, monitor }

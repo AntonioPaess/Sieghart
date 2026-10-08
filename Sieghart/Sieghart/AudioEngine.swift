@@ -94,7 +94,25 @@ enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired
     @Published private(set) var routedApps: Set<String> = []
     @Published private(set) var gains: [String: Float] = [:]
     @Published private(set) var error: String?
-    var visibleApps: [AudioApplicationInfo] { Array(state.apps.prefix(5)) }
+    @Published private(set) var favoriteApps: [String] = []
+    @Published private(set) var appOrder: [String] = []
+    @Published private(set) var outputPriority: [String] = []
+    @Published private(set) var inputPriority: [String] = []
+    @Published var automaticDevices = false {
+        didSet {
+            defaults.set(automaticDevices, forKey: "audio.automaticDevices")
+            if automaticDevices { refresh(); applyPriorities(); startPolling() }
+        }
+    }
+    var onReaction: ((Bool) -> Void)?
+    var visibleApps: [AudioApplicationInfo] {
+        let positions = Dictionary(uniqueKeysWithValues: appOrder.enumerated().map { ($1, $0) })
+        return Array(state.apps.enumerated().sorted { a, b in
+            let af = favoriteApps.contains(a.element.id), bf = favoriteApps.contains(b.element.id)
+            if af != bf { return af }
+            return (positions[a.element.id] ?? (10_000 + a.offset)) < (positions[b.element.id] ?? (10_000 + b.offset))
+        }.prefix(5).map(\.element))
+    }
     private let backend: any AudioBackend
     private let defaults: UserDefaults
     private var poll: Task<Void, Never>?
@@ -105,6 +123,11 @@ enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired
         self.backend = backend ?? CoreAudioBackend()
         self.defaults = defaults
         gains = (defaults.dictionary(forKey: "audio.appGains") ?? [:]).compactMapValues { ($0 as? NSNumber)?.floatValue }.mapValues { min(1, max(0, $0)) }
+        favoriteApps = defaults.stringArray(forKey: "audio.favoriteApps") ?? []
+        appOrder = defaults.stringArray(forKey: "audio.appOrder") ?? []
+        outputPriority = defaults.stringArray(forKey: "audio.outputPriority") ?? []
+        inputPriority = defaults.stringArray(forKey: "audio.inputPriority") ?? []
+        automaticDevices = defaults.bool(forKey: "audio.automaticDevices")
     }
     func refresh() {
         let latest = backend.snapshot()
@@ -115,7 +138,9 @@ enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired
         failedApps = failedApps.filter { id in
             state.apps.first { $0.id == id }?.processes == latest.apps.first { $0.id == id }?.processes
         }
+        let topologyChanged = Set(latest.devices.map(\.uid)) != Set(state.devices.map(\.uid))
         state = latest
+        if automaticDevices && topologyChanged { applyPriorities() }
         let alive = Set(state.apps.filter { !$0.processes.isEmpty }.map(\.id))
         backend.retainApplications(alive); routedApps.formIntersection(alive)
         guard perAppEnabled, let output = state.devices.first(where: { $0.id == state.output }) else { return }
@@ -126,17 +151,75 @@ enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired
     }
     func observe() {
         observers += 1; refresh()
+        startPolling()
+    }
+    func startLifecycle() { if automaticDevices { refresh(); startPolling() } }
+    private func startPolling() {
         guard poll == nil else { return }
         poll = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(3))
                 guard !Task.isCancelled, let self else { return }
                 self.refresh()
-                if self.observers == 0 && !self.perAppEnabled { self.poll = nil; return }
+                if self.observers == 0 && !self.perAppEnabled && !self.automaticDevices { self.poll = nil; return }
             }
         }
     }
     func stopObserving() { observers = max(0, observers - 1) }
+    func toggleFavorite(_ app: AudioApplicationInfo) {
+        if favoriteApps.contains(app.id) { favoriteApps.removeAll { $0 == app.id } } else { favoriteApps.append(app.id) }
+        defaults.set(favoriteApps, forKey: "audio.favoriteApps")
+    }
+    func moveApp(_ app: AudioApplicationInfo, direction: Int) {
+        var order = visibleApps.map(\.id)
+        let peers = order.filter { favoriteApps.contains($0) == favoriteApps.contains(app.id) }
+        guard let peer = peers.firstIndex(of: app.id), peers.indices.contains(peer + direction),
+              let index = order.firstIndex(of: app.id), let target = order.firstIndex(of: peers[peer + direction]) else { return }
+        order.swapAt(index, target)
+        appOrder = order + appOrder.filter { !order.contains($0) }
+        defaults.set(appOrder, forKey: "audio.appOrder")
+    }
+    func canMoveApp(_ app: AudioApplicationInfo, direction: Int) -> Bool {
+        let peers = visibleApps.filter { favoriteApps.contains($0.id) == favoriteApps.contains(app.id) }
+        guard let index = peers.firstIndex(where: { $0.id == app.id }) else { return false }
+        return peers.indices.contains(index + direction)
+    }
+    func preferDevice(_ device: AudioDeviceInfo, input: Bool, direction: Int = -1) {
+        var list = input ? inputPriority : outputPriority
+        if let index = list.firstIndex(of: device.uid) { if list.indices.contains(index + direction) { list.swapAt(index, index + direction) } }
+        else { list.insert(device.uid, at: 0) }
+        if input { inputPriority = list } else { outputPriority = list }
+        defaults.set(list, forKey: input ? "audio.inputPriority" : "audio.outputPriority")
+    }
+    func removePriority(_ device: AudioDeviceInfo, input: Bool) {
+        if input { inputPriority.removeAll { $0 == device.uid }; defaults.set(inputPriority, forKey: "audio.inputPriority") }
+        else { outputPriority.removeAll { $0 == device.uid }; defaults.set(outputPriority, forKey: "audio.outputPriority") }
+    }
+    private func applyPriorities() {
+        guard automaticDevices else { return }
+        for input in [false, true] {
+            let order = input ? inputPriority : outputPriority
+            guard let device = order.compactMap({ uid in state.devices.first { $0.uid == uid && (input ? $0.inputChannels : $0.outputChannels) > 0 } }).first,
+                  device.id != (input ? state.input : state.output) else { continue }
+            do {
+                if !input { backend.stopApplications(); routedApps = []; failedApps = [] }
+                try backend.setDefault(device.id, input: input); state = backend.snapshot(); error = nil
+            } catch { self.error = error.localizedDescription; onReaction?(false) }
+        }
+    }
+    func cycleOutput() {
+        refresh()
+        let available = state.devices.filter { $0.outputChannels > 0 }
+        guard available.count > 1 else { error = "Connect another output to switch devices"; onReaction?(false); return }
+        let index = available.firstIndex { $0.id == state.output } ?? -1
+        selectDevice(available[(index + 1) % available.count].id)
+    }
+    func toggleMicrophoneMute() {
+        refresh()
+        guard let muted = state.inputMuted else { error = "This microphone doesn't support hardware mute"; onReaction?(false); return }
+        muteInput(!muted)
+    }
+    func shutdown() { poll?.cancel(); poll = nil; backend.stopApplications(); routedApps = [] }
     func enableApplications() async {
         guard access != .requesting, !perAppEnabled else { return }
         enableGeneration += 1
@@ -184,7 +267,7 @@ enum AppMixerAccess: Equatable { case off, requesting, ready, permissionRequired
             }
         }
     }
-    private func perform(_ action: () throws -> Void) { do { try action(); error = nil } catch { self.error = error.localizedDescription } }
+    private func perform(_ action: () throws -> Void) { do { try action(); error = nil; onReaction?(true) } catch { self.error = error.localizedDescription; onReaction?(false) } }
 }
 
 struct AudioFailure: LocalizedError {

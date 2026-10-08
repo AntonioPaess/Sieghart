@@ -2,7 +2,7 @@
 
 ## Current status — October 8, 2026
 
-**Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report. **Sprint 4 is in progress** with clipboard/cleanup, configurable side buttons, a native arrival, optional middle click and spending data corrections. The new [checkpoint and manual tests](Design/sprint-4-checkpoint.md) define remaining work. Eleven isolated groups and the signed universal build/package checks passed for this slice. The assistant continues to keep the app closed; physical acceptance of the new cases remains with the user. The dated records below preserve earlier pending states as history.
+**Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report. **Sprint 4 requested implementation is delivered:** the earlier clipboard/editor slice passed the user’s tests; system, keep awake, audio priorities/shortcuts, compatible display/power and the expanded companion greeting have twelve isolated check groups and a signed universal build. [New Mac checks and hardware boundaries](Design/sprint-4-utilities.md) define the remaining release gate. The assistant keeps the app closed; physical acceptance of these later changes remains with the user. The dated records below preserve earlier pending states as history.
 
 The new [Coucou reference study](Design/coucou-reference.md) records future companion/task/motion ideas while keeping the six approved avatars and interaction rules. The welcome and final widget reveal now use original native choreography inspired by that study. Core utilities remain the rest of S4.
 
@@ -178,6 +178,14 @@ Global registration starts after AppKit launch, using the system dispatcher; the
 - Nine isolated groups and the universal signed build/package checks pass. Offscreen reference screens are regenerated. Real read-only Codex quotas/counter metadata succeeded; Claude has no fresh local reading on this Mac.
 - The user reconfirmed **keep the app closed; I will test**. No Sieghart/Xcode UI, real shortcut registration, microphone, sensor or system audio was started. Full-screen/red-close delivery, actual speech, audio playback and physical notch fit remain acceptance gates; Sprint 4 has not begun.
 
+## Sprint 4 — System utilities and greeting
+
+The previous clipboard/island/editor slice passed the user's Mac tests. The remaining requested implementation now adds System, Keep awake, audio favorites/order/device priorities and optional global output/microphone shortcuts, compatible brightness/dimming/display sleep, optional Bluetooth restoration and a narrow Music launch guard. The six companions greet from the center, wave and dock into the island; motion is optional and interruptions keep the current contour.
+
+[Full implementation, new Mac checks and hardware boundaries](Design/sprint-4-utilities.md). New hardware acceptance is pending; XDR boost and temperature/fan control remain backlog.
+
+![Six native companions greeting](Design/Concepts/companion-launch-greeting.gif)
+
 ## Sprint 4 — October 8 implementation slice
 
-See [checkpoint](Design/sprint-4-checkpoint.md) for storage/capture boundaries, optional Mac-only touch support, side slots, 60 Hz arrival, request-record/Fast/history corrections, user tests and remaining utilities. Eleven isolated groups pass; new tests never read the live clipboard or start a contact device. Native permission UI, lid/shutdown, cross-app Paste, trackpad taps and the new final-onboarding reveal await user acceptance. Sprint 3 remains accepted.
+See [checkpoint](Design/sprint-4-checkpoint.md) for storage/capture boundaries, optional Mac-only touch support, side slots, 60 Hz arrival, request-record/Fast/history corrections, user tests and remaining utilities. Eleven isolated groups pass; new tests never read the live clipboard or start a contact device. The user accepted this first slice and editor on October 8. The utility delivery above has separate new physical checks. Sprint 3 remains accepted.

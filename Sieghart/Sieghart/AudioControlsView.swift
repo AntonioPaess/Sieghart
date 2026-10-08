@@ -24,6 +24,10 @@ struct AudioControlsView: View {
                     Label("Input", systemImage: "mic").font(.headline)
                     deviceMenu(input: true)
                     Text("Changes the Mac's default audio device.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    UtilityToggle(title: "Use preferred devices when they connect", isOn: $audio.automaticDevices).toggleStyle(WorkspaceSwitchStyle())
+                    Text("Your manual choice stays until devices connect or disconnect. Preferences use device identity, including AirPods.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    priorityList(input: false)
+                    priorityList(input: true)
                 }.frame(maxWidth: .infinity, minHeight: 190, alignment: .topLeading)
             case .microphone:
                 HStack(spacing: 30) {
@@ -87,8 +91,15 @@ struct AudioControlsView: View {
             }
             ForEach(audio.visibleApps) { app in
                 VStack(spacing: 12) {
-                    if let icon = AudioAppIdentity.icon(for: app) { Image(nsImage: icon).resizable().scaledToFit().frame(width: 25, height: 25) }
-                    else { Image(systemName: "waveform").font(.system(size: 24)).frame(height: 25) }
+                    HStack(spacing: 5) {
+                        if let icon = AudioAppIdentity.icon(for: app) { Image(nsImage: icon).resizable().scaledToFit().frame(width: 25, height: 25) }
+                        else { Image(systemName: "waveform").font(.system(size: 24)).frame(height: 25) }
+                        Menu {
+                            Button(audio.favoriteApps.contains(app.id) ? "Remove favorite" : "Favorite") { audio.toggleFavorite(app) }
+                            Button("Move left") { audio.moveApp(app, direction: -1) }.disabled(!audio.canMoveApp(app, direction: -1))
+                            Button("Move right") { audio.moveApp(app, direction: 1) }.disabled(!audio.canMoveApp(app, direction: 1))
+                        } label: { Image(systemName: audio.favoriteApps.contains(app.id) ? "star.fill" : "ellipsis").font(.caption2) }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("\(app.name) order and favorite")
+                    }
                     let gain = audio.routedApps.contains(app.id) ? audio.gains[app.id] ?? 1 : 1
                     VerticalAudioSlider(value: gain, height: compact ? 80 : 160, enabled: audio.perAppEnabled && !app.processes.isEmpty) { audio.setGain($0, app: app) }
                         .accessibilityLabel("\(app.name) volume")
@@ -124,6 +135,25 @@ struct AudioControlsView: View {
                         Button { audio.selectDevice(device.id, input: input) } label: { Label(device.name + (device.id == id ? " ✓" : ""), systemImage: device.symbol) }
                     }
                 } label: { Label(name, systemImage: current?.symbol ?? "speaker.wave.2").font(.callout.weight(.semibold)).lineLimit(1) }.menuStyle(.borderlessButton).accessibilityLabel(input ? "Input device" : "Output device").accessibilityValue(name)
+            }
+        }
+    }
+    private func priorityList(input: Bool) -> some View {
+        let priority = input ? audio.inputPriority : audio.outputPriority
+        let devices = audio.state.devices.filter { (input ? $0.inputChannels : $0.outputChannels) > 0 }.sorted { (priority.firstIndex(of: $0.uid) ?? 999) < (priority.firstIndex(of: $1.uid) ?? 999) }
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(input ? "Preferred microphones" : "Preferred outputs").font(.caption.weight(.semibold))
+            ForEach(devices) { device in
+                HStack {
+                    Label(device.name, systemImage: device.symbol).font(.caption).lineLimit(1)
+                    Spacer()
+                    if let rank = priority.firstIndex(of: device.uid) { Text("\(rank + 1)").font(.caption).foregroundStyle(CompanionStyle.accentInk) }
+                    Menu {
+                        Button("Prefer / move up") { audio.preferDevice(device, input: input) }
+                        Button("Move down") { audio.preferDevice(device, input: input, direction: 1) }
+                        Button("Remove preference") { audio.removePriority(device, input: input) }.disabled(!priority.contains(device.uid))
+                    } label: { Image(systemName: "ellipsis") }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("\(device.name) priority")
+                }
             }
         }
     }

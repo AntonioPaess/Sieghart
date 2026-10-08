@@ -1,8 +1,8 @@
 import SwiftUI
 
 private enum MenuPage: String, CaseIterable {
-    case companion = "Companion", timers = "Timers", ai = "AI", audio = "Audio", clipboard = "Clipboard", avatars = "Avatars"
-    var symbol: String { switch self { case .companion: "face.smiling"; case .timers: "timer"; case .ai: "sparkles"; case .audio: "speaker.wave.2"; case .clipboard: "doc.on.clipboard"; case .avatars: "person.crop.square" } }
+    case companion = "Companion", timers = "Timers", ai = "AI", audio = "Audio", clipboard = "Clipboard", avatars = "Avatars", system = "System", keepAwake = "Keep awake", displayPower = "Display & power"
+    var symbol: String { switch self { case .companion: "face.smiling"; case .timers: "timer"; case .ai: "sparkles"; case .audio: "speaker.wave.2"; case .clipboard: "doc.on.clipboard"; case .avatars: "person.crop.square"; case .system: "cpu"; case .keepAwake: "cup.and.saucer"; case .displayPower: "sun.max" } }
 }
 struct MenuBarView: View {
     @EnvironmentObject private var assistant: AssistantViewModel
@@ -26,7 +26,7 @@ struct MenuBarView: View {
                 Text(page.rawValue).font(.caption).foregroundStyle(CompanionStyle.muted)
             }
             HStack(spacing: 4) {
-                ForEach(MenuPage.allCases, id: \.self) { item in
+                ForEach(Array(MenuPage.allCases.prefix(6)), id: \.self) { item in
                     Button { page = item } label: {
                         Group {
                             if item == .companion { CompanionCharacter(size: 20, avatar: preferences.avatar, animates: false) }
@@ -36,6 +36,11 @@ struct MenuBarView: View {
                             .background(page == item ? CompanionStyle.edge.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 10))
                     }.buttonStyle(.plain).help(item.rawValue).accessibilityLabel(item.rawValue).accessibilityAddTraits(page == item ? .isSelected : [])
                 }
+                Menu {
+                    Button("System") { page = .system }
+                    Button("Keep awake") { page = .keepAwake }
+                    Button("Display & power") { page = .displayPower }
+                } label: { Image(systemName: "ellipsis").frame(width: 24, height: 34) }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("More tools")
             }.padding(4).modifier(WorkspaceSurface(radius: 14))
             Group {
                 switch page {
@@ -61,6 +66,9 @@ struct MenuBarView: View {
                     if preview { AudioControlsView(compact: true).environmentObject(notch.audio) }
                     else { AudioControlsView(compact: true).environmentObject(notch.audio) }
                 case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, compact: true, dismiss: { notch.hide() })
+                case .system: SystemMonitorView(monitor: notch.monitor, compact: true)
+                case .keepAwake: KeepAwakeView(controller: notch.keepAwake, compact: true)
+                case .displayPower: DisplayPowerView(controller: notch.displayPower)
                 case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
                 }
             }.fixedSize(horizontal: false, vertical: true)

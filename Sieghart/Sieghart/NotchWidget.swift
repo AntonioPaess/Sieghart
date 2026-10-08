@@ -35,7 +35,7 @@ struct NotchGeometry: Equatable {
 }
 
 enum NotchPresentation: Equatable {
-    case home, focusSetup, timer, completion, island, celebration, aiLimits, tools, audio, avatars, clipboard
+    case home, focusSetup, timer, completion, island, celebration, aiLimits, tools, audio, avatars, clipboard, system, keepAwake, displayPower
 }
 
 enum NotchOverlayPolicy {
@@ -59,6 +59,7 @@ final class NotchWidgetController: ObservableObject {
     @Published private(set) var presentation: NotchPresentation = .home
 
     @Published private(set) var welcomeStartedAt: Date?
+    private var welcomeTask: Task<Void, Never>?
     @Published private(set) var latestCompletion: SessionCompletion?
     private var shownCompletionID: UUID?
     private let managesWindows: Bool
@@ -78,6 +79,14 @@ final class NotchWidgetController: ObservableObject {
     let clipboard: ClipboardController
     let middleClick: MiddleClickController
     let audio: AudioController
+    let monitor: SystemMonitor
+    let keepAwake: KeepAwakeController
+    let displayPower: DisplayPowerController
+    @Published private(set) var utilityReaction = UUID()
+    private(set) var utilitySucceeded = true
+    @Published private(set) var utilityMood = CompanionMood.idle
+    private var utilityMoodReset: Task<Void, Never>?
+    private var lastMonitorWarning: Date?
     private var activityObservation: AnyCancellable?
     private var panel: NSPanel?
     private var canvas: IslandWindowCanvas<AnyView>?
@@ -121,10 +130,13 @@ final class NotchWidgetController: ObservableObject {
         }
     }
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioController? = nil, clipboard: ClipboardController? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetController.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetController.keyboardRevealDelay) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioController? = nil, monitor: SystemMonitor? = nil, keepAwake: KeepAwakeController? = nil, displayPower: DisplayPowerController? = nil, clipboard: ClipboardController? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetController.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetController.keyboardRevealDelay) {
         self.assistant = assistant
         self.middleClick = MiddleClickController()
         self.audio = audio ?? AudioController()
+        self.monitor = monitor ?? SystemMonitor()
+        self.keepAwake = keepAwake ?? KeepAwakeController()
+        self.displayPower = displayPower ?? DisplayPowerController()
         self.clipboard = clipboard ?? ClipboardController(monitorsSystem: managesWindows)
         self.preferences = preferences
         self.managesWindows = managesWindows
@@ -180,6 +192,17 @@ final class NotchWidgetController: ObservableObject {
                     self.screenDidChange()
                 }
         }
+        self.monitor.onReading = { [weak self] reading in
+            guard let self else { return }
+            let sustained = self.monitor.history.suffix(3).filter { ($0.cpu ?? 0) > 0.9 }.count == 3
+            let lowBattery = !reading.onAC && (reading.battery ?? 1) < 0.1
+            if (sustained || lowBattery || reading.memoryPressure == "Critical"), self.lastMonitorWarning.map({ Date().timeIntervalSince($0) > 60 }) ?? true {
+                self.lastMonitorWarning = Date(); self.reactToUtility(false)
+            }
+        }
+        self.audio.onReaction = { [weak self] success in self?.reactToUtility(success) }
+        self.keepAwake.onReaction = { [weak self] success in self?.reactToUtility(success) }
+        self.displayPower.onReaction = { [weak self] success in self?.reactToUtility(success) }
         // A saved completion is context, never a new announcement on launch.
         latestCompletion = assistant.completionNotice
         shownCompletionID = assistant.completionNotice?.id
@@ -216,13 +239,24 @@ final class NotchWidgetController: ObservableObject {
 
     // Every normal reveal returns to the companion. Timer tools are explicit.
     func show() {
+        finishWelcome()
         presentation = .home
         reveal()
     }
 
     func showWelcome() {
-        welcomeStartedAt = Date().addingTimeInterval(0.35); presentation = .home; reveal()
+        finishWelcome()
+        let start = Date().addingTimeInterval(0.35)
+        welcomeStartedAt = start; presentation = .home; reveal()
+        revealGraceDeadline = ContinuousClock.now + .seconds(5)
+        scheduleHide(delay: .seconds(5))
+        welcomeTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(4500))
+            guard !Task.isCancelled, self?.welcomeStartedAt == start else { return }
+            self?.welcomeStartedAt = nil
+        }
     }
+    func finishWelcome() { welcomeTask?.cancel(); welcomeTask = nil; welcomeStartedAt = nil }
 
     func showCurrentTask() {
         if !(aiUsage?.analytics.work.isEmpty ?? true) { presentation = .aiLimits }
@@ -271,10 +305,23 @@ final class NotchWidgetController: ObservableObject {
     func showClipboard() { clipboard.preparePasteTarget(); presentation = .clipboard; reveal() }
     func toggleClipboard() { if isVisible && presentation == .clipboard { hide() } else { showClipboard() } }
 
+    func reactToUtility(_ success: Bool) {
+        utilitySucceeded = success; utilityReaction = UUID(); utilityMood = success ? .understood : .startled
+        utilityMoodReset?.cancel()
+        utilityMoodReset = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(2)); guard !Task.isCancelled else { return }; self?.utilityMood = .idle
+        }
+    }
+    func startUtilities() { keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle() }
+    func stopUtilities() { keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown() }
+    func showSystem() { presentation = .system; reveal() }
+    func showKeepAwake() { presentation = .keepAwake; reveal() }
+    func showDisplayPower() { presentation = .displayPower; reveal() }
     func showAudio() { presentation = .audio; reveal() }
     func showAvatars() { presentation = .avatars; reveal() }
 
     func showVoice() {
+        finishWelcome()
         presentation = .home
         reveal()
     }
@@ -568,6 +615,9 @@ final class NotchWidgetController: ObservableObject {
         case .celebration: height = 270
         case .tools: height = 350
         case .clipboard: height = 480
+        case .system: height = 440
+        case .keepAwake: height = 400
+        case .displayPower: height = 420
         case .audio: height = 460
         case .avatars: height = 340
         case .aiLimits: height = min(470, (notchScreen?.visibleFrame.height ?? 700) - 80)
@@ -576,7 +626,8 @@ final class NotchWidgetController: ObservableObject {
         switch presentation {
         case .island: width = 240
         case .aiLimits: width = 800
-        case .tools, .audio, .clipboard: width = 760
+        case .tools, .audio, .clipboard, .system, .displayPower: width = 760
+        case .keepAwake: width = 700
         case .focusSetup, .timer: width = 720
         default: width = 620
         }
@@ -718,15 +769,16 @@ struct NotchWidgetView: View {
         .onHover { notch.setPointerInsidePanel($0) }
         .focusEffectDisabled()
         .onExitCommand { notch.hide() }
+        .onChange(of: notch.utilityReaction) { _, _ in reactions.utility(notch.utilitySucceeded) }
         .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
-        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset() } }
+        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset(); notch.finishWelcome() } }
     }
 
     private var surface: some View {
         VStack(spacing: 0) {
             Color.clear.frame(height: notch.geometry.contentTop).allowsHitTesting(false)
             VStack(spacing: 14) {
-                if !compact { pageHeader }
+                if !compact { pageHeader.modifier(WelcomeContentPhase(started: notch.presentation == .home ? notch.welcomeStartedAt : nil, animates: animates)) }
                 switch notch.presentation {
                 case .home: home
                 case .focusSetup: pageScroll { setup }
@@ -736,6 +788,9 @@ struct NotchWidgetView: View {
                 case .celebration: celebration
                 case .tools: tools
                 case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, showsTitle: false, listHeight: 180, dismiss: { notch.hide() })
+                case .system: pageScroll { SystemMonitorView(monitor: notch.monitor) }
+                case .keepAwake: pageScroll { KeepAwakeView(controller: notch.keepAwake) }
+                case .displayPower: pageScroll { DisplayPowerView(controller: notch.displayPower) }
                 case .audio: pageScroll { AudioControlsView().environmentObject(notch.audio) }
                 case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: animates, compact: true)
                 case .aiLimits:
@@ -771,6 +826,9 @@ struct NotchWidgetView: View {
                 Button("Companion") { notch.show() }
                 Button("Timers") { notch.showTimer() }
                 Button("AI agents") { notch.showAILimits() }
+                Button("System") { notch.showSystem() }
+                Button("Keep awake") { notch.showKeepAwake() }
+                Button("Display & power") { notch.showDisplayPower() }
                 Button("Audio") { notch.showAudio() }
                 Button("Clipboard") { notch.showClipboard() }
                 Button("Change companion") { notch.showAvatars() }
@@ -789,6 +847,9 @@ struct NotchWidgetView: View {
         case .focusSetup, .timer: "Timers"
         case .aiLimits: "AI agents"
         case .tools: "Your tools"
+        case .system: "System"
+        case .keepAwake: "Keep awake"
+        case .displayPower: "Display & power"
         case .audio: "Audio"
         case .clipboard: "Clipboard"
         case .avatars: "Choose your companion"
@@ -808,7 +869,7 @@ struct NotchWidgetView: View {
                 }
             }
             Button { notch.show() } label: {
-                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: animates)
+                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: animates, mood: notch.utilityMood)
                     .frame(width: 44, height: 44).background(.black.opacity(0.6), in: Circle())
                     .overlay { Circle().strokeBorder(.white.opacity(0.14), lineWidth: 0.75) }
             }.buttonStyle(IslandButtonStyle()).focusEffectDisabled().accessibilityLabel("Your companion")
@@ -822,6 +883,9 @@ struct NotchWidgetView: View {
         case .timer: notch.showTimer()
         case .clipboard: notch.showClipboard()
         case .preferences: notch.focusMainWindow()
+        case .system: notch.showSystem()
+        case .keepAwake: notch.showKeepAwake()
+        case .displayPower: notch.showDisplayPower()
         case .audio: notch.showAudio()
         case .ai: notch.showAILimits()
         case .avatars: notch.showAvatars()
@@ -852,7 +916,8 @@ struct NotchWidgetView: View {
                 CompanionInteraction(action: reactToTouch) {
                     TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animates)) { context in
                         let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
-                        let walking = animates && reactions.mood == .idle && !activation.voicePresented && phase < 4
+                        let greeting = notch.welcomeStartedAt.map { context.date.timeIntervalSince($0) < 4.2 } ?? false
+                        let walking = !greeting && animates && reactions.mood == .idle && !activation.voicePresented && phase < 4
                         CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isListening || activation.isPreparing ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
                             .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
                     }.frame(width: 124, height: 96)
@@ -866,6 +931,7 @@ struct NotchWidgetView: View {
                     case .ended: avatarPointer = .zero
                     }
                 }
+                .modifier(WelcomeContentPhase(started: notch.welcomeStartedAt, animates: animates))
                 VStack(alignment: .leading, spacing: 6) {
                     Text(activation.voicePresented ? "YOUR COMPANION · VOICE" : assistant.hasActiveSession ? assistant.activityTitle.uppercased() : "YOUR COMPANION")
                         .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
@@ -880,18 +946,27 @@ struct NotchWidgetView: View {
                         else { Label(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "\(assistant.focusMinutes) min focus", systemImage: "timer").monospacedDigit() }
                     }.font(.caption.weight(.medium)).foregroundStyle(CompanionStyle.accentInk)
                 }.frame(maxWidth: .infinity, alignment: .leading)
+                    .modifier(WelcomeContentPhase(started: notch.welcomeStartedAt, animates: animates))
+            }
+            .overlay {
+                if animates, let start = notch.welcomeStartedAt {
+                    CompanionIslandGreeting(avatar: preferences.avatar, started: start, onTouch: { notch.finishWelcome(); reactToTouch() })
+                }
             }
         }
     }
 
     private var tools: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 4), spacing: 14) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 5), spacing: 14) {
             toolTile("Companion", subtitle: preferences.avatar.name, symbol: "face.smiling", avatar: preferences.avatar) { notch.show() }
             toolTile("Audio", subtitle: "Apps & devices", symbol: "speaker.wave.2") { notch.showAudio() }
             toolTile("AI agents", subtitle: "Limits & activity", symbol: "sparkles") { notch.showAILimits() }
             toolTile("Timers", subtitle: "Three ways to time", symbol: "timer") { notch.showTimer() }
             toolTile("Clipboard", subtitle: "Copies, kept nearby", symbol: "doc.on.clipboard") { notch.showClipboard() }
             toolTile("Avatars", subtitle: "Find your companion", symbol: "person.crop.square") { notch.showAvatars() }
+            toolTile("System", subtitle: "Live readings", symbol: "cpu") { notch.showSystem() }
+            toolTile("Keep awake", subtitle: "On your terms", symbol: "cup.and.saucer") { notch.showKeepAwake() }
+            toolTile("Display & power", subtitle: "Screen and sleep", symbol: "sun.max") { notch.showDisplayPower() }
             toolTile("Preferences", subtitle: "Your workspace", symbol: "gearshape") { notch.focusMainWindow() }
         }
     }
@@ -905,7 +980,7 @@ struct NotchWidgetView: View {
                 }.frame(height: 34)
                 Text(name).font(.callout.weight(.semibold)).lineLimit(1)
                 Text(subtitle).font(.system(size: 9)).foregroundStyle(CompanionStyle.muted).lineLimit(1)
-            }.frame(maxWidth: .infinity).padding(.vertical, 19).modifier(IslandControlSurface())
+            }.frame(maxWidth: .infinity).padding(.vertical, 15).modifier(IslandControlSurface())
         }.accessibilityLabel("\(name). \(subtitle)")
     }
 

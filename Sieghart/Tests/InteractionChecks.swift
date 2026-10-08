@@ -257,6 +257,23 @@ struct InteractionChecks {
         activation.setShortcut(activation.companionShortcut, for: .voice)
         precondition(activation.voiceShortcut == custom) // Duplicate bindings are rejected.
 
+        precondition(activation.shortcut(for: .nextOutput) == nil && activation.shortcut(for: .muteMicrophone) == nil)
+        activation.setShortcut(custom, for: .nextOutput)
+        precondition(activation.shortcut(for: .nextOutput) == nil, "Audio shortcuts share collision checks with voice")
+        let outputChord = ShortcutChord(keyCode: 20, modifiers: NSEvent.ModifierFlags([.command, .option, .shift]).rawValue, keyLabel: "3")
+        activation.setShortcut(outputChord, for: .nextOutput)
+        precondition(ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false).shortcut(for: .nextOutput) == outputChord)
+        activation.setShortcut(outputChord, for: .muteMicrophone)
+        precondition(activation.shortcut(for: .muteMicrophone) == nil)
+        activation.setShortcut(nil, for: .nextOutput)
+        let contour = IslandWindowCanvas<Text>.path(size: CGSize(width: 357.2, height: 94.8), canvasWidth: 800)
+        let current = IslandWindowCanvas<Text>.visibleSize(path: contour, fallback: CGSize(width: 760, height: 400))
+        precondition(abs(current.width - 357.2) < 0.001 && abs(current.height - 94.8) < 0.001, "Interrupted contour starts at presentation size, never the old endpoint")
+        let oldReaction = reactions.mood
+        reactions.utility(false); precondition(reactions.mood == .startled)
+        reactions.utility(true); precondition(reactions.mood == .understood)
+        reactions.reset(); _ = oldReaction
+
         activation.executeVoiceCommand("search for café & Swift")
         try await Task.sleep(for: .milliseconds(80))
         precondition(activation.commandAcknowledged && activation.voiceStatus == "Search opened · Fixture café & Swift" && notch.presentation == .home)

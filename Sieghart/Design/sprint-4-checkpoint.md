@@ -1,6 +1,6 @@
 # Sprint 4 — Clipboard, configurable island and companion arrival
 
-October 8, 2026. Sprint 3 remains complete and accepted on the user's all-passed Mac report. Sprint 4 is **in progress**, with this first implementation slice delivered. The assistant keeps Sieghart and Xcode closed; the new physical Mac checks below await the user.
+October 8, 2026. Sprint 3 remains complete and accepted on the user's all-passed Mac report. The user accepted all tests of this first slice on October 8. The remaining requested system utilities and expanded greeting are now implemented; their new physical Mac checks remain separate. [Current utility delivery and checklist](sprint-4-utilities.md). The assistant keeps Sieghart and Xcode closed.
 
 ## Delivered in this slice
 
@@ -51,18 +51,16 @@ All eleven isolated groups passed on October 8: clocks, voice callback safety, i
 
 ## Optional three-finger utility
 
-An original recognizer rejects movement, long taps, excess fingers and duplicate releases. The runtime dynamically loads macOS's undocumented contact interface only after opt-in and Accessibility, stops on disable/sleep/lock and rejects stale callbacks. Missing framework/device support displays unavailable. This is a **Mac utility only**; the future Student Challenge package must omit it. Real hardware acceptance remains open. This implements a three-finger tap, not three successive clicks. It does not change macOS gesture preferences or promise Windows-style autoscroll in every app.
+An original recognizer rejects movement, long taps, excess fingers and duplicate releases. The runtime dynamically loads macOS's undocumented contact interface only after opt-in and Accessibility, stops on disable/sleep/lock and rejects stale callbacks. Missing framework/device support displays unavailable. This is a **Mac utility only**; the future Student Challenge package must omit it. The user accepted this slice’s hardware checks on October 8. This implements a three-finger tap, not three successive clicks. It does not change macOS gesture preferences or promise Windows-style autoscroll in every app.
 
-## Remaining Sprint 4
+## Current Sprint 4 delivery
 
-- [ ] User acceptance of the new clipboard, cleanup, rail, gesture, arrival and spending cases above.
-- [ ] System monitor: CPU, GPU where exposed, memory pressure, network rates, disks and power; peripherals/fans must show unavailable where unsupported.
-- [ ] Keep awake: duration/deadline, conditions, persistence and correct restoration; supported lid behavior with a truthful capability boundary.
-- [ ] Audio: app pins/order, preferred device priorities, global output/microphone shortcuts, route recovery and remaining hardware capability checks.
-- [ ] Power/display: supported per-display brightness/power, XDR capability, Bluetooth-on-sleep and Music auto-launch control.
-- [ ] Tie the companion's working/completion/error reactions to these new real utilities; validate interrupted transitions and reduced-motion alternatives.
+- [x] User acceptance of this clipboard/cleanup/rail/gesture/arrival/spending slice, October 8.
+- [x] Remaining system, keep-awake, audio priority/order/shortcut, compatible display/power and companion reaction implementation.
+- [x] Injected logic checks, universal build and production offscreen previews.
+- [ ] Physical acceptance of the newly added utilities and expanded center/drop/wave/dock greeting. [Exact new Mac checks and hardware boundaries](sprint-4-utilities.md).
 
-Clipboard moved from S5 and three-finger middle click from S6 into this S4 slice by user request. Calendar/reminders, downloads/notifications, shelf and capture remain S5+. File drop/upload/email, chat connections, a principal avatar with task agents and optional GitHub are recorded future companion workflows after core utilities; none is pretended to work in this slice.
+Clipboard moved from S5 and three-finger middle click from S6 by user request. Calendar/reminders, downloads/notifications, shelf and capture remain S5+. Extended XDR boost, temperature/fan control, per-process network/speed testing and SMART are still explicit hardware backlog. File drop/upload/email, connected chats and specialist agents remain later connected companion work.
 
 ## Previews
 

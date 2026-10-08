@@ -150,7 +150,12 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
         layer?.addSublayer(outline)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-    var currentSurface: CGSize { surface }
+    var currentSurface: CGSize { Self.visibleSize(path: maskLayer.presentation()?.path, fallback: surface) }
+    static func visibleSize(path: CGPath?, fallback: CGSize) -> CGSize {
+        guard let path, !path.isEmpty else { return fallback }
+        let size = path.boundingBoxOfPath.size
+        return size.width.isFinite && size.height.isFinite && size.width > 0 && size.height > 0 ? size : fallback
+    }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     func updateAppearance(compact: Bool, stripHeight: CGFloat, appearance: AppAppearance, glassEnabled: Bool) {
@@ -160,7 +165,8 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
     func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, appearance: AppAppearance = .system, glassEnabled: Bool = false, welcome: Bool = false, settled: @escaping @MainActor () -> Void) {
         completion?.cancel()
         isDeparting = closing
-        let previous = surface == .zero ? CGSize(width: max(180, target.cutoutWidth), height: max(1, target.cutoutHeight)) : surface
+        let previous = surface == .zero ? CGSize(width: max(180, target.cutoutWidth), height: max(1, target.cutoutHeight)) : currentSurface
+        let contentOpacity = host.layer?.presentation()?.opacity ?? Float(host.alphaValue)
         surface = target.size
         outline.isHidden = target.compact || closing
         let gutter: CGFloat = target.compact ? 0 : 72
@@ -196,7 +202,8 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
         host.alphaValue = closing ? 0 : 1
         if !closing {
             let fade = CABasicAnimation(keyPath: "opacity")
-            fade.fromValue = 0; fade.toValue = 1; fade.beginTime = CACurrentMediaTime() + duration * 0.55
+            fade.fromValue = previous.height < 70 ? 0 : contentOpacity; fade.toValue = 1
+            fade.beginTime = CACurrentMediaTime() + (previous.height < 70 ? duration * 0.55 : 0)
             fade.fillMode = .backwards; fade.duration = duration * 0.45
             host.layer?.add(fade, forKey: "island.content")
         }

@@ -22,3 +22,7 @@ Retain CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Bu
 ## Sprint 4 application — October 8
 
 The new welcome and post-onboarding widget reveal use original native choreography: shell opening, delayed selected-avatar arrival, eyes opening and a soft nod, with reduced-motion fallback. No code or artwork was copied. Clipboard and editable rails remain real local tools. File/upload/email, chat connections and specialist agents are recorded after core utilities in the Sprint 4 checkpoint and Useful companions note.
+
+## Center greeting follow-up — October 8
+
+The user provided a 12.59-second local recording and requested the launch animation explicitly. Its archived original and contact sheet are in [Companion/2026-10-08](References/Companion/2026-10-08/README.md). The public `GreetingCanvasView.swift` and release notes were studied for choreography; no reference character, sounds or source were incorporated. Sieghart now uses its own center drop, spring landing, small lateral drift, brief waving gesture and dock/content fade for all six native companions. Taps/page changes interrupt it; reduced-motion and a saved Launch greeting switch are supported. [Utility delivery](sprint-4-utilities.md).

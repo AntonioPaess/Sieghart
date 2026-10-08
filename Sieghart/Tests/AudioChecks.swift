@@ -78,8 +78,28 @@ private final class Buffers {
         backend.reading.apps = Array(backend.reading.apps.prefix(2)); audio.refresh()
         precondition(audio.visibleApps.count == 2, "The mixer never fills missing apps with placeholder columns")
         audio.disableApplications(); precondition(!audio.perAppEnabled && backend.routes.isEmpty)
+        let orderedApps = audio.state.apps
+        audio.toggleFavorite(orderedApps[1]); precondition(audio.visibleApps.first?.id == orderedApps[1].id)
+        audio.toggleFavorite(orderedApps[0]); audio.moveApp(orderedApps[1], direction: -1)
+        precondition(audio.favoriteApps.count == 2 && audio.visibleApps.first?.id == orderedApps[1].id, "Ordering favorites preserves favorite status")
+        backend.reading.apps = []; audio.refresh(); precondition(audio.visibleApps.isEmpty, "Closed favorites must not fabricate towers")
+        backend.reading.apps = orderedApps; audio.refresh()
+        let headphones = backend.reading.devices[2]
+        audio.preferDevice(headphones, input: false)
+        let beforePriority = backend.reading.output
+        audio.refresh(); precondition(backend.reading.output == beforePriority, "Saved priority is not automatic authorization")
+        audio.automaticDevices = true; precondition(backend.reading.output == headphones.id)
+        audio.selectDevice(1); audio.refresh(); precondition(audio.state.output == 1, "Keep a manual choice until topology changes")
+        backend.reading.devices.removeLast(); audio.refresh()
+        let reconnected = AudioDeviceInfo(id: 42, name: headphones.name, uid: headphones.uid, inputChannels: headphones.inputChannels, outputChannels: headphones.outputChannels)
+        backend.reading.devices.append(reconnected); audio.refresh()
+        precondition(audio.state.output == 42, "Reconnect resolves the same UID even with a different object ID")
+        audio.cycleOutput(); precondition(audio.state.output == 1)
+        let mutedBefore = audio.state.inputMuted!; audio.toggleMicrophoneMute(); precondition(audio.state.inputMuted == !mutedBefore)
+        backend.reading.inputMuted = nil; audio.toggleMicrophoneMute(); precondition(audio.error != nil)
+        audio.shutdown()
         let restored = AudioController(backend: MockAudio(), defaults: defaults)
-        precondition(restored.gains[app.id] == 1 && !restored.perAppEnabled, "Saved gain must not authorize a new capture session")
+        precondition(restored.gains[app.id] == 1 && !restored.perAppEnabled && restored.favoriteApps.count == 2 && restored.outputPriority == [headphones.uid], "Saved gain must not authorize a new capture session")
 
         let deniedBackend = MockAudio(); deniedBackend.permissionFailure = kAudioDevicePermissionsError
         let denied = AudioController(backend: deniedBackend, defaults: defaults)
