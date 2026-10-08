@@ -43,7 +43,8 @@ struct MenuBarView: View {
                 case .companion:
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 14) {
-                            CompanionCharacter(size: 60, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, voicePhase: activation.companionVoicePhase)
+                            CompanionCharacter(size: 60, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion,
+                                voicePhase: activation.companionVoicePhase)
                             VStack(alignment: .leading, spacing: 6) {
                                 Text(assistant.hasActiveSession ? assistant.activityTitle : "Ready when you are.").font(.headline)
                                 Text(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "A little company for your day.").font(.callout).foregroundStyle(CompanionStyle.muted)

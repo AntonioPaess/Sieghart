@@ -26,12 +26,13 @@ final class ActivationController: ObservableObject {
     @Published private(set) var isPreparing = false
     @Published private(set) var isFinalizing = false
     @Published private(set) var isExecutingVoiceCommand = false
-    var isVoiceBusy: Bool { isListening || isPreparing || isFinalizing || isExecutingVoiceCommand }
+    @Published private(set) var isPresentingVoiceProcessing = false
+    var isVoiceBusy: Bool { isListening || isPreparing || isFinalizing || isExecutingVoiceCommand || isPresentingVoiceProcessing }
     var companionVoicePhase: CompanionVoicePhase {
         if isPreparing { return .preparing }
         if isListening { return .listening }
         if isFinalizing { return .thinking }
-        if isExecutingVoiceCommand { return .working }
+        if isExecutingVoiceCommand || isPresentingVoiceProcessing { return .working }
         if commandAcknowledged { return .success }
         return voicePresented ? .failure : .inactive
     }
@@ -72,8 +73,11 @@ final class ActivationController: ObservableObject {
     private var stopTask: Task<Void, Never>?
     private var voiceSession = VoiceCommandSession()
     private var feedbackTask: Task<Void, Never>?
+    private var processingFeedbackTask: Task<Void, Never>?
+    private let minimumVoiceProcessingDuration: Duration
+    private var processingStartedAt = ContinuousClock.now
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetViewModel, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open, voiceCapture: (any VoiceCapturing)? = nil, voiceNow: @escaping @MainActor () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetViewModel, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open, voiceCapture: (any VoiceCapturing)? = nil, voiceNow: @escaping @MainActor () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }, minimumVoiceProcessingDuration: Duration = .milliseconds(700)) {
         self.assistant = assistant
         self.notch = notch
         self.defaults = defaults
@@ -82,6 +86,7 @@ final class ActivationController: ObservableObject {
         self.searchBrowser = searchBrowser
         self.voiceCapture = voiceCapture ?? NativeVoiceCapture()
         self.voiceNow = voiceNow
+        self.minimumVoiceProcessingDuration = min(max(minimumVoiceProcessingDuration, .zero), .seconds(2))
         func saved(_ action: ShortcutAction, fallback: ShortcutChord) -> ShortcutChord? {
             if defaults.bool(forKey: "activation.\(action.rawValue).disabled") { return nil }
             if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { return chord }
@@ -492,6 +497,8 @@ final class ActivationController: ObservableObject {
     func stopListening() {
         voiceCaptureGeneration += 1
         stopTask?.cancel(); stopTask = nil
+        processingFeedbackTask?.cancel(); processingFeedbackTask = nil
+        isPresentingVoiceProcessing = false
         isListening = false; isFinalizing = false; isPreparing = false; isExecutingVoiceCommand = false
         voiceSession.cancel()
         voiceCapture.cancel()
@@ -501,7 +508,10 @@ final class ActivationController: ObservableObject {
     // Only local, reversible commands are executed by this intent parser.
     // Recognition text is never evaluated as code or an external instruction.
     func executeVoiceCommand(_ text: String) {
+        voiceRequestGeneration += 1
         feedbackTask?.cancel()
+        processingFeedbackTask?.cancel(); processingFeedbackTask = nil
+        isPresentingVoiceProcessing = false
         isExecutingVoiceCommand = false
         voicePresented = true
         transcript = text
@@ -511,6 +521,7 @@ final class ActivationController: ObservableObject {
             notch.showVoice()
             return
         }
+        processingStartedAt = ContinuousClock.now
         var succeeded = true
         switch command {
         case .start(let minutes):
@@ -525,7 +536,7 @@ final class ActivationController: ObservableObject {
             assistant.pausePomodoroFromGesture(); voiceStatus = assistant.hasActiveSession ? "Timer paused" : "No active timer to pause"
             succeeded = assistant.hasActiveSession
         case .finish:
-            if assistant.hasActiveSession { assistant.finishPomodoroFromWidget(); voiceStatus = "Session finished"; commandAcknowledged = true; scheduleFeedback(closeWidget: false); return }
+            if assistant.hasActiveSession { assistant.finishPomodoroFromWidget(); voiceStatus = "Session finished"; presentVoiceResult(succeeded: true, closeWidget: false); return }
             voiceStatus = "No active session to finish"
             succeeded = false
         case .reset:
@@ -550,14 +561,15 @@ final class ActivationController: ObservableObject {
                 do {
                     let app = try await self.openApplication(name)
                     guard generation == self.voiceRequestGeneration else { return }
-                    self.voiceStatus = "Opened \(app)"; self.commandAcknowledged = true
+                    self.voiceStatus = "Opened \(app)"
+                    self.isExecutingVoiceCommand = false
+                    self.presentVoiceResult(succeeded: true, closeWidget: true)
                 } catch {
                     guard generation == self.voiceRequestGeneration else { return }
-                    self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false
+                    self.voiceStatus = error.localizedDescription
+                    self.isExecutingVoiceCommand = false
+                    self.presentVoiceResult(succeeded: false, closeWidget: true)
                 }
-                self.isExecutingVoiceCommand = false
-                self.notch.voiceActivityDidChange()
-                self.scheduleFeedback(closeWidget: true)
             }
             return
         case .search(let query):
@@ -569,20 +581,44 @@ final class ActivationController: ObservableObject {
                 do {
                     let result = try await self.searchBrowser(query)
                     guard generation == self.voiceRequestGeneration else { return }
-                    self.voiceStatus = "Search opened · \(result)"; self.commandAcknowledged = true
+                    self.voiceStatus = "Search opened · \(result)"
+                    self.isExecutingVoiceCommand = false
+                    self.presentVoiceResult(succeeded: true, closeWidget: true)
                 } catch {
                     guard generation == self.voiceRequestGeneration else { return }
-                    self.voiceStatus = error.localizedDescription; self.commandAcknowledged = false
+                    self.voiceStatus = error.localizedDescription
+                    self.isExecutingVoiceCommand = false
+                    self.presentVoiceResult(succeeded: false, closeWidget: true)
                 }
-                self.isExecutingVoiceCommand = false
-                self.notch.voiceActivityDidChange()
-                self.scheduleFeedback(closeWidget: true)
             }
             return
         }
-        commandAcknowledged = succeeded
+        presentVoiceResult(succeeded: succeeded, closeWidget: true)
         notch.showVoice()
-        scheduleFeedback(closeWidget: true)
+    }
+
+    // Actions run immediately. Only their visual acknowledgement waits long
+    // enough to show the processing cue; idle/background polling never enters
+    // this state. The separate flag keeps completed work distinct from display.
+    private func presentVoiceResult(succeeded: Bool, closeWidget: Bool) {
+        processingFeedbackTask?.cancel()
+        let remaining = minimumVoiceProcessingDuration - processingStartedAt.duration(to: ContinuousClock.now)
+        guard remaining > .zero else { completeVoiceResult(succeeded: succeeded, closeWidget: closeWidget); return }
+        isPresentingVoiceProcessing = true
+        notch.voiceActivityDidChange()
+        let generation = voiceRequestGeneration
+        processingFeedbackTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: remaining)
+            guard !Task.isCancelled, let self, generation == self.voiceRequestGeneration else { return }
+            self.completeVoiceResult(succeeded: succeeded, closeWidget: closeWidget)
+        }
+    }
+
+    private func completeVoiceResult(succeeded: Bool, closeWidget: Bool) {
+        isPresentingVoiceProcessing = false
+        commandAcknowledged = succeeded
+        notch.voiceActivityDidChange()
+        scheduleFeedback(closeWidget: closeWidget)
     }
 
     private func scheduleFeedback(closeWidget: Bool) {

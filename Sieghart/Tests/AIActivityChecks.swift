@@ -35,6 +35,12 @@ import Foundation
         expect(disabled.points.isEmpty && disabled.work.isEmpty, "No monitoring consent yields no activity")
         let stale = AIActivityParser.parse(file, provider: .codex, now: now.addingTimeInterval(3600))
         expect(stale.work.isEmpty, "An old record cannot become active work")
+        let motionDefaults = UserDefaults(suiteName: "activity-motion-" + UUID().uuidString)!
+        let activeModel = AIUsageViewModel(defaults: motionDefaults, initialAnalytics: active, read: { _ in nil })
+        let completedModel = AIUsageViewModel(defaults: motionDefaults, initialAnalytics: finished, read: { _ in nil })
+        expect(activeModel.hasCurrentWork(at: now), "A real active task drives companion processing")
+        expect(!activeModel.hasCurrentWork(at: now.addingTimeInterval(301)), "Expired activity must stop the processing cue")
+        expect(!completedModel.hasCurrentWork(at: now) && !completedModel.hasPendingRead, "Terminal tasks and idle stores cannot show fabricated processing")
         // A start marker more than 2 MiB behind the counters still has a
         // bounded metadata path; a terminal marker must win over that start.
         let padding = String(repeating: "{\"type\":\"ignored\",\"pad\":\"" + String(repeating: "x", count: 1000) + "\"}\n", count: 2300)

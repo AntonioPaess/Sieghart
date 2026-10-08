@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
             Text("Native animation · Listening, processing and verified completion").font(.callout).foregroundStyle(.secondary)
             ForEach(0..<3) { row in
                 let phase: CompanionVoicePhase = row == 0 ? .listening : row == 1 ? .thinking : .success
-                let title = row == 0 ? "LISTENING · Ear and attentive lean" : row == 1 ? "PROCESSING · Thought dots and curious gaze" : "COMPLETED · Hop, turn and landing"
+                let title = row == 0 ? "LISTENING · Attentive gaze and gentle lean" : row == 1 ? "PROCESSING · Shape-matched corner loading" : "COMPLETED · Short individual acknowledgement"
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title).font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary)
                     HStack(spacing: 16) {
@@ -30,14 +30,14 @@ import UniformTypeIdentifiers
         let directory = URL(fileURLWithPath: "Sieghart/Design/Concepts", isDirectory: true)
         let renderer = ImageRenderer(content: board(time: 0.55)); renderer.scale = 2
         guard let cg = renderer.cgImage, let png = NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:]) else { throw NSError(domain: "VoicePreview", code: 1) }
-        try png.write(to: directory.appendingPathComponent("simple-companions-voice.png"))
-        let count = 60
-        guard let gif = CGImageDestinationCreateWithURL(directory.appendingPathComponent("simple-companions-voice.gif") as CFURL, UTType.gif.identifier as CFString, count, nil) else { throw NSError(domain: "VoicePreview", code: 2) }
+        try png.write(to: directory.appendingPathComponent("simple-companions-voice-v2.png"))
+        let count = 100
+        guard let gif = CGImageDestinationCreateWithURL(directory.appendingPathComponent("simple-companions-voice-v2.gif") as CFURL, UTType.gif.identifier as CFString, count, nil) else { throw NSError(domain: "VoicePreview", code: 2) }
         CGImageDestinationSetProperties(gif, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
         for frame in 0..<count {
-            let renderer = ImageRenderer(content: board(time: Double(frame) * 0.06)); renderer.scale = 1
+            let renderer = ImageRenderer(content: board(time: Double(frame) * 0.04)); renderer.scale = 1
             guard let image = renderer.cgImage else { throw NSError(domain: "VoicePreview", code: 3) }
-            CGImageDestinationAddImage(gif, image, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.06]] as CFDictionary)
+            CGImageDestinationAddImage(gif, image, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.04]] as CFDictionary)
         }
         guard CGImageDestinationFinalize(gif) else { throw NSError(domain: "VoicePreview", code: 4) }
         print("Rendered production voice gestures for all six companions. No app or microphone opened.")

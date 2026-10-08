@@ -141,7 +141,7 @@ struct NotchWidgetView: View {
                 }
             }
             Button { notch.show() } label: {
-                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: animates, mood: notch.utilityMood)
+                CompanionCharacter(size: 32, avatar: preferences.avatar, animates: animates, voicePhase: companionPhase(), mood: notch.utilityMood)
                     .frame(width: 44, height: 44).background(.black.opacity(0.6), in: Circle())
                     .overlay { Circle().strokeBorder(.white.opacity(0.14), lineWidth: 0.75) }
             }.buttonStyle(IslandButtonStyle()).focusEffectDisabled().accessibilityLabel("Your companion")
@@ -176,9 +176,14 @@ struct NotchWidgetView: View {
     }
 
     private var animates: Bool { preferences.characterMotion && !preferences.usesReducedMotion && notch.isVisible }
+    private func companionPhase() -> CompanionVoicePhase {
+        // External agents and telemetry reads belong to their own dashboard.
+        // The Companion reflects only an action it is handling for the user.
+        activation.companionVoicePhase
+    }
     private var face: some View {
         CompanionInteraction(action: { notch.show() }) {
-            CompanionCharacter(avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening, mood: activation.commandAcknowledged ? .understood : .idle)
+            CompanionCharacter(avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, listening: activation.isListening, voicePhase: companionPhase(), mood: activation.commandAcknowledged ? .understood : .idle)
         }.accessibilityLabel("Show companion")
     }
 
@@ -190,7 +195,7 @@ struct NotchWidgetView: View {
                         let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
                         let greeting = notch.welcomeStartedAt.map { context.date.timeIntervalSince($0) < 4.2 } ?? false
                         let walking = !greeting && animates && reactions.mood == .idle && !activation.voicePresented && phase < 4
-                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: activation.companionVoicePhase, gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isVoiceBusy ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
+                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: companionPhase(), gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isVoiceBusy ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
                             .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
                     }.frame(width: 124, height: 96)
                 }
@@ -264,7 +269,7 @@ struct NotchWidgetView: View {
         if activation.isPreparing { return "Getting ready…" }
         if activation.isListening { return "I’m listening." }
         if activation.isFinalizing { return "Finishing your command…" }
-        if activation.isExecutingVoiceCommand { return "On it." }
+        if activation.isExecutingVoiceCommand || activation.isPresentingVoiceProcessing { return "On it." }
         if activation.voicePresented && !activation.commandAcknowledged { return "Let’s try that again." }
         if activation.commandAcknowledged { return "Got it." }
         switch reactions.mood {
@@ -317,7 +322,7 @@ struct NotchWidgetView: View {
             if activation.voicePresented {
                 Button { notch.clickIsland() } label: {
                     HStack(spacing: 0) {
-                        CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: activation.companionVoicePhase,
+                        CompanionCharacter(size: 24, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: companionPhase(),
                                            mood: activation.commandAcknowledged ? .understood : .idle).frame(maxWidth: .infinity)
                         Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
                         VStack(spacing: 1) {

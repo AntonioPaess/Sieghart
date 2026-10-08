@@ -50,14 +50,17 @@ Numeric temperatures/fan control, XDR desktop boost, per-process network/speed t
 
 - [x] Search request grammar supports questions and direct topics; no topic whitelist. Exact reported phrases “pesquise por arquiteturas de mac” and “pesquisa github” are covered by capture-to-command integration.
 - [x] Missing-final search recovery after ended audio and a stable transcription, with bounded drain and last-word/cancellation guards. App/timer actions retain strict final-result gating. Physical search acceptance remains open on the user's renewed report.
-- [x] Real voice/action phases drive expectant preparation, listening ear/tilt, processing dots/gaze, successful hop/turn/landing and failure shake in all six native avatars. Interrupted transitions retain the visible pose; reduced/disabled motion keeps static cues. [Production animation preview](Sieghart/Design/Concepts/simple-companions-voice.gif).
+- [x] Initial voice gesture implementation: preparation, listening ear/tilt, processing dots/gaze, successful hop/turn/landing and failure shake. These visuals were subsequently rejected and replaced by the approved motion below; [earlier animation preview](Sieghart/Design/Concepts/simple-companions-voice.gif) is historical.
 - [ ] User verifies topic searches and expressive motion with Mac microphone/AirPods. Speaking/lip-sync, Megabrain, specialist delegation and role-specific file/email/calendar props remain planned.
 
-### October 8 — Motion visual review before implementation
+### October 8 — Approved motion applied
 
-- User rejected the listening ear, floating processing dots and full-turn completion, requesting a preview before replacing them. Production remains unchanged at this review step.
+- User rejected the listening ear, floating processing dots and full-turn completion, requesting a preview before replacing them. The user then approved the revised preview with “pode aplicar”; the replacement is now implemented.
 - [x] [Standalone visual study](Sieghart/Design/Concepts/expressive-study-v2/README.md): attentive listening, shape-specific corner loading badges and distinct short acknowledgements. Arcade keeps its pixel geometry. The cap/headband Coast was rejected; a revised minimal seafoam Coast with relaxed eyelids is shown in the family and native motion preview.
-- [ ] Visual approval, then runtime replacement and interruption/Reduce Motion verification. Apply the approved processing signal to all verified thinking/loading operations, not only voice. The prior gestures are implementation history, not an accepted final visual direction.
+- [x] Visual approval and native runtime replacement: attentive listening, silhouette-specific corner loading, short per-avatar completion, relaxed Coast eyes and tempo, and interpolated square Arcade expressions. Interrupted loading/winks/cancellation and same-phase updates are covered; Reduce Motion keeps static cues. [Production render](Sieghart/Design/Concepts/simple-companions-voice-v2.gif).
+- [x] Follow-up: idle Companion is independent of automatic AI refresh and external agent activity. Dashboard loading/work indicators remain scoped to that page. Fast voice actions run immediately; a separate, cancellable 700 ms minimum processing presentation precedes acknowledgement. No background polling triggers this hold; stale/replaced completions cannot overwrite a newer command.
+- [x] Portuguese timer regression: shared action grammar accepts inicia/inicie/iniciar and começa/comece/começar, foco/Pomodoro and the shortened pomodor transcription. Duration may be spoken numerically or as supported number words; “em 25 minutos” means a 25-minute session. Saved length is used when absent. Unit and capture-to-timer integration cover reported phrases, negation, ambiguity, final-word drain and no unintended browser search.
+- [ ] User physical check of the applied visuals. Other utility/voice/AirPods acceptance remains as recorded above; this design approval does not close it. Later file/email/agent adapters must feed their own real lifecycle events into the shared cue.
 - [ ] Define each avatar's biography/personality with the user. Coast direction: relaxed, reggae-loving digital nomad; communicate personality through expression/timing while preserving the family's simple style.
 
 ## Sprint 3 — First-run companion and live AI

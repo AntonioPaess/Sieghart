@@ -54,6 +54,9 @@ import Foundation
         claudeReport = defaults.data(forKey: "integrations.claudeReport").flatMap { try? JSONDecoder().decode(ClaudeLimitsReport.self, from: $0) }
     }
 
+    var hasPendingRead: Bool { isRefreshing || pricingRefreshing || historyIsReading }
+    func hasCurrentWork(at now: Date) -> Bool { analytics.work.contains { $0.isCurrent(at: now) } }
+
     func refresh(codexEnabled: Bool) async {
         guard !isRefreshing else { return }
         isRefreshing = true; defer { isRefreshing = false }

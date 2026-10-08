@@ -12,6 +12,24 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Start focus focus") == .start(minutes: nil))
         precondition(FocusVoiceParser.parse("Please start focus for twenty five minutes") == .start(minutes: 25))
         precondition(FocusVoiceParser.parse("Quero focar por cinquenta minutos") == .start(minutes: 50))
+        for phrase in ["inicia o foco", "inicia o pomodoro", "inicie o foco", "começa o pomodoro", "Sig, inicia o foco", "Você pode iniciar o foco?"] {
+            precondition(FocusVoiceParser.parse(phrase) == .start(minutes: nil), phrase)
+        }
+        for verb in ["inicia", "inicie", "iniciar", "começa", "comece", "começar"] {
+            for target in ["foco", "pomodoro", "pomodor"] {
+                for minutes in stride(from: 5, through: 60, by: 5) {
+                    let phrase = "\(verb) o \(target) em \(minutes) minutos"
+                    precondition(FocusVoiceParser.parse(phrase) == .start(minutes: minutes), phrase)
+                }
+            }
+        }
+        precondition(FocusVoiceParser.parse("inicia o pomodoro em vinte e cinco minutos") == .start(minutes: 25))
+        precondition(FocusVoiceParser.parse("foco por 30 minutos") == .start(minutes: 30))
+        precondition(FocusVoiceParser.parse("Não inicia o foco") == nil)
+        precondition(FocusVoiceParser.parse("inicia e pausa o pomodoro") == nil)
+        precondition(FocusVoiceParser.parse("inicia o foco em 20 ou 25 minutos") == nil)
+        precondition(FocusVoiceParser.parse("Como iniciar o pomodoro?") == .search(query: "Como iniciar o pomodoro?"))
+        precondition(FocusVoiceParser.parse("pesquise como inicia o foco") == .search(query: "como inicia o foco"))
         precondition(FocusVoiceParser.parse("Can you pause my focus timer") == .pause)
         precondition(FocusVoiceParser.parse("Take a break") == .startBreak)
         precondition(FocusVoiceParser.parse("Don't start focus") == nil)
@@ -140,32 +158,55 @@ struct InteractionChecks {
         precondition(compactNotch.height == 32 && compactNotch.contentTop == 0)
         precondition(compactNotch.width > compactNotch.cutoutWidth)
 
-        // Voice has distinct physical gestures and interrupted transitions
-        // retain the displayed pose. Reduced Motion keeps static state cues.
-        for size: CGFloat in [24, 60, 96] {
-            let listen = CompanionVoiceMotion.sample(phase: .listening, elapsed: 0.4, size: size, animates: true)
-            let think = CompanionVoiceMotion.sample(phase: .thinking, elapsed: 0.4, size: size, animates: true)
-            let win = CompanionVoiceMotion.sample(phase: .success, elapsed: 0.55, size: size, animates: true)
-            precondition(listen.ear > 0 && think.thoughts > 0 && win.offset.height < -size * 0.15)
+        // The approved family carries a readable busy cue without added ears,
+        // a generic ball or a full turn. Cancellation blends every parameter.
+        for avatar in CompanionAvatar.allCases {
+          for size: CGFloat in [24, 60, 96] {
+            let listen = CompanionVoiceMotion.sample(phase: .listening, elapsed: 0.4, size: size, avatar: avatar, animates: true)
+            let think = CompanionVoiceMotion.sample(phase: .thinking, elapsed: 0.4, size: size, avatar: avatar, animates: true)
+            let win = CompanionVoiceMotion.sample(phase: .success, elapsed: 0.55, size: size, avatar: avatar, animates: true)
+            precondition(listen.loading == 0 && think.loading == 1 && win.loading == 0)
             precondition(listen != think && think != win)
+            precondition(abs(win.rotation) < 6 && abs(win.offset.height) < size * 0.05)
+            if avatar == .arcade1984 { precondition(listen.rotation == 0 && think.rotation == 0 && win.rotation == 0) }
+            if avatar == .coastBuddy || avatar == .inkBuddy { precondition(win.wink > 0.8) }
             for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
-                precondition(CompanionVoiceMotion.sample(phase: phase, elapsed: 0.2, size: size, animates: false)
-                    == CompanionVoiceMotion.sample(phase: phase, elapsed: 3.8, size: size, animates: false))
+                precondition(CompanionVoiceMotion.sample(phase: phase, elapsed: 0.2, size: size, avatar: avatar, animates: false)
+                    == CompanionVoiceMotion.sample(phase: phase, elapsed: 3.8, size: size, avatar: avatar, animates: false))
             }
+            let settled = CompanionVoiceMotion.sample(phase: .success, elapsed: 1.2, size: size, avatar: avatar, animates: true)
+            precondition(settled == CompanionVoiceMotion.sample(phase: .success, elapsed: 5, size: size, avatar: avatar, animates: true), "Completion must settle instead of looping")
             var animator = CompanionVoiceAnimator()
-            animator.transition(to: .listening, at: 0, size: size, animates: true)
-            let before = animator.sample(at: 0.6, size: size, animates: true)
-            animator.transition(to: .thinking, at: 0.6, size: size, animates: true)
-            let after = animator.sample(at: 0.6, size: size, animates: true)
-            precondition(before.offset == after.offset && before.gaze == after.gaze && before.scaleX == after.scaleX && abs(before.rotation - after.rotation) < 0.00001, "Listening interruption must start at the visible pose")
-            animator.transition(to: .success, at: 1, size: size, animates: true)
-            let midJump = animator.sample(at: 1.45, size: size, animates: true)
-            animator.transition(to: .inactive, at: 1.45, size: size, animates: true)
-            let cancelled = animator.sample(at: 1.45, size: size, animates: true)
-            precondition(midJump.offset == cancelled.offset && midJump.scaleX == cancelled.scaleX)
-            precondition(abs(sin(midJump.rotation * .pi / 180) - sin(cancelled.rotation * .pi / 180)) < 0.00001)
-            precondition(animator.sample(at: 2, size: size, animates: true) == CompanionVoicePose())
+            animator.transition(to: .listening, at: 0, size: size, avatar: avatar, animates: true)
+            let before = animator.sample(at: 0.6, size: size, avatar: avatar, animates: true)
+            animator.transition(to: .thinking, at: 0.6, size: size, avatar: avatar, animates: true)
+            precondition(before == animator.sample(at: 0.6, size: size, avatar: avatar, animates: true))
+            animator.transition(to: .success, at: 1, size: size, avatar: avatar, animates: true)
+            let midGesture = animator.sample(at: 1.45, size: size, avatar: avatar, animates: true)
+            animator.transition(to: .inactive, at: 1.45, size: size, avatar: avatar, animates: true)
+            precondition(midGesture == animator.sample(at: 1.45, size: size, avatar: avatar, animates: true))
+            precondition(animator.sample(at: 2, size: size, avatar: avatar, animates: true) == CompanionVoicePose())
+            animator.transition(to: .working, at: 2, size: size, avatar: avatar, animates: true)
+            let working = animator.sample(at: 3, size: size, avatar: avatar, animates: true)
+            animator.transition(to: .working, at: 3, size: size, avatar: avatar, animates: true)
+            precondition(working == animator.sample(at: 3, size: size, avatar: avatar, animates: true), "Same-phase telemetry must not restart motion")
+          }
         }
+        precondition(CompanionActivity.phase(voice: .inactive, isLoading: true) == .thinking)
+        precondition(CompanionActivity.phase(voice: .inactive, hasActiveTask: true) == .working)
+        precondition(CompanionActivity.phase(voice: .inactive) == .inactive)
+        for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
+            precondition(CompanionActivity.phase(voice: phase, isLoading: true, hasActiveTask: true) == phase, "Background tasks must not hide voice or its result")
+        }
+        let pixelBadge = CompanionLoadingShape(avatar: .arcade1984).path(in: CGRect(x: 0, y: 0, width: 28, height: 28))
+        var segments = 0
+        pixelBadge.forEach { element in
+            switch element {
+            case .move, .line, .closeSubpath: segments += 1
+            default: preconditionFailure("Arcade loading geometry must remain stepped, without curves")
+            }
+        }
+        precondition(segments > 12)
 
         let reactions = CompanionReactions(now: { clock }, recoveryDelay: .milliseconds(30), wakeDelay: .milliseconds(30))
         for _ in 0..<3 { reactions.touch(); precondition(reactions.mood == .happy) }
@@ -194,7 +235,7 @@ struct InteractionChecks {
         preferences.avatar = .crtBuddy
         let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query })
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query }, minimumVoiceProcessingDuration: .zero)
         notch.activation = activation
         precondition(activation.voiceShortcut == .voice && activation.voiceShortcut?.keyCode != nil)
         // A first click from another app must reach both native activation and

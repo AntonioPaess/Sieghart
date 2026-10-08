@@ -37,7 +37,7 @@ import Foundation
     var queries: [String] = []
     var urls: [URL] = []
     var apps: [String] = []
-    init() {
+    init(minimumProcessingDuration: Duration = .zero) {
         defaults = UserDefaults(suiteName: suite)!
         assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
         let preferences = CompanionPreferences(defaults: defaults)
@@ -48,7 +48,7 @@ import Foundation
             searchBrowser: { [weak self] query in
                 guard let url = BrowserSearch.url(for: query) else { throw VoiceCaptureFailure.unavailable }
                 self?.queries.append(query); self?.urls.append(url); return query
-            }, voiceCapture: capture, voiceNow: { [weak self] in self?.time ?? 0 })
+            }, voiceCapture: capture, voiceNow: { [weak self] in self?.time ?? 0 }, minimumVoiceProcessingDuration: minimumProcessingDuration)
         notch.activation = controller
     }
     func cleanup() { controller.cancelVoiceCommand(); defaults.removePersistentDomain(forName: suite) }
@@ -201,6 +201,73 @@ import Foundation
             precondition(f.controller.commandAcknowledged && !f.controller.isVoiceBusy)
             f.controller.cancelVoiceCommand()
         }
-        print("PASS: capture → quiet/final drain → parser → Google/app/timer; pinned voice UI; exact-once/trailing words; cancellation/replacement; search topics and missing-final search recovery; strict tool finalization; voice phases; timeout/input loss; permission cancellation")
+        // Spoken Portuguese timer verbs must execute a timer, never a search.
+        // Duration is the session length; wait for the recognizer's final text
+        // so a partial default-duration command cannot start prematurely.
+        for (index, pair) in [
+            ("inicia o foco", 25),
+            ("inicia o pomodoro", 25),
+            ("inicia o pomodor em 20 minutos", 20),
+            ("inicia o pomodoro em vinte e cinco minutos", 25),
+            ("Sig, inicie o foco por 40 minutos", 40)
+        ].enumerated() {
+            f.assistant.resetPomodoro()
+            f.assistant.setFocusMinutes(25)
+            let base = 200.0 + Double(index) * 10
+            f.time = base; try await f.start()
+            let queryCount = f.queries.count
+            let completed = f.assistant.completedSessions
+            f.level(-65, at: base + 0.1)
+            f.recognize("inicia o foco")
+            for tick in 2...10 { f.level(-20, at: base + Double(tick) / 10) }
+            for tick in 11...26 { f.level(-65, at: base + Double(tick) / 10) }
+            precondition(f.controller.isFinalizing && !f.assistant.hasActiveSession)
+            f.recognize(pair.0, final: true)
+            f.recognize(pair.0, final: true)
+            precondition(f.assistant.isRunning && f.assistant.focusMinutes == pair.1, pair.0)
+            precondition(f.assistant.activeTimerMode == .pomodoro && f.assistant.interval == .focus)
+            precondition(f.assistant.remainingSeconds == Double(pair.1 * 60))
+            precondition(f.assistant.completedSessions == completed && f.queries.count == queryCount)
+            precondition(f.controller.commandAcknowledged && !f.controller.isVoiceBusy)
+            f.controller.cancelVoiceCommand()
+        }
+        f.assistant.resetPomodoro()
+        // Production timing: even instant commands have a visible cue. The
+        // operation itself is not delayed, and idle never reports loading.
+        let paced = VoiceFixture(minimumProcessingDuration: .milliseconds(700))
+        defer { paced.cleanup() }
+        precondition(paced.controller.companionVoicePhase == .inactive && !paced.controller.isVoiceBusy)
+        paced.controller.executeVoiceCommand("inicia o foco em 20 minutos")
+        precondition(paced.assistant.isRunning && paced.assistant.focusMinutes == 20)
+        precondition(!paced.controller.isExecutingVoiceCommand && paced.controller.isPresentingVoiceProcessing)
+        precondition(paced.controller.companionVoicePhase == .working && !paced.controller.commandAcknowledged)
+        paced.notch.setPointerInsidePanel(true); paced.notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(100))
+        precondition(paced.controller.companionVoicePhase == .working && paced.notch.presentation == .home)
+        try await Task.sleep(for: .milliseconds(660))
+        precondition(paced.controller.companionVoicePhase == .success && !paced.controller.isVoiceBusy)
+        paced.controller.cancelVoiceCommand()
+        precondition(paced.controller.companionVoicePhase == .inactive && !paced.controller.isPresentingVoiceProcessing)
+        paced.assistant.resetPomodoro()
+
+        paced.controller.executeVoiceCommand("pesquisa github")
+        try await Task.sleep(for: .milliseconds(30))
+        precondition(paced.queries == ["github"] && paced.controller.isPresentingVoiceProcessing,
+                     "The browser action happens immediately while visual acknowledgement is paced")
+        paced.controller.cancelVoiceCommand()
+        try await Task.sleep(for: .milliseconds(730))
+        precondition(paced.controller.companionVoicePhase == .inactive && !paced.controller.commandAcknowledged)
+        precondition(!paced.notch.isVisible && paced.queries.count == 1)
+
+        paced.controller.executeVoiceCommand("inicia o foco")
+        try await Task.sleep(for: .milliseconds(100))
+        paced.controller.executeVoiceCommand("pause the timer")
+        try await Task.sleep(for: .milliseconds(350))
+        precondition(paced.controller.companionVoicePhase == .working && !paced.controller.commandAcknowledged,
+                     "An old completion must not interrupt the replacement's cue")
+        try await Task.sleep(for: .milliseconds(400))
+        precondition(paced.controller.companionVoicePhase == .success && paced.controller.voiceStatus == "Timer paused")
+        paced.controller.cancelVoiceCommand()
+        print("PASS: capture → quiet/final drain → parser → Google/app/timer; Portuguese focus/Pomodoro verbs and duration; minimum visible processing without delayed actions; idle/cancel/replacement; pinned voice UI; exact-once/trailing words; search topics and missing-final search recovery; strict tool finalization; voice phases; timeout/input loss; permission cancellation")
     }
 }

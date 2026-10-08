@@ -8,6 +8,11 @@ enum FocusVoiceCommand: Equatable {
 }
 
 enum FocusVoiceParser {
+    // Share the spoken verb forms with local-intent detection so a command
+    // cannot become a browser query before reaching the timer parser.
+    static let startVerbs = ["start", "begin", "iniciar", "inicia", "inicie", "comecar", "comeca", "comece"]
+    static let focusWords = ["focar", "focus", "foco", "pomodoro", "pomodor"]
+
     static func parse(_ transcript: String) -> FocusVoiceCommand? {
         // Parse search before interpreting words inside its query as actions.
         let original = SearchVoiceParser.requestText(transcript)
@@ -15,7 +20,7 @@ enum FocusVoiceParser {
             guard let query = SearchVoiceParser.query(in: original) else { return nil }
             return .search(query: query)
         }
-        var text = transcript.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US"))
+        var text = original.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en_US"))
         text = text.replacingOccurrences(of: "’", with: "'")
         let negatedRequest = ["don't", "do not", "never", "nao", "not now"].contains(where: text.contains)
         let words = Set(text.components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty })
@@ -24,7 +29,7 @@ enum FocusVoiceParser {
             || text.range(of: #"^(?:show|mostre|mostrar|veja|exibir)\b"#, options: .regularExpression) != nil
             || text.range(of: #"^(?:(?:ai|ia|codex|claude)\s+(?:limits|limites|usage|consumo)|(?:limits|limites|usage|consumo)\s+(?:ai|ia|codex|claude))[.!?]?$"#, options: .regularExpression) != nil
         if personalUsage && has(["ai", "ia", "codex", "claude"]) && has(["limits", "limit", "limites", "limite", "usage", "consumo", "tokens", "cost", "costs", "gasto", "gastos"]) {
-            guard !negatedRequest, !has(["pause", "stop", "start", "begin", "resume", "finish", "reset", "hide", "close", "focus", "pomodoro", "pausar", "iniciar", "retomar", "finalizar", "zerar", "esconder", "fechar", "focar"]) else { return nil }
+            guard !negatedRequest, !has(startVerbs + focusWords + ["pause", "stop", "resume", "finish", "reset", "hide", "close", "pausar", "retomar", "finalizar", "zerar", "esconder", "fechar"]) else { return nil }
             return .aiLimits
         }
         if SearchVoiceParser.hasQuestionIntent(original) {
@@ -50,13 +55,13 @@ enum FocusVoiceParser {
             return .openApp(name: name)
         }
         let pause = has(["pause", "pausar", "pausa", "stop", "parar"])
-        let start = has(["start", "begin", "iniciar", "comecar", "comece", "focar", "focus", "pomodoro"])
+        let start = has(startVerbs + focusWords)
         let resume = has(["resume", "continue", "retomar", "continuar"])
         let finish = has(["finish", "complete", "end", "finalizar", "terminar", "concluir"])
         let reset = has(["reset", "restart", "reiniciar", "zerar"])
         // Reject conflicting actions instead of choosing whichever substring wins.
         if [pause, resume, finish, reset].filter({ $0 }).count > 1 { return nil }
-        if pause && has(["start", "begin", "iniciar", "comecar"]) { return nil }
+        if pause && has(startVerbs) { return nil }
         if has(["hide", "close", "esconder", "fechar"]) && has(["show", "open", "mostrar", "abrir"]) { return nil }
         if pause { return .pause }
         if reset { return .reset }
@@ -104,10 +109,11 @@ enum SearchVoiceParser {
         text.range(of: #"^(?:please\s+|por favor\s+)?(?:n[ãa]o|don't|do not|never|not now)\b"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
     static func hasLocalIntent(_ text: String) -> Bool {
-        let wrappers = #"(?:(?:please|por favor)[, ]+|(?:can|could) you\s+|(?:quero|preciso)(?:\s+que\s+voce)?\s+)*"#
-        let actions = #"(?:open|launch|abrir|abra|abre|start|begin|iniciar|comecar|comece|focar|pause|pausar|pausa|stop|parar|resume|continue|retomar|continuar|finish|complete|end|finalizar|terminar|concluir|reset|restart|reiniciar|zerar|configure|settings|adjust|configurar|ajustar|hide|close|esconder|fechar|recolher|show|mostrar|take|fazer)\b"#
+        let wrappers = #"(?:(?:please|por favor)[, ]+|(?:(?:can|could) you|(?:voce\s+)?(?:pode|poderia)|(?:quero|preciso)(?:\s+que\s+voce)?)[, ]+)*"#
+        let starts = FocusVoiceParser.startVerbs.joined(separator: "|")
+        let actions = #"(?:open|launch|abrir|abra|abre|"# + starts + #"|focar|pause|pausar|pausa|stop|parar|resume|continue|retomar|continuar|finish|complete|end|finalizar|terminar|concluir|reset|restart|reiniciar|zerar|configure|settings|adjust|configurar|ajustar|hide|close|esconder|fechar|recolher|show|mostrar|take|fazer)\b"#
         return text.range(of: "^" + wrappers + actions, options: .regularExpression) != nil
-            || text.range(of: #"^(?:focus|pomodoro)(?:$|\s+(?:for|por)\b)"#, options: .regularExpression) != nil
+            || text.range(of: #"^(?:focus|foco|pomodoro|pomodor)(?:[.!?]?$|\s+(?:for|por|em)\b)"#, options: .regularExpression) != nil
             || text.range(of: #"^(?:quero|preciso)\s+(?:um\s+)?(?:break|rest|descanso|intervalo)\b"#, options: .regularExpression) != nil
     }
     static func hasUnsupportedAction(_ text: String) -> Bool {

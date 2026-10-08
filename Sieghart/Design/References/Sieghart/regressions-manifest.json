@@ -78,5 +78,11 @@
     "source_filename": "Captura de Tela 2026-10-08 às 19.11.29.png",
     "description": "Full recognized search stays Listening after speech stops",
     "sha256": "40f623f4ed4b3cc03d978d2098169aa5751a5196d1286389186e3c492ff15c12"
+  },
+  {
+    "file": "2026-10-08-20-39-36-idle-loading-before.png",
+    "source_filename": "Captura de Tela 2026-10-08 às 20.39.36.png",
+    "description": "Idle Companion incorrectly shows processing from automatic AI telemetry or unrelated external work",
+    "sha256": "2a7624497147ac25de361a69fbdee05f697a00ec2770774227cd7eea2c39b085"
   }
 ]

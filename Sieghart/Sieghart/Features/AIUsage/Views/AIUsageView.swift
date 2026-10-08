@@ -135,13 +135,13 @@ struct AIUsageView: View {
                 HStack { Label("Now", systemImage: "waveform.path.ecg").font(heading); Spacer(); Circle().fill(work.isEmpty ? CompanionStyle.muted : CompanionStyle.accent).frame(width: 7, height: 7) }
                 if work.isEmpty {
                     HStack(spacing: 14) {
-                        CompanionCharacter(size: dense ? 24 : 36, avatar: preferences.avatar, animates: false)
-                        VStack(alignment: .leading, spacing: 4) { Text("Ready when you are.").font(heading); Text("Active AI work appears here automatically after monitoring is enabled.").font(detail).foregroundStyle(CompanionStyle.muted) }
+                        CompanionCharacter(size: dense ? 24 : 36, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, voicePhase: usage.hasPendingRead ? .thinking : .inactive)
+                        VStack(alignment: .leading, spacing: 4) { Text(usage.hasPendingRead ? "Updating activity…" : "Ready when you are.").font(heading); Text("Active AI work appears here automatically after monitoring is enabled.").font(detail).foregroundStyle(CompanionStyle.muted) }
                     }
                 } else {
                     ForEach(work.prefix(2)) { task in
                         HStack(spacing: 14) {
-                            CompanionCharacter(size: dense ? 22 : 36, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: true)
+                            CompanionCharacter(size: dense ? 22 : 36, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: true, voicePhase: .working)
                             VStack(alignment: .leading, spacing: dense ? 2 : 5) {
                                 HStack { ProviderMark(provider: task.provider, size: dense ? 14 : 22); Text(task.project).font(heading).lineLimit(1) }
                                 Text("\(modelName(task.model)) · \(task.output.formatted()) recent output").font(detail).foregroundStyle(CompanionStyle.muted).lineLimit(1)

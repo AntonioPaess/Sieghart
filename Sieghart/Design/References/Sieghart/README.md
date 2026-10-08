@@ -63,3 +63,10 @@ Original screenshots are preserved with SHA-256 in the regression manifest. The 
 ![Full recognized search remains Listening after the user stops](2026-10-08-19-11-29-listening-stalled-before.png)
 
 The user requires expanded Companion to remain visible throughout active voice. This supersedes the earlier pointer-collapse rule for busy voice only. The new endpoint/task-finish implementation has unit and injected capture-to-command integration evidence; [physical voice checklist](../../voice-search-regression-checks.md) remains pending. Original screenshots are preserved outside application resources.
+
+
+## October 8 — Idle loading and imperceptible command feedback
+
+![Idle Companion incorrectly displays a loading badge](2026-10-08-20-39-36-idle-loading-before.png)
+
+The Companion, footer and menu avatar now reflect only their own command lifecycle; background AI telemetry and external agent work keep their indicators in the AI dashboard. Fast commands execute immediately while a separate 700 ms minimum presentation makes processing visible before acknowledgement. Cancel/replacement invalidates delayed feedback. Portuguese inicia/inicie/começa forms also route to the timer instead of a browser search. Physical user checks remain pending.
