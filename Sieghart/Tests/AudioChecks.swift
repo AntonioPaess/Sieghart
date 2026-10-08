@@ -50,7 +50,7 @@ private final class Buffers {
         precondition(AudioDeviceInfo(id: 1, name: "Wireless headphones", uid: "fixture", inputChannels: 0, outputChannels: 2, transport: kAudioDeviceTransportTypeBluetooth).symbol == "headphones")
         let suite = "Sieghart.AudioChecks.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        let backend = MockAudio(), audio = AudioController(backend: backend, defaults: defaults)
+        let backend = MockAudio(), audio = AudioViewModel(backend: backend, defaults: defaults)
         precondition(backend.calls == 0 && !audio.perAppEnabled)
         audio.refresh(); let app = audio.state.apps[0]
         audio.setGain(0.4, app: app); precondition(backend.calls == 0, "No app capture before explicit enable")
@@ -98,17 +98,17 @@ private final class Buffers {
         let mutedBefore = audio.state.inputMuted!; audio.toggleMicrophoneMute(); precondition(audio.state.inputMuted == !mutedBefore)
         backend.reading.inputMuted = nil; audio.toggleMicrophoneMute(); precondition(audio.error != nil)
         audio.shutdown()
-        let restored = AudioController(backend: MockAudio(), defaults: defaults)
+        let restored = AudioViewModel(backend: MockAudio(), defaults: defaults)
         precondition(restored.gains[app.id] == 1 && !restored.perAppEnabled && restored.favoriteApps.count == 2 && restored.outputPriority == [headphones.uid], "Saved gain must not authorize a new capture session")
 
         let deniedBackend = MockAudio(); deniedBackend.permissionFailure = kAudioDevicePermissionsError
-        let denied = AudioController(backend: deniedBackend, defaults: defaults)
+        let denied = AudioViewModel(backend: deniedBackend, defaults: defaults)
         await denied.enableApplications()
         precondition(!denied.perAppEnabled && denied.access == .permissionRequired && deniedBackend.calls == 0, "No saved mix before the real permission request succeeds")
         deniedBackend.permissionFailure = nil; await denied.enableApplications()
         precondition(denied.perAppEnabled && deniedBackend.permissionRequests == 2)
         let delayedBackend = MockAudio(); delayedBackend.holdsRequest = true
-        let delayed = AudioController(backend: delayedBackend, defaults: defaults)
+        let delayed = AudioViewModel(backend: delayedBackend, defaults: defaults)
         let request = Task { await delayed.enableApplications() }
         while delayedBackend.pending == nil { await Task.yield() }
         precondition(delayed.access == .requesting && !delayed.perAppEnabled)

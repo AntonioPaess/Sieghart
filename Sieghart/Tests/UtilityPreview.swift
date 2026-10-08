@@ -47,15 +47,15 @@ private final class NoUtilitySensor: AccelerometerProviding {
         let suite = "Sieghart.UtilityPreview.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let prefs = CompanionPreferences(defaults: defaults); prefs.onboardingComplete = true; prefs.avatar = .paperPal; prefs.appearance = .dark
-        let monitor = SystemMonitor(backend: PreviewSystem()); for _ in 0..<30 { monitor.refresh() }
-        let awake = KeepAwakeController(backend: PreviewAwake(), defaults: defaults)
-        let display = DisplayPowerController(backend: PreviewDisplay(), defaults: defaults); display.refresh()
+        let monitor = SystemMonitorViewModel(backend: PreviewSystem()); for _ in 0..<30 { monitor.refresh() }
+        let awake = KeepAwakeViewModel(backend: PreviewAwake(), defaults: defaults)
+        let display = DisplayPowerViewModel(backend: PreviewDisplay(), defaults: defaults); display.refresh()
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
-        let notch = NotchWidgetController(assistant: assistant, preferences: prefs, monitor: monitor, keepAwake: awake, displayPower: display, managesWindows: false)
+        let notch = NotchWidgetViewModel(assistant: assistant, preferences: prefs, monitor: monitor, keepAwake: awake, displayPower: display, managesWindows: false)
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
         let sensor = SensorViewModel(reader: NoUtilitySensor()), gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)
-        let codex = CodexUsageModel(defaults: defaults, load: { throw CocoaError(.fileReadNoSuchFile) })
-        let ai = AIUsageModel(defaults: defaults, readClaude: { nil }, read: { _ in nil })
+        let codex = CodexUsageViewModel(defaults: defaults, load: { throw CocoaError(.fileReadNoSuchFile) })
+        let ai = AIUsageViewModel(defaults: defaults, readClaude: { nil }, read: { _ in nil })
         for section in [AppSection.system, .keepAwake, .displayPower] {
             let view = ContentView(initialSection: section, scrollable: false).frame(width: 1020, height: 940)
                 .environmentObject(prefs).environmentObject(assistant).environmentObject(notch).environmentObject(activation)

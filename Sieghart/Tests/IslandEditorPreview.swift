@@ -16,12 +16,12 @@ private final class NoEditorSensor: AccelerometerProviding {
         preferences.onboardingComplete = true; preferences.avatar = .paperPal; preferences.characterMotion = false
         preferences.setRail(.none, at: 2); preferences.setRail(.none, at: 5)
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
-        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false)
+        let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false)
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
         let sensor = SensorViewModel(reader: NoEditorSensor())
         let gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)
-        let codex = CodexUsageModel(defaults: defaults, load: { throw CocoaError(.fileReadNoSuchFile) })
-        let usage = AIUsageModel(defaults: defaults, readClaude: { nil }, read: { _ in nil })
+        let codex = CodexUsageViewModel(defaults: defaults, load: { throw CocoaError(.fileReadNoSuchFile) })
+        let usage = AIUsageViewModel(defaults: defaults, readClaude: { nil }, read: { _ in nil })
         for appearance in [AppAppearance.dark, .light] {
             preferences.appearance = appearance
             let view = ContentView(initialSection: .dynamicIsland, scrollable: false)

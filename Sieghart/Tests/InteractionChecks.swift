@@ -28,11 +28,28 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("search for Open Safari and start focus") == .search(query: "Open Safari and start focus"))
         precondition(FocusVoiceParser.parse("Pesquise receitas de pão & café") == .search(query: "receitas de pão & café"))
         precondition(FocusVoiceParser.parse("Não pesquise receitas") == nil)
+        for command in ["pesquisa", "pesquise", "pesquisar", "procura", "procure", "buscar", "busca", "busque", "faça uma pesquisa"] {
+            precondition(FocusVoiceParser.parse(command + " no Google sobre C++ & café") == .search(query: "C++ & café"))
+        }
+        precondition(FocusVoiceParser.parse("Quero que você pesquise sobre saúde e agenda") == .search(query: "saúde e agenda"))
+        precondition(FocusVoiceParser.parse("Can you search for como não parar o timer") == .search(query: "como não parar o timer"))
+        precondition(FocusVoiceParser.parse("look up notícias de Recife") == .search(query: "notícias de Recife"))
+        precondition(FocusVoiceParser.parse("Não quero que você pesquise no Google sobre saúde") == nil)
+        precondition(FocusVoiceParser.parse("Don't search for music") == nil)
+        precondition(BrowserSearch.url(for: String(repeating: "á", count: 1_000)) != nil)
+        precondition(FocusVoiceParser.parse("Como pausar o timer no Mac?") == .search(query: "Como pausar o timer no Mac?"))
+        precondition(FocusVoiceParser.parse("Como não perder o foco?") == .search(query: "Como não perder o foco?"))
+        precondition(FocusVoiceParser.parse("Quem criou o Swift?") == .search(query: "Quem criou o Swift?"))
+        precondition(FocusVoiceParser.parse("What is new in Swift?") == .search(query: "What is new in Swift?"))
+        precondition(FocusVoiceParser.parse("search for start focus\nbad") == nil)
+        precondition(FocusVoiceParser.parse("Como iniciar foco\nbad") == nil)
+        precondition(FocusVoiceParser.parse("pesquise start focus " + String(repeating: "a", count: 2_001)) == nil)
         let query = "C++ & café #5; $(touch /tmp/nope)"
         let search = BrowserSearch.url(for: query)!
         precondition(URLComponents(url: search, resolvingAgainstBaseURL: false)?.queryItems?.first?.value == query)
-        precondition(search.host == "duckduckgo.com" && search.scheme == "https")
-        precondition(BrowserSearch.url(for: String(repeating: "a", count: 501)) == nil)
+        precondition(search.absoluteString.contains("C%2B%2B"))
+        precondition(search.host == "www.google.com" && search.path == "/search" && search.scheme == "https")
+        precondition(BrowserSearch.url(for: String(repeating: "a", count: 2_001)) == nil)
         precondition(BrowserSearch.url(for: "a\nb") == nil)
         precondition(FocusVoiceParser.parse("Open Warp") == .openApp(name: "warp"))
         precondition(FocusVoiceParser.parse("Open Safari and search YouTube") == nil)
@@ -131,7 +148,7 @@ struct InteractionChecks {
         defaults.set("retired-avatar", forKey: "appearance.avatar")
         precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
         preferences.avatar = .crtBuddy
-        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
+        let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query })
         notch.activation = activation
@@ -153,7 +170,7 @@ struct InteractionChecks {
         precondition(!notch.isVisible) // Second activation click closes, rather than reopening.
 
         let liveTask = AIWork(id: "fixture", provider: .codex, model: "fixture-model", project: "Fixture project", startedAt: .now.addingTimeInterval(-20), lastSeen: .now, output: 100)
-        let liveUsage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
+        let liveUsage = AIUsageViewModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
         notch.aiUsage = liveUsage
         notch.showIsland()
         precondition(notch.isVisible && notch.presentation == .island && notch.geometry.height == 36)
@@ -169,7 +186,7 @@ struct InteractionChecks {
         precondition(notch.presentation == .aiLimits) // No focus timer needed for live AI.
         notch.hide()
         precondition(notch.presentation == .island)
-        let disconnected = CodexUsageModel(defaults: defaults, load: { throw CodexUsageError.unavailable })
+        let disconnected = CodexUsageViewModel(defaults: defaults, load: { throw CodexUsageError.unavailable })
         liveUsage.disable(.codex, codex: disconnected)
         notch.showIsland()
         precondition(!notch.isVisible)
@@ -277,6 +294,13 @@ struct InteractionChecks {
         activation.executeVoiceCommand("search for café & Swift")
         try await Task.sleep(for: .milliseconds(80))
         precondition(activation.commandAcknowledged && activation.voiceStatus == "Search opened · Fixture café & Swift" && notch.presentation == .home)
+        notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(notch.presentation == .island && activation.voicePresented && activation.commandAcknowledged)
+        notch.showVoice()
+        precondition(notch.presentation == .island) // Result updates don't reopen a collapsed panel.
+        notch.clickIsland()
+        precondition(notch.presentation == .home && activation.voicePresented)
         activation.executeVoiceCommand("Open Safari")
         precondition(notch.presentation == .home && activation.voicePresented && activation.transcript == "Open Safari")
         try await Task.sleep(for: .milliseconds(20))
@@ -351,7 +375,7 @@ struct InteractionChecks {
         try await Task.sleep(for: .milliseconds(1200))
         precondition(notch.presentation == .island) // Leaving expanded controls tucks them away.
         // Every expanded page obeys pointer exit, including former sticky pages.
-        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, notch.showVoice, notch.showClipboard] {
+        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, { notch.showVoice() }, notch.showClipboard] {
             open(); notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
             try await Task.sleep(for: .milliseconds(320))
             precondition(notch.presentation == .island && assistant.hasActiveSession)
@@ -364,7 +388,7 @@ struct InteractionChecks {
         precondition(!notch.isVisible)
         notch.showCurrentTask()
         precondition(notch.presentation == .home) // Completed focus cannot hijack a reveal.
-        let relaunched = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false)
+        let relaunched = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false)
         drainEvents()
         precondition(!relaunched.isVisible) // Published saved completion is not replayed.
         notch.hide()
@@ -393,7 +417,7 @@ struct InteractionChecks {
         precondition(gate.accept(.voice, source: .monitor, at: 1.1))
         precondition(gate.accept(.companion, source: .carbon, at: 1.1))
 
-        let grace = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
+        let grace = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
         grace.show()
         grace.setPointerInsidePanel(false) // A layout/Space exit cannot cut short a keyboard reveal.
         try await Task.sleep(for: .milliseconds(150))

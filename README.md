@@ -15,6 +15,14 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 > **Sprint 4 implementation delivered.** The first slice passed the user’s Mac checklist; new utilities and greeting have separate physical checks. Connected email/upload workflows and extended hardware capabilities remain planned.
 
+## October 8 — Voice/search and MVVM organization
+
+Sources and Xcode groups now use **Features / Core / Shared**, with screen Views/ViewModels together by feature, native services/helpers in Core and reused controls/preferences/coordinators in Shared. [Architecture and boundaries](Sieghart/ARCHITECTURE.md).
+
+Voice now ends after audio quiet and waits for final transcription, replacing the fixed ten-second cutoff. Automatic island collapse preserves that explicitly started session with a compact microphone/status indicator; result updates keep it collapsed. Capture renews its microphone engine each time and handles initial headset format changes with one bounded retry. Google is the default search engine; natural Portuguese/English searches and general questions are accepted. [Changes and exact Mac checks](Sieghart/Design/voice-search-regression-checks.md). Actual AirPods/speech acceptance is still pending.
+
+The user will provide onboarding storytelling. A [three-minute experience brief](Sieghart/Design/challenge-onboarding-brief.md) is recorded; the final judging flow is not yet delivered.
+
 ## Sprint 4 — System utilities and greeting
 
 The previous clipboard/island/editor slice passed the user's Mac tests. The remaining requested implementation now adds System, Keep awake, audio favorites/order/device priorities and optional global output/microphone shortcuts, compatible brightness/dimming/display sleep, optional Bluetooth restoration and a narrow Music launch guard. The six companions greet from the center, wave and dock into the island; motion is optional and interruptions keep the current contour.
@@ -177,24 +185,14 @@ Sprint 3 is complete and accepted October 8, 2026: the user reported all manual 
 
 | Location | Responsibility |
 | --- | --- |
-| [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) / [`WorkspaceView.swift`](Sieghart/Sieghart/WorkspaceView.swift) | App composition, main-window navigation, glass settings and selected companion. |
-| [`MenuBarView.swift`](Sieghart/Sieghart/MenuBarView.swift) | Companion header, session card, and quick controls. |
-| [`NotchWidget.swift`](Sieghart/Sieghart/NotchWidget.swift) | Notch panel, companion, focus configuration, and timer views. |
-| [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro, countdown/stopwatch dates, rounds, and persistence. |
-| [`ActivationCore.swift`](Sieghart/Sieghart/ActivationCore.swift) | Global keyboard shortcut and explicit voice commands. |
-| [`KeyboardShortcuts.swift`](Sieghart/Sieghart/KeyboardShortcuts.swift) | Shortcut capture, persistence format, and modifier gestures. |
-| [`VoiceCommands.swift`](Sieghart/Sieghart/VoiceCommands.swift) | Supported local voice intents and duration validation. |
-| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Three-mode timer surface and shared focus configuration editor. |
-| [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
-| [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
-| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) | Six native companions, interpolated eye expressions, body motion, touch reactions and the Appearance gallery. |
-| [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
-| [`OnboardingView.swift`](Sieghart/Sieghart/OnboardingView.swift) | Initial six-avatar choice and local AI monitoring consent. |
-| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIActivity.swift`](Sieghart/Sieghart/AIActivity.swift) | Background provider monitoring, local lifecycle/counters and spending ledger. |
-| [`AIActivityView.swift`](Sieghart/Sieghart/AIActivityView.swift) | Quotas, spending, live work, hourly/model/project charts and activity heatmap. |
-| [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) / [`UsageImports.swift`](Sieghart/Sieghart/UsageImports.swift) | Counters, actual-charge import/export, broader history and automatic Claude desktop limits. |
-| [`CodexUsage.swift`](Sieghart/Sieghart/CodexUsage.swift) | Read-only Codex quota adapter, reset windows and timeouts. |
-| [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
+| [App](Sieghart/Sieghart/App) | Composition and resident application lifetime. |
+| [Features](Sieghart/Sieghart/Features) | Views and ViewModels grouped by screen/feature. |
+| [Core Services](Sieghart/Sieghart/Core/Services) | Voice, Core Audio, AI readers, pasteboard, monitor, power, display, input, calendar and native panels. |
+| [Core Helpers](Sieghart/Sieghart/Core/Helpers) | Voice/search parsing, encoded URLs, shortcut rules, timer and notch value types. |
+| [Shared](Sieghart/Sieghart/Shared) | Reusable avatars/controls, appearance options, preferences, activation/gesture services and assets. |
+| [Tests](Sieghart/Tests) / [Design](Sieghart/Design) | Isolated checks, offscreen fixture previews and design/reference records. |
+
+[Detailed MVVM organization](Sieghart/ARCHITECTURE.md). Native island presentation still has a coordinator; the hierarchy does not claim a complete protocol extraction of every AppKit window operation.
 
 ## AI usage
 

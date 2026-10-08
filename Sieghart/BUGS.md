@@ -111,3 +111,22 @@ The user reconfirmed **keep the app closed; I will test**. Nine isolated groups,
 SG-004 follow-up: permission preparation now uses a temporary unmuted global tap, replacing an empty inclusion list that captures no processes. Same-ID output sample-rate/channel/UID changes tear down and rebuild routes. A restarted helper clears a previous failed-route suppression; disappearing audio processes release stale routes. Permission settings remain accessible after Enable, because startup success alone is not proof of audible gain control. Mock denial/retry/format-change cases pass; actual macOS permission and WhatsApp/AirPods playback have not been tested.
 
 Voice search has a real encoded default-browser action, actual charges have a reviewed CSV/JSON import/export adapter, expanded history includes archives, and automatic Claude desktop percentages have validated versioned parsing/freshness. Those implementation items are complete; actual speech and file-picker interaction join the user acceptance pass.
+
+
+## SG-006 — Voice finishes before the user stops speaking
+
+**Reported:** October 8, 2026. **Status:** implementation verified with synthetic inputs; user speech acceptance pending.
+
+Automatic island collapse also cancelled voice; it now keeps an explicitly started session alive with a compact microphone/status indicator, while explicit Cancel/Close still cancels. The original capture always ended after ten seconds, or 1.2 seconds after the last changed transcript, and cancelled recognition before final words could arrive. PCM activity now keeps capture alive; quiet ends audio and final recognition dispatches once. Cancellation, input loss and the session/final-result safety limits run no partial command. See [changes, bounds and Mac tests](Design/voice-search-regression-checks.md).
+
+## SG-007 — Restricted search wording and wrong engine
+
+**Reported:** October 8, 2026. **Status:** parser/URL and injected action checks passed; real voice/browser acceptance pending.
+
+DuckDuckGo was hard-coded and colloquial Portuguese/general question forms were missing. Google now opens in the default browser, with broader explicit search phrases and questions. Accents/query content are preserved; invalid queries cannot fall through into timer/app commands. Existing local AI-limit questions keep their panel route.
+
+## SG-008 — Voice does not listen with AirPods
+
+**Reported:** October 8, 2026; the user clarified this is microphone voice capture, not app volume. **Status:** lifecycle/PCM fixes verified in isolation; physical AirPods reproduction/acceptance pending.
+
+Capture previously reused one audio engine across input/device changes. Each command now creates a fresh engine, validates hardware/capture formats, observes engine configuration changes and permits one bounded preparation retry before detected speech. An interrupted spoken command is cancelled without dispatch; stale capture callbacks cannot affect a replacement. This addresses the identified lifecycle risk without claiming a confirmed physical diagnosis. Confirm the selected microphone in Audio → Microphone and perform the headset checklist above. [Apple's configuration-change contract](https://developer.apple.com/documentation/foundation/nsnotification/name-swift.struct/avaudioengineconfigurationchange) describes hardware rate/channel changes stopping and uninitializing the engine.

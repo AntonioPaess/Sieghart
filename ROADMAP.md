@@ -37,6 +37,15 @@ The user accepted the previous slice and editor on October 8. The remaining requ
 
 Numeric temperatures/fan control, XDR desktop boost, per-process network/speed testing and SMART remain explicit extended hardware backlog, not claimed delivered. Sprint 3 stays closed. Upload/email, connected chats, task agents and optional GitHub follow the core utility release gate.
 
+### October 8 — Voice/search regressions and feature organization
+
+- [x] Physical source/Xcode hierarchy organized as `Features/<Feature>/Views` and `ViewModels`, `Core/Services` and `Helpers`, and reusable `Shared/Components`, `Models`, `Services` and `Resources`. Native adapters are separated from observable feature state; navigation/onboarding/layout state has explicit ViewModels. See [architecture](Sieghart/ARCHITECTURE.md).
+- [x] Automatic island collapse preserves explicitly started voice with a compact microphone indicator; explicit Cancel/Close still cancels. Voice endpoint follows audio quiet rather than a fixed ten-second window; final transcription drains before dispatch, with cancellation/stale-result guards and no partial execution at safety/error cutoffs.
+- [x] Google default-browser search supports broader Portuguese/English phrasing and general questions, preserving literal query contents and preventing invalid searches from triggering other actions.
+- [x] Voice renews its input engine per command and handles headset format changes with one bounded retry before detected speech. Real AirPods acceptance remains pending.
+- [ ] User Mac acceptance of the new voice/search/AirPods fixes: [exact regression checklist](Sieghart/Design/voice-search-regression-checks.md). This supplements the pending new utility/greeting acceptance above; prior Sprint 3 acceptance stays recorded.
+- [ ] Challenge onboarding storytelling and a timed three-minute judging path. The user will write the story; [experience brief](Sieghart/Design/challenge-onboarding-brief.md) records goals, accessible/offline equivalents and a proposed time budget. The final storyline/judging flow is not implemented yet.
+
 ## Sprint 3 — First-run companion and live AI
 
 ### Dated implementation record

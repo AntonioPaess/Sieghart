@@ -1,5 +1,11 @@
 # Sieghart
 
+## Current voice/search and architecture update — October 8
+
+Physical source/Xcode groups now use feature Views/ViewModels, Core services/helpers and reused Shared components/services/resources. [Architecture](ARCHITECTURE.md). Voice uses audio quiet and final-result draining; headset input is renewed per command with bounded preparation recovery. Search uses Google and broader Portuguese/English wording/general questions. [Mac regression checklist](Design/voice-search-regression-checks.md). Speech/AirPods physical acceptance remains pending; development keeps the app closed.
+
+The user will write the Challenge storytelling. [Three-minute judging-experience brief](Design/challenge-onboarding-brief.md) is recorded as a future onboarding gate.
+
 ## Current status — October 8, 2026
 
 **Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report. **Sprint 4 requested implementation is delivered:** the earlier clipboard/editor slice passed the user’s tests; system, keep awake, audio priorities/shortcuts, compatible display/power and the expanded companion greeting have twelve isolated check groups and a signed universal build. [New Mac checks and hardware boundaries](Design/sprint-4-utilities.md) define the remaining release gate. The assistant keeps the app closed; physical acceptance of these later changes remains with the user. The dated records below preserve earlier pending states as history.

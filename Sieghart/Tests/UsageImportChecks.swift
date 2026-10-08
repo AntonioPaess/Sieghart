@@ -17,7 +17,7 @@ import Foundation
 
         let suite = "Sieghart.UsageImportChecks.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        let model = AIUsageModel(defaults: defaults, readClaude: { v2 }, read: { _ in nil })
+        let model = AIUsageViewModel(defaults: defaults, readClaude: { v2 }, read: { _ in nil })
         await model.refresh(codexEnabled: false)
         precondition(model.effectiveClaudeReport == nil)
         model.claudeEnabled = true; await model.refresh(codexEnabled: false)
@@ -39,7 +39,7 @@ import Foundation
         changed = csv.replacingOccurrences(of: "12.123456", with: "-2")
         do { _ = try ChargeFile.decode(Data(changed.utf8), csv: true, source: "bad.csv", now: now); preconditionFailure("Invalid batch accepted") } catch {}
         do { _ = try ChargeFile.decode(Data("reference,provider,date,amount,currency,kind\n\"unclosed".utf8), csv: true, source: "bad.csv", now: now); preconditionFailure("Malformed CSV accepted") } catch {}
-        let restored = AIUsageModel(defaults: defaults, readClaude: { nil }, read: { _ in nil })
+        let restored = AIUsageViewModel(defaults: defaults, readClaude: { nil }, read: { _ in nil })
         precondition(restored.ledger.charges.count == 2 && restored.ledger.charges.first?.source == "fixture.csv")
         let manual = RecordedCharge(provider: .codex, date: now, amount: 9, currency: .USD, kind: .api)
         let manualRoundtrip = try ChargeFile.decode(ChargeFile.export([manual]), csv: false, source: "export.json", now: now)

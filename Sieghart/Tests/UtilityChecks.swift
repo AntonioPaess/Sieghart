@@ -47,13 +47,13 @@ import Foundation
         var unavailable = first; unavailable.counters.diskIOAvailable = false; unavailable.derive(from: first.counters)
         precondition(unavailable.diskReadRate == nil && unavailable.gpu == nil, "Missing hardware readings aren't fabricated")
         let sampler = SampleMonitor(); sampler.samples = [first, second]
-        let monitor = SystemMonitor(backend: sampler)
+        let monitor = SystemMonitorViewModel(backend: sampler)
         precondition(sampler.calls == 0, "Constructing a model must not sample the Mac")
         for _ in 0..<75 { monitor.refresh() }
         precondition(monitor.history.count == 60)
 
         var clock = Date(timeIntervalSince1970: 1_800_000_000)
-        let engine = SampleAwake(), awake = KeepAwakeController(backend: engine, defaults: defaults, now: { clock })
+        let engine = SampleAwake(), awake = KeepAwakeViewModel(backend: engine, defaults: defaults, now: { clock })
         precondition(engine.acquired.isEmpty && !awake.enabled)
         awake.request.onlyOnAC = true; engine.current.onAC = false; awake.start()
         precondition(awake.enabled && !awake.holding && engine.acquired.isEmpty)
@@ -72,15 +72,15 @@ import Foundation
         engine.current.externalDisplay = true; engine.current.applications = ["fixture.app"]; awake.tick(); precondition(awake.holding)
         awake.request.restoreOnLaunch = true; awake.saveOptions(); awake.shutdown()
         let restoredEngine = SampleAwake(); restoredEngine.current = engine.current
-        let restored = KeepAwakeController(backend: restoredEngine, defaults: defaults, now: { clock })
+        let restored = KeepAwakeViewModel(backend: restoredEngine, defaults: defaults, now: { clock })
         precondition(restoredEngine.acquired.isEmpty)
         restored.startLifecycle(center: NotificationCenter()); precondition(restored.enabled && restored.holding)
         restored.stop(); restored.shutdown()
         let failedEngine = SampleAwake(); failedEngine.fails = true
-        let failed = KeepAwakeController(backend: failedEngine, defaults: defaults, now: { clock }); failed.request.externalDisplayOnly = false; failed.request.applications = []; failed.start()
+        let failed = KeepAwakeViewModel(backend: failedEngine, defaults: defaults, now: { clock }); failed.request.externalDisplayOnly = false; failed.request.applications = []; failed.start()
         precondition(!failed.holding && failed.error != nil); failed.stop()
 
-        let adapter = SampleDisplay(), display = DisplayPowerController(backend: adapter, defaults: defaults)
+        let adapter = SampleDisplay(), display = DisplayPowerViewModel(backend: adapter, defaults: defaults)
         precondition(adapter.brightnessWrites.isEmpty && adapter.sleeps == 0)
         display.refresh(); display.setBrightness(2, display: adapter.fixture[0]); display.setDimming(0, display: adapter.fixture[0])
         precondition(adapter.brightnessWrites == [1] && adapter.dimWrites == [0.2])
@@ -89,10 +89,10 @@ import Foundation
         display.disconnectBluetoothOnSleep = true; display.willSleep(); display.didWake(); display.didWake()
         precondition(adapter.disconnected == ["A"] && adapter.reconnected == ["A"], "Restore only successfully disconnected devices, once")
         display.sleepDisplays(); display.restoreBrightness(); precondition(adapter.sleeps == 1 && adapter.restoreCount > 0)
-        precondition(DisplayPowerController.shouldBlockMusic(enabled: true, launch: 12, lastPlayKey: 11))
-        precondition(!DisplayPowerController.shouldBlockMusic(enabled: true, launch: 15, lastPlayKey: 11))
-        precondition(!DisplayPowerController.shouldBlockMusic(enabled: false, launch: 12, lastPlayKey: 11))
-        precondition(!DisplayPowerController.shouldBlockMusic(enabled: true, launch: 10, lastPlayKey: 11))
+        precondition(DisplayPowerViewModel.shouldBlockMusic(enabled: true, launch: 12, lastPlayKey: 11))
+        precondition(!DisplayPowerViewModel.shouldBlockMusic(enabled: true, launch: 15, lastPlayKey: 11))
+        precondition(!DisplayPowerViewModel.shouldBlockMusic(enabled: false, launch: 12, lastPlayKey: 11))
+        precondition(!DisplayPowerViewModel.shouldBlockMusic(enabled: true, launch: 10, lastPlayKey: 11))
         display.shutdown()
         print("Utility checks passed: counter deltas/reset, bounded history, assertion ownership/conditions/sleep/deadlines/restoration, brightness capabilities, safe dimming, owned Bluetooth restoration and playback launch gating. No real system action used.")
     }

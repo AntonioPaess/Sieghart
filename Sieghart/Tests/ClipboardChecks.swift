@@ -29,7 +29,7 @@ actor FixtureClipboardStorage: ClipboardStorage {
         let suite = "Sieghart.ClipboardChecks.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let now = Date(timeIntervalSince1970: 1_790_000_000), access = FakeClipboard(), store = FixtureClipboardStorage()
-        let model = ClipboardController(defaults: defaults, access: access, storage: store, monitorsSystem: false, now: { now })
+        let model = ClipboardViewModel(defaults: defaults, access: access, storage: store, monitorsSystem: false, now: { now })
         await model.restore()
         await model.poll(sourceName: "Example", sourceBundle: "example")
         precondition(access.reads == 0 && model.entries.isEmpty)
@@ -82,18 +82,18 @@ actor FixtureClipboardStorage: ClipboardStorage {
         access.failWrite = true
         let failed = await model.copy(original); precondition(!failed && model.status.contains("Could not copy"))
         await model.flush()
-        let restored = ClipboardController(defaults: defaults, access: FakeClipboard(), storage: store, monitorsSystem: false, now: { now })
+        let restored = ClipboardViewModel(defaults: defaults, access: FakeClipboard(), storage: store, monitorsSystem: false, now: { now })
         await restored.restore(); precondition(restored.entries.count == 3 && restored.entries.contains { $0.pinned })
         model.remove(original.id); await model.flush(); precondition(!model.entries.contains { $0.id == original.id })
         model.clear(); await model.flush(); let cleared = await store.load(); precondition(cleared.isEmpty)
         var many = (0..<210).map { ClipboardEntry(payload: ClipboardPayload(kind: .text, text: "item \($0)"), copiedAt: now.addingTimeInterval(-Double($0)), sourceName: "Fixture", sourceBundle: "fixture") }
         many[209].pinned = true
-        let bounded = ClipboardController.bounded(many, now: now)
+        let bounded = ClipboardViewModel.bounded(many, now: now)
         precondition(bounded.count == 200 && bounded.contains { $0.pinned })
         let expired = ClipboardEntry(payload: ClipboardPayload(kind: .text, text: "Old"), copiedAt: now.addingTimeInterval(-31 * 86400), sourceName: "Fixture", sourceBundle: "fixture")
-        precondition(ClipboardController.bounded([expired], now: now).isEmpty)
+        precondition(ClipboardViewModel.bounded([expired], now: now).isEmpty)
         var pinned = expired; pinned.pinned = true
-        precondition(ClipboardController.bounded([pinned, pinned], now: now).count == 1)
+        precondition(ClipboardViewModel.bounded([pinned, pinned], now: now).count == 1)
         model.historyLimit = 5
         for index in 0..<9 { model.record(ClipboardPayload(kind: .text, text: "Limit \(index)"), sourceName: "Fixture", sourceBundle: "fixture") }
         precondition(model.entries.count == 5)
@@ -102,9 +102,9 @@ actor FixtureClipboardStorage: ClipboardStorage {
         model.historyLimit = 10; model.cleanup = .shutdown
         model.record(ClipboardPayload(kind: .text, text: "Before restart"), sourceName: "Fixture", sourceBundle: "fixture")
         model.togglePin(model.entries[0].id); await model.flush()
-        let afterBoot = ClipboardController(defaults: defaults, access: FakeClipboard(), storage: store, monitorsSystem: false, now: { now }, bootTime: { ClipboardController.systemBootTime() + 100 })
+        let afterBoot = ClipboardViewModel(defaults: defaults, access: FakeClipboard(), storage: store, monitorsSystem: false, now: { now }, bootTime: { ClipboardViewModel.systemBootTime() + 100 })
         await afterBoot.restore(); await afterBoot.flush(); precondition(afterBoot.entries.isEmpty && afterBoot.historyLimit == 10)
-        precondition(ClipboardController.bounded([expired], now: now, limit: 5, retentionDays: nil).count == 1)
+        precondition(ClipboardViewModel.bounded([expired], now: now, limit: 5, retentionDays: nil).count == 1)
         let width = CGSize(width: 610, height: 220)
         precondition(CompanionGaze.sample(point: CGPoint(x: 0, y: 110), in: width).width == -4)
         precondition(CompanionGaze.sample(point: CGPoint(x: 610, y: 110), in: width).width == 4)

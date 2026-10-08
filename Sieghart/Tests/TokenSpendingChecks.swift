@@ -36,7 +36,7 @@ import Foundation
         let suite = "Sieghart.SpendingChecks.\(UUID().uuidString)", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let readerRoot = root
-        let model = AIUsageModel(defaults: defaults, read: { LocalTokenReader.read($0, home: readerRoot) })
+        let model = AIUsageViewModel(defaults: defaults, read: { LocalTokenReader.read($0, home: readerRoot) })
         await model.refresh(codexEnabled: false)
         precondition(model.tokens.isEmpty && !model.claudeEnabled)
         model.claudeEnabled = true
@@ -54,7 +54,7 @@ import Foundation
         precondition(model.ledger.recorded(.codex, currency: .USD, month: now) == 25)
         precondition(model.ledger.recorded(.codex, currency: .BRL, month: now) == 100)
         precondition(model.ledger.recorded(.codex, currency: .USD, month: now.addingTimeInterval(-90 * 86400)) == nil)
-        let restored = AIUsageModel(defaults: defaults)
+        let restored = AIUsageViewModel(defaults: defaults)
         precondition(restored.ledger.prices[.codex] == prices && restored.ledger.usdToBRL == 5)
         precondition(restored.ledger.charges.count == 4)
         let first = model.ledger.charges[0].id
@@ -64,10 +64,10 @@ import Foundation
         let report = Data("{\"capturedAt\":\"2026-10-05T21:00:00Z\",\"primary\":{\"usedPercent\":40,\"windowDurationMins\":300,\"resetsAt\":2000000000},\"secondary\":{\"usedPercent\":60,\"windowDurationMins\":10080,\"resetsAt\":2000200000}}".utf8)
         try model.importClaudeReport(report)
         precondition(model.claudeEnabled && model.claudeReport?.primary?.window.remainingPercent(at: now) == 60)
-        precondition(AIUsageModel(defaults: defaults).claudeReport?.secondary?.usedPercent == 60)
+        precondition(AIUsageViewModel(defaults: defaults).claudeReport?.secondary?.usedPercent == 60)
         let invalid = Data(String(decoding: report, as: UTF8.self).replacingOccurrences(of: "\"usedPercent\":40", with: "\"usedPercent\":101").utf8)
         do { try model.importClaudeReport(invalid); preconditionFailure("Invalid quotas accepted") } catch { }
-        model.clearClaudeReport(); precondition(AIUsageModel(defaults: defaults).claudeReport == nil)
+        model.clearClaudeReport(); precondition(AIUsageViewModel(defaults: defaults).claudeReport == nil)
         print("PASS: local counters, duplicate and cumulative events, cache/reasoning accounting, opt-in, decimal estimates, separate USD/BRL charges, monthly totals, persistence, and dated Claude reports")
     }
 }
