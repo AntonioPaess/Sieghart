@@ -20,7 +20,7 @@ The user moved clipboard history and an optional three-finger middle click forwa
 - Shared local Clipboard in app/menu/island; a default side button and global **Control + Option + C**. Search/filter, pins, previews, copy/paste fallback, pause, exclusions and delete/clear. Choose 5/10/20 copies and cleanup after chosen days, Mac shutdown or lid close. Local bounded storage; pins count toward the cap. Shutdown/lid cleanup includes pins. Direct paste uses explicit Accessibility access.
 - A dedicated Dynamic Island visual editor follows the October 8 reference: central companion/island preview, six clickable/draggable surrounding slots, dashed + for empty positions, Layout presets and Small/Medium/Large cards below. Add/edit/remove and swap/move save immediately. Optional Glass remains configurable. [Editor details](Sieghart/Design/island-layout-editor.md).
 - Three-step onboarding with native 60 Hz six-avatar arrival, symmetric pointer gaze, no black strip above the avatar, optional voice/direct-paste access preparation and a special widget reveal on Finish. Existing approved artwork, offline core and Reduce Motion remain.
-- Optional three-finger tap generates middle mouse click; default off, explicit Accessibility, unsupported state, drag/long/more-finger rejection and teardown. Uses an undocumented Mac contact capability; must be omitted from future Challenge packaging and awaits real trackpad checks.
+- Optional three-finger tap generates middle mouse click; default off, explicit Accessibility, unsupported state, drag/long/more-finger rejection and teardown. Uses an undocumented Mac contact capability; must be omitted from future Challenge packaging. The user accepted the first slice on October 8; the assistant did not perform real trackpad tests.
 - AI response usage records, response-ID deduplication, recorded Fast changes and initial bounded full-file scanning with retained earlier counters correct the previous spending data path. Cleaner spending typography and exact unpriced disclosure. Internal models without published prices remain unpriced; API value remains separate from paid charges.
 
 ### Sprint 4 utility delivery — October 8
@@ -185,6 +185,16 @@ Detailed experience and dependencies: [Useful companions](Sieghart/Design/compan
 ### New companion reference — October 8, 2026
 
 The user supplied Coucou’s animated demo after accepting Sprint 3. [Reference study](Sieghart/Design/coucou-reference.md): task/result hierarchy, coordinated avatar/surface motion, file receive/carry gestures and small task-agent indicators. Use these for the future companion workflow while retaining the approved six-character family, click-only opening, pointer-exit collapse and configurable Glass. Core S4 utilities remain first; this research introduces no runtime integration or new Sprint 3 gate.
+
+### Expressive specialists — User direction, October 8, 2026
+
+- A chosen principal companion with up to five user-assigned specialists: email, agenda, expense/bill organization, wellbeing and knowledge/projects (Obsidian/GitHub). Any avatar can take any role; shared file tools stay available to all.
+- Character-specific preparing/listening/interpreting/working/speaking/waiting/success/error animations. Explore a cupped/unfolding ear for actual listening and a hop/turn after verified completion. Understanding a request must remain distinct from finishing it.
+- Optional break routines first; AirPods head-motion calibration and a separately authorized iPhone/Watch health-data bridge are feasibility work. Session time is not proof of sitting, and head tilt is not full-body posture.
+- Configurable Obsidian/GitHub connectors, with MCP where supported, selected sources/actions and resumable multi-tool tasks.
+- Local “Megabrain active” / “ativar Megabrain” Easter egg: temporary stylized giant brain and playful recovery, interruptible and reduced-motion compatible.
+
+These are recorded requirements for a future companion milestone after core utilities, not shipped features or additional Sprint 4 acceptance gates. No agent runtime, health connection, MCP connection or Easter egg is implemented in this documentation update. [Roles, motion states, feasibility and acceptance](Sieghart/Design/companion-capabilities.md).
 
 ## Complete reference coverage — 77 modules
 
