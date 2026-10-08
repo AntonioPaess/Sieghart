@@ -1,17 +1,21 @@
 # Sieghart roadmap
 
-Updated October 7, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 8, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 ## Status and release gates
 
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
-- **Sprint 3:** implementation complete, manual Mac acceptance pending. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
-- **Open acceptance:** SG-001 companion/voice shortcuts after Spaces/full-screen; real notch placement/animation; microphone permission/recognition. The user reconfirmed on October 7 that the assistant must keep the app closed; the user will perform real interaction/audio acceptance. CLI builds, isolated checks, offscreen rendering and read-only adapter checks are allowed.
+- **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
+- **Mac acceptance:** the user confirmed “Todos passaram” after receiving the test instructions. SG-001 through SG-005 are resolved on that report; no Sprint 3 blocker remains reported. The assistant keeps the app closed during its work. CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed. Sprint 4 has not started.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
 
 ## Sprint 3 — First-run companion and live AI
+
+### Dated implementation record
+
+The October 5–7 entries below retain the findings and pending checks as they stood at each checkpoint. The October 8 acceptance record supersedes those pending statuses.
 
 ### Implemented first slice — October 5, 2026
 
@@ -107,21 +111,23 @@ Updated October 7, 2026. This is the current execution plan; older Obsidian chec
 - Audio permission preparation uses an unmuted temporary global tap rather than an empty process inclusion list. Output format/UID/channel changes rebuild routes even when the device ID is unchanged; restarted helpers can recover failed routes. Permission settings remain available while the mixer is enabled.
 - Verification: all nine isolated groups pass; signed universal build/package checks pass; updated production screens render offscreen. Real read-only source check: Codex quota available, 80 local files / 852 counter records / zero missing models. No fresh Claude desktop plan history is available on this Mac; its missing-source state and both supported formats are verified.
 
-### Remaining Mac acceptance — user performs these checks
+### Mac acceptance — passed October 8, 2026
+
+The user reported all checks passed. The original checklist is retained below; this is user-reported acceptance, not assistant-observed hardware verification.
 
 1. **Interaction / SG-001, SG-002, SG-005:** single-click entire compact notch and close/crossing behavior; Control + Option + S / V after red window-close, across desktops and another app in full screen; correct placement without the bright top seam. Saved custom modifier-only chords require their separate monitoring grant.
 2. **Voice:** actual microphone/speech grant and recognition, open an installed app, open a browser query, cancel and deny permission. Voice feedback must remain in Companion; focus starts only on request.
 3. **Audio / SG-004:** actual capture grant/denial/retry, master plus up to five real apps, WhatsApp/media gain and mute, speakers/AirPods, headset call format changes, unplug/reconnect and mixer disable restoring normal playback.
 4. **First run / AI / appearance:** save one of six avatars, accept/decline local monitoring, verify current provider and chart details against source, verify System/Light/Dark and independent Glass switches, reduced motion/transparency. Claude absence should stay unavailable; if used, enable its desktop usage menu and verify a fresh reading.
 
-**Exit:** implementation and automated verification are complete. Sprint 3 acceptance remains pending these real Mac checks, as reconfirmed by the user; SG-001/SG-002/SG-004 are not closed on mock evidence. Sprint 4 has not started. Calendar remains hidden until S5.
+**Exit:** Sprint 3 is complete and accepted on October 8 following the user’s all-passed report. SG-001 through SG-005 are resolved; no Sprint 3 acceptance gate remains open. The last implementation check found no fresh Claude history, so absence remains unavailable. Sprint 4 has not started. Calendar remains hidden until S5.
 
 ## Following delivery order
 
 | Milestone | Outcome |
 | --- | --- |
 | Challenge track | Three-minute offline companion/focus story, accepted playground destination, physical-sensor compatibility, local resources under edition size limit. Reference screenshots and network integrations stay outside its package. |
-| Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. Real Mac audio/interaction acceptance pending. |
+| Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. User Mac acceptance passed October 8. |
 | S4 | System monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Expand and validate the audio foundation. |
 | S5 | Calendar repair/reminders, notifications, selected-folder downloads, clipboard/shelf and core capture tools. |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
@@ -149,6 +155,10 @@ GitHub makes sense as project context for people who develop software. It is opt
 - **Sequence:** record as a future companion-workflow milestone after core utilities and verified adapters. This proposal does not add new Sprint 3 exit requirements. Network-dependent email/upload stays outside the mandatory offline Challenge story. No upload, email sending or agent delegation is implemented/enabled here.
 
 Detailed experience and dependencies: [Useful companions](Sieghart/Design/companion-capabilities.md).
+
+### New companion reference — October 8, 2026
+
+The user supplied Coucou’s animated demo after accepting Sprint 3. [Reference study](Sieghart/Design/coucou-reference.md): task/result hierarchy, coordinated avatar/surface motion, file receive/carry gestures and small task-agent indicators. Use these for the future companion workflow while retaining the approved six-character family, click-only opening, pointer-exit collapse and configurable Glass. Core S4 utilities remain first; this research introduces no runtime integration or new Sprint 3 gate.
 
 ## Complete reference coverage — 77 modules
 
@@ -203,7 +213,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `mixer` | Per-app volume mixer | Implemented core; Mac acceptance pending | Before S4 / S4 |
+| `mixer` | Per-app volume mixer | Implemented core; user Mac acceptance passed; S4 priorities/order remain | Before S4 / S4 |
 | `soundOutputSwitcher` | Output switcher | Device picker implemented; global shortcut pending | Before S4 / S4 |
 | `audioPriority` | Preferred audio devices | Planned | S4 |
 | `micMute` | Global microphone mute | Supported hardware mute implemented; global shortcut pending | Before S4 / S4 |
@@ -250,13 +260,13 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `notchCalendar` | Week/month agenda and meeting links | Planned | S3–S5 |
 | `notchNotifications` | New notification cards | Planned | S3–S5 |
 | `notchGestures` | Island scroll/swipe gestures | Planned | S3–S5 |
-| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro implemented; real Mac acceptance pending | S3 + S5 |
+| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro core implemented and user accepted; S5 extensions remain | S3 + S5 |
 | `notchAccessories` | Accessory status and battery alerts | Planned | S3–S5 |
 | `notchLyrics` | Lyrics | Planned | S3–S5 |
 | `notchQueue` | Playback queue | Planned | S3–S5 |
 | `notchLiveEqualizer` | Live audio bars | Planned | S3–S5 |
 | `notchDownloads` | Selected-folder downloads | Planned | S3–S5 |
-| `notchAgents` | AI limits/tokens/cost/live work | Partial — Live work, Codex quotas, charts, automatic price/FX estimates implemented; broader adapters/acceptance pending | S3 + S5 |
+| `notchAgents` | AI limits/tokens/cost/live work | Partial — S3 live work, quota/history/import adapters, charts and price/FX estimates delivered and user accepted; broader S5 scope remains | S3 + S5 |
 | `notchWatch` | Selected screen-area monitoring | Planned | S3–S5 |
 | `notchMascot` | Companion interaction | Partial — Six original companions and reactions; feature-specific interactions expand per module | S3 + S5 |
 

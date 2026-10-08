@@ -1,5 +1,11 @@
 # Sieghart
 
+## Current status — October 8, 2026
+
+**Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report; Sprint 4 has not started. Nine isolated groups and the signed universal build passed at implementation closeout. The assistant continues to keep the app closed; this acceptance is user-reported. The dated records below preserve earlier pending states as history.
+
+The new [Coucou reference study](Design/coucou-reference.md) records future companion/task/motion ideas while keeping the six approved avatars and interaction rules. S4 core utilities remain the next scope.
+
 Native macOS SwiftUI companion with a configurable notch island and local Pomodoro timer.
 
 The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is the macOS development base. The [repository overview](../README.md#swift-student-challenge) records the offline, three-minute story and submission milestone. Real sensor interaction remains a goal; compatibility with the accepted playground destination needs validation.

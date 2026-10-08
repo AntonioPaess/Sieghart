@@ -1,8 +1,12 @@
 # Sieghart bug tracker
 
+## Acceptance — October 8, 2026
+
+After receiving the manual test instructions, the user reported “Todos passaram” (all passed). SG-001 through SG-005 are resolved on this report. The assistant did not run live shortcuts, microphone or audio tests. Investigation notes below preserve the earlier pending statuses as dated history; reopen the specific issue if a regression occurs. See [Sprint 3 accepted closeout](Design/sprint-3-closeout.md).
+
 ## SG-001 — Shortcut intermittently stops responding
 
-**Priority:** high. **Reported:** October 5, 2026. **Status:** recovery improvements and listen-only session event tap implemented; the reported intermittent case remains open for validation on the Mac.
+**Priority:** high. **Reported:** October 5, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 **Observed:** both the companion and voice shortcuts sometimes stop working and do not recover, confirmed by the user. The user confirmed switching desktops/Spaces and entering full-screen on the same Mac as a trigger. The investigation prioritizes shared capture/registration state and overlay visibility; a modifier-monitor-only interruption would not explain the default regular-key companion binding by itself.
 
@@ -54,7 +58,7 @@ Tests cover default-key and saved modifier choices, simulated window-close deliv
 
 ## SG-002 — Island click remains unreliable
 
-**Priority:** high. **Reported:** October 6, 2026. **Status:** native first-click and toggle corrections implemented; physical Mac acceptance pending.
+**Priority:** high. **Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 The user reported that clicking still did not behave as expected. The previous activation handler always opened rather than toggled, queued its action asynchronously, used a nearly invisible window alpha, and did not explicitly accept first mouse when another app held focus. The native target covered only the camera gap rather than both compact wings. SwiftUI button labels did not explicitly cover transparent spacing.
 
@@ -72,7 +76,7 @@ Pointer exit tolerance is now 800 ms; a keyboard reveal provides four seconds to
 
 ## SG-003 — Compact island resembles a selected control
 
-**Reported:** October 6, 2026, in IMG_6234.HEIC. **Status:** contour removed; offscreen hover render verified.
+**Reported:** October 6, 2026, in IMG_6234.HEIC. **Status:** resolved — contour removed; user confirmed all manual acceptance tests passed October 8, 2026.
 
 The blue/lilac edge was the SwiftUI hover stroke around the compact shell. That stroke is removed, and the native canvas hides its outline whenever compact or departing. Hover now uses a subtle happy companion expression in idle, AI and timer states. The camera band stays black; click and keyboard actions retain their existing routes. [Production hover preview](Design/Concepts/compact-hover-preview.png). Physical notch and full-screen behavior remain tracked in SG-001/SG-002.
 
@@ -85,7 +89,7 @@ The avatar's initial focus stroke is removed from custom interaction; the native
 
 ## SG-004 — App mixer does not request permission / WhatsApp gain ineffective
 
-**Reported:** October 6, 2026. **Status:** concrete packaging and routing corrections implemented; real playback acceptance pending.
+**Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 The compiled Info.plist omitted the system-audio privacy description even though the project contained an INFOPLIST_KEY setting. Enable only flipped a Boolean and first tap creation could fail during rigid device-stream format checks before reaching the permission path. The explicit Info.plist is now merged into Debug/Release. A temporary unmuted tap-only aggregate starts the public permission flow on Enable, with request/failure/retry/settings state and cancellation protection. No saved gain applies before that succeeds.
 
@@ -95,7 +99,7 @@ Mocked checks cover permission request, denial/retry/cancel, saved gain gating, 
 
 ## SG-005 — Oversized menu, bright top seam, static sleep
 
-**Reported:** October 6, 2026. **Status:** corrections implemented and offscreen previews verified; physical seam acceptance pending.
+**Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
 
 Menu width decreased from 560 to 380 points; natural subpage heights replace the fixed content area. Companion height is about 297 versus 548 points. Compact child controls preserve navigation and timer actions. Native island positioning overlaps the screen edge by one backing pixel and removes the contour stroke that could expose the bright seam. Sleeping motion now visibly breathes/sways and floats a fading “z” for every avatar. Isolated motion checks cover all six and disabled/reduced-motion stillness. The production sleep GIF demonstrates the new movement; it is design documentation outside app resources.
 

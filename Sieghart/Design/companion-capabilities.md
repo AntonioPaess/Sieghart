@@ -1,6 +1,8 @@
 # Useful companions
 
-October 7, 2026. Product proposals requested by the user. These features are backlog options, not shipped capabilities. Complete the core Mac utilities and their acceptance checks first. Any of the six companions can be the primary companion. Optional task roles let the other characters act as agents while retaining the same base capabilities.
+Updated October 8, 2026. Product proposals requested by the user. These features are backlog options, not shipped capabilities. Sprint 3 is accepted; core Mac utilities remain the delivery priority. Any of the six companions can be the primary companion. Optional task roles let the other characters act as agents while retaining the same base capabilities.
+
+The new [Coucou reference study](coucou-reference.md) informs task/result hierarchy, coordinated motion, file receive/carry gestures and compact task-agent indicators. Sieghart retains its six companions, click-only opening, pointer-exit collapse and optional Glass.
 
 ## Recommended starting point
 
@@ -60,7 +62,7 @@ Roles represent real tasks and adapters, not six disconnected chat tabs. Any ava
 
 ## Already implemented in this round
 
-The separate Voice island page and Voice launcher tile are removed. Speak, the menu command and the voice shortcut use Companion itself. Preparation, listening animation, transcript, success or failure and Cancel/Back fit the existing 620 × 240 base panel. Returning from voice does not start a timer. Voice recognition and actual microphone/app-launch behavior still require user acceptance on the Mac.
+The separate Voice island page and Voice launcher tile are removed. Speak, the menu command and the voice shortcut use Companion itself. Preparation, listening animation, transcript, success or failure and Cancel/Back fit the existing 620 × 240 base panel. Returning from voice does not start a timer. The user confirmed all Sprint 3 manual checks passed on October 8, including the voice acceptance checklist.
 
 ## Appearance controls
 
