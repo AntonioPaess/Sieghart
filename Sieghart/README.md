@@ -8,7 +8,7 @@ The user will write the Challenge storytelling. [Three-minute judging-experience
 
 ## Current status — October 8, 2026
 
-**Sprint 3 complete and accepted.** The user reported “Todos passaram” after receiving the manual acceptance instructions. SG-001 through SG-005 are resolved on that report. **Sprint 4 requested implementation is delivered:** the earlier clipboard/editor slice passed the user’s tests; system, keep awake, audio priorities/shortcuts, compatible display/power and the expanded companion greeting have twelve isolated check groups and a signed universal build. [New Mac checks and hardware boundaries](Design/sprint-4-utilities.md) define the remaining release gate. The assistant keeps the app closed; physical acceptance of these later changes remains with the user. The dated records below preserve earlier pending states as history.
+**Sprints 3 and 4 are complete and accepted.** Sprint 3 closed on “Todos passaram”; Sprint 4 closed on the final October 8 “tudo funcionando” report after `f77ac65`, including voice/AirPods/motion and Safari/app-selection follow-ups. [Sprint 4 closeout](Design/sprint-4-closeout.md) · [Sprint 5 scope](Design/sprint-5-plan.md). Automated checks, universal build and user acceptance remain distinct evidence; the assistant keeps the app closed. Dated pending statements below are historical.
 
 The new [Coucou reference study](Design/coucou-reference.md) records future companion/task/motion ideas while keeping the six approved avatars and interaction rules. The welcome and final widget reveal now use original native choreography inspired by that study. Core utilities remain the rest of S4.
 
@@ -188,7 +188,7 @@ Global registration starts after AppKit launch, using the system dispatcher; the
 
 The previous clipboard/island/editor slice passed the user's Mac tests. The remaining requested implementation now adds System, Keep awake, audio favorites/order/device priorities and optional global output/microphone shortcuts, compatible brightness/dimming/display sleep, optional Bluetooth restoration and a narrow Music launch guard. The six companions greet from the center, wave and dock into the island; motion is optional and interruptions keep the current contour.
 
-[Full implementation, new Mac checks and hardware boundaries](Design/sprint-4-utilities.md). New hardware acceptance is pending; XDR boost and temperature/fan control remain backlog.
+[Full implementation, new Mac checks and hardware boundaries](Design/sprint-4-utilities.md). User acceptance closed on the final October 8 report; XDR boost and temperature/fan control remain backlog.
 
 ![Six native companions greeting](Design/Concepts/companion-launch-greeting.gif)
 

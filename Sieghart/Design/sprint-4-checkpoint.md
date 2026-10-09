@@ -1,6 +1,6 @@
 # Sprint 4 — Clipboard, configurable island and companion arrival
 
-October 8, 2026. Sprint 3 remains complete and accepted on the user's all-passed Mac report. The user accepted all tests of this first slice on October 8. The remaining requested system utilities and expanded greeting are now implemented; their new physical Mac checks remain separate. [Current utility delivery and checklist](sprint-4-utilities.md). The assistant keeps Sieghart and Xcode closed.
+October 8, 2026. Sprints 3 and 4 are complete and accepted. The first slice passed the earlier report; the final “tudo funcionando” after `f77ac65` closes later utilities/greeting and voice/audio follow-ups. [Closeout](sprint-4-closeout.md) · [Sprint 5 plan](sprint-5-plan.md). The assistant keeps Sieghart and Xcode closed.
 
 ## Delivered in this slice
 
@@ -58,7 +58,7 @@ An original recognizer rejects movement, long taps, excess fingers and duplicate
 - [x] User acceptance of this clipboard/cleanup/rail/gesture/arrival/spending slice, October 8.
 - [x] Remaining system, keep-awake, audio priority/order/shortcut, compatible display/power and companion reaction implementation.
 - [x] Injected logic checks, universal build and production offscreen previews.
-- [ ] Physical acceptance of the newly added utilities and expanded center/drop/wave/dock greeting. [Exact new Mac checks and hardware boundaries](sprint-4-utilities.md).
+- [x] New utilities/greeting and final follow-ups accepted on the October 8 “tudo funcionando” report after `f77ac65`. [Closeout](sprint-4-closeout.md).
 
 Clipboard moved from S5 and three-finger middle click from S6 by user request. Calendar/reminders, downloads/notifications, shelf and capture remain S5+. Extended XDR boost, temperature/fan control, per-process network/speed testing and SMART are still explicit hardware backlog. File drop/upload/email, connected chats and specialist agents remain later connected companion work.
 

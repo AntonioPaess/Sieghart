@@ -1,6 +1,6 @@
 # Sprint 4 — System utilities and companion greeting
 
-October 8, 2026. The user accepted all tests of the previous clipboard/island/editor slice and authorized the remaining utilities. The implementation below is delivered. Its new physical Mac checks remain separate from that acceptance. Sieghart and Xcode were kept closed throughout development.
+October 8, 2026. **Complete and accepted:** after `f77ac65`, the user reported “tudo funcionando”. This closes the new utility/greeting and voice/audio follow-up acceptance, separate from the earlier clipboard/editor report. [Closeout](sprint-4-closeout.md) · [Sprint 5 plan](sprint-5-plan.md). Sieghart and Xcode were kept closed during assistant development.
 
 ## Delivered
 
@@ -29,7 +29,7 @@ Twelve isolated check groups cover the existing workflows and new counter resets
 
 The universal arm64/x86_64 app is built with CLI tools and its actual package is checked for privacy descriptions, resident-agent metadata and signature. Production UI previews use fixture readings and are explicitly examples, not captures of the user's device.
 
-## New Mac checks
+## Mac acceptance checklist — closed on the final user report
 
 1. **System:** open the app's System page or island → System. Wait two samples, check CPU/network change with real work, memory detail on hover, Disks capacity and History tooltips. Missing GPU/power readings must say unavailable. Closing the page stops its polling when no other System surface is visible.
 2. **Keep awake:** start five minutes, then Stop. Repeat with Keep display awake, a future Until time, AC-only, external-display-only and a selected app. Unplug power or quit the selected app: status should become Waiting, then resume when the conditions return. Enable Resume valid session and relaunch during an unexpired session. Test sleep/wake and expiry. Closing the settings window must keep the resident session; Quit releases it.
@@ -40,7 +40,7 @@ The universal arm64/x86_64 app is built with CLI tools and its actual package is
 
 ## Next roadmap work
 
-New hardware acceptance closes this delivery's release gate. Extended hardware functions listed above remain explicit backlog items. The next product sprint covers calendar/reminders, notifications, chosen-folder downloads, file shelf and capture. File receive/upload/email, connected chats and specialist agents are recorded later companion workflows; no external send is performed by this delivery.
+The final October 8 user report closes this delivery’s release gate. Extended hardware functions listed above remain explicit backlog items. The next product sprint covers calendar/reminders, notifications, chosen-folder downloads, file shelf and capture. File receive/upload/email, connected chats and specialist agents are recorded later companion workflows; no external send is performed by this delivery.
 
 ## October 8 — Finder, hidden apps and Safari follow-up
 
@@ -48,7 +48,7 @@ The user reported Finder clutter, no way to remove a mixer row and ineffective S
 
 The initial owner lookup used ancestry/bundle/path alone. WebKit XPC processes can have launchd as parent and a shared helper identity outside Safari's bundle, leaving their audio outside the Safari tap. The Mac adapter now consults optional process responsibility before ancestry fallback; each volume gesture gets the current audio-object group rather than the row's old snapshot. This repairs an identified coverage gap; it is not proof that it explains every real playback failure. No Safari, microphone or audio capture was launched by the assistant.
 
-Audio fixtures cover multiple WebKit host identities, helper/self/daemon/missing-query fallback, Safari helper replacement between polls, Finder exclusion, five-app refill, hide releasing only its route, persistence/restore, closed/hidden stale callbacks and existing permission/route/PCM checks. Both native and `SIEGHART_CHALLENGE` variants compile/run; the latter omits the responsibility lookup. Actual Safari playback remains user acceptance.
+Audio fixtures cover multiple WebKit host identities, helper/self/daemon/missing-query fallback, Safari helper replacement between polls, Finder exclusion, five-app refill, hide releasing only its route, persistence/restore, closed/hidden stale callbacks and existing permission/route/PCM checks. Both native and `SIEGHART_CHALLENGE` variants compile/run; the latter omits the responsibility lookup. Safari/app selection was subsequently accepted on the final October 8 “tudo funcionando” report; no assistant playback test was performed.
 
 ## Previews
 

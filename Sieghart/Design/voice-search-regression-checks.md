@@ -1,6 +1,6 @@
 # Voice, Google search and AirPods — regression checks
 
-October 8, 2026, evening follow-up. The user reproduced a complete transcript staying in **Listening** after speech stopped. This reopens SG-006 acceptance. Implementation is corrected and automated checks pass; **physical speech/AirPods acceptance is pending**. Sieghart and Xcode remain closed during development.
+October 8, 2026, evening follow-up. The user reproduced a complete transcript staying in **Listening** after speech stopped. Implementation was corrected and automated checks pass. **Acceptance subsequently closed on the final October 8 “tudo funcionando” report after `f77ac65`.** [Sprint 4 closeout](sprint-4-closeout.md). Sieghart and Xcode remained closed during assistant development; earlier pending statements below are dated investigation history.
 
 ## What failed and what changed
 

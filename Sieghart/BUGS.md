@@ -4,6 +4,10 @@
 
 After receiving the manual test instructions, the user reported “Todos passaram” (all passed). SG-001 through SG-005 are resolved on this report. The assistant did not run live shortcuts, microphone or audio tests. Investigation notes below preserve the earlier pending statuses as dated history; reopen the specific issue if a regression occurs. See [Sprint 3 accepted closeout](Design/sprint-3-closeout.md).
 
+## October 8 — Sprint 4 accepted closeout
+
+After `f77ac65`, the user reported **“tudo funcionando”** and asked to close Sprint 4. The renewed Safari follow-up and SG-006/SG-007/SG-008 are resolved on that overall user report, as are the utility/greeting and applied-motion acceptance gates. No itemized device report or assistant hardware run is claimed. [Closeout](Design/sprint-4-closeout.md). Earlier pending statements below preserve dated investigation history.
+
 ## SG-001 — Shortcut intermittently stops responding
 
 **Priority:** high. **Reported:** October 5, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
@@ -99,7 +103,7 @@ Mocked checks cover permission request, denial/retry/cancel, saved gain gating, 
 
 ### October 8 follow-up — Safari gain and app selection
 
-**Safari status:** new report; implementation updated, physical acceptance pending. The earlier Sprint 3 acceptance remains recorded above.
+**Safari status:** resolved on the final October 8 “tudo funcionando” report after `f77ac65`. The earlier Sprint 3 acceptance remains recorded above.
 
 Browser audio can belong to a WebKit XPC helper whose parent is launchd, so public ancestry and executable paths alone may miss it. An optional macOS responsibility lookup now resolves these helpers to their actual host app before the existing fallbacks. A slider change also refreshes the process group, avoiding a stale helper list between polls. Generic WebKit processes are never assigned to Safari by name. The undocumented lookup is compiled out under `SIEGHART_CHALLENGE`; full submission packaging remains pending. This closes identified ownership/lifecycle gaps, without claiming they explain every real Safari failure.
 
@@ -125,7 +129,7 @@ Voice search has a real encoded default-browser action, actual charges have a re
 
 ## SG-006 — Voice endpoint finishes too early or remains Listening
 
-**Reported:** October 8, 2026, including an evening reproduction showing complete text still in Listening. **Status:** reopened physical acceptance; corrected implementation passes unit and capture-to-command integration checks.
+**Reported:** October 8, 2026, including an evening reproduction showing complete text still in Listening. **Status:** resolved on the final October 8 user acceptance after `f77ac65`; corrected implementation passes unit and capture-to-command integration checks.
 
 The previous implementation learned noise only below its own threshold and could treat a raised microphone floor as ongoing speech. It also ended request audio without explicitly finishing the buffer-recognition task, and did not act on `isFinal` while capture was active. The correction calibrates initial background, detects a speech-envelope drop, calls `endAudio` plus `task.finish`, and accepts final completion immediately. Only final text dispatches once; cancelled/stale/failed sessions run nothing. A failing old-code regression demonstrates the noise-floor defect. The new integration exercises actual ActivationController/session/parser/Google URL/action flow with injected capture and launch boundaries.
 
@@ -133,12 +137,12 @@ The user now requires expanded Companion to remain visible while listening. Busy
 
 ## SG-007 — Restricted search wording and wrong engine
 
-**Reported:** October 8, 2026. **Status:** reopened by the user; parser and full injected capture-to-action checks pass; live voice/browser acceptance pending.
+**Reported:** October 8, 2026. **Status:** resolved on the final October 8 user acceptance after `f77ac65`; parser and injected capture-to-action checks pass.
 
 Earlier engine/wording corrections used Google. The user subsequently reported “pesquise por arquiteturas de mac” and “pesquisa github” failing. Both were already accepted by the syntax parser; there was no topic whitelist, so the actual microphone/recognizer failure is not diagnosed from those phrases alone. New capture-to-command fixtures cover both and missing-final recovery. Questions and direct topics are supported without interpreting their words as local actions. After confirmed audio end plus bounded drain, a settled search can proceed without `isFinal`; app/timer actions still require final recognition. Cancellation, input loss and the capture safety limit never use this fallback. [Evidence, boundaries and physical checks](Design/voice-search-regression-checks.md). Live speech acceptance is reopened.
 
 ## SG-008 — Voice does not listen with AirPods
 
-**Reported:** October 8, 2026; the user clarified this is microphone voice capture, not app volume. **Status:** lifecycle/PCM fixes verified in isolation; physical AirPods reproduction/acceptance pending.
+**Reported:** October 8, 2026; the user clarified this is microphone voice capture, not app volume. **Status:** resolved on the final October 8 user acceptance after `f77ac65`; lifecycle/PCM fixes also verified in isolation.
 
 Capture previously reused one audio engine across input/device changes. Each command now creates a fresh engine, validates hardware/capture formats, observes engine configuration changes and permits one bounded preparation retry before detected speech. An interrupted spoken command is cancelled without dispatch; stale capture callbacks cannot affect a replacement. This addresses the identified lifecycle risk without claiming a confirmed physical diagnosis. Confirm the selected microphone in Audio → Microphone and perform the headset checklist above. [Apple's configuration-change contract](https://developer.apple.com/documentation/foundation/nsnotification/name-swift.struct/avaudioengineconfigurationchange) describes hardware rate/channel changes stopping and uninitializing the engine.

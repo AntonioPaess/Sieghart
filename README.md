@@ -13,13 +13,13 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
-> **Sprint 4 implementation delivered.** The first slice passed the user’s Mac checklist; new utilities and greeting have separate physical checks. Connected email/upload workflows and extended hardware capabilities remain planned.
+> **Sprint 4 complete and accepted October 8.** After `f77ac65`, the user reported “tudo funcionando”. [Closeout](Sieghart/Design/sprint-4-closeout.md). [Sprint 5 scope](Sieghart/Design/sprint-5-plan.md): agenda/reminders, notifications, downloads, files, capture and contextual companion reactions. Connected email/upload and extended hardware remain later work.
 
 ## October 8 — Voice/search and MVVM organization
 
 Sources and Xcode groups now use **Features / Core / Shared**, with screen Views/ViewModels together by feature, native services/helpers in Core and reused controls/preferences/coordinators in Shared. [Architecture and boundaries](Sieghart/ARCHITECTURE.md).
 
-Voice closes audio and drains recognition before executing commands. Topic searches now include questions and bare terms, with a bounded recovery for a settled search whose final recognition callback never arrives; app/timer commands retain strict final recognition. Expanded Companion stays visible during busy voice/action states. The approved gestures are now applied: attentive listening, a shape-matched corner loading cue and short individual success reactions. Coast has relaxed eyelids and an unhurried rhythm; Arcade retains square eyes and stepped geometry. Companion reflects its own commands; background AI telemetry never puts an idle avatar into loading. Actual AI work and data reads use cues only in their dashboard. Fast voice actions run immediately, with at least 700 ms of visual processing before result acknowledgement. [Animated production gestures](Sieghart/Design/Concepts/simple-companions-voice-v2.gif) · [Changes, tests and Mac checklist](Sieghart/Design/voice-search-regression-checks.md). Physical voice/AirPods acceptance remains pending.
+Voice closes audio and drains recognition before executing commands. Topic searches now include questions and bare terms, with a bounded recovery for a settled search whose final recognition callback never arrives; app/timer commands retain strict final recognition. Expanded Companion stays visible during busy voice/action states. The approved gestures are now applied: attentive listening, a shape-matched corner loading cue and short individual success reactions. Coast has relaxed eyelids and an unhurried rhythm; Arcade retains square eyes and stepped geometry. Companion reflects its own commands; background AI telemetry never puts an idle avatar into loading. Actual AI work and data reads use cues only in their dashboard. Fast voice actions run immediately, with at least 700 ms of visual processing before result acknowledgement. [Animated production gestures](Sieghart/Design/Concepts/simple-companions-voice-v2.gif) · [Changes, tests and Mac checklist](Sieghart/Design/voice-search-regression-checks.md). Voice/AirPods and applied motion acceptance closed on the final October 8 user report.
 
 The user approved the [revised motion/Coast study](Sieghart/Design/Concepts/expressive-study-v2/README.md) with “pode aplicar”. It is implemented with native paths and smooth interruption; the app was kept closed for user testing.
 
@@ -29,7 +29,7 @@ The user will provide onboarding storytelling. A [three-minute experience brief]
 
 The previous clipboard/island/editor slice passed the user's Mac tests. The remaining requested implementation now adds System, Keep awake, audio favorites/order/device priorities and optional global output/microphone shortcuts, compatible brightness/dimming/display sleep, optional Bluetooth restoration and a narrow Music launch guard. The six companions greet from the center, wave and dock into the island; motion is optional and interruptions keep the current contour.
 
-[Full implementation, new Mac checks and hardware boundaries](Sieghart/Design/sprint-4-utilities.md). New hardware acceptance is pending; XDR boost and temperature/fan control remain backlog.
+[Full implementation, new Mac checks and hardware boundaries](Sieghart/Design/sprint-4-utilities.md). User acceptance closed October 8 after the final audio follow-up; XDR boost and temperature/fan control remain backlog.
 
 ![Six native companions greeting](Sieghart/Design/Concepts/companion-launch-greeting.gif)
 
@@ -104,7 +104,7 @@ The compact island and camera strip stay sRGB black (`#000000`). Expanded pages 
 
 Output selection, master volume and input-device controls use Core Audio hardware properties. Devices without writable volume/mute show unavailable controls. The per-app mixer is off after launch. **Enable app mixer** opts in; the button immediately starts the public macOS system-audio permission path before enabling app sliders. A failure provides Retry and Audio permission settings. The mixer processes audio locally without saving it or recording the microphone. It shows up to five actual running apps plus Master, prioritizes apps currently playing audio, groups helpers into their visible installed app, waits for an audio connection before enabling its slider, loads native app icons, identifies the selected device (including AirPods), adjusts each with a private process tap and aggregate playback route, and restores normal playback when disabled. Stereo process mixdown supports mono Bluetooth calls and planar/interleaved Float32 outputs; encoded/incompatible formats are rejected explicitly. Device format changes rebuild routes even with the same ID; restarted helpers can retry. The user reported all Sprint 3 manual checks passed October 8, including the audio/device checklist.
 
-Finder is excluded from app columns. Use an app's icon menu → **Hide from mixer** to remove it and release its route, restoring normal playback; **Hidden apps** (eye-slash) restores it with its saved mixer volume. Hidden choices persist and do not create columns for closed apps. Safari/XPC helpers now resolve through optional macOS responsibility metadata plus the existing ancestry/bundle/path fallback, and each slider change refreshes its process group. Injected checks and the universal build pass; the newly reported Safari playback issue still requires the user's physical check. This optional undocumented lookup is omitted under `SIEGHART_CHALLENGE`; full Challenge packaging remains pending. [Audio follow-up and Mac checklist](Sieghart/Design/sprint-4-utilities.md).
+Finder is excluded from app columns. Use an app's icon menu → **Hide from mixer** to remove it and release its route, restoring normal playback; **Hidden apps** (eye-slash) restores it with its saved mixer volume. Hidden choices persist and do not create columns for closed apps. Safari/XPC helpers now resolve through optional macOS responsibility metadata plus the existing ancestry/bundle/path fallback, and each slider change refreshes its process group. Injected checks and the universal build pass; Safari/app-selection acceptance closed on the user’s final October 8 “tudo funcionando” report. This optional undocumented lookup is omitted under `SIEGHART_CHALLENGE`; full Challenge packaging remains pending. [Audio follow-up and Mac checklist](Sieghart/Design/sprint-4-utilities.md).
 
 ![Choose a companion from the menu bar](Sieghart/Design/Concepts/menu-avatars-preview.png)
 
@@ -181,7 +181,7 @@ These checks do not open the app, activate the sensor, register system shortcuts
 
 ## Sprint 3 closeout
 
-Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 requested implementation is delivered; its new physical Mac checklist is linked at the top.
+Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 is also complete and accepted on the final October 8 report; its closeout and Sprint 5 scope are linked at the top.
 
 [Delivered scope and exact Mac checklist](Sieghart/Design/sprint-3-closeout.md) · [Charge import format](Sieghart/Design/charge-imports.md) · [Sources preview](Sieghart/Design/Concepts/ai-data-sources-preview.png) · [Search in Companion](Sieghart/Design/Concepts/island-companion-search-preview.png)
 
@@ -236,7 +236,7 @@ The user supplied Coucou as inspiration after accepting Sprint 3. [Reference stu
 
 ## Next steps
 
-Sprint 3 is closed and the requested Sprint 4 implementation is delivered. New utility/greeting hardware acceptance is the current release gate. S5 then introduces calendar/reminders, notifications, downloads, a file shelf and capture; connected companion workflows follow the core utilities.
+Sprints 3 and 4 are complete and accepted. [Sprint 5](Sieghart/Design/sprint-5-plan.md) is ready to begin: calendar/reminders, notifications, selected-folder downloads, file shelf, clipboard/file helpers, capture and contextual companion reactions. Connected workflows follow the core utilities.
 
 - Implement and validate the S4 utility scope when that sprint begins.
 - Validate real sensor interaction in the accepted Challenge submission environment.
