@@ -28,9 +28,20 @@ struct AudioApplicationInfo: Identifiable, Equatable {
     var isPlaying = true
 }
 
-// Public process ancestry and installed app bundles resolve browser/audio helpers
-// to their visible app. No private responsibility symbol or app-specific list.
+// Responsibility metadata covers XPC audio helpers whose parent is launchd.
+// It is optional and Mac-only; ancestry/bundle/path lookup remains the fallback.
 enum AudioAppIdentity {
+    private static let responsibilityLookup: (@convention(c) (pid_t) -> pid_t)? = {
+        #if SIEGHART_CHALLENGE
+        return nil
+        #else
+        guard let handle = dlopen(nil, RTLD_LAZY) else { return nil }
+        defer { dlclose(handle) }
+        guard let function = dlsym(handle, "responsibility_get_pid_responsible_for_pid") else { return nil }
+        return unsafeBitCast(function, to: (@convention(c) (pid_t) -> pid_t).self)
+        #endif
+    }()
+
     static func ancestor(of pid: pid_t, isApplication: (pid_t) -> Bool, parent: (pid_t) -> pid_t) -> pid_t? {
         var current = pid, visited: Set<pid_t> = []
         for _ in 0..<32 {
@@ -40,12 +51,20 @@ enum AudioAppIdentity {
         }
         return nil
     }
+    static func applicationPID(of pid: pid_t, isApplication: (pid_t) -> Bool,
+                               parent: (pid_t) -> pid_t, responsible: (pid_t) -> pid_t?) -> pid_t? {
+        guard pid > 1 else { return nil }
+        if isApplication(pid) { return pid }
+        if let owner = responsible(pid), owner > 1, owner != pid,
+           let app = ancestor(of: owner, isApplication: isApplication, parent: parent) { return app }
+        return ancestor(of: pid, isApplication: isApplication, parent: parent)
+    }
     @MainActor static func owner(of pid: pid_t, bundleID: String = "") -> NSRunningApplication? {
-        if let id = ancestor(of: pid, isApplication: { NSRunningApplication(processIdentifier: $0)?.activationPolicy == .regular }, parent: { id in
+        if let id = applicationPID(of: pid, isApplication: { NSRunningApplication(processIdentifier: $0)?.activationPolicy == .regular }, parent: { id in
             var info = proc_bsdinfo()
             let size = Int32(MemoryLayout<proc_bsdinfo>.size)
             return proc_pidinfo(id, PROC_PIDTBSDINFO, 0, &info, size) == size ? pid_t(info.pbi_ppid) : 0
-        }) { return NSRunningApplication(processIdentifier: id) }
+        }, responsible: { responsibilityLookup?($0) }) { return NSRunningApplication(processIdentifier: id) }
         if !bundleID.isEmpty, let app = NSWorkspace.shared.runningApplications.filter({ app in
             guard app.activationPolicy == .regular, let id = app.bundleIdentifier else { return false }
             return bundleID == id || bundleID.hasPrefix(id + ".")
@@ -63,6 +82,14 @@ enum AudioAppIdentity {
         let url = app.bundlePath.map { URL(fileURLWithPath: $0) } ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: app.id)
         return url.map { NSWorkspace.shared.icon(forFile: $0.path) }
     }
+}
+enum AudioMixerApps {
+    // Finder remains available through Master/system sound, not a mixer tower.
+    static func isEligible(_ id: String) -> Bool { id != "com.apple.finder" }
+}
+struct HiddenAudioApplication: Identifiable, Equatable {
+    let id: String
+    let name: String
 }
 struct AudioSnapshot {
     var devices: [AudioDeviceInfo] = []
@@ -280,6 +307,7 @@ private final class ApplicationAudioRoute {
         // connection are listed as waiting, never given an ineffective tap.
         for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular && app.processIdentifier != ProcessInfo.processInfo.processIdentifier {
             let key = app.bundleIdentifier ?? app.bundleURL?.path ?? "process.\(app.processIdentifier)"
+            guard AudioMixerApps.isEligible(key) else { continue }
             owners[key] = app; grouped[key] = []
         }
         for process in ids(kAudioHardwarePropertyProcessObjectList) {
@@ -288,6 +316,7 @@ private final class ApplicationAudioRoute {
             guard pid > 0, pid != ProcessInfo.processInfo.processIdentifier,
                   let app = AudioAppIdentity.owner(of: pid, bundleID: string(process, kAudioProcessPropertyBundleID)), app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { continue }
             let key = app.bundleIdentifier ?? app.bundleURL?.path ?? "process.\(app.processIdentifier)"
+            guard AudioMixerApps.isEligible(key) else { continue }
             grouped[key, default: []].append(process); owners[key] = app
             if running != 0 { playing.insert(key) }
         }

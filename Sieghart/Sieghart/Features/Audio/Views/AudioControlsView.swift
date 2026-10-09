@@ -72,6 +72,15 @@ struct AudioControlsView: View {
                         else { Task { await audio.enableApplications() } }
                     }.buttonStyle(CompanionButtonStyle(primary: !audio.perAppEnabled, compact: compact)).disabled(audio.access == .requesting)
                     if audio.access == .requesting { ProgressView().controlSize(.small) }
+                    if !audio.hiddenApps.isEmpty {
+                        Menu {
+                            ForEach(audio.hiddenApps) { app in
+                                Button("Show \(app.name)") { audio.restoreApp(app.id) }
+                            }
+                        } label: { Label("Hidden apps", systemImage: "eye.slash") }
+                            .labelStyle(.iconOnly).menuStyle(.borderlessButton).fixedSize().font(.caption)
+                            .help("Show hidden audio apps").accessibilityLabel("Show hidden audio apps")
+                    }
                     if audio.access == .permissionRequired || audio.access == .failed || audio.perAppEnabled {
                         Button("Audio permission") { audio.openAudioPermissionSettings() }.buttonStyle(.plain).font(.caption)
                     }
@@ -83,10 +92,10 @@ struct AudioControlsView: View {
     }
     private var applicationColumns: some View {
         HStack(alignment: .top, spacing: compact ? 18 : 26) {
-            if audio.state.apps.isEmpty {
+            if audio.visibleApps.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Your audio apps appear here.").font(.headline)
-                    Text("Play audio on this output to adjust an app separately.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    Text(audio.hiddenApps.isEmpty ? "Your audio apps appear here." : "No apps shown.").font(.headline)
+                    Text(audio.hiddenApps.isEmpty ? "Play audio on this output to adjust an app separately." : "Use Hidden apps to restore one to the mixer.").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }.frame(minWidth: compact ? 200 : 210, minHeight: compact ? 130 : 185, alignment: .center)
             }
             ForEach(audio.visibleApps) { app in
@@ -98,7 +107,10 @@ struct AudioControlsView: View {
                             Button(audio.favoriteApps.contains(app.id) ? "Remove favorite" : "Favorite") { audio.toggleFavorite(app) }
                             Button("Move left") { audio.moveApp(app, direction: -1) }.disabled(!audio.canMoveApp(app, direction: -1))
                             Button("Move right") { audio.moveApp(app, direction: 1) }.disabled(!audio.canMoveApp(app, direction: 1))
-                        } label: { Image(systemName: audio.favoriteApps.contains(app.id) ? "star.fill" : "ellipsis").font(.caption2) }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("\(app.name) order and favorite")
+                            Divider()
+                            Button("Hide from mixer") { audio.hideApp(app) }
+                                .help("Hidden apps play at their normal volume. Your saved mixer volume returns when you show the app again.")
+                        } label: { Image(systemName: audio.favoriteApps.contains(app.id) ? "star.fill" : "ellipsis").font(.caption2) }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("\(app.name) mixer options")
                     }
                     let gain = audio.routedApps.contains(app.id) ? audio.gains[app.id] ?? 1 : 1
                     VerticalAudioSlider(value: gain, height: compact ? 80 : 160, enabled: audio.perAppEnabled && !app.processes.isEmpty) { audio.setGain($0, app: app) }

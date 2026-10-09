@@ -14,6 +14,7 @@ import Darwin
     @Published private(set) var error: String?
     @Published private(set) var favoriteApps: [String] = []
     @Published private(set) var appOrder: [String] = []
+    @Published private(set) var hiddenApps: [HiddenAudioApplication] = []
     @Published private(set) var outputPriority: [String] = []
     @Published private(set) var inputPriority: [String] = []
     @Published var automaticDevices = false {
@@ -25,7 +26,7 @@ import Darwin
     var onReaction: ((Bool) -> Void)?
     var visibleApps: [AudioApplicationInfo] {
         let positions = Dictionary(uniqueKeysWithValues: appOrder.enumerated().map { ($1, $0) })
-        return Array(state.apps.enumerated().sorted { a, b in
+        return Array(state.apps.filter { isIncluded($0.id) }.enumerated().sorted { a, b in
             let af = favoriteApps.contains(a.element.id), bf = favoriteApps.contains(b.element.id)
             if af != bf { return af }
             return (positions[a.element.id] ?? (10_000 + a.offset)) < (positions[b.element.id] ?? (10_000 + b.offset))
@@ -43,11 +44,23 @@ import Darwin
         gains = (defaults.dictionary(forKey: "audio.appGains") ?? [:]).compactMapValues { ($0 as? NSNumber)?.floatValue }.mapValues { min(1, max(0, $0)) }
         favoriteApps = defaults.stringArray(forKey: "audio.favoriteApps") ?? []
         appOrder = defaults.stringArray(forKey: "audio.appOrder") ?? []
+        hiddenApps = (defaults.dictionary(forKey: "audio.hiddenApps") ?? [:]).compactMap { id, value in
+            guard AudioMixerApps.isEligible(id), let name = value as? String else { return nil }
+            return HiddenAudioApplication(id: id, name: name)
+        }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
         outputPriority = defaults.stringArray(forKey: "audio.outputPriority") ?? []
         inputPriority = defaults.stringArray(forKey: "audio.inputPriority") ?? []
         automaticDevices = defaults.bool(forKey: "audio.automaticDevices")
     }
     func refresh() {
+        updateSnapshot()
+        guard perAppEnabled, let output = state.devices.first(where: { $0.id == state.output }) else { return }
+        for app in state.apps where isIncluded(app.id) && !app.processes.isEmpty && gains[app.id] != nil && !failedApps.contains(app.id) {
+            do { try backend.setApplication(app, gain: gains[app.id]!, output: output); routedApps.insert(app.id) }
+            catch { failedApps.insert(app.id); self.error = error.localizedDescription }
+        }
+    }
+    private func updateSnapshot() {
         let latest = backend.snapshot()
         let previousOutput = state.devices.first { $0.id == state.output }
         let nextOutput = latest.devices.first { $0.id == latest.output }
@@ -59,13 +72,30 @@ import Darwin
         let topologyChanged = Set(latest.devices.map(\.uid)) != Set(state.devices.map(\.uid))
         state = latest
         if automaticDevices && topologyChanged { applyPriorities() }
-        let alive = Set(state.apps.filter { !$0.processes.isEmpty }.map(\.id))
+        let alive = Set(state.apps.filter { isIncluded($0.id) && !$0.processes.isEmpty }.map(\.id))
         backend.retainApplications(alive); routedApps.formIntersection(alive)
-        guard perAppEnabled, let output = state.devices.first(where: { $0.id == state.output }) else { return }
-        for app in state.apps where !app.processes.isEmpty && gains[app.id] != nil && !failedApps.contains(app.id) {
-            do { try backend.setApplication(app, gain: gains[app.id]!, output: output); routedApps.insert(app.id) }
-            catch { routedApps.remove(app.id); failedApps.insert(app.id); self.error = error.localizedDescription }
-        }
+    }
+    private func isIncluded(_ id: String) -> Bool {
+        AudioMixerApps.isEligible(id) && !hiddenApps.contains { $0.id == id }
+    }
+    func hideApp(_ app: AudioApplicationInfo) {
+        guard isIncluded(app.id) else { return }
+        hiddenApps.append(HiddenAudioApplication(id: app.id, name: app.name))
+        hiddenApps.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        persistHiddenApps()
+        routedApps.remove(app.id); failedApps.remove(app.id)
+        // Detaching its tap restores normal app playback. Other gains/routes
+        // remain intact, and the saved gain is kept for an explicit restore.
+        backend.retainApplications(Set(state.apps.filter { isIncluded($0.id) && !$0.processes.isEmpty }.map(\.id)))
+    }
+    func restoreApp(_ id: String) {
+        guard hiddenApps.contains(where: { $0.id == id }) else { return }
+        hiddenApps.removeAll { $0.id == id }
+        persistHiddenApps()
+        refresh()
+    }
+    private func persistHiddenApps() {
+        defaults.set(Dictionary(uniqueKeysWithValues: hiddenApps.map { ($0.id, $0.name) }), forKey: "audio.hiddenApps")
     }
     func observe() {
         observers += 1; refresh()
@@ -171,10 +201,16 @@ import Darwin
     }
     func muteInput(_ muted: Bool) { perform { try backend.setInputMuted(muted, device: state.input) }; state = backend.snapshot() }
     func setGain(_ value: Float, app: AudioApplicationInfo) {
-        guard perAppEnabled, !app.processes.isEmpty, let output = state.devices.first(where: { $0.id == state.output }) else { return }
+        guard perAppEnabled, isIncluded(app.id) else { return }
+        // A browser may have replaced its audio helper since the last poll.
+        // Resolve the latest process group on each user change, not the row's
+        // old captured value. Missing/closed apps never receive a stale tap.
+        updateSnapshot()
+        guard let current = state.apps.first(where: { $0.id == app.id }), !current.processes.isEmpty,
+              let output = state.devices.first(where: { $0.id == state.output }) else { return }
         let gain = min(1, max(0, value))
         do {
-            try backend.setApplication(app, gain: gain, output: output)
+            try backend.setApplication(current, gain: gain, output: output)
             gains[app.id] = gain; routedApps.insert(app.id); failedApps.remove(app.id); error = nil
             defaults.set(gains, forKey: "audio.appGains")
         } catch {

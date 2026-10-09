@@ -97,6 +97,16 @@ Per-app routes now use stereo process mixdown across the app's output streams ra
 
 Mocked checks cover permission request, denial/retry/cancel, saved gain gating, no empty-process routing, five/two app counts, mono/stereo/planar buffer mapping, errors and teardown. The built signed universal bundle contains the audio privacy key. Actual first permission prompt, denial/recovery, WhatsApp voice/call volume, AirPods mode changes, devices disconnecting and latency must be confirmed on the Mac before closing this bug.
 
+### October 8 follow-up — Safari gain and app selection
+
+**Safari status:** new report; implementation updated, physical acceptance pending. The earlier Sprint 3 acceptance remains recorded above.
+
+Browser audio can belong to a WebKit XPC helper whose parent is launchd, so public ancestry and executable paths alone may miss it. An optional macOS responsibility lookup now resolves these helpers to their actual host app before the existing fallbacks. A slider change also refreshes the process group, avoiding a stale helper list between polls. Generic WebKit processes are never assigned to Safari by name. The undocumented lookup is compiled out under `SIEGHART_CHALLENGE`; full submission packaging remains pending. This closes identified ownership/lifecycle gaps, without claiming they explain every real Safari failure.
+
+Finder is omitted. Each app can be hidden persistently via its icon menu and restored from **Hidden apps**. Hiding releases only that app's route and restores normal playback, keeping its saved gain/order/favorite for a later explicit restore. Up to five remaining real apps fill the available columns.
+
+Injected native and Challenge-flag audio checks pass, including distinct WebKit hosts, fresh helpers, hide/restore, process disappearance and route release. The signed universal build and bundle checks pass. No app, permission prompt or actual audio was started. Verify Safari web playback at 20%, mute and 100%, repeat after opening another tab and changing output, and check hide/restore persistence. See [Sprint 4 audio checklist](Design/sprint-4-utilities.md).
+
 ## SG-005 — Oversized menu, bright top seam, static sleep
 
 **Reported:** October 6, 2026. **Status:** resolved — user confirmed all manual acceptance tests passed October 8, 2026.
