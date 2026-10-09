@@ -48,18 +48,18 @@ struct CodexUsageChecks {
         let suite = "Sieghart.UsageChecks.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        let model = CodexUsageModel(defaults: defaults, load: { response })
+        let model = CodexUsageViewModel(defaults: defaults, load: { response })
         precondition(!model.enabled && model.bucket == nil)
         model.enabled = true
         await model.refresh(force: true)
         precondition(model.bucket?.primary?.usedPercent == 36 && model.updatedAt != nil)
         model.enabled = false
         precondition(model.bucket == nil && model.updatedAt == nil)
-        let failing = CodexUsageModel(defaults: defaults, load: { throw NSError(domain: "SECRET_TOKEN", code: 1) })
+        let failing = CodexUsageViewModel(defaults: defaults, load: { throw NSError(domain: "SECRET_TOKEN", code: 1) })
         failing.enabled = true
         await failing.refresh(force: true)
         precondition(failing.bucket == nil && !(failing.errorMessage ?? "").contains("SECRET_TOKEN"))
-        let delayed = CodexUsageModel(defaults: defaults, load: { Thread.sleep(forTimeInterval: 0.05); return response })
+        let delayed = CodexUsageViewModel(defaults: defaults, load: { Thread.sleep(forTimeInterval: 0.05); return response })
         delayed.enabled = true
         let request = Task { await delayed.refresh(force: true) }
         try await Task.sleep(for: .milliseconds(10))

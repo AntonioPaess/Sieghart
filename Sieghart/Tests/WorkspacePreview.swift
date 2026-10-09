@@ -15,7 +15,7 @@ import CoreAudio
         preferences.appearance = .dark
         let now = Date(), calendar = Calendar.current
         let data = Data("{\"rateLimitsByLimitId\":{\"codex\":{\"limitId\":\"codex\",\"planType\":\"plus\",\"primary\":{\"usedPercent\":36,\"windowDurationMins\":300,\"resetsAt\":\(now.addingTimeInterval(3600).timeIntervalSince1970)},\"secondary\":{\"usedPercent\":33,\"windowDurationMins\":10080,\"resetsAt\":\(now.addingTimeInterval(518400).timeIntervalSince1970)}}}}".utf8)
-        let codex = CodexUsageModel(defaults: defaults, load: { try JSONDecoder().decode(CodexUsageResponse.self, from: data) }); codex.enabled = true; await codex.refresh()
+        let codex = CodexUsageViewModel(defaults: defaults, load: { try JSONDecoder().decode(CodexUsageResponse.self, from: data) }); codex.enabled = true; await codex.refresh()
         let start = calendar.startOfDay(for: now)
         var points: [AIUsagePoint] = []
         for hour in [9,10,12,13,14,17,18,20] {
@@ -31,12 +31,12 @@ import CoreAudio
             return CodexAccountActivity.Day(startDate: formatter.string(from: date), tokens: Int64(index % 11 + 1) * 1000000)
         }
         let account = CodexAccountActivity(summary: .init(lifetimeTokens: 800000000, peakDailyTokens: 11000000, currentStreakDays: 2), dailyUsageBuckets: days)
-        let usage = AIUsageModel(defaults: defaults, readClaude: { nil }, initialAnalytics: AIAnalytics(points: points, work: [work], scannedFiles: 12), initialAccountActivity: account, initialPrices: PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/ModelTokenPrices.json")), read: { _ in nil })
+        let usage = AIUsageViewModel(defaults: defaults, readClaude: { nil }, initialAnalytics: AIAnalytics(points: points, work: [work], scannedFiles: 12), initialAccountActivity: account, initialPrices: PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/Shared/Resources/ModelTokenPrices.json")), read: { _ in nil })
 
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
-        let audio = AudioController(backend: PreviewAudio(), defaults: defaults); audio.refresh(); await audio.enableApplications()
+        let audio = AudioViewModel(backend: PreviewAudio(), defaults: defaults); audio.refresh(); await audio.enableApplications()
         for app in audio.state.apps { audio.setGain(app.id == "com.apple.Music" ? 0.7 : 1, app: app) }
-        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, audio: audio, managesWindows: false)
+        let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, audio: audio, managesWindows: false)
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, openApplication: { _ in "Safari (example)" }, searchBrowser: { _ in "Swift tutorials (example)" })
         let sensor = SensorViewModel(reader: PreviewAccelerometer())
         let gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)

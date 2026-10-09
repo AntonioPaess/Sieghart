@@ -35,6 +35,12 @@ import Foundation
         expect(disabled.points.isEmpty && disabled.work.isEmpty, "No monitoring consent yields no activity")
         let stale = AIActivityParser.parse(file, provider: .codex, now: now.addingTimeInterval(3600))
         expect(stale.work.isEmpty, "An old record cannot become active work")
+        let motionDefaults = UserDefaults(suiteName: "activity-motion-" + UUID().uuidString)!
+        let activeModel = AIUsageViewModel(defaults: motionDefaults, initialAnalytics: active, read: { _ in nil })
+        let completedModel = AIUsageViewModel(defaults: motionDefaults, initialAnalytics: finished, read: { _ in nil })
+        expect(activeModel.hasCurrentWork(at: now), "A real active task drives companion processing")
+        expect(!activeModel.hasCurrentWork(at: now.addingTimeInterval(301)), "Expired activity must stop the processing cue")
+        expect(!completedModel.hasCurrentWork(at: now) && !completedModel.hasPendingRead, "Terminal tasks and idle stores cannot show fabricated processing")
         // A start marker more than 2 MiB behind the counters still has a
         // bounded metadata path; a terminal marker must win over that start.
         let padding = String(repeating: "{\"type\":\"ignored\",\"pad\":\"" + String(repeating: "x", count: 1000) + "\"}\n", count: 2300)
@@ -58,6 +64,32 @@ import Foundation
         try (header + terminal + padding + final + changed).write(to: longFile, atomically: true, encoding: .utf8)
         let mixed = AIActivityParser.parse(longFile, provider: .codex, now: now).points
         expect(Set(mixed.map(\.model)) == Set(["fixture-model", "next-model"]), "Future turn context cannot relabel earlier counters")
+        let direct = root.appendingPathComponent("direct.jsonl")
+        let responseUsage: [String: Any] = ["input_tokens": 1000, "cached_input_tokens": 800, "cache_write_input_tokens": 50, "output_tokens": 100, "reasoning_output_tokens": 80]
+        var canonical = try line("session_meta", -30, ["id": "canonical-session", "cwd": "/fixture/projects/Work"])
+        canonical += try line("turn_context", -20, ["model": "gpt-6.1-sol", "service_tier": "default"])
+        canonical += try line("event_msg", -15, ["type": "thread_settings_applied", "thread_settings": ["service_tier": "fast"]])
+        let response = try line("token_usage_record", -10, ["response_id": "response-a", "usage": responseUsage])
+        canonical += response + response
+        canonical += try line("event_msg", -9, ["type": "token_count", "info": ["total_token_usage": responseUsage, "last_token_usage": responseUsage]])
+        try canonical.write(to: direct, atomically: true, encoding: .utf8)
+        let requests = AIActivityParser.parse(direct, provider: .codex, now: now)
+        expect(requests.points.count == 1 && requests.points[0].total == 1100 && requests.points[0].cached == 800 && requests.points[0].cacheCreation == 50, "Response records take precedence over repeated quota counters, without double-counting reasoning")
+        expect(requests.points[0].id == "codex:response:response-a" && requests.points[0].serviceTier == "fast" && requests.points[0].perRequest, "Response identity deduplicates clones and retains changes to Fast pricing")
+        let historic = sessions.appendingPathComponent("historic-\(UUID()).jsonl")
+        var initial = try line("session_meta", -30, ["id": "history-session", "cwd": "/fixture/History"])
+        initial += try line("turn_context", -29, ["model": "gpt-6.1-sol"])
+        initial += try line("token_usage_record", -28, ["response_id": "history-old", "usage": responseUsage])
+        initial += padding
+        initial += try line("token_usage_record", -5, ["response_id": "history-new", "usage": responseUsage])
+        try initial.write(to: historic, atomically: true, encoding: .utf8)
+        let historyReader = AIAnalyticsReader(home: root)
+        let initialHistory = await historyReader.read(providers: [.codex], now: now)
+        expect(initialHistory.points.contains { $0.id == "codex:response:history-old" }, "Initial automatic scan keeps counters before a long conversation tail")
+        initial += try line("token_usage_record", -1, ["response_id": "history-latest", "usage": responseUsage])
+        try initial.write(to: historic, atomically: true, encoding: .utf8)
+        let nextHistory = await historyReader.read(providers: [.codex], now: now)
+        expect(["history-old", "history-new", "history-latest"].allSatisfy { id in nextHistory.points.contains { $0.id == "codex:response:" + id } }, "Polling adds new response counters without discarding the earlier day's usage")
         let account = try JSONDecoder().decode(CodexAccountActivity.self, from: Data("{\"summary\":{\"lifetimeTokens\":1200,\"peakDailyTokens\":1000,\"currentStreakDays\":2},\"dailyUsageBuckets\":[{\"startDate\":\"2026-10-05\",\"tokens\":1000}]}".utf8))
         expect(account.dailyUsageBuckets?.first?.tokens == 1000 && account.summary?.currentStreakDays == 2, "Account heatmap keeps provider-supplied days and streak")
         let claude = sessions.appendingPathComponent("claude-fixture.jsonl")

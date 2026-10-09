@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Sieghart reconnects devices you chose to disconnect during sleep.</string>
     <key>NSAudioCaptureUsageDescription</key>
     <string>Sieghart adjusts audio from apps you choose. Audio is processed locally and never saved.</string>
     <key>LSUIElement</key><true/>

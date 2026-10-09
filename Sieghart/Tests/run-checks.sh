@@ -4,56 +4,40 @@ repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 check_dir="$(mktemp -d /private/tmp/sieghart-checks.XXXXXX)"
 trap 'rm -rf "$check_dir"' EXIT
 cd "$repo_root"
+source_root="Sieghart/Sieghart"
+module_cache="${CLANG_MODULE_CACHE_PATH:-/private/tmp/sieghart-check-module-cache}"
 
-xcrun swiftc -swift-version 6 \
-  Sieghart/Sieghart/AssistantCore.swift Sieghart/Sieghart/SensorEngine.swift \
-  Sieghart/Tests/PomodoroChecks.swift -o "$check_dir/timer"
-"$check_dir/timer"
+# Resolve feature/Core/Shared sources once. App composition is excluded so
+# isolated checks never construct the resident app or start platform services.
+all_sources=()
+while IFS= read -r source_file; do all_sources+=("$source_file"); done < <(rg --files "$source_root" -g '*.swift' | sort | sed '/\/App\//d')
+ui_shared=("$source_root/Shared/Components/DesignSystem.swift" "$source_root/Shared/Components/Island/IslandChrome.swift"
+  "$source_root/Shared/Components/Companion/CompanionAvatars.swift" "$source_root/Shared/Components/Companion/CompanionArrival.swift"
+  "$source_root/Shared/Models/AppearanceOptions.swift" "$source_root/Shared/Services/Preferences/CompanionPreferences.swift")
+codex_sources=("$source_root/Core/Services/AI/CodexUsage.swift" "$source_root/Features/AIUsage/ViewModels/CodexUsageViewModel.swift")
+ai_sources=("${codex_sources[@]}" "$source_root/Core/Services/AI/ModelPricing.swift"
+  "$source_root/Core/Services/AI/AIUsage.swift" "$source_root/Core/Services/AI/UsageImports.swift"
+  "$source_root/Core/Services/AI/AIActivity.swift" "$source_root/Features/AIUsage/ViewModels/AIUsageViewModel.swift")
+clipboard_sources=("$source_root/Core/Services/Clipboard/ClipboardHistory.swift" "$source_root/Features/Clipboard/ViewModels/ClipboardViewModel.swift")
+check() {
+  local check_name="$1"; shift
+  xcrun swiftc -swift-version 6 -module-cache-path "$module_cache" "$@" -o "$check_dir/$check_name"
+  "$check_dir/$check_name"
+}
 
-xcrun swiftc -swift-version 6 \
-  Sieghart/Sieghart/VoiceCallbacks.swift Sieghart/Tests/VoiceCallbackChecks.swift \
-  -o "$check_dir/callbacks"
-"$check_dir/callbacks"
-
-xcrun swiftc -swift-version 6 \
-  Sieghart/Sieghart/AssistantCore.swift Sieghart/Sieghart/SensorEngine.swift \
-  Sieghart/Sieghart/IslandChrome.swift Sieghart/Sieghart/DesignSystem.swift Sieghart/Sieghart/CompanionAvatars.swift \
-  Sieghart/Sieghart/NotchWidget.swift Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/CodexUsageView.swift Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift Sieghart/Sieghart/AIUsageView.swift \
-  Sieghart/Sieghart/AIActivity.swift Sieghart/Sieghart/AIActivityView.swift Sieghart/Sieghart/OnboardingView.swift \
-  Sieghart/Sieghart/ActivationCore.swift Sieghart/Sieghart/KeyboardShortcuts.swift \
-  Sieghart/Sieghart/VoiceCommands.swift Sieghart/Sieghart/VoiceCallbacks.swift \
-  Sieghart/Sieghart/AudioEngine.swift Sieghart/Sieghart/AudioControlsView.swift \
-  Sieghart/Sieghart/FocusSessionView.swift Sieghart/Tests/InteractionChecks.swift \
-  -o "$check_dir/interactions"
-"$check_dir/interactions"
-
-xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Tests/CodexUsageChecks.swift -o "$check_dir/usage"
-"$check_dir/usage"
-
-xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift Sieghart/Sieghart/AIActivity.swift Sieghart/Tests/TokenSpendingChecks.swift \
-  -o "$check_dir/spending"
-"$check_dir/spending"
-
-xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift Sieghart/Sieghart/AIActivity.swift \
-  Sieghart/Sieghart/IslandChrome.swift Sieghart/Sieghart/DesignSystem.swift Sieghart/Sieghart/CompanionAvatars.swift \
-  Sieghart/Tests/AIActivityChecks.swift -o "$check_dir/activity"
-"$check_dir/activity"
-
-xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift Sieghart/Sieghart/UsageImports.swift \
-  Sieghart/Sieghart/AIActivity.swift Sieghart/Tests/PricingChecks.swift -o "$check_dir/pricing"
-"$check_dir/pricing"
-
-xcrun swiftc -swift-version 6 Sieghart/Sieghart/AudioEngine.swift \
-  Sieghart/Tests/AudioChecks.swift -o "$check_dir/audio"
-"$check_dir/audio"
-
-xcrun swiftc -swift-version 6 Sieghart/Sieghart/CodexUsage.swift \
-  Sieghart/Sieghart/ModelPricing.swift Sieghart/Sieghart/AIUsage.swift \
-  Sieghart/Sieghart/AIActivity.swift Sieghart/Sieghart/UsageImports.swift \
-  Sieghart/Tests/UsageImportChecks.swift -o "$check_dir/imports"
-"$check_dir/imports"
+check timer "$source_root/Core/Helpers/TimerModels.swift" "$source_root/Features/Timers/ViewModels/AssistantViewModel.swift" \
+  "$source_root/Core/Services/Input/SensorEngine.swift" "$source_root/Features/ImpactGestures/ViewModels/SensorViewModel.swift" Sieghart/Tests/PomodoroChecks.swift
+check callbacks "$source_root/Core/Services/Voice/VoiceCapture.swift" Sieghart/Tests/VoiceCallbackChecks.swift
+check voice-integration "${all_sources[@]}" Sieghart/Tests/VoiceIntegrationChecks.swift
+check interactions "${all_sources[@]}" Sieghart/Tests/InteractionChecks.swift
+check usage "${codex_sources[@]}" Sieghart/Tests/CodexUsageChecks.swift
+check spending "${ai_sources[@]}" Sieghart/Tests/TokenSpendingChecks.swift
+check activity "${ai_sources[@]}" "${ui_shared[@]}" Sieghart/Tests/AIActivityChecks.swift
+check pricing "${ai_sources[@]}" Sieghart/Tests/PricingChecks.swift
+check audio "$source_root/Core/Services/Audio/AudioEngine.swift" "$source_root/Features/Audio/ViewModels/AudioViewModel.swift" Sieghart/Tests/AudioChecks.swift
+check imports "${ai_sources[@]}" Sieghart/Tests/UsageImportChecks.swift
+check clipboard "${clipboard_sources[@]}" "${ui_shared[@]}" Sieghart/Tests/ClipboardChecks.swift
+check middle-click "$source_root/Shared/Services/Input/MiddleClickController.swift" Sieghart/Tests/MiddleClickChecks.swift
+check utilities "$source_root/Core/Services/System/MacSystemSampler.swift" "$source_root/Features/SystemMonitor/ViewModels/SystemMonitorViewModel.swift" \
+  "$source_root/Core/Services/Power/MacAwakeBackend.swift" "$source_root/Features/KeepAwake/ViewModels/KeepAwakeViewModel.swift" \
+  "$source_root/Core/Services/Display/MacDisplayPowerBackend.swift" "$source_root/Features/DisplayPower/ViewModels/DisplayPowerViewModel.swift" Sieghart/Tests/UtilityChecks.swift

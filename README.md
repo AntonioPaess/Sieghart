@@ -13,7 +13,37 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 **Built toward the Swift Student Challenge.** The goal is a short, personal experience about physical interaction, an expressive companion, and calmer focus. The macOS app is the development base; Challenge packaging and hardware compatibility remain milestones.
 
-> **In development.** The app compiles and its timer, voice-intent, shortcut, and presentation checks pass. Physical notch layout, microphone permissions, and hardware gestures still need validation on the Mac. Conversational AI is planned.
+> **Sprint 4 complete and accepted October 8.** After `f77ac65`, the user reported “tudo funcionando”. [Closeout](Sieghart/Design/sprint-4-closeout.md). [Sprint 5 scope](Sieghart/Design/sprint-5-plan.md): agenda/reminders, notifications, downloads, files, capture and contextual companion reactions. Connected email/upload and extended hardware remain later work.
+
+## October 8 — Voice/search and MVVM organization
+
+Sources and Xcode groups now use **Features / Core / Shared**, with screen Views/ViewModels together by feature, native services/helpers in Core and reused controls/preferences/coordinators in Shared. [Architecture and boundaries](Sieghart/ARCHITECTURE.md).
+
+Voice closes audio and drains recognition before executing commands. Topic searches now include questions and bare terms, with a bounded recovery for a settled search whose final recognition callback never arrives; app/timer commands retain strict final recognition. Expanded Companion stays visible during busy voice/action states. The approved gestures are now applied: attentive listening, a shape-matched corner loading cue and short individual success reactions. Coast has relaxed eyelids and an unhurried rhythm; Arcade retains square eyes and stepped geometry. Companion reflects its own commands; background AI telemetry never puts an idle avatar into loading. Actual AI work and data reads use cues only in their dashboard. Fast voice actions run immediately, with at least 700 ms of visual processing before result acknowledgement. [Animated production gestures](Sieghart/Design/Concepts/simple-companions-voice-v2.gif) · [Changes, tests and Mac checklist](Sieghart/Design/voice-search-regression-checks.md). Voice/AirPods and applied motion acceptance closed on the final October 8 user report.
+
+The user approved the [revised motion/Coast study](Sieghart/Design/Concepts/expressive-study-v2/README.md) with “pode aplicar”. It is implemented with native paths and smooth interruption; the app was kept closed for user testing.
+
+The user will provide onboarding storytelling. A [three-minute experience brief](Sieghart/Design/challenge-onboarding-brief.md) is recorded; the final judging flow is not yet delivered.
+
+## Sprint 4 — System utilities and greeting
+
+The previous clipboard/island/editor slice passed the user's Mac tests. The remaining requested implementation now adds System, Keep awake, audio favorites/order/device priorities and optional global output/microphone shortcuts, compatible brightness/dimming/display sleep, optional Bluetooth restoration and a narrow Music launch guard. The six companions greet from the center, wave and dock into the island; motion is optional and interruptions keep the current contour.
+
+[Full implementation, new Mac checks and hardware boundaries](Sieghart/Design/sprint-4-utilities.md). User acceptance closed October 8 after the final audio follow-up; XDR boost and temperature/fan control remain backlog.
+
+![Six native companions greeting](Sieghart/Design/Concepts/companion-launch-greeting.gif)
+
+## Sprint 4 — First slice
+
+- **Clipboard:** local text, image and file-reference history; search, pins, preview, copy/paste, exclusions and pause. Choose **5, 10 or 20** saved copies and cleanup after chosen days, Mac shutdown or lid close. Open with **⌃⌥C**, the side button, app tab or menu subpage. Direct Paste needs Accessibility; Copy/⌘V works without it.
+- **Side buttons:** Dynamic Island offers a visual island preview with six surrounding positions. Click to add/edit/remove, drag to move or swap, and choose Essentials/Focus/Work from Layout. Size cards and optional Glass sit below the editor.
+- **Companion arrival:** Welcome → avatar → local tools, native fluid animation, balanced left/right gaze, optional permission setup and a distinct widget entrance on Finish. No black band above the avatar.
+- **Optional middle click:** Activation → Three-finger middle click. Off by default; tap with three fingers, grant Accessibility and retry. Unsupported trackpads show unavailable. Future Challenge packaging must omit this Mac-only contact adapter.
+- **AI spending:** response-record deduplication, Fast tier changes, first full bounded scan and retained counters from long files. Internal models without official prices remain explicitly unpriced. API-equivalent value is separate from paid charges.
+
+![Six companions arriving](Sieghart/Design/Concepts/companion-welcome-motion.gif)
+
+[Clipboard preview](Sieghart/Design/Concepts/island-clipboard-preview.png) · [onboarding](Sieghart/Design/Concepts/onboarding-welcome-preview.png) · [first-slice changes and accepted checklist](Sieghart/Design/sprint-4-checkpoint.md).
 
 ## The experience
 
@@ -22,7 +52,7 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 | **Six companions** | CRT Buddy, Arcade 1984, Minimal Spirit, Coast Buddy, Paper Pal and Ink Buddy. Choose your companion during onboarding; change it later in Appearance or the menu-bar Avatars tab. It also becomes your menu-bar icon. |
 | **Expressive reactions** | Touch brings a smile; repeated pokes make the companion grumpy, then sleepy. Tap again to wake it. Native eye expressions, smooth blinking, gaze, sleeping breath and floating “z” and short messages explain each response. |
 | **Audio controls** | Master output volume, default output/input selection, supported microphone gain/mute, and an opt-in per-app mixer on the selected output. Stereo/mono Float32 routes use Core Audio process taps; the user accepted the Sprint 3 Mac checklist October 8. |
-| **Menu-bar subpages** | Companion, Timers, AI, Audio and Avatars replace the long stacked panel. Avatar changes save immediately. |
+| **Menu-bar subpages** | Companion, Timers, AI, Audio, Clipboard and Avatars replace the long stacked panel. Avatar changes save immediately. |
 | **Three timer modes** | The app and notch share a standalone countdown, Pomodoro with breaks/rounds, and stopwatch. Each supports pause, resume and reset; choosing a mode never starts a session. |
 | **Dynamic island** | Matches the physical notch’s height and grows sideways. The companion strolls along the island and nudges the countdown during the final 30 seconds. Hover for a visual highlight; the first click opens controls even with another app active. The full activation strip, including the camera gap, toggles controls. Pointer exit allows 800 ms to cross between controls; keyboard reveal allows four seconds to reach them. |
 | **Completion celebration** | The avatar comes down to announce completion and the break, then tucks away again. |
@@ -42,13 +72,13 @@ Choose **Timer**, **Pomodoro** or **Stopwatch** in the app’s **Timers tab**, t
 
 *Offscreen 20 fps preview of native gaze, blinking and breathing. The app’s motion updates at 60 Hz and respects Reduce Motion.*
 
-First launch presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** or the menu-bar **Avatars** tab to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
+First launch opens an animated welcome, then presents all six companions in a three-column onboarding gallery, with each name and personality. Select your initial companion and continue. Later, open **Appearance** or the menu-bar **Avatars** tab to change it. The choice saves immediately and appears throughout the main app, widget, compact island, voice, completion celebrations, menu header, and menu-bar icon. All artwork is drawn locally and works offline. Legacy sprite assets remain archived in the repository and are excluded from the app bundle. CRT Buddy remains the default.
 
 ### A companion with context
 
 ![Companion with comfortable margins and no duplicated action row](Sieghart/Design/Concepts/island-companion-preview.png)
 
-*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses five compact subpages with natural content heights.*
+*Static renders of the production views, without opening app windows. The widget keeps only companion context inside the Buddy page. Side controls and the tool grid handle navigation; the menu bar uses six compact subpages with natural content heights.*
 
 The compact island and camera strip stay sRGB black (`#000000`). Expanded pages offer optional Glass, an attached shoulder contour and circular quick controls around the surface. Appearance selects System, Light or Dark; separate switches control Glass in other windows/panels and in the expanded island. Both switches default off. macOS 26 uses Liquid Glass; older supported systems use behind-window blur. Reduce Transparency keeps an opaque surface. Native transitions reserve their full bounds so the moving silhouette does not resize or crop its content.
 
@@ -74,9 +104,11 @@ The compact island and camera strip stay sRGB black (`#000000`). Expanded pages 
 
 Output selection, master volume and input-device controls use Core Audio hardware properties. Devices without writable volume/mute show unavailable controls. The per-app mixer is off after launch. **Enable app mixer** opts in; the button immediately starts the public macOS system-audio permission path before enabling app sliders. A failure provides Retry and Audio permission settings. The mixer processes audio locally without saving it or recording the microphone. It shows up to five actual running apps plus Master, prioritizes apps currently playing audio, groups helpers into their visible installed app, waits for an audio connection before enabling its slider, loads native app icons, identifies the selected device (including AirPods), adjusts each with a private process tap and aggregate playback route, and restores normal playback when disabled. Stereo process mixdown supports mono Bluetooth calls and planar/interleaved Float32 outputs; encoded/incompatible formats are rejected explicitly. Device format changes rebuild routes even with the same ID; restarted helpers can retry. The user reported all Sprint 3 manual checks passed October 8, including the audio/device checklist.
 
+Finder is excluded from app columns. Use an app's icon menu → **Hide from mixer** to remove it and release its route, restoring normal playback; **Hidden apps** (eye-slash) restores it with its saved mixer volume. Hidden choices persist and do not create columns for closed apps. Safari/XPC helpers now resolve through optional macOS responsibility metadata plus the existing ancestry/bundle/path fallback, and each slider change refreshes its process group. Injected checks and the universal build pass; Safari/app-selection acceptance closed on the user’s final October 8 “tudo funcionando” report. This optional undocumented lookup is omitted under `SIEGHART_CHALLENGE`; full Challenge packaging remains pending. [Audio follow-up and Mac checklist](Sieghart/Design/sprint-4-utilities.md).
+
 ![Choose a companion from the menu bar](Sieghart/Design/Concepts/menu-avatars-preview.png)
 
-The menu-bar panel is 380 points wide. Each tab replaces its content and fits its height, eliminating the empty 300-point content area. The island's tool grid opens Companion, Audio, AI agents, Timers, Avatars and Preferences; voice uses Companion. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
+The menu-bar panel is 380 points wide. Each tab replaces its content and fits its height, eliminating the empty 300-point content area. The island's ten-tile grid opens Companion, Audio, AI agents, Timers, Clipboard, Avatars, System, Keep awake, Display & power and Preferences; voice uses Companion. AI cards follow limits/spending → current work → hourly trend → models/projects → activity; hover/select a bar for exact tokens and estimated value. Connection details open separately, keeping island height bounded.
 
 ## Swift Student Challenge
 
@@ -109,7 +141,7 @@ Select the **Sieghart** scheme and **My Mac**, then run. Configure signing if Xc
 
 ### Start your first session
 
-1. Complete the two-step onboarding: choose one of six avatars, then decide whether to follow local AI usage automatically. Focus works with monitoring off.
+1. Complete Welcome → choose one of six avatars → optional local AI/Clipboard tools. Optional voice/paste access setup is available there. Finish opens the companion with a special arrival; focus remains explicit.
 2. Click the compact island or press **Control + Option + S** to reveal the companion. Hover gives a subtle companion reaction without outlining or opening the island.
 3. Open **Timers** in the app or widget. Choose Timer for a countdown, Pomodoro for focus/break rounds, or Stopwatch for elapsed time.
 4. Press **Start** for the selected mode. The widget tucks into the island; click it for pause/resume/reset controls. Pomodoro also offers Finish.
@@ -123,7 +155,7 @@ Closing the main window with its red button keeps Sieghart in the menu bar. An a
 
 Voice starts with its configured shortcut or **Speak** in Companion/menu. Listening, transcription, feedback and Cancel/Back use the Companion page itself; there is no separate Voice page or launcher tile. The default voice shortcut is **Control + Option + V**. Saved custom modifier-only bindings remain available; Activation offers the regular-key default without overwriting them. Modifier-only shortcuts use a listen-only session event tap with Input Monitoring access, or the AppKit global monitor with existing Accessibility access. Activation provides an explicit permission button; one of those grants is sufficient. Shortcuts containing a regular key use the system hotkey API. See [Apple’s event-monitor documentation](https://developer.apple.com/documentation/appkit/nsevent/addglobalmonitorforevents(matching:handler:)).
 
-Speak a supported command and finish naturally. Recognition completion or a short pause executes it automatically; capture stops after at most ten seconds. Choose English or Portuguese in Activation. Try “start focus for 25 minutes”, “pause timer”, “resume”, “finish”, “show”, or “hide”. Unsupported, negated, or conflicting commands leave the timer unchanged. This is a local focus-command interface; open-ended AI conversation remains planned.
+Speak a supported command and finish naturally. About 1.4 seconds of audio quiet ends capture, then final recognition executes a local action. A 55-second safety limit cancels prolonged capture. Choose English or Portuguese in Activation. Try “inicia o foco”, “inicie o pomodoro”, “inicia o pomodoro em vinte e cinco minutos”, “start focus for 25 minutes”, “pause timer”, “resume”, “finish”, “show”, or “hide”. A spoken duration sets the session length, not a delayed start. Without one, the saved focus length is used. Focus choices remain 5–60 minutes in five-minute steps. Unsupported, negated, or conflicting commands leave the timer unchanged. This is a local command interface; open-ended AI conversation remains planned.
 
 Timers and preferences are stored locally in `UserDefaults`. The microphone is off while idle. Speech recognition uses Apple’s Speech framework; service availability and on-device processing depend on the language and system. See [Apple’s Speech documentation](https://developer.apple.com/documentation/speech/sfspeechrecognizer).
 
@@ -149,7 +181,7 @@ These checks do not open the app, activate the sensor, register system shortcuts
 
 ## Sprint 3 closeout
 
-Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 has not started.
+Sprint 3 is complete and accepted October 8, 2026: the user reported all manual checks passed. Implementation, nine isolated test groups and the signed universal build were completed October 7. Browser search, reviewed charge CSV/JSON import/export, expanded local/archived history and automatic Claude desktop quota reading complete the adapters. Real read-only Codex quota/counter sources were checked successfully; the last check found no fresh Claude reading on this Mac. SG-001 through SG-005 are resolved on the user’s report. Sprint 4 is also complete and accepted on the final October 8 report; its closeout and Sprint 5 scope are linked at the top.
 
 [Delivered scope and exact Mac checklist](Sieghart/Design/sprint-3-closeout.md) · [Charge import format](Sieghart/Design/charge-imports.md) · [Sources preview](Sieghart/Design/Concepts/ai-data-sources-preview.png) · [Search in Companion](Sieghart/Design/Concepts/island-companion-search-preview.png)
 
@@ -157,24 +189,14 @@ Sprint 3 is complete and accepted October 8, 2026: the user reported all manual 
 
 | Location | Responsibility |
 | --- | --- |
-| [`SieghartApp.swift`](Sieghart/Sieghart/SieghartApp.swift) / [`WorkspaceView.swift`](Sieghart/Sieghart/WorkspaceView.swift) | App composition, main-window navigation, glass settings and selected companion. |
-| [`MenuBarView.swift`](Sieghart/Sieghart/MenuBarView.swift) | Companion header, session card, and quick controls. |
-| [`NotchWidget.swift`](Sieghart/Sieghart/NotchWidget.swift) | Notch panel, companion, focus configuration, and timer views. |
-| [`AssistantCore.swift`](Sieghart/Sieghart/AssistantCore.swift) | Pomodoro, countdown/stopwatch dates, rounds, and persistence. |
-| [`ActivationCore.swift`](Sieghart/Sieghart/ActivationCore.swift) | Global keyboard shortcut and explicit voice commands. |
-| [`KeyboardShortcuts.swift`](Sieghart/Sieghart/KeyboardShortcuts.swift) | Shortcut capture, persistence format, and modifier gestures. |
-| [`VoiceCommands.swift`](Sieghart/Sieghart/VoiceCommands.swift) | Supported local voice intents and duration validation. |
-| [`FocusSessionView.swift`](Sieghart/Sieghart/FocusSessionView.swift) | Three-mode timer surface and shared focus configuration editor. |
-| [`VoiceCallbacks.swift`](Sieghart/Sieghart/VoiceCallbacks.swift) | Safe speech-authorization callback bridge. |
-| [`DesignSystem.swift`](Sieghart/Sieghart/DesignSystem.swift) | Shared palette, controls, and appearance preferences. |
-| [`CompanionAvatars.swift`](Sieghart/Sieghart/CompanionAvatars.swift) | Six native companions, interpolated eye expressions, body motion, touch reactions and the Appearance gallery. |
-| [`SensorEngine.swift`](Sieghart/Sieghart/SensorEngine.swift) / [`ImpactGestures.swift`](Sieghart/Sieghart/ImpactGestures.swift) | Experimental accelerometer input and configurable gesture actions. |
-| [`OnboardingView.swift`](Sieghart/Sieghart/OnboardingView.swift) | Initial six-avatar choice and local AI monitoring consent. |
-| [`AIUsage.swift`](Sieghart/Sieghart/AIUsage.swift) / [`AIActivity.swift`](Sieghart/Sieghart/AIActivity.swift) | Background provider monitoring, local lifecycle/counters and spending ledger. |
-| [`AIActivityView.swift`](Sieghart/Sieghart/AIActivityView.swift) | Quotas, spending, live work, hourly/model/project charts and activity heatmap. |
-| [`AIUsageView.swift`](Sieghart/Sieghart/AIUsageView.swift) / [`UsageImports.swift`](Sieghart/Sieghart/UsageImports.swift) | Counters, actual-charge import/export, broader history and automatic Claude desktop limits. |
-| [`CodexUsage.swift`](Sieghart/Sieghart/CodexUsage.swift) | Read-only Codex quota adapter, reset windows and timeouts. |
-| [`Tests`](Sieghart/Tests) / [`Design`](Sieghart/Design/Prototype) | Deterministic checks and the design reference. |
+| [App](Sieghart/Sieghart/App) | Composition and resident application lifetime. |
+| [Features](Sieghart/Sieghart/Features) | Views and ViewModels grouped by screen/feature. |
+| [Core Services](Sieghart/Sieghart/Core/Services) | Voice, Core Audio, AI readers, pasteboard, monitor, power, display, input, calendar and native panels. |
+| [Core Helpers](Sieghart/Sieghart/Core/Helpers) | Voice/search parsing, encoded URLs, shortcut rules, timer and notch value types. |
+| [Shared](Sieghart/Sieghart/Shared) | Reusable avatars/controls, appearance options, preferences, activation/gesture services and assets. |
+| [Tests](Sieghart/Tests) / [Design](Sieghart/Design) | Isolated checks, offscreen fixture previews and design/reference records. |
+
+[Detailed MVVM organization](Sieghart/ARCHITECTURE.md). Native island presentation still has a coordinator; the hierarchy does not claim a complete protocol extraction of every AppKit window operation.
 
 ## AI usage
 
@@ -214,7 +236,7 @@ The user supplied Coucou as inspiration after accepting Sprint 3. [Reference stu
 
 ## Next steps
 
-Sprint 3 is closed. The next execution scope is S4: system monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Later companion workflows follow the core utilities.
+Sprints 3 and 4 are complete and accepted. [Sprint 5](Sieghart/Design/sprint-5-plan.md) is ready to begin: calendar/reminders, notifications, selected-folder downloads, file shelf, clipboard/file helpers, capture and contextual companion reactions. Connected workflows follow the core utilities.
 
 - Implement and validate the S4 utility scope when that sprint begins.
 - Validate real sensor interaction in the accepted Challenge submission environment.

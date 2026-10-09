@@ -12,6 +12,24 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Start focus focus") == .start(minutes: nil))
         precondition(FocusVoiceParser.parse("Please start focus for twenty five minutes") == .start(minutes: 25))
         precondition(FocusVoiceParser.parse("Quero focar por cinquenta minutos") == .start(minutes: 50))
+        for phrase in ["inicia o foco", "inicia o pomodoro", "inicie o foco", "começa o pomodoro", "Sig, inicia o foco", "Você pode iniciar o foco?"] {
+            precondition(FocusVoiceParser.parse(phrase) == .start(minutes: nil), phrase)
+        }
+        for verb in ["inicia", "inicie", "iniciar", "começa", "comece", "começar"] {
+            for target in ["foco", "pomodoro", "pomodor"] {
+                for minutes in stride(from: 5, through: 60, by: 5) {
+                    let phrase = "\(verb) o \(target) em \(minutes) minutos"
+                    precondition(FocusVoiceParser.parse(phrase) == .start(minutes: minutes), phrase)
+                }
+            }
+        }
+        precondition(FocusVoiceParser.parse("inicia o pomodoro em vinte e cinco minutos") == .start(minutes: 25))
+        precondition(FocusVoiceParser.parse("foco por 30 minutos") == .start(minutes: 30))
+        precondition(FocusVoiceParser.parse("Não inicia o foco") == nil)
+        precondition(FocusVoiceParser.parse("inicia e pausa o pomodoro") == nil)
+        precondition(FocusVoiceParser.parse("inicia o foco em 20 ou 25 minutos") == nil)
+        precondition(FocusVoiceParser.parse("Como iniciar o pomodoro?") == .search(query: "Como iniciar o pomodoro?"))
+        precondition(FocusVoiceParser.parse("pesquise como inicia o foco") == .search(query: "como inicia o foco"))
         precondition(FocusVoiceParser.parse("Can you pause my focus timer") == .pause)
         precondition(FocusVoiceParser.parse("Take a break") == .startBreak)
         precondition(FocusVoiceParser.parse("Don't start focus") == nil)
@@ -27,12 +45,46 @@ struct InteractionChecks {
         precondition(FocusVoiceParser.parse("Show and hide") == nil)
         precondition(FocusVoiceParser.parse("search for Open Safari and start focus") == .search(query: "Open Safari and start focus"))
         precondition(FocusVoiceParser.parse("Pesquise receitas de pão & café") == .search(query: "receitas de pão & café"))
+        for (spoken, query) in [
+            ("pesquise por arquiteturas de mac", "arquiteturas de mac"),
+            ("pesquisa github", "github"),
+            ("procure receitas de pão", "receitas de pão"),
+            ("procure arquitetura de processadores ARM", "arquitetura de processadores ARM"),
+            ("Você pode pesquisar sobre astrofísica?", "astrofísica?"),
+            ("Por favor, pesquisa no Google sobre música brasileira", "música brasileira"),
+            ("Sig, pesquise por C++", "C++"),
+            ("GitHub", "GitHub"),
+            ("Como funcionam os tokens do Claude?", "Como funcionam os tokens do Claude?"),
+            ("arquiteturas de Mac", "arquiteturas de Mac"),
+            ("meu Mac não liga", "meu Mac não liga"),
+            ("Quanto custa um Mac?", "Quanto custa um Mac?"),
+            ("arquiteturas que pausam processos", "arquiteturas que pausam processos")
+        ] { precondition(FocusVoiceParser.parse(spoken) == .search(query: query), spoken) }
+        precondition(FocusVoiceParser.parse("envie um email") == nil)
+        precondition(FocusVoiceParser.parse("...") == nil)
         precondition(FocusVoiceParser.parse("Não pesquise receitas") == nil)
+        for command in ["pesquisa", "pesquise", "pesquisar", "procura", "procure", "buscar", "busca", "busque", "faça uma pesquisa"] {
+            precondition(FocusVoiceParser.parse(command + " no Google sobre C++ & café") == .search(query: "C++ & café"))
+        }
+        precondition(FocusVoiceParser.parse("Quero que você pesquise sobre saúde e agenda") == .search(query: "saúde e agenda"))
+        precondition(FocusVoiceParser.parse("Can you search for como não parar o timer") == .search(query: "como não parar o timer"))
+        precondition(FocusVoiceParser.parse("look up notícias de Recife") == .search(query: "notícias de Recife"))
+        precondition(FocusVoiceParser.parse("Não quero que você pesquise no Google sobre saúde") == nil)
+        precondition(FocusVoiceParser.parse("Don't search for music") == nil)
+        precondition(BrowserSearch.url(for: String(repeating: "á", count: 1_000)) != nil)
+        precondition(FocusVoiceParser.parse("Como pausar o timer no Mac?") == .search(query: "Como pausar o timer no Mac?"))
+        precondition(FocusVoiceParser.parse("Como não perder o foco?") == .search(query: "Como não perder o foco?"))
+        precondition(FocusVoiceParser.parse("Quem criou o Swift?") == .search(query: "Quem criou o Swift?"))
+        precondition(FocusVoiceParser.parse("What is new in Swift?") == .search(query: "What is new in Swift?"))
+        precondition(FocusVoiceParser.parse("search for start focus\nbad") == nil)
+        precondition(FocusVoiceParser.parse("Como iniciar foco\nbad") == nil)
+        precondition(FocusVoiceParser.parse("pesquise start focus " + String(repeating: "a", count: 2_001)) == nil)
         let query = "C++ & café #5; $(touch /tmp/nope)"
         let search = BrowserSearch.url(for: query)!
         precondition(URLComponents(url: search, resolvingAgainstBaseURL: false)?.queryItems?.first?.value == query)
-        precondition(search.host == "duckduckgo.com" && search.scheme == "https")
-        precondition(BrowserSearch.url(for: String(repeating: "a", count: 501)) == nil)
+        precondition(search.absoluteString.contains("C%2B%2B"))
+        precondition(search.host == "www.google.com" && search.path == "/search" && search.scheme == "https")
+        precondition(BrowserSearch.url(for: String(repeating: "a", count: 2_001)) == nil)
         precondition(BrowserSearch.url(for: "a\nb") == nil)
         precondition(FocusVoiceParser.parse("Open Warp") == .openApp(name: "warp"))
         precondition(FocusVoiceParser.parse("Open Safari and search YouTube") == nil)
@@ -106,6 +158,56 @@ struct InteractionChecks {
         precondition(compactNotch.height == 32 && compactNotch.contentTop == 0)
         precondition(compactNotch.width > compactNotch.cutoutWidth)
 
+        // The approved family carries a readable busy cue without added ears,
+        // a generic ball or a full turn. Cancellation blends every parameter.
+        for avatar in CompanionAvatar.allCases {
+          for size: CGFloat in [24, 60, 96] {
+            let listen = CompanionVoiceMotion.sample(phase: .listening, elapsed: 0.4, size: size, avatar: avatar, animates: true)
+            let think = CompanionVoiceMotion.sample(phase: .thinking, elapsed: 0.4, size: size, avatar: avatar, animates: true)
+            let win = CompanionVoiceMotion.sample(phase: .success, elapsed: 0.55, size: size, avatar: avatar, animates: true)
+            precondition(listen.loading == 0 && think.loading == 1 && win.loading == 0)
+            precondition(listen != think && think != win)
+            precondition(abs(win.rotation) < 6 && abs(win.offset.height) < size * 0.05)
+            if avatar == .arcade1984 { precondition(listen.rotation == 0 && think.rotation == 0 && win.rotation == 0) }
+            if avatar == .coastBuddy || avatar == .inkBuddy { precondition(win.wink > 0.8) }
+            for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
+                precondition(CompanionVoiceMotion.sample(phase: phase, elapsed: 0.2, size: size, avatar: avatar, animates: false)
+                    == CompanionVoiceMotion.sample(phase: phase, elapsed: 3.8, size: size, avatar: avatar, animates: false))
+            }
+            let settled = CompanionVoiceMotion.sample(phase: .success, elapsed: 1.2, size: size, avatar: avatar, animates: true)
+            precondition(settled == CompanionVoiceMotion.sample(phase: .success, elapsed: 5, size: size, avatar: avatar, animates: true), "Completion must settle instead of looping")
+            var animator = CompanionVoiceAnimator()
+            animator.transition(to: .listening, at: 0, size: size, avatar: avatar, animates: true)
+            let before = animator.sample(at: 0.6, size: size, avatar: avatar, animates: true)
+            animator.transition(to: .thinking, at: 0.6, size: size, avatar: avatar, animates: true)
+            precondition(before == animator.sample(at: 0.6, size: size, avatar: avatar, animates: true))
+            animator.transition(to: .success, at: 1, size: size, avatar: avatar, animates: true)
+            let midGesture = animator.sample(at: 1.45, size: size, avatar: avatar, animates: true)
+            animator.transition(to: .inactive, at: 1.45, size: size, avatar: avatar, animates: true)
+            precondition(midGesture == animator.sample(at: 1.45, size: size, avatar: avatar, animates: true))
+            precondition(animator.sample(at: 2, size: size, avatar: avatar, animates: true) == CompanionVoicePose())
+            animator.transition(to: .working, at: 2, size: size, avatar: avatar, animates: true)
+            let working = animator.sample(at: 3, size: size, avatar: avatar, animates: true)
+            animator.transition(to: .working, at: 3, size: size, avatar: avatar, animates: true)
+            precondition(working == animator.sample(at: 3, size: size, avatar: avatar, animates: true), "Same-phase telemetry must not restart motion")
+          }
+        }
+        precondition(CompanionActivity.phase(voice: .inactive, isLoading: true) == .thinking)
+        precondition(CompanionActivity.phase(voice: .inactive, hasActiveTask: true) == .working)
+        precondition(CompanionActivity.phase(voice: .inactive) == .inactive)
+        for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
+            precondition(CompanionActivity.phase(voice: phase, isLoading: true, hasActiveTask: true) == phase, "Background tasks must not hide voice or its result")
+        }
+        let pixelBadge = CompanionLoadingShape(avatar: .arcade1984).path(in: CGRect(x: 0, y: 0, width: 28, height: 28))
+        var segments = 0
+        pixelBadge.forEach { element in
+            switch element {
+            case .move, .line, .closeSubpath: segments += 1
+            default: preconditionFailure("Arcade loading geometry must remain stepped, without curves")
+            }
+        }
+        precondition(segments > 12)
+
         let reactions = CompanionReactions(now: { clock }, recoveryDelay: .milliseconds(30), wakeDelay: .milliseconds(30))
         for _ in 0..<3 { reactions.touch(); precondition(reactions.mood == .happy) }
         reactions.touch(); precondition(reactions.mood == .annoyed)
@@ -131,9 +233,9 @@ struct InteractionChecks {
         defaults.set("retired-avatar", forKey: "appearance.avatar")
         precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
         preferences.avatar = .crtBuddy
-        let notch = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
+        let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
-        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query })
+        let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query }, minimumVoiceProcessingDuration: .zero)
         notch.activation = activation
         precondition(activation.voiceShortcut == .voice && activation.voiceShortcut?.keyCode != nil)
         // A first click from another app must reach both native activation and
@@ -153,7 +255,7 @@ struct InteractionChecks {
         precondition(!notch.isVisible) // Second activation click closes, rather than reopening.
 
         let liveTask = AIWork(id: "fixture", provider: .codex, model: "fixture-model", project: "Fixture project", startedAt: .now.addingTimeInterval(-20), lastSeen: .now, output: 100)
-        let liveUsage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
+        let liveUsage = AIUsageViewModel(defaults: defaults, initialAnalytics: AIAnalytics(work: [liveTask]), read: { _ in nil })
         notch.aiUsage = liveUsage
         notch.showIsland()
         precondition(notch.isVisible && notch.presentation == .island && notch.geometry.height == 36)
@@ -169,7 +271,7 @@ struct InteractionChecks {
         precondition(notch.presentation == .aiLimits) // No focus timer needed for live AI.
         notch.hide()
         precondition(notch.presentation == .island)
-        let disconnected = CodexUsageModel(defaults: defaults, load: { throw CodexUsageError.unavailable })
+        let disconnected = CodexUsageViewModel(defaults: defaults, load: { throw CodexUsageError.unavailable })
         liveUsage.disable(.codex, codex: disconnected)
         notch.showIsland()
         precondition(!notch.isVisible)
@@ -257,9 +359,33 @@ struct InteractionChecks {
         activation.setShortcut(activation.companionShortcut, for: .voice)
         precondition(activation.voiceShortcut == custom) // Duplicate bindings are rejected.
 
+        precondition(activation.shortcut(for: .nextOutput) == nil && activation.shortcut(for: .muteMicrophone) == nil)
+        activation.setShortcut(custom, for: .nextOutput)
+        precondition(activation.shortcut(for: .nextOutput) == nil, "Audio shortcuts share collision checks with voice")
+        let outputChord = ShortcutChord(keyCode: 20, modifiers: NSEvent.ModifierFlags([.command, .option, .shift]).rawValue, keyLabel: "3")
+        activation.setShortcut(outputChord, for: .nextOutput)
+        precondition(ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false).shortcut(for: .nextOutput) == outputChord)
+        activation.setShortcut(outputChord, for: .muteMicrophone)
+        precondition(activation.shortcut(for: .muteMicrophone) == nil)
+        activation.setShortcut(nil, for: .nextOutput)
+        let contour = IslandWindowCanvas<Text>.path(size: CGSize(width: 357.2, height: 94.8), canvasWidth: 800)
+        let current = IslandWindowCanvas<Text>.visibleSize(path: contour, fallback: CGSize(width: 760, height: 400))
+        precondition(abs(current.width - 357.2) < 0.001 && abs(current.height - 94.8) < 0.001, "Interrupted contour starts at presentation size, never the old endpoint")
+        let oldReaction = reactions.mood
+        reactions.utility(false); precondition(reactions.mood == .startled)
+        reactions.utility(true); precondition(reactions.mood == .understood)
+        reactions.reset(); _ = oldReaction
+
         activation.executeVoiceCommand("search for café & Swift")
         try await Task.sleep(for: .milliseconds(80))
         precondition(activation.commandAcknowledged && activation.voiceStatus == "Search opened · Fixture café & Swift" && notch.presentation == .home)
+        notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
+        try await Task.sleep(for: .milliseconds(320))
+        precondition(notch.presentation == .island && activation.voicePresented && activation.commandAcknowledged)
+        notch.showVoice()
+        precondition(notch.presentation == .island) // Result updates don't reopen a collapsed panel.
+        notch.clickIsland()
+        precondition(notch.presentation == .home && activation.voicePresented)
         activation.executeVoiceCommand("Open Safari")
         precondition(notch.presentation == .home && activation.voicePresented && activation.transcript == "Open Safari")
         try await Task.sleep(for: .milliseconds(20))
@@ -284,6 +410,13 @@ struct InteractionChecks {
         notch.showTools()
         precondition(notch.presentation == .tools && notch.isVisible)
         notch.showAudio(); precondition(notch.presentation == .audio)
+        activation.receiveHotkey(.clipboard); precondition(notch.presentation == .clipboard && notch.isVisible)
+        activation.receiveHotkey(.clipboard, eventTime: ProcessInfo.processInfo.systemUptime + 1); precondition(!notch.isVisible || notch.presentation == .island)
+        if let companionChord = activation.companionShortcut {
+            activation.setShortcut(companionChord, for: .clipboard); precondition(activation.clipboardShortcut == .clipboard)
+        }
+        activation.setShortcut(nil, for: .clipboard); precondition(activation.clipboardShortcut == nil)
+        activation.setShortcut(.clipboard, for: .clipboard)
         notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
         try await Task.sleep(for: .milliseconds(320))
         precondition(!notch.isVisible || notch.presentation == .island)
@@ -327,7 +460,7 @@ struct InteractionChecks {
         try await Task.sleep(for: .milliseconds(1200))
         precondition(notch.presentation == .island) // Leaving expanded controls tucks them away.
         // Every expanded page obeys pointer exit, including former sticky pages.
-        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, notch.showVoice] {
+        for open in [notch.show, notch.showTools, notch.showAILimits, notch.showFocusSetup, { notch.showVoice() }, notch.showClipboard] {
             open(); notch.setPointerInsidePanel(true); notch.setPointerInsidePanel(false)
             try await Task.sleep(for: .milliseconds(320))
             precondition(notch.presentation == .island && assistant.hasActiveSession)
@@ -340,7 +473,7 @@ struct InteractionChecks {
         precondition(!notch.isVisible)
         notch.showCurrentTask()
         precondition(notch.presentation == .home) // Completed focus cannot hijack a reveal.
-        let relaunched = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false)
+        let relaunched = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false)
         drainEvents()
         precondition(!relaunched.isVisible) // Published saved completion is not replayed.
         notch.hide()
@@ -369,7 +502,7 @@ struct InteractionChecks {
         precondition(gate.accept(.voice, source: .monitor, at: 1.1))
         precondition(gate.accept(.companion, source: .carbon, at: 1.1))
 
-        let grace = NotchWidgetController(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
+        let grace = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
         grace.show()
         grace.setPointerInsidePanel(false) // A layout/Space exit cannot cut short a keyboard reveal.
         try await Task.sleep(for: .milliseconds(150))

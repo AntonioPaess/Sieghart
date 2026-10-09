@@ -54,3 +54,19 @@ The compact menu now measures 380 points wide with natural page heights (Compani
 ![Companion quality before](2026-10-06-22-39-37-companion-quality-before.png)
 
 Original screenshots are preserved with SHA-256 in the regression manifest. The approved white reference board remains [archived](../../Concepts/simple-companions-depth-reference.png). The Canvas now draws at its final display size instead of magnifying 42-point artwork; matte shading, visor depth and the paper crease retain the approved silhouettes. [Updated production light board](../../Concepts/simple-companions-depth-preview.png) · [Appearance](../../Concepts/app-appearance-preview.png).
+
+
+## October 8 evening — Voice stays Listening after the phrase
+
+![Compact Listening while the user expects visible Companion](2026-10-08-19-11-24-listening-compact-before.png)
+
+![Full recognized search remains Listening after the user stops](2026-10-08-19-11-29-listening-stalled-before.png)
+
+The user requires expanded Companion to remain visible throughout active voice. This supersedes the earlier pointer-collapse rule for busy voice only. The new endpoint/task-finish implementation has unit and injected capture-to-command integration evidence; [physical voice checklist](../../voice-search-regression-checks.md) remains pending. Original screenshots are preserved outside application resources.
+
+
+## October 8 — Idle loading and imperceptible command feedback
+
+![Idle Companion incorrectly displays a loading badge](2026-10-08-20-39-36-idle-loading-before.png)
+
+The Companion, footer and menu avatar now reflect only their own command lifecycle; background AI telemetry and external agent work keep their indicators in the AI dashboard. Fast commands execute immediately while a separate 700 ms minimum presentation makes processing visible before acknowledgement. Cancel/replacement invalidates delayed feedback. Portuguese inicia/inicie/começa forms also route to the timer instead of a browser search. Physical user checks remain pending.

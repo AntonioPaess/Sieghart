@@ -2,7 +2,7 @@
 set -euo pipefail
 app_bundle="${1:?Pass the compiled Sieghart.app path}"
 bundle_info="$app_bundle/Contents/Info.plist"
-for privacy_key in NSAudioCaptureUsageDescription NSMicrophoneUsageDescription NSSpeechRecognitionUsageDescription; do
+for privacy_key in NSAudioCaptureUsageDescription NSMicrophoneUsageDescription NSSpeechRecognitionUsageDescription NSBluetoothAlwaysUsageDescription; do
   purpose="$(/usr/bin/plutil -extract "$privacy_key" raw "$bundle_info")"
   [[ -n "$purpose" ]] || { echo "Missing built privacy purpose: $privacy_key"; exit 1; }
 done

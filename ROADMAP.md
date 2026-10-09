@@ -7,9 +7,63 @@ Updated October 8, 2026. This is the current execution plan; older Obsidian chec
 - **Sprint 1:** foundation, timer persistence and notch geometry delivered; visual iteration continued in Sprint 2.
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
 - **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
-- **Mac acceptance:** the user confirmed “Todos passaram” after receiving the test instructions. SG-001 through SG-005 are resolved on that report; no Sprint 3 blocker remains reported. The assistant keeps the app closed during its work. CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed. Sprint 4 has not started.
+- **Sprint 4:** complete and accepted October 8, 2026, on the user’s “tudo funcionando” report after `f77ac65`; utilities, voice/search/AirPods/motion follow-ups and Safari/app selection acceptance are closed on that report. [Closeout](Sieghart/Design/sprint-4-closeout.md).
+- **Sprint 5:** next planned implementation sprint, ready to begin — agenda/reminders, notifications, selected-folder downloads, shelf, clipboard/file helpers, capture and real-event companion reactions. [Scope and exit criteria](Sieghart/Design/sprint-5-plan.md).
+- **Mac acceptance:** Sprint 3 and Sprint 4 are accepted on the user’s reports, not assistant hardware runs. SG-001 through SG-008 and the Safari follow-up are closed; reopen a specific issue for a reported regression. Keep Sieghart/Xcode closed during assistant verification; CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed.
 - **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
+
+## Sprint 4 — Complete and accepted, October 8, 2026
+
+The user moved clipboard history and an optional three-finger middle click forward, requested configurable side buttons and a coordinated onboarding arrival, and reported a spending discrepancy. The latest “tudo funcionando” report after `f77ac65` closes this sprint. [Accepted closeout](Sieghart/Design/sprint-4-closeout.md) · [Implementation and Mac checklist](Sieghart/Design/sprint-4-checkpoint.md).
+
+### Delivered first slice
+
+- Shared local Clipboard in app/menu/island; a default side button and global **Control + Option + C**. Search/filter, pins, previews, copy/paste fallback, pause, exclusions and delete/clear. Choose 5/10/20 copies and cleanup after chosen days, Mac shutdown or lid close. Local bounded storage; pins count toward the cap. Shutdown/lid cleanup includes pins. Direct paste uses explicit Accessibility access.
+- A dedicated Dynamic Island visual editor follows the October 8 reference: central companion/island preview, six clickable/draggable surrounding slots, dashed + for empty positions, Layout presets and Small/Medium/Large cards below. Add/edit/remove and swap/move save immediately. Optional Glass remains configurable. [Editor details](Sieghart/Design/island-layout-editor.md).
+- Three-step onboarding with native 60 Hz six-avatar arrival, symmetric pointer gaze, no black strip above the avatar, optional voice/direct-paste access preparation and a special widget reveal on Finish. Existing approved artwork, offline core and Reduce Motion remain.
+- Optional three-finger tap generates middle mouse click; default off, explicit Accessibility, unsupported state, drag/long/more-finger rejection and teardown. Uses an undocumented Mac contact capability; must be omitted from future Challenge packaging. The user accepted the first slice on October 8; the assistant did not perform real trackpad tests.
+- AI response usage records, response-ID deduplication, recorded Fast changes and initial bounded full-file scanning with retained earlier counters correct the previous spending data path. Cleaner spending typography and exact unpriced disclosure. Internal models without published prices remain unpriced; API value remains separate from paid charges.
+
+### Sprint 4 utility delivery — October 8
+
+The user accepted the previous slice and editor on October 8. The remaining requested implementation is delivered in app/menu/island, with original center/drop/wave/dock launch and onboarding choreography. [Changes, capability boundaries and new Mac checks](Sieghart/Design/sprint-4-utilities.md).
+
+- [x] User acceptance: clipboard/cleanup/paste/full-screen shortcut, rails/editor, three-finger taps, onboarding/gaze and spending first slice.
+- [x] Base system monitor: CPU, exposed GPU, memory/pressure/cache/compression/swap, physical network rates/totals/IP, disks/capacity/exposed I/O, battery draw/health/time/cycles and USB names.
+- [x] Keep awake: duration/deadline/conditions, owned assertions, supported lid boundary and opt-in valid-session restoration.
+- [x] Audio priorities, actual-app favorites/order, optional global output/microphone shortcuts and route recovery.
+- [x] Compatible brightness/software dimming/display sleep, HDR capability disclosure, optional Bluetooth sleep restoration and playback-key Music launch guard.
+- [x] Utility-linked companion reactions, center greeting, presentation-size interruption continuity, configurable motion and reduced-motion fallback; twelve isolated groups and offscreen production previews.
+- [x] New utility/greeting acceptance closed on the October 8 “tudo funcionando” report after the final audio follow-up; no assistant hardware run claimed.
+
+Numeric temperatures/fan control, XDR desktop boost, per-process network/speed testing and SMART remain explicit extended hardware backlog, not claimed delivered. Sprint 3 stays closed. Upload/email, connected chats, task agents and optional GitHub follow the core utility release gate.
+
+### October 8 — Voice/search regressions and feature organization
+
+- [x] Physical source/Xcode hierarchy organized as `Features/<Feature>/Views` and `ViewModels`, `Core/Services` and `Helpers`, and reusable `Shared/Components`, `Models`, `Services` and `Resources`. Native adapters are separated from observable feature state; navigation/onboarding/layout state has explicit ViewModels. See [architecture](Sieghart/ARCHITECTURE.md).
+- [x] Evening correction after the user reproduced endless Listening: calibrate raised microphone noise and detect the trailing speech-envelope drop; end request audio and explicitly finish the recognition task. Authoritative final results end capture immediately. Expanded Companion stays visible throughout permission preparation/listening/finalization, superseding compact-while-listening. Unit and capture-to-command integration checks cover final words, exactly-once actions, stale/cancelled callbacks and pinned visibility. Physical acceptance closed on the final October 8 user report.
+- [x] Google default-browser search supports broader Portuguese/English phrasing and general questions, preserving literal query contents and preventing invalid searches from triggering other actions.
+- [x] Voice renews its input engine per command and handles headset format changes with one bounded retry before detected speech. AirPods acceptance closed on the final October 8 user report.
+- [x] User Mac acceptance of voice/search/AirPods fixes closed on the final October 8 report. [Regression evidence/checklist](Sieghart/Design/voice-search-regression-checks.md).
+
+### October 8 — Free topic search and expressive voice
+
+- [x] Search request grammar supports questions and direct topics; no topic whitelist. Exact reported phrases “pesquise por arquiteturas de mac” and “pesquisa github” are covered by capture-to-command integration.
+- [x] Missing-final search recovery after ended audio and a stable transcription, with bounded drain and last-word/cancellation guards. App/timer actions retain strict final-result gating. Physical acceptance closed on the final October 8 user report.
+- [x] Initial voice gesture implementation: preparation, listening ear/tilt, processing dots/gaze, successful hop/turn/landing and failure shake. These visuals were subsequently rejected and replaced by the approved motion below; [earlier animation preview](Sieghart/Design/Concepts/simple-companions-voice.gif) is historical.
+- [x] Topic search and applied expressive motion accepted on the final October 8 user report. Speaking/lip-sync, Megabrain and specialist delegation remain future work; S5 connects reactions to its calendar/file events.
+
+### October 8 — Approved motion applied
+
+- User rejected the listening ear, floating processing dots and full-turn completion, requesting a preview before replacing them. The user then approved the revised preview with “pode aplicar”; the replacement is now implemented.
+- [x] [Standalone visual study](Sieghart/Design/Concepts/expressive-study-v2/README.md): attentive listening, shape-specific corner loading badges and distinct short acknowledgements. Arcade keeps its pixel geometry. The cap/headband Coast was rejected; a revised minimal seafoam Coast with relaxed eyelids is shown in the family and native motion preview.
+- [x] Visual approval and native runtime replacement: attentive listening, silhouette-specific corner loading, short per-avatar completion, relaxed Coast eyes and tempo, and interpolated square Arcade expressions. Interrupted loading/winks/cancellation and same-phase updates are covered; Reduce Motion keeps static cues. [Production render](Sieghart/Design/Concepts/simple-companions-voice-v2.gif).
+- [x] Follow-up: idle Companion is independent of automatic AI refresh and external agent activity. Dashboard loading/work indicators remain scoped to that page. Fast voice actions run immediately; a separate, cancellable 700 ms minimum processing presentation precedes acknowledgement. No background polling triggers this hold; stale/replaced completions cannot overwrite a newer command.
+- [x] Portuguese timer regression: shared action grammar accepts inicia/inicie/iniciar and começa/comece/começar, foco/Pomodoro and the shortened pomodor transcription. Duration may be spoken numerically or as supported number words; “em 25 minutos” means a 25-minute session. Saved length is used when absent. Unit and capture-to-timer integration cover reported phrases, negation, ambiguity, final-word drain and no unintended browser search.
+- [x] Mixer follow-up: Finder is omitted; any other row can be hidden/restored with persistent choices. Hide releases its audio route and preserves its saved gain/favorite/order. Five real eligible apps refill the cap. Browser ownership now includes optional Mac responsibility metadata for XPC helpers, with public ancestry/bundle/path fallback; each slider change resolves the latest process group. Isolated checks cover distinct WebKit hosts, fresh helpers, hidden/closed stale callbacks, route release and persistence.
+- [x] User Safari/app-selection acceptance: “tudo funcionando” after `f77ac65`, October 8. Automated ownership/mixing checks remain separate evidence. Optional responsibility lookup is compiled out with `SIEGHART_CHALLENGE`; final Challenge packaging remains pending.
+- [x] Applied visuals and utility/voice follow-ups accepted on the final October 8 report. Later file/email/agent adapters must feed their own real lifecycle events into the shared cue.
 
 ## Sprint 3 — First-run companion and live AI
 
@@ -128,10 +182,16 @@ The user reported all checks passed. The original checklist is retained below; t
 | --- | --- |
 | Challenge track | Three-minute offline companion/focus story, accepted playground destination, physical-sensor compatibility, local resources under edition size limit. Reference screenshots and network integrations stay outside its package. |
 | Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. User Mac acceptance passed October 8. |
-| S4 | System monitor, keep awake, audio device priorities/shortcuts and power/display essentials. Expand and validate the audio foundation. |
-| S5 | Calendar repair/reminders, notifications, selected-folder downloads, clipboard/shelf and core capture tools. |
+| S4 | Complete and accepted October 8 on the final user report after `f77ac65`. Extended hardware capabilities stay separate backlog. |
+| S5 | Next planned sprint: calendar/reminders, notifications, selected-folder downloads, file shelf, clipboard/file helpers, capture and real-event companion reactions. [Detailed scope](Sieghart/Design/sprint-5-plan.md). |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
+
+## Parallel Challenge experience track
+
+- [ ] User-written onboarding storytelling and a timed three-minute offline judging path; [experience brief](Sieghart/Design/challenge-onboarding-brief.md).
+- [ ] Avatar biographies/personality with the user. Coast: relaxed, reggae-loving digital nomad, expressed through the family’s simple style.
+- [ ] Final package destination, supported APIs/hardware, resources and offline substitutes. These are separate milestones, not unfinished Sprint 4 utilities.
 
 ## Companion usefulness after core utilities
 
@@ -159,6 +219,16 @@ Detailed experience and dependencies: [Useful companions](Sieghart/Design/compan
 ### New companion reference — October 8, 2026
 
 The user supplied Coucou’s animated demo after accepting Sprint 3. [Reference study](Sieghart/Design/coucou-reference.md): task/result hierarchy, coordinated avatar/surface motion, file receive/carry gestures and small task-agent indicators. Use these for the future companion workflow while retaining the approved six-character family, click-only opening, pointer-exit collapse and configurable Glass. Core S4 utilities remain first; this research introduces no runtime integration or new Sprint 3 gate.
+
+### Expressive specialists — User direction, October 8, 2026
+
+- A chosen principal companion with up to five user-assigned specialists: email, agenda, expense/bill organization, wellbeing and knowledge/projects (Obsidian/GitHub). Any avatar can take any role; shared file tools stay available to all.
+- Character-specific preparing/listening/interpreting/working/speaking/waiting/success/error animations. Explore a cupped/unfolding ear for actual listening and a hop/turn after verified completion. Understanding a request must remain distinct from finishing it.
+- Optional break routines first; AirPods head-motion calibration and a separately authorized iPhone/Watch health-data bridge are feasibility work. Session time is not proof of sitting, and head tilt is not full-body posture.
+- Configurable Obsidian/GitHub connectors, with MCP where supported, selected sources/actions and resumable multi-tool tasks.
+- Local “Megabrain active” / “ativar Megabrain” Easter egg: temporary stylized giant brain and playful recovery, interruptible and reduced-motion compatible.
+
+These are recorded requirements for a future companion milestone after core utilities, not shipped features or additional Sprint 4 acceptance gates. No agent runtime, health connection, MCP connection or Easter egg is implemented in this documentation update. [Roles, motion states, feasibility and acceptance](Sieghart/Design/companion-capabilities.md).
 
 ## Complete reference coverage — 77 modules
 
@@ -190,7 +260,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `mouseAcceleration` | Mouse acceleration control | Planned | S6 |
 | `mouseNavigation` | Side-button navigation | Planned | S6 |
 | `mouseButtonShortcuts` | Extra mouse button bindings | Planned | S6 |
-| `middleClick` | Three-finger middle click | Planned | S6 |
+| `middleClick` | Three-finger middle click | Implemented optional tap; Accessibility and supported trackpad required; user accepted October 8 | S4 (Mac only) |
 | `mouseClickDebounce` | Mouse click debounce | Planned | S6 |
 | `keyboardDebounce` | Keyboard debounce | Planned | S6 |
 | `textSnippets` | Text expansion snippets | Planned | S6 |
@@ -201,7 +271,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `clipboardHistory` | Local clipboard history | Planned | S5 |
+| `clipboardHistory` | Local clipboard history | Implemented — local text/images/files, 5/10/20, cleanup, search/pins, direct paste fallback; user accepted October 8 | S4 |
 | `pastePlain` | Paste plain text | Planned | S5 |
 | `finderCutPaste` | Finder cut and paste | Planned | S5 |
 | `finderRename` | Rename shortcut | Planned | S5 |
@@ -213,26 +283,26 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `mixer` | Per-app volume mixer | Implemented core; user Mac acceptance passed; S4 priorities/order remain | Before S4 / S4 |
-| `soundOutputSwitcher` | Output switcher | Device picker implemented; global shortcut pending | Before S4 / S4 |
-| `audioPriority` | Preferred audio devices | Planned | S4 |
-| `micMute` | Global microphone mute | Supported hardware mute implemented; global shortcut pending | Before S4 / S4 |
-| `musicBlock` | Prevent Music auto-launch | Planned | S4 |
+| `mixer` | Per-app volume mixer | Implemented and user accepted — favorites/order, hidden apps, Finder exclusion and browser helper follow-up | Before S4 / S4 |
+| `soundOutputSwitcher` | Output switcher | Implemented and user accepted — picker plus optional global cycle shortcut | Before S4 / S4 |
+| `audioPriority` | Preferred audio devices | Implemented and user accepted — saved UID priorities; opt-in device selection on connection changes | S4 |
+| `micMute` | Global microphone mute | Implemented and user accepted — supported selected-input mute plus optional global shortcut | Before S4 / S4 |
+| `musicBlock` | Prevent Music auto-launch | Implemented and user accepted — opt-in playback-key/new-launch window; Accessibility required | S4 |
 
 ### Energy and displays (4)
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `keepAwake` | Keep awake: duration/deadline/lid | Planned | S4 |
-| `brightness` | Per-display brightness/power | Planned | S4 |
-| `extraBrightness` | XDR extra brightness | Planned | S4 |
-| `bluetoothSleep` | Bluetooth on sleep | Planned | S4 |
+| `keepAwake` | Keep awake: duration/deadline/lid | Implemented — duration/deadline/conditions/owned assertions/restoration; standard lid rules | S4 |
+| `brightness` | Per-display brightness/power | Implemented and user accepted — compatible native brightness, reversible gamma dimming and display sleep | S4 |
+| `extraBrightness` | XDR extra brightness | HDR headroom disclosed; XDR desktop boost remains extended hardware backlog | S4 |
+| `bluetoothSleep` | Bluetooth on sleep | Implemented and user accepted — owned device disconnect and asynchronous authenticated reconnection | S4 |
 
 ### Tools (19)
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `quickLauncher` | Quick tool panel | Partial — Seven widget routes with selected companion artwork; customizable launch panel pending | S5–S7 |
+| `quickLauncher` | Quick tool panel | Partial — Shared clipboard route, avatar artwork and six customizable side slots; broader launcher pending | S5–S7 |
 | `quickToggles` | Quick actions | Planned | S5–S7 |
 | `colorPicker` | Screen color picker | Planned | S5–S7 |
 | `screenOCR` | Screen text/QR copy | Planned | S5–S7 |
@@ -274,20 +344,20 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `monitorCPU` | CPU use and temperature | Planned | S4 |
-| `monitorGPU` | GPU use and temperature | Planned | S4 |
-| `monitorMemory` | Memory pressure/cache/compression/swap | Planned | S4 |
-| `monitorNetwork` | Traffic, apps, local IP and speed test | Planned | S4 |
-| `monitorDisk` | Space, I/O, SMART and eject | Planned | S4 |
-| `monitorPower` | Battery/power/time/health/cycles | Planned | S4 |
-| `connectedDevices` | Connected peripherals | Planned | S4 |
-| `fanControl` | Fan status and control | Planned | S4 |
+| `monitorCPU` | CPU use and temperature | Base CPU deltas and thermal state implemented; numeric temperature remains hardware backlog | S4 |
+| `monitorGPU` | GPU use and temperature | Exposed utilization implemented; numeric temperature remains hardware backlog | S4 |
+| `monitorMemory` | Memory pressure/cache/compression/swap | Implemented used/pressure/cache/compression/swap detail | S4 |
+| `monitorNetwork` | Traffic, apps, local IP and speed test | Physical traffic/totals/IP implemented; per-app traffic and speed test remain backlog | S4 |
+| `monitorDisk` | Space, I/O, SMART and eject | Capacity/free/exposed I/O implemented; SMART/eject remain backlog | S4 |
+| `monitorPower` | Battery/power/time/health/cycles | Implemented reported battery draw/time/health/cycles and source | S4 |
+| `connectedDevices` | Connected peripherals | USB names and actual audio devices implemented; broader peripherals remain backlog | S4 |
+| `fanControl` | Fan status and control | Unavailable in base monitor; RPM and manual/curve control remain extended hardware backlog | S4 |
 
 ## Foundations beyond the module count
 
 - Onboarding: preset/individual module choices, six avatars, language, optional permissions tied to enabled features, no unnecessary access to finish. Revisit later from Settings.
 - Settings: searchable sections, configurable keyboard/mouse shortcuts, startup at login, theme, menu-bar symbol/color, density, module enable/disable and real service teardown.
-- Display behavior: click-only expansion, visual hover feedback, universal pointer-exit collapse, Small/Medium/Large expanded size, physical-notch geometry, capsule on other screens, multiple displays, full-screen and Spaces, lock/unlock, sensible hit targets, pure black compact backplate, no focus theft.
+- Display behavior: click-only expansion, visual hover feedback, pointer-exit collapse outside busy voice, Small/Medium/Large expanded size, physical-notch geometry, capsule on other screens, multiple displays, full-screen and Spaces, lock/unlock, sensible hit targets, pure black compact backplate, no focus theft.
 - Island navigation: home/control center, side shortcuts, reorderable modules, compact/expanded states, keyboard routes, music/player selection and volume.
 - AI: Codex/Claude first, then OpenCode/Copilot when a verified source exists; quota windows, resets, tokens/cache, models/projects/trends, task elapsed/completion alerts. Read-only existing sign-in with bounded local metadata access.
 - Money: distinguish invoices/subscription charges from API-equivalent estimates; model-specific prices with date/source, USD/BRL and dated FX; import/export and retention controls.

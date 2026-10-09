@@ -1,6 +1,12 @@
 # Widget reference gallery
 
-43 screenshots supplied by the user on October 5–6, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
+45 screenshots supplied by the user on October 5–8, 2026. Original pixels preserved; timestamps and SHA-256 hashes are recorded in [manifest.json](manifest.json). These are product references, not Sieghart screenshots. Exclude this directory from the Challenge app package.
+
+## October 8 — Visual island editor
+
+![Visual editor with surrounding controls and size cards](2026-10-08-13-32-54-island-layout-editor-reference.png)
+
+Applied in Sieghart’s [visual editor](../../island-layout-editor.md), retaining the selected native companion and existing size preferences.
 
 The user requests functional coverage across the reference app, improved usability, and an integrated Sieghart companion. See [the roadmap](../../../../ROADMAP.md). The installed reference shows version 3.4.0 and 73 modules; its current public catalog contains 77.
 
@@ -179,7 +185,7 @@ The user requests functional coverage across the reference app, improved usabili
 
 ## October 6 source review — AI and audio
 
-Pinned source revision: `906646178553325e76107af78ff04bf352c10adf`. Reviewed [AI row geometry](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift), [local usage service](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/AgentUsage/AgentUsageService.swift), [mixer](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Audio/AppVolumeMixer.swift) and [owner/icon resolution](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/ResponsibleProcess.swift). These files show fixed-height paired cards, local agent records, regular app grouping (including silent audio connections), and icons supplied by macOS rather than downloaded SVGs. Implementation and preview notes: [bounded island layouts](../../island-layout.md). Public process ancestry replaces private symbol lookup in Sieghart.
+Pinned source revision: `906646178553325e76107af78ff04bf352c10adf`. Reviewed [AI row geometry](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift), [local usage service](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/AgentUsage/AgentUsageService.swift), [mixer](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/Audio/AppVolumeMixer.swift) and [owner/icon resolution](https://github.com/vorssaint/vorssaint-utils/blob/906646178553325e76107af78ff04bf352c10adf/Sources/Vorssaint/Services/ResponsibleProcess.swift). These files show fixed-height paired cards, local agent records, regular app grouping (including silent audio connections), and icons supplied by macOS rather than downloaded SVGs. Implementation and preview notes: [bounded island layouts](../../island-layout.md). The October 6 implementation used public ancestry only. The October 8 Safari follow-up adds independently implemented optional macOS responsibility metadata, with public fallbacks and a Challenge compile exclusion; [current boundaries and acceptance](../../sprint-4-utilities.md). No GPL source was incorporated.
 
 
 ## October 7 — Optional Glass and appearance choices

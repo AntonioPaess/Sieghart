@@ -2,13 +2,14 @@ import Foundation
 
 @main struct PricingChecks {
     @MainActor static func main() async throws {
-        let catalog = PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/ModelTokenPrices.json"))
+        let catalog = PriceCatalog.bundled(file: URL(fileURLWithPath: "Sieghart/Sieghart/Shared/Resources/ModelTokenPrices.json"))
         expect(catalog.entries.count >= 59, "Bundled official numeric price facts decode")
         expect(catalog.price(model: "gpt-6.1-sol", provider: .codex)?.rates.inputUSD == 2, "Exact model rates are used")
         expect(catalog.price(model: "gpt-6.1-sol-2026-10-05", provider: .codex)?.id == "gpt-6.1-sol", "Dated snapshots resolve documented base rates")
         expect(catalog.price(model: "codex-auto-review", provider: .codex) == nil, "Internal models never inherit an invented price")
         expect(catalog.price(model: "gpt-6.1-sol-unknown", provider: .codex) == nil, "Unverified aliases remain unpriced")
         expect(catalog.price(model: "gpt-6.1-sol", provider: .codex, tier: "priority")?.rates.inputUSD == 4, "Known fast tier uses published tier rate")
+        expect(catalog.price(model: "openai/gpt-6.1-sol", provider: .codex, tier: "FAST")?.rates.inputUSD == 4, "Router prefix and case preserve the recorded Fast price")
         let markdown = """
         ### Standard pricing data
         | Model | Short context input | Short context cached input | Short context cache writes | Short context output | Long context input | Long context cached input | Long context cache writes | Long context output |
@@ -31,8 +32,8 @@ import Foundation
         let suite = "Sieghart.Pricing.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let point = AIUsagePoint(id: "one", provider: .codex, date: .now, model: "gpt-6.1-sol", project: "Fixture", input: 1000000, output: 100000, cached: 900000, perRequest: false)
-        let usage = AIUsageModel(defaults: defaults, initialAnalytics: AIAnalytics(points: [point]), initialPrices: catalog, read: { _ in nil })
-        let codex = CodexUsageModel(defaults: defaults, load: { throw CodexUsageError.unavailable }); codex.enabled = true
+        let usage = AIUsageViewModel(defaults: defaults, initialAnalytics: AIAnalytics(points: [point]), initialPrices: catalog, read: { _ in nil })
+        let codex = CodexUsageViewModel(defaults: defaults, load: { throw CodexUsageError.unavailable }); codex.enabled = true
         usage.claudeEnabled = true
         expect(usage.usedProviders(codex: codex) == [.codex], "An installed/enabled unused Claude cannot display its logo")
         let value = usage.estimate([point], provider: .codex)
@@ -46,7 +47,7 @@ import Foundation
         expect(usage.usesCustomPrices(.codex) && usage.conversionRate == 5, "Custom prices remain an explicit optional override")
         usage.useAutomaticPrices(.codex)
         expect(!usage.usesCustomPrices(.codex) && usage.estimate([point], provider: .codex).usd == value.usd, "Automatic source can be restored without losing charges")
-        let restored = AIUsageModel(defaults: defaults, initialPrices: catalog, read: { _ in nil })
+        let restored = AIUsageViewModel(defaults: defaults, initialPrices: catalog, read: { _ in nil })
         expect(!restored.usesCustomPrices(.codex), "Automatic preference persists")
         usage.disable(.codex, codex: codex)
         expect(usage.usedProviders(codex: codex).isEmpty, "Disconnected providers disappear from the summary")
