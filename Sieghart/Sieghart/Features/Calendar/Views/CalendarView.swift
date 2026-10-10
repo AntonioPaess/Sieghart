@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CalendarView: View {
     @ObservedObject var model: CalendarViewModel
+    @Environment(\.islandPreview) private var preview
     var compact = false
     @State private var reminderTitle = ""
     @State private var reminderDate = Date().addingTimeInterval(3600)
@@ -12,9 +13,19 @@ struct CalendarView: View {
         VStack(alignment: .leading, spacing: compact ? 12 : 18) {
             if !compact { Label("Your day", systemImage: "calendar").font(.title3.weight(.semibold)) }
             HStack(spacing: 8) {
-                Picker("Period", selection: $model.span) {
-                    ForEach(CalendarViewModel.Span.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.segmented)
+                if preview {
+                    HStack(spacing: 0) {
+                        ForEach(CalendarViewModel.Span.allCases, id: \.self) { item in
+                            Text(item.rawValue).font(.caption.weight(item == model.span ? .semibold : .regular))
+                                .padding(.horizontal, 12).padding(.vertical, 7)
+                                .background(item == model.span ? CompanionStyle.edge.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 7))
+                        }
+                    }.padding(3).background(CompanionStyle.edge.opacity(0.08), in: RoundedRectangle(cornerRadius: 9))
+                } else {
+                    Picker("Period", selection: $model.span) {
+                        ForEach(CalendarViewModel.Span.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }.pickerStyle(.segmented)
+                }
                 Button { model.shift(-1) } label: { Image(systemName: "chevron.left") }.accessibilityLabel("Previous period")
                 Button { model.selectedDate = Date() } label: { Text("Today") }
                 Button { model.shift(1) } label: { Image(systemName: "chevron.right") }.accessibilityLabel("Next period")
@@ -30,11 +41,17 @@ struct CalendarView: View {
                         Text("NEXT EVENT").font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
                         Text(next.title).font(.headline)
                         Text(next.startDate.formatted(date: .abbreviated, time: .shortened) + " · " + next.calendarTitle).font(.caption)
-                        if next.hasLink { Button("Join meeting") { model.open(next) }.buttonStyle(CompanionButtonStyle(compact: compact)) }
+                        HStack(spacing: 9) {
+                            if next.hasLink { Button("Join meeting") { model.open(next) }.buttonStyle(CompanionButtonStyle(compact: compact)) }
+                            if model.eventAlertsEnabled && !model.isEventAlertDismissed(next) {
+                                Button("Snooze alert") { model.snoozeEventAlert(next) }.buttonStyle(.plain)
+                                Button("Dismiss alert") { model.dismissEventAlert(next) }.buttonStyle(.plain)
+                            }
+                        }
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(12).background(CompanionStyle.edge.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
                 }
                 if model.events.isEmpty { Text("No events in this period.").font(.callout).foregroundStyle(CompanionStyle.muted) }
-                ForEach(model.events) { event in
+                ForEach(model.events.filter { $0.id != model.nextEvent?.id }) { event in
                     HStack(alignment: .top, spacing: 9) {
                         Image(systemName: "circle.fill").font(.system(size: 6)).foregroundStyle(CompanionStyle.accent).padding(.top, 7)
                         VStack(alignment: .leading, spacing: 3) {
@@ -55,8 +72,13 @@ struct CalendarView: View {
             Divider()
             Text("REMINDERS").font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
             HStack(spacing: 7) {
-                TextField("Remind me to…", text: $reminderTitle)
-                DatePicker("When", selection: $reminderDate, in: Date()..., displayedComponents: [.date, .hourAndMinute]).labelsHidden()
+                if preview {
+                    Text("Remind me to…").foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(reminderDate.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(CompanionStyle.muted)
+                } else {
+                    TextField("Remind me to…", text: $reminderTitle)
+                    DatePicker("When", selection: $reminderDate, in: Date()..., displayedComponents: [.date, .hourAndMinute]).labelsHidden()
+                }
                 Button("Add") { model.addReminder(title: reminderTitle, due: reminderDate); reminderTitle = "" }
             }
             ForEach(model.visibleReminders) { reminder in
@@ -72,6 +94,16 @@ struct CalendarView: View {
             }
             DisclosureGroup("Notification preferences", isExpanded: $showsPreferences) {
                 Toggle("Reminder notifications", isOn: $model.notificationsEnabled)
+                Toggle("Upcoming event alerts", isOn: $model.eventAlertsEnabled)
+                if model.eventAlertsEnabled {
+                    Picker("Alert before event", selection: $model.eventLeadMinutes) {
+                        Text("At start").tag(0)
+                        Text("5 minutes").tag(5)
+                        Text("10 minutes").tag(10)
+                        Text("15 minutes").tag(15)
+                        Text("30 minutes").tag(30)
+                    }
+                }
                 HStack {
                     Text("Quiet hours")
                     Picker("From", selection: $model.quietStart) { ForEach(0..<24, id: \.self) { Text(String(format: "%02d:00", $0)).tag($0) } }.labelsHidden()

@@ -84,7 +84,7 @@ final class NotchWidgetViewModel: ObservableObject {
         }
     }
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioViewModel? = nil, monitor: SystemMonitorViewModel? = nil, keepAwake: KeepAwakeViewModel? = nil, displayPower: DisplayPowerViewModel? = nil, clipboard: ClipboardViewModel? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetViewModel.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetViewModel.keyboardRevealDelay) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioViewModel? = nil, monitor: SystemMonitorViewModel? = nil, keepAwake: KeepAwakeViewModel? = nil, displayPower: DisplayPowerViewModel? = nil, clipboard: ClipboardViewModel? = nil, calendar: CalendarViewModel? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetViewModel.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetViewModel.keyboardRevealDelay) {
         self.assistant = assistant
         self.middleClick = MiddleClickController()
         self.audio = audio ?? AudioViewModel()
@@ -92,7 +92,7 @@ final class NotchWidgetViewModel: ObservableObject {
         self.keepAwake = keepAwake ?? KeepAwakeViewModel()
         self.displayPower = displayPower ?? DisplayPowerViewModel()
         self.clipboard = clipboard ?? ClipboardViewModel(monitorsSystem: managesWindows)
-        self.calendar = CalendarViewModel(observesSystem: managesWindows)
+        self.calendar = calendar ?? CalendarViewModel(observesSystem: managesWindows)
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay

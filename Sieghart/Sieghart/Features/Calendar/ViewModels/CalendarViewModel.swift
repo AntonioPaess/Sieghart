@@ -18,12 +18,17 @@ final class CalendarViewModel: ObservableObject {
     @Published var span: Span = .week { didSet { refresh() } }
     @Published var selectedDate = Date() { didSet { refresh() } }
     @Published var notificationsEnabled: Bool { didSet { defaults.set(notificationsEnabled, forKey: "calendar.notifications"); rescheduleReminders() } }
-    @Published var quietStart: Int { didSet { defaults.set(quietStart, forKey: "calendar.quietStart"); rescheduleReminders() } }
-    @Published var quietEnd: Int { didSet { defaults.set(quietEnd, forKey: "calendar.quietEnd"); rescheduleReminders() } }
+    @Published var eventAlertsEnabled: Bool { didSet { defaults.set(eventAlertsEnabled, forKey: "calendar.eventAlerts"); rescheduleEvents() } }
+    @Published var eventLeadMinutes: Int { didSet { defaults.set(eventLeadMinutes, forKey: "calendar.eventLeadMinutes"); rescheduleEvents() } }
+    @Published var quietStart: Int { didSet { defaults.set(quietStart, forKey: "calendar.quietStart"); rescheduleReminders(); rescheduleEvents() } }
+    @Published var quietEnd: Int { didSet { defaults.set(quietEnd, forKey: "calendar.quietEnd"); rescheduleReminders(); rescheduleEvents() } }
     private let reader: CalendarReading
     private let notifier: ReminderNotifying
     private let defaults: UserDefaults
     private var excludedIDs: Set<String>
+    private var scheduledEventKeys: Set<String>
+    private var snoozedEventKeys: [String: Date] = [:]
+    private var upcomingEventsForAlerts: [CalendarEventSummary] = []
     private var activationObserver: AnyCancellable?
     private var storeChangeObserver: AnyCancellable?
 
@@ -31,6 +36,10 @@ final class CalendarViewModel: ObservableObject {
         self.reader = reader; self.notifier = notifier; self.defaults = defaults
         self.excludedIDs = Set(defaults.stringArray(forKey: "calendar.excludedIDs") ?? [])
         self.notificationsEnabled = defaults.bool(forKey: "calendar.notifications")
+        self.eventAlertsEnabled = defaults.bool(forKey: "calendar.eventAlerts")
+        self.eventLeadMinutes = defaults.object(forKey: "calendar.eventLeadMinutes") as? Int ?? 10
+        self.scheduledEventKeys = Set(defaults.stringArray(forKey: "calendar.scheduledEventKeys") ?? [])
+        self.snoozedEventKeys = defaults.dictionary(forKey: "calendar.snoozedEventKeys") as? [String: Date] ?? [:]
         self.quietStart = defaults.object(forKey: "calendar.quietStart") as? Int ?? 22
         self.quietEnd = defaults.object(forKey: "calendar.quietEnd") as? Int ?? 8
         if let data = defaults.data(forKey: "calendar.reminders"), let saved = try? JSONDecoder().decode([SieghartReminder].self, from: data) { reminders = saved }
@@ -59,7 +68,7 @@ final class CalendarViewModel: ObservableObject {
     func prepare() {
         accessState = reader.accessState
         if accessState == .fullAccess { refresh() }
-        else { events = []; nextEvent = nil; calendars = []; lastUpdated = nil; status = accessState.title }
+        else { events = []; nextEvent = nil; upcomingEventsForAlerts = []; calendars = []; lastUpdated = nil; status = accessState.title; cancelEventAlerts() }
     }
     func requestAccessAndRefresh() {
         guard !isRequestingAccess else { return }
@@ -83,7 +92,7 @@ final class CalendarViewModel: ObservableObject {
     }
     func refresh() {
         accessState = reader.accessState
-        guard accessState == .fullAccess else { events = []; nextEvent = nil; calendars = []; status = accessState.title; return }
+        guard accessState == .fullAccess else { events = []; nextEvent = nil; upcomingEventsForAlerts = []; calendars = []; status = accessState.title; cancelEventAlerts(); return }
         isLoading = true
         let range = dateRange()
         let snapshot = reader.load(from: range.start, to: range.end, selectedIDs: nil)
@@ -92,6 +101,8 @@ final class CalendarViewModel: ObservableObject {
         let now = Date()
         let upcoming = reader.load(from: now, to: Calendar.current.date(byAdding: .day, value: 30, to: now) ?? now.addingTimeInterval(30 * 86_400), selectedIDs: nil)
         nextEvent = upcoming.events.first { !excludedIDs.contains($0.calendarID) && $0.endDate > now }
+        upcomingEventsForAlerts = upcoming.events.filter { !excludedIDs.contains($0.calendarID) }
+        rescheduleEvents()
         lastUpdated = snapshot.fetchedAt
         isLoading = false
         status = calendars.isEmpty ? "No calendars found. Check your Calendar accounts." : events.isEmpty ? "No events in this period." : "\(events.count) events"
@@ -132,6 +143,65 @@ final class CalendarViewModel: ObservableObject {
     func requestNotificationAccess() {
         guard let notifier = notifier as? LocalReminderNotifier else { return }
         Task { status = await notifier.requestAccess() ? "Notifications allowed" : "Enable notifications in System Settings"; rescheduleReminders() }
+    }
+    func handleNotificationAction(_ action: String, reminderID: String?, eventKey: String?) {
+        guard ["sieghart.dismiss", "sieghart.snooze"].contains(action) else { return }
+        if let raw = reminderID, let id = UUID(uuidString: raw) {
+            if action == "sieghart.dismiss" { dismiss(id) } else { snooze(id) }
+            return
+        }
+        guard let key = eventKey else { return }
+        if action == "sieghart.dismiss" {
+            dismissedEventKeys.insert(key)
+            notifier.cancelEvents([key]); scheduledEventKeys.remove(key); saveScheduledEventKeys()
+            status = "Event alert dismissed"
+        } else {
+            if upcomingEventsForAlerts.isEmpty { prepare() }
+            if let event = upcomingEventsForAlerts.first(where: { Self.eventKey($0) == key }) { snoozeEventAlert(event) }
+        }
+    }
+    func isEventAlertDismissed(_ event: CalendarEventSummary) -> Bool { dismissedEventKeys.contains(Self.eventKey(event)) }
+    func dismissEventAlert(_ event: CalendarEventSummary) {
+        let key = Self.eventKey(event)
+        dismissedEventKeys.insert(key)
+        defaults.set(Array(dismissedEventKeys), forKey: "calendar.dismissedEventKeys")
+        notifier.cancelEvents([key]); scheduledEventKeys.remove(key); saveScheduledEventKeys()
+        status = "Event alert dismissed"
+    }
+    func snoozeEventAlert(_ event: CalendarEventSummary, minutes: Int = 10) {
+        let key = Self.eventKey(event)
+        let time = Date().addingTimeInterval(Double(minutes * 60))
+        guard time < event.endDate else { status = "Event ends before the postponed alert"; return }
+        snoozedEventKeys[key] = time
+        defaults.set(snoozedEventKeys, forKey: "calendar.snoozedEventKeys")
+        notifier.cancelEvents([key])
+        Task { await notifier.scheduleEvent(event, key: key, at: time, quietStart: quietStart, quietEnd: quietEnd) }
+        status = "Event alert postponed"
+    }
+    private var dismissedEventKeys: Set<String> {
+        get { Set(defaults.stringArray(forKey: "calendar.dismissedEventKeys") ?? []) }
+        set { defaults.set(Array(newValue), forKey: "calendar.dismissedEventKeys") }
+    }
+    private static func eventKey(_ event: CalendarEventSummary) -> String { "sieghart.event.\(event.id).\(Int(event.startDate.timeIntervalSince1970))" }
+    private func saveScheduledEventKeys() { defaults.set(Array(scheduledEventKeys), forKey: "calendar.scheduledEventKeys") }
+    private func cancelEventAlerts() {
+        notifier.cancelEvents(scheduledEventKeys)
+        scheduledEventKeys = []; saveScheduledEventKeys()
+    }
+    private func rescheduleEvents() {
+        guard eventAlertsEnabled, accessState == .fullAccess else { cancelEventAlerts(); return }
+        let now = Date()
+        snoozedEventKeys = snoozedEventKeys.filter { $0.value > now }
+        defaults.set(snoozedEventKeys, forKey: "calendar.snoozedEventKeys")
+        let chosen = Array(upcomingEventsForAlerts.filter { $0.startDate > now && !dismissedEventKeys.contains(Self.eventKey($0)) }.prefix(32))
+        let newKeys = Set(chosen.map(Self.eventKey))
+        notifier.cancelEvents(scheduledEventKeys.subtracting(newKeys))
+        scheduledEventKeys = newKeys; saveScheduledEventKeys()
+        for event in chosen {
+            let key = Self.eventKey(event)
+            let due = snoozedEventKeys[key] ?? event.startDate.addingTimeInterval(-Double(eventLeadMinutes * 60))
+            Task { await notifier.scheduleEvent(event, key: key, at: due, quietStart: quietStart, quietEnd: quietEnd) }
+        }
     }
     private func saveReminders() { defaults.set(try? JSONEncoder().encode(reminders), forKey: "calendar.reminders") }
     private func rescheduleReminders() {

@@ -7,18 +7,18 @@ October 10, 2026. Implementation slice on branch `sprint-5`; physical Mac accept
 - Calendar is visible in the workspace, menu bar panel, island tool page and configurable island rail. All three surfaces use one `CalendarViewModel` owned by the island coordinator.
 - One retained `EKEventStore` reads day, week and month ranges. Calendar inclusion is local and persisted. The next event scans the following 30 days independently of the current range. Meeting links are accepted only for HTTP(S) URLs from the EventKit URL, location or notes.
 - Explicit Calendar permission action and denied/restricted recovery. The feature does not ask for access on launch.
-- User-created reminders persist locally, can be dismissed or postponed ten minutes, and receive stable-identifier local notifications after explicit notification access. Notification preference and quiet hours are local; matching scheduled requests replace rather than duplicate earlier ones.
+- User-created reminders persist locally, can be dismissed or postponed ten minutes, and receive stable-identifier local notifications after explicit notification access. Upcoming calendar event alerts have a separate switch and lead time. Quiet hours and stable request identifiers avoid noisy duplicate requests. Both kinds of native alert expose dismiss and ten-minute snooze actions.
 
 ## Verification
 
-- `xcrun swiftc -swift-version 6 -module-cache-path /private/tmp/sieghart-calendar-cache ... CalendarChecks.swift` passed using injected Calendar and notification adapters. It covers range changes, source selection, next event, persistence, snooze, dismiss, quiet-hour rollover and permission revocation.
-- `plutil -lint Sieghart.xcodeproj/project.pbxproj` passed.
-- Full `xcodebuild` did not complete because the local SwiftUI macro server returned malformed responses for `@State` in old and new views. This is a toolchain/environment failure; UI compilation, signed package and offscreen render are unverified.
+- `CalendarChecks.swift` passed with injected Calendar and notification adapters. It covers range changes, source selection, next event, persistence, snooze, dismiss, event-alert action routing, quiet-hour rollover and permission revocation.
+- `plutil -lint` passed for the Xcode project. The CLI build passed after running outside the sandbox that had blocked SwiftUI's macro server. A signed Debug bundle passed `verify-built-app.sh` for privacy strings, menu-agent metadata and signature.
+- App, menu and island Calendar pages rendered offscreen with injected data in `Design/Concepts/calendar-*-preview.png`; their layout was inspected. This preview does not establish behavior of native controls on the user's Mac.
 - Sieghart and Xcode stayed closed. No real Calendar, notification, microphone, clipboard or screen access was exercised.
 
 ## Remaining in this slice
 
-Calendar event alerts, notification actions for dismiss/snooze, a complete duplicate/sleep recovery check, UI compilation/render and user Mac acceptance. The rest of Sprint 5 proceeds with selected-folder downloads and shelf, file helpers, capture, then actual event-driven companion reactions.
+A physical Calendar/notification check, including delivery after sleep and relaunch, remains with the user. The rest of Sprint 5 proceeds with selected-folder downloads and shelf, file helpers, capture, then actual event-driven companion reactions.
 
 ## Reference research and license
 

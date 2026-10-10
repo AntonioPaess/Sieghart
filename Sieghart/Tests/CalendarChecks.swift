@@ -15,7 +15,11 @@ import Foundation
 @MainActor final class FakeReminderNotifier: ReminderNotifying {
     var scheduled: [UUID] = []
     var cancelled: [UUID] = []
+    var eventKeys: [String] = []
+    var cancelledEventKeys: Set<String> = []
     func schedule(_ reminder: SieghartReminder, enabled: Bool, quietStart: Int, quietEnd: Int) async { scheduled.append(reminder.id) }
+    func scheduleEvent(_ event: CalendarEventSummary, key: String, at due: Date, quietStart: Int, quietEnd: Int) async { eventKeys.append(key) }
+    func cancelEvents(_ keys: Set<String>) { cancelledEventKeys.formUnion(keys) }
     func cancel(_ id: UUID) { cancelled.append(id) }
 }
 @main struct CalendarChecks {
@@ -32,17 +36,25 @@ import Foundation
         precondition(model.events.count == 2 && model.nextEvent?.id == "a")
         model.setSelected(false, id: "two")
         precondition(model.events.map(\.id) == ["a"])
+        model.eventAlertsEnabled = true
+        await Task.yield()
+        precondition(notifier.eventKeys.count >= 1)
+        let eventKey = notifier.eventKeys.first!
+        model.handleNotificationAction("sieghart.dismiss", reminderID: nil, eventKey: eventKey)
+        precondition(model.isEventAlertDismissed(reader.all[0]))
+        let reopenForAlerts = CalendarViewModel(reader: reader, notifier: notifier, defaults: defaults, observesSystem: false)
+        precondition(reopenForAlerts.isEventAlertDismissed(reader.all[0]))
         model.span = .week; precondition(model.dateRange().duration >= 6 * 86_400)
         model.span = .month; precondition(model.dateRange().duration >= 28 * 86_400)
         model.notificationsEnabled = true
         model.addReminder(title: "  Call Sam  ", due: now.addingTimeInterval(7200))
         precondition(model.visibleReminders.count == 1 && model.visibleReminders[0].title == "Call Sam")
         let id = model.visibleReminders[0].id
-        model.snooze(id)
+        model.handleNotificationAction("sieghart.snooze", reminderID: id.uuidString, eventKey: nil)
         precondition(model.visibleReminders[0].snoozedUntil != nil)
         let reopened = CalendarViewModel(reader: reader, notifier: notifier, defaults: defaults, observesSystem: false)
         precondition(reopened.visibleReminders.count == 1 && !reopened.isSelected("two"))
-        reopened.dismiss(id)
+        reopened.handleNotificationAction("sieghart.dismiss", reminderID: id.uuidString, eventKey: nil)
         precondition(reopened.visibleReminders.isEmpty && notifier.cancelled.contains(id))
         let calendar = Calendar(identifier: .gregorian)
         let night = calendar.date(from: DateComponents(year: 2026, month: 10, day: 10, hour: 23))!
