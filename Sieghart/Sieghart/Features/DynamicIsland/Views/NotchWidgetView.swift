@@ -59,6 +59,7 @@ struct NotchWidgetView: View {
                 case .island: island
                 case .celebration: celebration
                 case .tools: tools
+                case .calendar: pageScroll { CalendarView(model: notch.calendar, compact: true) }
                 case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, showsTitle: false, listHeight: 180, dismiss: { notch.hide() })
                 case .system: pageScroll { SystemMonitorView(monitor: notch.monitor) }
                 case .keepAwake: pageScroll { KeepAwakeView(controller: notch.keepAwake) }
@@ -103,6 +104,7 @@ struct NotchWidgetView: View {
                 Button("Display & power") { notch.showDisplayPower() }
                 Button("Audio") { notch.showAudio() }
                 Button("Clipboard") { notch.showClipboard() }
+                Button("Calendar") { notch.showCalendar() }
                 Button("Change companion") { notch.showAvatars() }
                 Button("Tools") { notch.showTools() }
                 Divider()
@@ -124,6 +126,7 @@ struct NotchWidgetView: View {
         case .displayPower: "Display & power"
         case .audio: "Audio"
         case .clipboard: "Clipboard"
+        case .calendar: "Calendar"
         case .avatars: "Choose your companion"
         case .completion, .celebration: "Session complete"
         case .island: ""
@@ -154,6 +157,7 @@ struct NotchWidgetView: View {
         case .tools: notch.showTools()
         case .timer: notch.showTimer()
         case .clipboard: notch.showClipboard()
+        case .calendar: notch.showCalendar()
         case .preferences: notch.focusMainWindow()
         case .system: notch.showSystem()
         case .keepAwake: notch.showKeepAwake()
@@ -240,6 +244,7 @@ struct NotchWidgetView: View {
             toolTile("AI agents", subtitle: "Limits & activity", symbol: "sparkles") { notch.showAILimits() }
             toolTile("Timers", subtitle: "Three ways to time", symbol: "timer") { notch.showTimer() }
             toolTile("Clipboard", subtitle: "Copies, kept nearby", symbol: "doc.on.clipboard") { notch.showClipboard() }
+            toolTile("Calendar", subtitle: "Events & reminders", symbol: "calendar") { notch.showCalendar() }
             toolTile("Avatars", subtitle: "Find your companion", symbol: "person.crop.square") { notch.showAvatars() }
             toolTile("System", subtitle: "Live readings", symbol: "cpu") { notch.showSystem() }
             toolTile("Keep awake", subtitle: "On your terms", symbol: "cup.and.saucer") { notch.showKeepAwake() }

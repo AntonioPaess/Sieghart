@@ -35,7 +35,7 @@ struct NotchGeometry: Equatable {
 }
 
 enum NotchPresentation: Equatable {
-    case home, focusSetup, timer, completion, island, celebration, aiLimits, tools, audio, avatars, clipboard, system, keepAwake, displayPower
+    case home, focusSetup, timer, completion, island, celebration, aiLimits, tools, audio, avatars, clipboard, calendar, system, keepAwake, displayPower
 }
 
 enum NotchOverlayPolicy {

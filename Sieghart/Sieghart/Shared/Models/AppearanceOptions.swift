@@ -15,12 +15,13 @@ enum WidgetSize: String, CaseIterable, Identifiable {
 }
 
 enum IslandRailAction: String, CaseIterable, Identifiable {
-    case tools = "All tools", timer = "Timers", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Avatars", voice = "Speak", companion = "Companion", system = "System", keepAwake = "Keep awake", displayPower = "Display & power", none = "Hidden"
+    case tools = "All tools", timer = "Timers", calendar = "Calendar", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Avatars", voice = "Speak", companion = "Companion", system = "System", keepAwake = "Keep awake", displayPower = "Display & power", none = "Hidden"
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .tools: "square.grid.2x2"
         case .timer: "timer"
+        case .calendar: "calendar"
         case .clipboard: "doc.on.clipboard"
         case .preferences: "gearshape"
         case .audio: "speaker.wave.2"

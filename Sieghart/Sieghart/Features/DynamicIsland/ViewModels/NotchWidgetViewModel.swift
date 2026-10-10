@@ -29,6 +29,7 @@ final class NotchWidgetViewModel: ObservableObject {
     var codexUsage: CodexUsageViewModel?
     var aiUsage: AIUsageViewModel?
     let clipboard: ClipboardViewModel
+    let calendar: CalendarViewModel
     let middleClick: MiddleClickController
     let audio: AudioViewModel
     let monitor: SystemMonitorViewModel
@@ -91,6 +92,7 @@ final class NotchWidgetViewModel: ObservableObject {
         self.keepAwake = keepAwake ?? KeepAwakeViewModel()
         self.displayPower = displayPower ?? DisplayPowerViewModel()
         self.clipboard = clipboard ?? ClipboardViewModel(monitorsSystem: managesWindows)
+        self.calendar = CalendarViewModel(observesSystem: managesWindows)
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay
@@ -257,6 +259,7 @@ final class NotchWidgetViewModel: ObservableObject {
         reveal()
     }
 
+    func showCalendar() { calendar.prepare(); presentation = .calendar; reveal() }
     func showClipboard() { clipboard.preparePasteTarget(); presentation = .clipboard; reveal() }
     func toggleClipboard() { if isVisible && presentation == .clipboard { hide() } else { showClipboard() } }
 
@@ -591,6 +594,7 @@ final class NotchWidgetViewModel: ObservableObject {
         case .celebration: height = 270
         case .tools: height = 350
         case .clipboard: height = 480
+        case .calendar: height = 480
         case .system: height = 440
         case .keepAwake: height = 400
         case .displayPower: height = 420
@@ -602,7 +606,7 @@ final class NotchWidgetViewModel: ObservableObject {
         switch presentation {
         case .island: width = 240
         case .aiLimits: width = 800
-        case .tools, .audio, .clipboard, .system, .displayPower: width = 760
+        case .tools, .audio, .clipboard, .calendar, .system, .displayPower: width = 760
         case .keepAwake: width = 700
         case .focusSetup, .timer: width = 720
         default: width = 620

@@ -1,11 +1,10 @@
 import AppKit
-import Combine
 import EventKit
 import Foundation
+import UserNotifications
 
 enum CalendarAccessState: Equatable {
     case notDetermined, writeOnly, fullAccess, denied, restricted
-
     var title: String {
         switch self {
         case .notDetermined: "Calendar access not requested"
@@ -17,15 +16,23 @@ enum CalendarAccessState: Equatable {
     }
 }
 
-struct CalendarEventSummary: Identifiable, Equatable, Sendable {
+struct CalendarSource: Identifiable, Equatable {
+    let id: String
+    let title: String
+    let color: NSColor
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id && lhs.title == rhs.title }
+}
+
+struct CalendarEventSummary: Identifiable, Equatable {
     let id: String
     let title: String
     let startDate: Date
     let endDate: Date
+    let calendarID: String
     let calendarTitle: String
     let isAllDay: Bool
     let url: URL?
-
+    var hasLink: Bool { url != nil }
     var relativeStart: String {
         let minutes = Int(ceil(startDate.timeIntervalSinceNow / 60))
         if minutes <= 0 { return "Now" }
@@ -34,51 +41,54 @@ struct CalendarEventSummary: Identifiable, Equatable, Sendable {
         let hours = minutes / 60
         return hours == 1 ? "In 1 hour" : "In \(hours) hours"
     }
-
-    var hasLink: Bool { url != nil }
 }
 
-struct CalendarSnapshot: Sendable {
+struct CalendarSnapshot {
     let events: [CalendarEventSummary]
-    let calendarCount: Int
+    let calendars: [CalendarSource]
     let fetchedAt: Date
-
-    static func load() -> CalendarSnapshot {
-        // The store and its EKEvent objects stay on this background task.
-        // Only value summaries cross back to the main actor.
-        let store = EKEventStore()
-        let now = Date()
-        let end = Calendar.current.date(byAdding: .day, value: 7, to: now) ?? now.addingTimeInterval(7 * 86_400)
-        let calendars = store.calendars(for: .event)
-        let predicate = store.predicateForEvents(withStart: now, end: end, calendars: nil)
-        let events = store.events(matching: predicate)
-            .filter { $0.endDate > now && $0.startDate < end }
-            .sorted { $0.startDate < $1.startDate }
-            .prefix(5)
-            .map(CalendarEventSummary.init)
-        return CalendarSnapshot(events: events, calendarCount: calendars.count, fetchedAt: now)
-    }
 }
 
-private extension CalendarEventSummary {
-    init(event: EKEvent) {
-        self.init(
-            id: event.eventIdentifier ?? UUID().uuidString,
-            title: event.title.isEmpty ? "Untitled event" : event.title,
-            startDate: event.startDate,
-            endDate: event.endDate,
-            calendarTitle: event.calendar?.title ?? "Calendar",
-            isAllDay: event.isAllDay,
-            url: Self.webURL(event.url) ?? Self.firstURL(in: event.location) ?? Self.firstURL(in: event.notes)
-        )
-    }
+@MainActor
+protocol CalendarReading {
+    var accessState: CalendarAccessState { get }
+    func requestAccess() async throws -> Bool
+    func load(from start: Date, to end: Date, selectedIDs: Set<String>?) -> CalendarSnapshot
+}
 
-    static func webURL(_ url: URL?) -> URL? {
-        guard let url, let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else { return nil }
+@MainActor
+final class EventKitCalendarReader: CalendarReading {
+    private let store = EKEventStore()
+    var accessState: CalendarAccessState {
+        switch EKEventStore.authorizationStatus(for: .event) {
+        case .notDetermined: .notDetermined
+        case .writeOnly: .writeOnly
+        case .fullAccess: .fullAccess
+        case .denied: .denied
+        case .restricted: .restricted
+        @unknown default: .restricted
+        }
+    }
+    func requestAccess() async throws -> Bool { try await store.requestFullAccessToEvents() }
+    func load(from start: Date, to end: Date, selectedIDs: Set<String>?) -> CalendarSnapshot {
+        let sources = store.calendars(for: .event)
+        let included = sources.filter { selectedIDs?.contains($0.calendarIdentifier) ?? true }
+        let events = store.events(matching: store.predicateForEvents(withStart: start, end: end, calendars: included))
+            .filter { $0.endDate > start && $0.startDate < end }
+            .sorted { $0.startDate < $1.startDate }
+            .map { event in
+                CalendarEventSummary(id: event.eventIdentifier ?? "\(event.calendar.calendarIdentifier)-\(event.startDate.timeIntervalSince1970)-\(event.title ?? "")",
+                    title: event.title?.isEmpty == false ? event.title! : "Untitled event", startDate: event.startDate,
+                    endDate: event.endDate, calendarID: event.calendar.calendarIdentifier, calendarTitle: event.calendar.title,
+                    isAllDay: event.isAllDay, url: Self.webURL(event.url) ?? Self.firstURL(event.location) ?? Self.firstURL(event.notes))
+            }
+        return CalendarSnapshot(events: events, calendars: sources.map { CalendarSource(id: $0.calendarIdentifier, title: $0.title, color: $0.color) }, fetchedAt: Date())
+    }
+    private static func webURL(_ url: URL?) -> URL? {
+        guard let url, ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return nil }
         return url
     }
-
-    static func firstURL(in text: String?) -> URL? {
+    private static func firstURL(_ text: String?) -> URL? {
         guard let text else { return nil }
         for token in text.split(whereSeparator: { $0.isWhitespace }) {
             let candidate = token.trimmingCharacters(in: .punctuationCharacters)
@@ -86,4 +96,49 @@ private extension CalendarEventSummary {
         }
         return nil
     }
+}
+
+struct SieghartReminder: Identifiable, Codable, Equatable {
+    var id: UUID
+    var title: String
+    var dueDate: Date
+    var completed = false
+    var snoozedUntil: Date?
+    var effectiveDate: Date { snoozedUntil ?? dueDate }
+}
+
+@MainActor
+protocol ReminderNotifying {
+    func schedule(_ reminder: SieghartReminder, enabled: Bool, quietStart: Int, quietEnd: Int) async
+    func cancel(_ id: UUID)
+}
+
+@MainActor
+final class LocalReminderNotifier: ReminderNotifying {
+    private let center = UNUserNotificationCenter.current()
+    func schedule(_ reminder: SieghartReminder, enabled: Bool, quietStart: Int, quietEnd: Int) async {
+        cancel(reminder.id)
+        guard enabled, !reminder.completed else { return }
+        let now = Date()
+        guard let due = Self.scheduledDate(for: reminder.effectiveDate, now: now, quietStart: quietStart, quietEnd: quietEnd) else { return }
+        let settings = await center.notificationSettings()
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Sieghart reminder"
+        content.body = reminder.title
+        content.userInfo = ["reminderID": reminder.id.uuidString]
+        try? await center.add(UNNotificationRequest(identifier: reminder.id.uuidString, content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: max(1, due.timeIntervalSinceNow), repeats: false)))
+    }
+    static func scheduledDate(for due: Date, now: Date, quietStart: Int, quietEnd: Int, calendar: Calendar = .current) -> Date? {
+        guard due > now else { return nil }
+        guard quietStart != quietEnd, (0..<24).contains(quietStart), (0..<24).contains(quietEnd) else { return due }
+        let hour = calendar.component(.hour, from: due)
+        let quiet = quietStart < quietEnd ? (hour >= quietStart && hour < quietEnd) : (hour >= quietStart || hour < quietEnd)
+        guard quiet else { return due }
+        let targetDay = quietStart > quietEnd && hour >= quietStart ? calendar.date(byAdding: .day, value: 1, to: due) ?? due : due
+        return calendar.date(bySettingHour: quietEnd, minute: 0, second: 0, of: targetDay) ?? due
+    }
+    func cancel(_ id: UUID) { center.removePendingNotificationRequests(withIdentifiers: [id.uuidString]) }
+    func requestAccess() async -> Bool { (try? await center.requestAuthorization(options: [.alert, .badge, .sound])) ?? false }
 }

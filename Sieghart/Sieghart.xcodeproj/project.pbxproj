@@ -34,6 +34,7 @@
 		BDC7275C10AA24B5FA24089A /* CodexUsageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7D3E4E4D2F185C3C6D374A8 /* CodexUsageView.swift */; };
 		B292879B7DCF83172A593694 /* AudioViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD694E941C92BC152BA28F8F /* AudioViewModel.swift */; };
 		BD25A8FA7997DA9E2E7706F4 /* AudioControlsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD13711E0D298CD4D3268AD /* AudioControlsView.swift */; };
+		A50000000000000000000001 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000002 /* CalendarView.swift */; };
 		B34788CF9DC2F098FD22A23A /* CalendarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF4A33DC0972DB6D4CF81EC7 /* CalendarViewModel.swift */; };
 		BFD4F7F7047D6ED2C7F0454E /* ClipboardViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B315C4EF27981541133C59F0 /* ClipboardViewModel.swift */; };
 		BBF5D8490A7647054EE81463 /* ClipboardHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA661430D620193698B10304 /* ClipboardHistoryView.swift */; };
@@ -101,6 +102,7 @@
 		B7D3E4E4D2F185C3C6D374A8 /* CodexUsageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexUsageView.swift; sourceTree = "<group>"; };
 		BD694E941C92BC152BA28F8F /* AudioViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioViewModel.swift; sourceTree = "<group>"; };
 		BCD13711E0D298CD4D3268AD /* AudioControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioControlsView.swift; sourceTree = "<group>"; };
+		A50000000000000000000002 /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		BF4A33DC0972DB6D4CF81EC7 /* CalendarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarViewModel.swift; sourceTree = "<group>"; };
 		B315C4EF27981541133C59F0 /* ClipboardViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardViewModel.swift; sourceTree = "<group>"; };
 		BA661430D620193698B10304 /* ClipboardHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardHistoryView.swift; sourceTree = "<group>"; };
@@ -379,6 +381,7 @@
 			isa = PBXGroup;
 			children = (
 				B3CDF174BBBE3A5CACF1A4D7 /* ViewModels */,
+			A50000000000000000000003 /* Views */,
 			);
 			path = Calendar;
 			sourceTree = "<group>";
@@ -391,6 +394,7 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
+		A50000000000000000000003 /* Views */ = {isa = PBXGroup; children = (A50000000000000000000002 /* CalendarView.swift */,); path = Views; sourceTree = "<group>"; };
 		BA0804FC7CD2638552508B9F /* Clipboard */ = {
 			isa = PBXGroup;
 			children = (
@@ -851,6 +855,7 @@
 				B292879B7DCF83172A593694 /* AudioViewModel.swift in Sources */,
 				BD25A8FA7997DA9E2E7706F4 /* AudioControlsView.swift in Sources */,
 				B34788CF9DC2F098FD22A23A /* CalendarViewModel.swift in Sources */,
+				A50000000000000000000001 /* CalendarView.swift in Sources */,
 				BFD4F7F7047D6ED2C7F0454E /* ClipboardViewModel.swift in Sources */,
 				BBF5D8490A7647054EE81463 /* ClipboardHistoryView.swift in Sources */,
 				B6615DEBC383F82D71002A2D /* DisplayPowerViewModel.swift in Sources */,
