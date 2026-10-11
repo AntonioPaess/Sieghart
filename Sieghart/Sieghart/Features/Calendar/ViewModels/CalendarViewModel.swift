@@ -52,6 +52,7 @@ final class CalendarViewModel: ObservableObject {
     }
 
     var visibleReminders: [SieghartReminder] { reminders.filter { !$0.completed }.sorted { $0.effectiveDate < $1.effectiveDate } }
+    var upcomingEvents: [CalendarEventSummary] { upcomingEventsForAlerts }
     var accessButtonLabel: String {
         switch accessState {
         case .notDetermined, .writeOnly: "Connect calendar"
@@ -78,7 +79,7 @@ final class CalendarViewModel: ObservableObject {
         case .denied, .restricted: openCalendarSettings()
         case .notDetermined, .writeOnly:
             isRequestingAccess = true; status = "Waiting for Calendar permission..."
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp?.activate(ignoringOtherApps: true)
             Task {
                 do {
                     let granted = try await reader.requestAccess()
@@ -123,6 +124,14 @@ final class CalendarViewModel: ObservableObject {
     func openCalendarSettings() {
         let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars")!
         status = NSWorkspace.shared.open(url) ? "Check Calendar access in System Settings." : "Open System Settings → Privacy & Security → Calendars"
+    }
+    func openCalendarApp() {
+        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.iCal") else {
+            status = "Calendar app could not be found"; return
+        }
+        NSWorkspace.shared.openApplication(at: app, configuration: NSWorkspace.OpenConfiguration()) { _, error in
+            if let error { Task { @MainActor in self.status = "Could not open Calendar: \(error.localizedDescription)" } }
+        }
     }
     func addReminder(title: String, due: Date) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)

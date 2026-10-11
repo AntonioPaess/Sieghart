@@ -2,7 +2,8 @@ import AppKit
 import SwiftUI
 
 @MainActor private final class PreviewCalendar: CalendarReading {
-    let accessState: CalendarAccessState = .fullAccess
+    let accessState: CalendarAccessState
+    init(accessState: CalendarAccessState = .fullAccess) { self.accessState = accessState }
     func requestAccess() async throws -> Bool { true }
     func load(from start: Date, to end: Date, selectedIDs: Set<String>?) -> CalendarSnapshot {
         let events = [
@@ -39,7 +40,7 @@ private final class PreviewSensor: AccelerometerProviding {
         preferences.onboardingComplete = true
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
         let calendar = CalendarViewModel(reader: PreviewCalendar(), notifier: PreviewNotifier(), defaults: defaults, observesSystem: false)
-        calendar.prepare(); calendar.span = .day
+        calendar.prepare(); calendar.span = .month
         calendar.addReminder(title: "Prepare notes", due: Date().addingTimeInterval(7200))
         let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, calendar: calendar, managesWindows: false)
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false)
@@ -48,6 +49,11 @@ private final class PreviewSensor: AccelerometerProviding {
         notch.activation = activation; notch.codexUsage = codex; notch.aiUsage = usage
         notch.showCalendar()
         try render(NotchWidgetView(scrollable: false).environmentObject(notch).environmentObject(assistant).environmentObject(activation).environmentObject(preferences).environmentObject(codex).environmentObject(usage).padding(36).background(Color(white: 0.22)), name: "calendar-island-preview")
+        let permission = CalendarViewModel(reader: PreviewCalendar(accessState: .notDetermined), notifier: PreviewNotifier(), defaults: defaults, observesSystem: false)
+        try render(CalendarView(model: permission, compact: true, island: true).frame(width: 1000, height: 350).padding(36).background(Color.black), name: "calendar-permission-preview")
+        notch.showTools()
+        try render(NotchWidgetView(scrollable: false).environmentObject(notch).environmentObject(assistant).environmentObject(activation).environmentObject(preferences).environmentObject(codex).environmentObject(usage).padding(36).background(Color(white: 0.22)), name: "calendar-tools-preview")
+        try render(IslandLayoutEditor(preferences: preferences, onPreview: {}).frame(width: 850).padding(36).background(Color(white: 0.16)), name: "calendar-tools-editor-preview")
         try render(MenuBarView(initialPage: "Calendar").environmentObject(notch).environmentObject(assistant).environmentObject(activation).environmentObject(preferences), name: "calendar-menu-preview")
         let sensor = SensorViewModel(reader: PreviewSensor()), gestures = ImpactGestureCoordinator(assistant: assistant, notch: notch)
         try render(ContentView(initialSection: .calendar, scrollable: false).frame(width: 1050, height: 950).environmentObject(notch).environmentObject(assistant).environmentObject(activation).environmentObject(preferences).environmentObject(codex).environmentObject(usage).environmentObject(sensor).environmentObject(gestures), name: "calendar-app-preview")

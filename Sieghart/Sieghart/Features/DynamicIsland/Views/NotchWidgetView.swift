@@ -59,7 +59,7 @@ struct NotchWidgetView: View {
                 case .island: island
                 case .celebration: celebration
                 case .tools: tools
-                case .calendar: pageScroll { CalendarView(model: notch.calendar, compact: true) }
+                case .calendar: pageScroll { CalendarView(model: notch.calendar, compact: true, island: true) }
                 case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, showsTitle: false, listHeight: 180, dismiss: { notch.hide() })
                 case .system: pageScroll { SystemMonitorView(monitor: notch.monitor) }
                 case .keepAwake: pageScroll { KeepAwakeView(controller: notch.keepAwake) }
@@ -239,17 +239,28 @@ struct NotchWidgetView: View {
 
     private var tools: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 14), count: 5), spacing: 14) {
-            toolTile("Companion", subtitle: preferences.avatar.name, symbol: "face.smiling", avatar: preferences.avatar) { notch.show() }
-            toolTile("Audio", subtitle: "Apps & devices", symbol: "speaker.wave.2") { notch.showAudio() }
-            toolTile("AI agents", subtitle: "Limits & activity", symbol: "sparkles") { notch.showAILimits() }
-            toolTile("Timers", subtitle: "Three ways to time", symbol: "timer") { notch.showTimer() }
-            toolTile("Clipboard", subtitle: "Copies, kept nearby", symbol: "doc.on.clipboard") { notch.showClipboard() }
-            toolTile("Calendar", subtitle: "Events & reminders", symbol: "calendar") { notch.showCalendar() }
-            toolTile("Avatars", subtitle: "Find your companion", symbol: "person.crop.square") { notch.showAvatars() }
-            toolTile("System", subtitle: "Live readings", symbol: "cpu") { notch.showSystem() }
-            toolTile("Keep awake", subtitle: "On your terms", symbol: "cup.and.saucer") { notch.showKeepAwake() }
-            toolTile("Display & power", subtitle: "Screen and sleep", symbol: "sun.max") { notch.showDisplayPower() }
-            toolTile("Preferences", subtitle: "Your workspace", symbol: "gearshape") { notch.focusMainWindow() }
+            ForEach(preferences.toolActions) { action in
+                toolTile(action.rawValue, subtitle: action == .companion ? preferences.avatar.name : action.subtitle,
+                         symbol: action.symbol, avatar: action == .companion ? preferences.avatar : nil) {
+                    activateTool(action)
+                }
+            }
+        }
+    }
+
+    private func activateTool(_ action: IslandToolAction) {
+        switch action {
+        case .companion: notch.show()
+        case .audio: notch.showAudio()
+        case .ai: notch.showAILimits()
+        case .timer: notch.showTimer()
+        case .clipboard: notch.showClipboard()
+        case .calendar: notch.showCalendar()
+        case .avatars: notch.showAvatars()
+        case .system: notch.showSystem()
+        case .keepAwake: notch.showKeepAwake()
+        case .displayPower: notch.showDisplayPower()
+        case .preferences: notch.focusMainWindow()
         }
     }
 

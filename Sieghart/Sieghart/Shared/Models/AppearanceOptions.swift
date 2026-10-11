@@ -47,3 +47,43 @@ enum IslandRailPreset: String, CaseIterable, Identifiable {
         }
     }
 }
+
+enum IslandToolAction: String, CaseIterable, Identifiable {
+    case companion = "Companion", audio = "Audio", ai = "AI agents", timer = "Timers"
+    case clipboard = "Clipboard", calendar = "Calendar", avatars = "Avatars", system = "System"
+    case keepAwake = "Keep awake", displayPower = "Display & power", preferences = "Preferences"
+
+    var id: String { rawValue }
+    static let defaultSelection: [Self] = [.companion, .audio, .ai, .timer, .clipboard,
+                                            .calendar, .avatars, .system, .keepAwake, .displayPower]
+    var symbol: String {
+        switch self {
+        case .companion: "face.smiling"
+        case .audio: "speaker.wave.2"
+        case .ai: "sparkles"
+        case .timer: "timer"
+        case .clipboard: "doc.on.clipboard"
+        case .calendar: "calendar"
+        case .avatars: "person.crop.square"
+        case .system: "cpu"
+        case .keepAwake: "cup.and.saucer"
+        case .displayPower: "sun.max"
+        case .preferences: "gearshape"
+        }
+    }
+    var subtitle: String {
+        switch self {
+        case .companion: "Your companion"
+        case .audio: "Apps & devices"
+        case .ai: "Limits & activity"
+        case .timer: "Three ways to time"
+        case .clipboard: "Copies, kept nearby"
+        case .calendar: "Events & reminders"
+        case .avatars: "Find your companion"
+        case .system: "Live readings"
+        case .keepAwake: "On your terms"
+        case .displayPower: "Screen and sleep"
+        case .preferences: "Your workspace"
+        }
+    }
+}

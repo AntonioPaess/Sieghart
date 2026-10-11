@@ -7,6 +7,8 @@ struct IslandLayoutEditor: View {
     @ObservedObject var preferences: CompanionPreferences
     var onPreview: () -> Void
     @Environment(\.islandPreview) private var staticPreview
+    @State private var editingTool: Int?
+    @State private var dropTool: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
@@ -43,6 +45,8 @@ struct IslandLayoutEditor: View {
             Text("Click + to add a button. Drag buttons between the positions around the island. Click a button to change or remove it.")
                 .font(.callout).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
 
+            toolEditor
+
             VStack(alignment: .leading, spacing: 16) {
                 Text("Size").font(.headline)
                 HStack(spacing: 12) {
@@ -74,6 +78,71 @@ struct IslandLayoutEditor: View {
             Image(systemName: "chevron.up.chevron.down").font(.caption2.weight(.semibold))
         }.padding(.horizontal, 14).frame(height: 34)
             .background(CompanionStyle.edge.opacity(0.07), in: RoundedRectangle(cornerRadius: 9))
+    }
+
+    private var toolEditor: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Your tools").font(.headline)
+                    Text("Choose the ten tiles shown in the island menu. Click to replace; drag to rearrange.")
+                        .font(.caption).foregroundStyle(CompanionStyle.muted)
+                }
+                Spacer()
+                Button("Reset tools") { preferences.resetTools() }
+                    .buttonStyle(.plain).foregroundStyle(CompanionStyle.accentInk)
+            }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
+                ForEach(0..<10) { slot in toolEditorSlot(slot) }
+            }
+        }.companionCard()
+    }
+
+    @ViewBuilder private func toolEditorSlot(_ slot: Int) -> some View {
+        let action = preferences.toolActions[slot]
+        let tile = Button { editingTool = slot } label: {
+            VStack(spacing: 7) {
+                Image(systemName: action.symbol).font(.system(size: 20)).frame(height: 24)
+                Text(action.rawValue).font(.caption.weight(.medium)).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            .foregroundStyle(CompanionStyle.ink)
+            .frame(maxWidth: .infinity).frame(height: 70)
+            .background(CompanionStyle.edge.opacity(0.07), in: RoundedRectangle(cornerRadius: 12))
+            .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(dropTool == slot ? CompanionStyle.accent : .clear, lineWidth: 2) }
+        }
+        .buttonStyle(.plain).focusEffectDisabled()
+        .accessibilityLabel("Tool \(slot + 1): \(action.rawValue)")
+        .popover(isPresented: Binding(get: { editingTool == slot }, set: { if !$0 { editingTool = nil } })) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Tool \(slot + 1)").font(.headline).padding(8)
+                ForEach(IslandToolAction.allCases) { option in
+                    Button {
+                        preferences.setTool(option, at: slot)
+                        editingTool = nil
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: option.symbol).frame(width: 20)
+                            Text(option.rawValue)
+                            Spacer()
+                            if option == action { Image(systemName: "checkmark") }
+                        }.padding(8).contentShape(Rectangle())
+                    }.buttonStyle(.plain).focusEffectDisabled()
+                }
+            }.padding(10).frame(width: 220)
+        }
+        if staticPreview { tile }
+        else {
+            tile.draggable("sieghart.tool.\(slot)")
+                .dropDestination(for: String.self) { items, _ in
+                    guard let value = items.first, items.count == 1, value.hasPrefix("sieghart.tool."),
+                          let source = Int(value.dropFirst("sieghart.tool.".count)), (0..<10).contains(source) else { return false }
+                    preferences.moveTool(from: source, to: slot)
+                    dropTool = nil
+                    return true
+                } isTargeted: { targeted in
+                    dropTool = targeted ? slot : nil
+                }
+        }
     }
 
     private var canvas: some View {

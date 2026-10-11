@@ -4,6 +4,26 @@ import SwiftUI
 @MainActor
 final class CompanionPreferences: ObservableObject {
     @Published private(set) var railActions: [IslandRailAction]
+    @Published private(set) var toolActions: [IslandToolAction]
+    func setTool(_ action: IslandToolAction, at slot: Int) {
+        guard toolActions.indices.contains(slot) else { return }
+        var next = toolActions
+        if let other = next.firstIndex(of: action), other != slot { next.swapAt(other, slot) }
+        else { next[slot] = action }
+        toolActions = next
+        defaults.set(next.map(\.rawValue), forKey: "island.tools")
+    }
+    func resetTools() {
+        toolActions = IslandToolAction.defaultSelection
+        defaults.set(toolActions.map(\.rawValue), forKey: "island.tools")
+    }
+    func moveTool(from source: Int, to destination: Int) {
+        guard toolActions.indices.contains(source), toolActions.indices.contains(destination), source != destination else { return }
+        var next = toolActions
+        next.swapAt(source, destination)
+        toolActions = next
+        defaults.set(next.map(\.rawValue), forKey: "island.tools")
+    }
     func setRail(_ action: IslandRailAction, at slot: Int) {
         guard railActions.indices.contains(slot) else { return }
         var next = railActions
@@ -36,6 +56,8 @@ final class CompanionPreferences: ObservableObject {
         self.defaults = defaults
         let savedRails = defaults.stringArray(forKey: "island.rails")?.compactMap(IslandRailAction.init(rawValue:))
         railActions = savedRails?.count == 6 ? savedRails! : IslandRailPreset.essentials.actions
+        let savedTools = defaults.stringArray(forKey: "island.tools")?.compactMap(IslandToolAction.init(rawValue:))
+        toolActions = savedTools?.count == 10 && Set(savedTools!).count == 10 ? savedTools! : IslandToolAction.defaultSelection
         appearance = defaults.string(forKey: "appearance.theme").flatMap(AppAppearance.init(rawValue:)) ?? .system
         windowGlass = defaults.object(forKey: "appearance.windowGlass") as? Bool ?? false
         islandGlass = defaults.object(forKey: "appearance.islandGlass") as? Bool ?? false

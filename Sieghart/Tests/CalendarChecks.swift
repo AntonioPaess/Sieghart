@@ -63,6 +63,10 @@ import Foundation
         precondition(LocalReminderNotifier.scheduledDate(for: night, now: night.addingTimeInterval(-60), quietStart: 8, quietEnd: 8, calendar: calendar) == night)
         reader.accessState = .denied; reopened.prepare()
         precondition(reopened.events.isEmpty && reopened.nextEvent == nil)
+        reader.accessState = .notDetermined; reopened.prepare()
+        reopened.requestAccessAndRefresh()
+        for _ in 0..<20 where reopened.accessState != .fullAccess { await Task.yield() }
+        precondition(reopened.accessState == .fullAccess && reopened.events.count == 1)
         print("Calendar checks passed")
     }
 }
