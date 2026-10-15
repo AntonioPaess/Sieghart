@@ -45,6 +45,7 @@ struct SieghartApp: App {
         _aiUsage = StateObject(wrappedValue: aiUsage)
         appDelegate.activation = activation
         appDelegate.clipboard = notch.clipboard
+        appDelegate.calendar = notch.calendar
         appDelegate.onLaunch = {
             notch.startUtilities()
             if preferences.onboardingComplete && preferences.launchGreeting { notch.showWelcome() }

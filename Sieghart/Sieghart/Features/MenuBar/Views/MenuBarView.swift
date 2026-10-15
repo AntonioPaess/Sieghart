@@ -56,6 +56,7 @@ struct MenuBarView: View {
                             Button(activation.isVoiceBusy ? "Cancel voice" : "Speak a command") { activation.toggleListening() }.buttonStyle(CompanionButtonStyle(compact: true))
                         }
                     }.frame(maxWidth: .infinity, alignment: .topLeading)
+                case .calendar: CalendarView(model: notch.calendar, compact: true)
                 case .timers: TimerToolsView(compact: true, onStart: { notch.showIsland() })
                 case .ai:
                     AIUsageSummary(compact: true)

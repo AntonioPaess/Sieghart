@@ -1,6 +1,6 @@
 # Sieghart roadmap
 
-Updated October 8, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 11, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 ## Status and release gates
 
@@ -8,9 +8,9 @@ Updated October 8, 2026. This is the current execution plan; older Obsidian chec
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
 - **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
 - **Sprint 4:** complete and accepted October 8, 2026, on the user’s “tudo funcionando” report after `f77ac65`; utilities, voice/search/AirPods/motion follow-ups and Safari/app selection acceptance are closed on that report. [Closeout](Sieghart/Design/sprint-4-closeout.md).
-- **Sprint 5:** next planned implementation sprint, ready to begin — agenda/reminders, notifications, selected-folder downloads, shelf, clipboard/file helpers, capture and real-event companion reactions. [Scope and exit criteria](Sieghart/Design/sprint-5-plan.md).
+- **Sprint 5:** in progress on `sprint-5` — Calendar/day-week-month, calendar choice, next event, meeting links and local reminders/notification preferences and native alert actions are implemented as a first slice. The Calendar permission bundle metadata was repaired after user feedback; the island now opens Calendar with month plus agenda, and Your tools has ten configurable tiles. CLI signed build and offscreen previews pass, while physical acceptance remains pending. Selected-folder downloads, shelf, file helpers, capture and real-event companion reactions follow. [Scope and exit criteria](Sieghart/Design/sprint-5-plan.md).
 - **Mac acceptance:** Sprint 3 and Sprint 4 are accepted on the user’s reports, not assistant hardware runs. SG-001 through SG-008 and the Safari follow-up are closed; reopen a specific issue for a reported regression. Keep Sieghart/Xcode closed during assistant verification; CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed.
-- **Calendar:** hidden at the user's request; repair and reintroduction in S5, not a current release gate.
+- **Calendar:** reintroduced in the first S5 implementation slice; [checkpoint and verification limits](Sieghart/Design/sprint-5-calendar-checkpoint.md).
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
 
 ## Sprint 4 — Complete and accepted, October 8, 2026
@@ -37,7 +37,7 @@ The user accepted the previous slice and editor on October 8. The remaining requ
 - [x] Utility-linked companion reactions, center greeting, presentation-size interruption continuity, configurable motion and reduced-motion fallback; twelve isolated groups and offscreen production previews.
 - [x] New utility/greeting acceptance closed on the October 8 “tudo funcionando” report after the final audio follow-up; no assistant hardware run claimed.
 
-Numeric temperatures/fan control, XDR desktop boost, per-process network/speed testing and SMART remain explicit extended hardware backlog, not claimed delivered. Sprint 3 stays closed. Upload/email, connected chats, task agents and optional GitHub follow the core utility release gate.
+Numeric temperatures/fan control, XDR desktop boost, per-process network/speed testing and SMART remain explicit extended hardware backlog, not claimed delivered. Sprint 3 stays closed. Upload/email, connected chats, specialist task agents and optional GitHub/MCP follow the core utility release gate. Public GitHub release checks in the Vorssaint reference are distinct from connected GitHub actions. The future user-selected primary avatar coordinates agenda, well-being, email, finance and knowledge specialists; this sprint supplies the local agenda event base.
 
 ### October 8 — Voice/search regressions and feature organization
 

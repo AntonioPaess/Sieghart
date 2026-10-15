@@ -1,11 +1,12 @@
 import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
-    case overview = "Overview", focus = "Timers", activation = "Activation", appearance = "Appearance", dynamicIsland = "Dynamic Island", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard", system = "System", keepAwake = "Keep awake", displayPower = "Display & power"
+    case overview = "Overview", calendar = "Calendar", focus = "Timers", activation = "Activation", appearance = "Appearance", dynamicIsland = "Dynamic Island", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard", system = "System", keepAwake = "Keep awake", displayPower = "Display & power"
     var id: String { rawValue }
     var symbol: String {
         switch self {
         case .overview: "square.grid.2x2"
+        case .calendar: "calendar"
         case .focus: "timer"
         case .activation: "keyboard"
         case .appearance: "slider.horizontal.3"

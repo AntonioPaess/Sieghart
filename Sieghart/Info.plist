@@ -5,5 +5,7 @@
     <string>Sieghart reconnects devices you chose to disconnect during sleep.</string>
     <key>NSAudioCaptureUsageDescription</key>
     <string>Sieghart adjusts audio from apps you choose. Audio is processed locally and never saved.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Sieghart shows your upcoming events in the calendar and Dynamic Island. Events stay on this Mac.</string>
     <key>LSUIElement</key><true/>
 </dict></plist>

@@ -58,6 +58,9 @@ struct ContentView: View {
             }
             switch viewModel.section {
             case .overview: overview
+            case .calendar:
+                heading("Your day, at a glance.", subtitle: "Events and reminders from the calendars you choose.")
+                CalendarView(model: notch.calendar).companionCard()
             case .focus: focusSettings
             case .activation: activationSettings
             case .appearance: appearanceSettings
