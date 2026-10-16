@@ -15,15 +15,15 @@ struct CompanionOnboardingView: View {
         self.scrollable = scrollable; self.clipboard = clipboard; self.arrivalPreviewTime = arrivalPreviewTime; self.onFinish = onFinish; self.prepareVoice = prepareVoice
         _viewModel = StateObject(wrappedValue: OnboardingViewModel(initialStep: initialStep))
     }
-    private var chosen: CompanionAvatar { viewModel.selection ?? preferences.avatar }
+    private var chosen: CompanionAvatar { .sig }
     private var moves: Bool { preferences.characterMotion && !preferences.usesReducedMotion && !reducedMotion }
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(spacing: 16) {
                 if viewModel.step > 0 { CompanionCharacter(size: 48, avatar: chosen, animates: moves) }
                 VStack(alignment: .leading, spacing: 5) {
-                    Text(viewModel.step == 0 ? "A little companion. A quieter day." : viewModel.step == 1 ? "Find your companion." : "Bring your tools along.").font(.largeTitle.weight(.semibold))
-                    Text(viewModel.step == 0 ? "Meet Sieghart. A familiar face for your time and your tools." : viewModel.step == 1 ? "Six personalities. The same useful companion." : "Choose what stays nearby. You can change this anytime.")
+                    Text(viewModel.step == 0 ? "A little companion. A quieter day." : viewModel.step == 1 ? "Meet your team." : "Bring your tools along.").font(.largeTitle.weight(.semibold))
+                    Text(viewModel.step == 0 ? "Meet Sieghart. A familiar face for your time and your tools." : viewModel.step == 1 ? "Sig leads. Five specialists bring their own personality." : "Choose what stays nearby. You can change this anytime.")
                         .foregroundStyle(CompanionStyle.muted)
                 }
             }
@@ -37,7 +37,7 @@ struct CompanionOnboardingView: View {
                 HStack(spacing: 6) { ForEach(0..<3) { index in Capsule().fill(viewModel.step == index ? CompanionStyle.accent : CompanionStyle.edge.opacity(0.15)).frame(width: viewModel.step == index ? 20 : 6, height: 6) } }
                     .accessibilityLabel("Step \(viewModel.step + 1) of 3")
                 Spacer()
-                Button(viewModel.step == 0 ? "Meet the companions" : viewModel.step == 1 ? "Continue with \(chosen.name)" : "Make yourself at home") {
+                Button(viewModel.step == 0 ? "Meet the companions" : viewModel.step == 1 ? "Continue with Sig" : "Make yourself at home") {
                     if viewModel.step < 2 { viewModel.step += 1 }
                     else {
                         viewModel.complete(preferences: preferences, usage: usage, codex: codex, clipboard: clipboard)
@@ -56,18 +56,16 @@ struct CompanionOnboardingView: View {
         VStack(alignment: .leading, spacing: 18) {
             if viewModel.step == 0 {
                 VStack(spacing: 12) {
-                    CompanionArrivalView(avatar: chosen, animates: moves, previewElapsed: arrivalPreviewTime)
+                    CompanionTeamArrival(animates: moves, previewTime: arrivalPreviewTime).frame(height: 300)
                     Text("Ready when you are.").font(.title2.weight(.semibold))
                     Text("Keep a timer nearby, find something you copied, or speak a command. Your companion stays with you — without taking over your day.")
                         .font(.callout).foregroundStyle(CompanionStyle.muted).multilineTextAlignment(.center).frame(maxWidth: 470)
-                    HStack(spacing: 14) { ForEach(CompanionAvatar.allCases) { avatar in CompanionCharacter(size: 34, avatar: avatar, animates: moves) } }
-                        .padding(.top, 16).accessibilityHidden(true)
-                    Text("Six companions. Yours to choose.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    Text("Sig is your main companion. Meet Rita, Ada, Gantt, Elinor and Toni.").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }.frame(maxWidth: .infinity).padding(.vertical, 22).modifier(WorkspaceSurface(radius: 24))
             } else if viewModel.step == 1 {
-                CompanionAvatarPicker(selection: Binding(get: { chosen }, set: { viewModel.selection = $0 }), animates: moves)
+                CompanionTeamGallery(animates: moves)
                 Text(chosen.detail).font(.callout).foregroundStyle(CompanionStyle.muted)
-                Text("Your choice appears in the menu bar, island, focus sessions and voice feedback. Change it anytime in Appearance.")
+                Text("Tap any companion to explore their movements. Sig stays with you in the island, voice and focus sessions.")
                     .font(.caption).foregroundStyle(CompanionStyle.muted)
             } else {
                 VStack(alignment: .leading, spacing: 14) {

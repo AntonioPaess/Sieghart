@@ -1,0 +1,67 @@
+{
+  "source_repository": "Louis-CFM/coucou",
+  "commit": "1dc314f632ff646b44191dbd4e89b042e07b3670",
+  "greeting_unchanged_from_v4": true,
+  "files_read": [
+    {
+      "file": "AppState.swift",
+      "sha256": "2b02198620fb8c2aa865194ba883931415b82e8c5827dddfbba6965e5f54cae2",
+      "line_count": 896
+    },
+    {
+      "file": "BotCanvasView.swift",
+      "sha256": "f481c350509ec23dfd820834ebf97720be7a7cda79344ae05cc59e52c3484b28",
+      "line_count": 315
+    },
+    {
+      "file": "BotEngine.swift",
+      "sha256": "6c1520769d7cb85ac324882d5fe0e710a8637732e9b37fef0ef96e084e7bca3a",
+      "line_count": 1868
+    },
+    {
+      "file": "DesktopMochi.swift",
+      "sha256": "92e298c30d42183d3a2bd761259f110f58e3313184c6d815ba450855eb413aa7",
+      "line_count": 769
+    },
+    {
+      "file": "FileDropView.swift",
+      "sha256": "cc970bdb59e1464d5b52179bdddba492849954971bbc74030ceb3203fd08bfef",
+      "line_count": 124
+    },
+    {
+      "file": "GreetingCanvasView.swift",
+      "sha256": "e2f75e5abbab5a14e81d9c186f5c54b8e79d83c8496a86304d9d786f0e426073",
+      "line_count": 689
+    },
+    {
+      "file": "IslandStateMachine.swift",
+      "sha256": "34cfc2813af46afb46818f5212bba4f64b4e27e9f61d8ad078a5ebfe830ccb32",
+      "line_count": 247
+    },
+    {
+      "file": "IslandTypes.swift",
+      "sha256": "40d048f9aeddf35609d6de5394e8f6967cb7619b8aa66fdb1d200aeeb85ad519",
+      "line_count": 251
+    },
+    {
+      "file": "MochiActivityState.swift",
+      "sha256": "fcb4c5fe88238ac8ee09df00b399dd8f45bda511faf745a59105cd2068d7e162",
+      "line_count": 69
+    },
+    {
+      "file": "UploadCanvasView.swift",
+      "sha256": "583ad4ae16ee82075cd3e90aea912f93c1de3d31244e15a364dde3743c6be8e2",
+      "line_count": 582
+    },
+    {
+      "file": "UploadSequenceEngine.swift",
+      "sha256": "a05c215f579ea0adc262c12eceec938dde35861ad59ea6df716ca060c96658e3",
+      "line_count": 437
+    },
+    {
+      "file": "VoiceIslandView.swift",
+      "sha256": "ce9fee93575b5e3f7a29c067f528c174e205935b5071c4933a0030134e883a17",
+      "line_count": 90
+    }
+  ]
+}

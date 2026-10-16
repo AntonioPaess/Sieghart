@@ -3,6 +3,7 @@ import SwiftUI
 enum AppSection: String, CaseIterable, Identifiable {
     case overview = "Overview", calendar = "Calendar", focus = "Timers", activation = "Activation", appearance = "Appearance", dynamicIsland = "Dynamic Island", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard", system = "System", keepAwake = "Keep awake", displayPower = "Display & power"
     var id: String { rawValue }
+    case files = "Files", capture = "Capture", agentRoom = "Ada’s room"
     var symbol: String {
         switch self {
         case .overview: "square.grid.2x2"
@@ -12,11 +13,14 @@ enum AppSection: String, CaseIterable, Identifiable {
         case .appearance: "slider.horizontal.3"
         case .dynamicIsland: "rectangle.topthird.inset.filled"
         case .aiLimits: "chart.bar.xaxis"
+        case .agentRoom: "bubble.left.and.bubble.right"
         case .audio: "speaker.wave.2"
         case .system: "cpu"
         case .keepAwake: "cup.and.saucer"
         case .displayPower: "sun.max"
         case .clipboard: "doc.on.clipboard"
+        case .files: "tray"
+        case .capture: "viewfinder"
         }
     }
 }

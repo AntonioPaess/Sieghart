@@ -13,7 +13,7 @@ private final class NoEditorSensor: AccelerometerProviding {
         let suite = "Sieghart.IslandEditorPreview.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let preferences = CompanionPreferences(defaults: defaults)
-        preferences.onboardingComplete = true; preferences.avatar = .paperPal; preferences.characterMotion = false
+        preferences.onboardingComplete = true; preferences.characterMotion = false
         preferences.setRail(.none, at: 2); preferences.setRail(.none, at: 5)
         let assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
         let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false)

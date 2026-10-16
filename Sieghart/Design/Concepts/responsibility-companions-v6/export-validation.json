@@ -1,0 +1,148 @@
+{
+  "verified_at": "2026-10-11",
+  "videos": [
+    {
+      "file": "onboarding-widget-60fps.mp4",
+      "width": 1280,
+      "height": 960,
+      "r_frame_rate": "60/1",
+      "duration": "30.000000",
+      "nb_frames": "1800",
+      "sha256": "444b7ac5df20635a5c93fad01c9cd4a1062d410737a68cd03c54ce1817a1177a"
+    },
+    {
+      "file": "entrada-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "8.200000",
+      "nb_frames": "492",
+      "sha256": "8794f5ef0e3ba70de82db456f05faaf8205915bf3117c53f3cf1f3e2424e533e"
+    },
+    {
+      "file": "vida-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "25.500000",
+      "nb_frames": "1530",
+      "sha256": "736bb612ad4087d92c104b0f2d32c171739ba259b406119963d38408da8a228d"
+    },
+    {
+      "file": "interacao-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "9.300000",
+      "nb_frames": "558",
+      "sha256": "ec45aaa62e85031ac1e688ee8811b291dab7a41adb319d95a6aeb00f1b5a5eeb"
+    },
+    {
+      "file": "agentes-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "31.000000",
+      "nb_frames": "1860",
+      "sha256": "85ae2233aecc12cc773286f9235e9a553cba030b3a22dfaf44dd7ec7920d6245"
+    },
+    {
+      "file": "emocoes-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "18.000000",
+      "nb_frames": "1080",
+      "sha256": "b3d465c7734f8a041f13c4f7df2002fed66489f99af2bed0df73705eea936a7a"
+    },
+    {
+      "file": "voz-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "20.000000",
+      "nb_frames": "1200",
+      "sha256": "e3b4147a9597be041485368ea211142f6783921cc75adf94422958a217f778a8"
+    },
+    {
+      "file": "musica-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360",
+      "sha256": "0c1c2e796e18574b986eb3eb6e055a1e13f978cdc619a258ffb9a2ccd4b1d40a"
+    },
+    {
+      "file": "arquivos-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "25.000000",
+      "nb_frames": "1500",
+      "sha256": "e2702e16c067302c49d6ab29c28446ae1108469277f5a1f3cadae872f3efc32e"
+    },
+    {
+      "file": "acessorios-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "8.000000",
+      "nb_frames": "480",
+      "sha256": "38059a8561533a6ab6c6c7ccba634b9ec2cc1111ede16e56c41f9c2d94169212"
+    },
+    {
+      "file": "transicoes-60fps.mp4",
+      "width": 1280,
+      "height": 1040,
+      "r_frame_rate": "60/1",
+      "duration": "12.000000",
+      "nb_frames": "720",
+      "sha256": "56e7640ee34f1703296257661c2ec52121c184e02e31507cf7a24f2208190583"
+    }
+  ],
+  "motion_controls": 49,
+  "gallery_javascript_syntax": "passed",
+  "local_assets": "passed",
+  "sig_fixed_primary": true,
+  "sleep_body_motion": [
+    {
+      "avatar": "Sig",
+      "mean_body_pixel_change": 4.985,
+      "fraction_body_pixels_changed": 0.1871
+    },
+    {
+      "avatar": "Rita",
+      "mean_body_pixel_change": 2.211,
+      "fraction_body_pixels_changed": 0.0642
+    },
+    {
+      "avatar": "Ada",
+      "mean_body_pixel_change": 2.093,
+      "fraction_body_pixels_changed": 0.0563
+    },
+    {
+      "avatar": "Gantt",
+      "mean_body_pixel_change": 5.016,
+      "fraction_body_pixels_changed": 0.1286
+    },
+    {
+      "avatar": "Elinor",
+      "mean_body_pixel_change": 12.003,
+      "fraction_body_pixels_changed": 0.2382
+    },
+    {
+      "avatar": "Toni",
+      "mean_body_pixel_change": 5.885,
+      "fraction_body_pixels_changed": 0.1464
+    }
+  ],
+  "video_frames_visually_inspected": [
+    "onboarding-widget",
+    "agents working",
+    "dizzy",
+    "love"
+  ],
+  "browser_ui_tested": false,
+  "production_app_modified_by_this_concept_task": false
+}

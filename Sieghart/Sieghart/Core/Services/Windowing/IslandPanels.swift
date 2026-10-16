@@ -14,7 +14,7 @@ final class HoverZonePanel: NSPanel {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect { frameRect }
 }
 
-final class HoverZoneView: NSView {
+final class HoverZoneView: FileDropTargetView {
     var onEnter: (() -> Void)?
     var onExit: (() -> Void)?
     var onClick: (() -> Void)?

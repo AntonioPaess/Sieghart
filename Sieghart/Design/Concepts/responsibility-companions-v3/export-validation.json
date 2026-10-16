@@ -1,0 +1,69 @@
+{
+  "videos": [
+    {
+      "file": "all-states-3d-60fps.mp4",
+      "width": 1668,
+      "height": 1520,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "sig-all-states-3d.mp4",
+      "width": 480,
+      "height": 540,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "rita-all-states-3d.mp4",
+      "width": 480,
+      "height": 540,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "ada-all-states-3d.mp4",
+      "width": 480,
+      "height": 540,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "gantt-all-states-3d.mp4",
+      "width": 480,
+      "height": 540,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "elinor-all-states-3d.mp4",
+      "width": 480,
+      "height": 540,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "toni-all-states-3d.mp4",
+      "width": 480,
+      "height": 540,
+      "r_frame_rate": "60/1",
+      "duration": "41.000000",
+      "nb_frames": "2460"
+    },
+    {
+      "file": "first-opening-3d.mp4",
+      "width": 1668,
+      "height": 1520,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    }
+  ],
+  "state_images": 17
+}

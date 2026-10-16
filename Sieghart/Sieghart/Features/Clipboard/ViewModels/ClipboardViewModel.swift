@@ -171,6 +171,13 @@ import Darwin
         guard monitorsSystem else { return }
         if let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier != ProcessInfo.processInfo.processIdentifier { pasteTarget = front }
     }
+    func pasteCurrentPlainText(dismiss: () -> Void) async {
+        guard monitorsSystem, let target = pasteTarget, !target.isTerminated else {
+            status = "Choose a destination app, then open Clipboard from the menu or island."; return
+        }
+        do { status = try await PlainTextPasteService().paste(to: target.processIdentifier, dismiss: dismiss) }
+        catch { status = error.localizedDescription }
+    }
     func copy(_ item: ClipboardEntry) async -> Bool {
         guard !copying else { return false }
         copying = true; defer { copying = false }

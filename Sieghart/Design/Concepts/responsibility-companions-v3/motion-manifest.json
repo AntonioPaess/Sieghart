@@ -1,0 +1,148 @@
+{
+  "version": 3,
+  "status": "visual_concept_only",
+  "render": "procedural_3d",
+  "production_app_modified": false,
+  "master": "all-states-3d-60fps.mp4",
+  "fps": 60,
+  "width": 1668,
+  "height": 1520,
+  "duration_seconds": 41,
+  "frame_count": 2460,
+  "states": [
+    {
+      "state": "hello",
+      "start_seconds": 0,
+      "duration_seconds": 4,
+      "snapshot": "00-state.png"
+    },
+    {
+      "state": "idle",
+      "start_seconds": 4,
+      "duration_seconds": 2,
+      "snapshot": "01-state.png"
+    },
+    {
+      "state": "look",
+      "start_seconds": 6,
+      "duration_seconds": 2,
+      "snapshot": "02-state.png"
+    },
+    {
+      "state": "stroll",
+      "start_seconds": 8,
+      "duration_seconds": 2,
+      "snapshot": "03-state.png"
+    },
+    {
+      "state": "preparing",
+      "start_seconds": 10,
+      "duration_seconds": 2,
+      "snapshot": "04-state.png"
+    },
+    {
+      "state": "listening",
+      "start_seconds": 12,
+      "duration_seconds": 2,
+      "snapshot": "05-state.png"
+    },
+    {
+      "state": "thinking",
+      "start_seconds": 14,
+      "duration_seconds": 3,
+      "snapshot": "06-state.png"
+    },
+    {
+      "state": "working",
+      "start_seconds": 17,
+      "duration_seconds": 4,
+      "snapshot": "07-state.png"
+    },
+    {
+      "state": "speaking",
+      "start_seconds": 21,
+      "duration_seconds": 2,
+      "snapshot": "08-state.png"
+    },
+    {
+      "state": "understood",
+      "start_seconds": 23,
+      "duration_seconds": 2,
+      "snapshot": "09-state.png"
+    },
+    {
+      "state": "happy",
+      "start_seconds": 25,
+      "duration_seconds": 2,
+      "snapshot": "10-state.png"
+    },
+    {
+      "state": "celebrating",
+      "start_seconds": 27,
+      "duration_seconds": 3,
+      "snapshot": "11-state.png"
+    },
+    {
+      "state": "annoyed",
+      "start_seconds": 30,
+      "duration_seconds": 2,
+      "snapshot": "12-state.png"
+    },
+    {
+      "state": "startled",
+      "start_seconds": 32,
+      "duration_seconds": 1.5,
+      "snapshot": "13-state.png"
+    },
+    {
+      "state": "failure",
+      "start_seconds": 33.5,
+      "duration_seconds": 2,
+      "snapshot": "14-state.png"
+    },
+    {
+      "state": "sleeping",
+      "start_seconds": 35.5,
+      "duration_seconds": 3,
+      "snapshot": "15-state.png"
+    },
+    {
+      "state": "waking",
+      "start_seconds": 38.5,
+      "duration_seconds": 2.5,
+      "snapshot": "16-state.png"
+    }
+  ],
+  "characters": [
+    {
+      "name": "Sig",
+      "role": "coordenação",
+      "motion": "encaminhar sinais de trabalho"
+    },
+    {
+      "name": "Rita",
+      "role": "saúde e pausas",
+      "motion": "respiração e pulso do coração"
+    },
+    {
+      "name": "Ada",
+      "role": "código e GitHub",
+      "motion": "linhas de código e salto de conclusão"
+    },
+    {
+      "name": "Gantt",
+      "role": "agenda e rotina",
+      "motion": "movimento da página e organização de compromissos"
+    },
+    {
+      "name": "Elinor",
+      "role": "finanças e recursos",
+      "motion": "inspeção pelo monóculo e gráfico"
+    },
+    {
+      "name": "Toni",
+      "role": "comunicação",
+      "motion": "dobra viva e mensagem de papel"
+    }
+  ]
+}

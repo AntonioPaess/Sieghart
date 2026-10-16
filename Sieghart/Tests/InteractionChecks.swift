@@ -137,7 +137,7 @@ struct InteractionChecks {
         for avatar in CompanionAvatar.allCases {
             guard let icon = CompanionArtwork.menuBarImage(for: avatar) else { fatalError("Missing vector menu image") }
             precondition(icon.size == NSSize(width: 22, height: 22))
-            precondition(icon.isTemplate == (avatar == .minimalSpirit))
+            precondition(!icon.isTemplate)
             for mood: CompanionMood in [.idle, .happy, .annoyed, .asleep, .waking, .startled, .understood, .celebrating] {
                 let still = CompanionMotion.sample(time: 0, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
                 let later = CompanionMotion.sample(time: 100, size: 24, avatar: avatar, mood: mood, listening: true, strolling: true, animates: false)
@@ -151,8 +151,8 @@ struct InteractionChecks {
                 precondition(moving.eyeOpen.isFinite && moving.scaleX > 0 && moving.scaleY > 0)
             }
         }
-        let blinkClosed = CompanionMotion.sample(time: 0.14, size: 42, avatar: .crtBuddy, mood: .idle, listening: false, strolling: false, animates: true)
-        let blinkOpen = CompanionMotion.sample(time: 0.28, size: 42, avatar: .crtBuddy, mood: .idle, listening: false, strolling: false, animates: true)
+        let blinkClosed = CompanionMotion.sample(time: 0.14, size: 42, avatar: .sig, mood: .idle, listening: false, strolling: false, animates: true)
+        let blinkOpen = CompanionMotion.sample(time: 0.28, size: 42, avatar: .sig, mood: .idle, listening: false, strolling: false, animates: true)
         precondition(blinkClosed.eyeOpen < 0.05 && blinkOpen.eyeOpen == 1)
         let compactNotch = NotchGeometry(width: 328, cutoutWidth: 180, cutoutHeight: 32, compact: true)
         precondition(compactNotch.height == 32 && compactNotch.contentTop == 0)
@@ -168,8 +168,8 @@ struct InteractionChecks {
             precondition(listen.loading == 0 && think.loading == 1 && win.loading == 0)
             precondition(listen != think && think != win)
             precondition(abs(win.rotation) < 6 && abs(win.offset.height) < size * 0.05)
-            if avatar == .arcade1984 { precondition(listen.rotation == 0 && think.rotation == 0 && win.rotation == 0) }
-            if avatar == .coastBuddy || avatar == .inkBuddy { precondition(win.wink > 0.8) }
+            if avatar == .ada { precondition(listen.rotation == 0 && think.rotation == 0 && win.rotation == 0) }
+            if avatar == .rita || avatar == .sig { precondition(win.wink > 0.8) }
             for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
                 precondition(CompanionVoiceMotion.sample(phase: phase, elapsed: 0.2, size: size, avatar: avatar, animates: false)
                     == CompanionVoiceMotion.sample(phase: phase, elapsed: 3.8, size: size, avatar: avatar, animates: false))
@@ -198,7 +198,7 @@ struct InteractionChecks {
         for phase in [CompanionVoicePhase.preparing, .listening, .thinking, .working, .success, .failure] {
             precondition(CompanionActivity.phase(voice: phase, isLoading: true, hasActiveTask: true) == phase, "Background tasks must not hide voice or its result")
         }
-        let pixelBadge = CompanionLoadingShape(avatar: .arcade1984).path(in: CGRect(x: 0, y: 0, width: 28, height: 28))
+        let pixelBadge = CompanionLoadingShape(avatar: .ada).path(in: CGRect(x: 0, y: 0, width: 28, height: 28))
         var segments = 0
         pixelBadge.forEach { element in
             switch element {
@@ -221,19 +221,13 @@ struct InteractionChecks {
         reactions.touch(); reactions.touch(); reactions.touch()
         precondition(reactions.mood == .happy) // An old tap doesn't join a new burst.
         reactions.reset(); precondition(reactions.mood == .idle)
-        precondition(preferences.avatar == .crtBuddy)
-        for avatar in CompanionAvatar.allCases {
-            preferences.avatar = avatar
-            precondition(CompanionPreferences(defaults: defaults).avatar == avatar)
+        precondition(preferences.avatar == .sig)
+        for saved in ["crt-buddy", "arcade-1984", "minimal-spirit", "coast-buddy", "paper-pal", "ink-buddy", "soft-orbit", "star-sprout", "retired-avatar"] {
+            defaults.set(saved, forKey: "appearance.avatar")
+            precondition(CompanionPreferences(defaults: defaults).avatar == .sig)
+            precondition(defaults.string(forKey: "appearance.avatar") == "sig")
         }
-        defaults.set("soft-orbit", forKey: "appearance.avatar")
-        precondition(CompanionPreferences(defaults: defaults).avatar == .coastBuddy)
-        defaults.set("star-sprout", forKey: "appearance.avatar")
-        precondition(CompanionPreferences(defaults: defaults).avatar == .inkBuddy)
-        defaults.set("retired-avatar", forKey: "appearance.avatar")
-        precondition(CompanionPreferences(defaults: defaults).avatar == .crtBuddy)
-        preferences.avatar = .crtBuddy
-        let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
+        let notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, calendar: IsolatedCalendarFixture.make(defaults: defaults), managesWindows: false, announcementDelay: .milliseconds(90), pointerExitDelay: .milliseconds(250), keyboardRevealDelay: .milliseconds(1100))
         let lifecycle = NotificationCenter()
         let activation = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false, lifecycleNotifications: lifecycle, openApplication: { name in "Fixture " + name }, searchBrowser: { query in "Fixture " + query }, minimumVoiceProcessingDuration: .zero)
         notch.activation = activation
@@ -473,7 +467,7 @@ struct InteractionChecks {
         precondition(!notch.isVisible)
         notch.showCurrentTask()
         precondition(notch.presentation == .home) // Completed focus cannot hijack a reveal.
-        let relaunched = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false)
+        let relaunched = NotchWidgetViewModel(assistant: assistant, preferences: preferences, calendar: IsolatedCalendarFixture.make(defaults: defaults), managesWindows: false)
         drainEvents()
         precondition(!relaunched.isVisible) // Published saved completion is not replayed.
         notch.hide()
@@ -502,7 +496,7 @@ struct InteractionChecks {
         precondition(gate.accept(.voice, source: .monitor, at: 1.1))
         precondition(gate.accept(.companion, source: .carbon, at: 1.1))
 
-        let grace = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
+        let grace = NotchWidgetViewModel(assistant: assistant, preferences: preferences, calendar: IsolatedCalendarFixture.make(defaults: defaults), managesWindows: false, pointerExitDelay: .milliseconds(90), keyboardRevealDelay: .milliseconds(280))
         grace.show()
         grace.setPointerInsidePanel(false) // A layout/Space exit cannot cut short a keyboard reveal.
         try await Task.sleep(for: .milliseconds(150))

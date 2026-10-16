@@ -73,8 +73,16 @@ actor LocalClipboardStorage: ClipboardStorage {
     func save(_ entries: [ClipboardEntry], revision: UInt64) throws {
         guard revision >= lastRevision else { return }
         let data = try JSONEncoder().encode(entries)
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        let parent = url.deletingLastPathComponent()
+        try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: parent.path)
+        // The mobile file-protection option creates an owner-unreadable file
+        // on the tested macOS filesystem. Keep macOS storage atomic/private.
+        #if os(macOS)
+        try data.write(to: url, options: .atomic)
+        #else
         try data.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+        #endif
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
         lastRevision = revision
     }
@@ -83,7 +91,7 @@ actor LocalClipboardStorage: ClipboardStorage {
 // A slow promised pasteboard provider cannot block the main thread or queue
 // unlimited reads. A timeout discards its result; the worker remains reserved
 // until the original operation actually returns.
-private final class PasteboardWorker: @unchecked Sendable {
+final class PasteboardWorker: @unchecked Sendable {
     private let queue = DispatchQueue(label: "sieghart.clipboard", qos: .utility)
     private let lock = NSLock()
     private var busy = false

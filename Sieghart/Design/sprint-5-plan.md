@@ -1,6 +1,14 @@
 # Sprint 5 — Daily context and files
 
-October 8, 2026. Sprint 4 is complete and accepted on the user's “tudo funcionando” report after `f77ac65`. Sprint 5 is ready to begin; the scope below is planned, not implemented by this closeout.
+Updated October 12, 2026. Sprint 4 is complete and accepted on the user's “tudo funcionando” report after `f77ac65`. Sprint 5's local implementation is delivered on `sprint-5`; user physical Mac acceptance remains pending. [Delivered behavior and verification](sprint-5-closeout.md) · [Mac test guide](sprint-5-test-guide.md).
+
+## Current checkpoint
+
+- Implemented: shared Calendar state across app/menu/island, day/week/month, selected calendars, next event and meeting links, explicit Calendar consent and denial recovery, local reminders, event/reminder notifications with quiet hours and dismiss/snooze, ten configurable island tool tiles.
+- October 12 visual correction: the approved team greeting keeps its choreography and circular light but has no horizontal rectangle. Calendar now includes Gantt in both permission and agenda views, a brief identity-specific hello followed by cached breathing, and a month/agenda layout grouped by day. These are Gantt's presentation surfaces; autonomous specialist execution remains a later integration.
+- Delivered next slices: selected-folder downloads, file shelf, reviewed Finder move/rename with optional Finder-only shortcuts, plain text paste, URL cleanup, DMG app copy, capture/annotation/local OCR/QR/color and actual event-driven companion reactions. App/menu/island share each feature's state. All 16 isolated check groups, signed bundle verification and nine local layout/PNG exports pass.
+- Remaining gate: physical Mac acceptance of native permissions, Finder/paste/drag/share, screen selection/color, notifications/sleep, live appearance and whole-process resource usage. No app was launched during assistant verification.
+- The six fixed characters and their greeting/performance/Retina work are implemented in the working tree. They do not establish that every future specialist tool or connected account already works. Sig remains the principal.
 
 ## Core delivery
 

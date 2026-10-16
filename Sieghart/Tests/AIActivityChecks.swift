@@ -101,11 +101,11 @@ import Foundation
         let suite = "Sieghart.OnboardingChecks.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
         let prefs = CompanionPreferences(defaults: defaults)
-        expect(!prefs.onboardingComplete && CompanionAvatar.allCases.count == 6, "First run presents exactly six choices")
-        prefs.avatar = .coastBuddy; prefs.onboardingComplete = true
+        expect(!prefs.onboardingComplete && CompanionAvatar.allCases.count == 6, "First run introduces Sig and five specialists")
+        defaults.set("coast-buddy", forKey: "appearance.avatar"); prefs.onboardingComplete = true
         let restored = CompanionPreferences(defaults: defaults)
-        expect(restored.onboardingComplete && restored.avatar == .coastBuddy, "Finishing onboarding preserves choice across relaunch")
-        print("PASS: AI lifecycle, graph counter deduplication, account activity and six-avatar onboarding persistence")
+        expect(restored.onboardingComplete && restored.avatar == .sig, "Finishing onboarding preserves consent and fixes Sig as principal")
+        print("PASS: AI lifecycle, graph counter deduplication, account activity and fixed-team onboarding persistence")
     }
     static func expect(_ value: @autoclosure () -> Bool, _ message: String) {
         guard value() else { fatalError("FAIL: \(message)") }

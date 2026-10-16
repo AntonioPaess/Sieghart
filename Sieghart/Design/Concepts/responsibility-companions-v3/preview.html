@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sieghart — Papel vivo</title>
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#f8f6f0,#17191a);--fg:light-dark(#242a27,#eeeae2);--muted:light-dark(#657064,#b2b9b0);--line:light-dark(#d8dbd1,#3c443e);--surface:light-dark(#eeeee7,#222824)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:1060px;margin:auto;padding:36px 24px 48px}header{display:flex;justify-content:space-between;gap:24px;align-items:end;margin-bottom:26px}h1{margin:0;font-size:30px;font-weight:600;letter-spacing:-.8px}p{margin:4px 0;color:var(--muted)}.note{font-size:13px}.controls{display:flex;align-items:end;gap:18px;flex-wrap:wrap;padding:16px 0;border-top:1px solid var(--line)}label{display:grid;gap:6px;font-size:13px;color:var(--muted)}select,button{font:inherit;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 14px}select{min-width:160px}button{cursor:pointer}button:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--muted);outline-offset:3px}#player{display:block;width:100%;max-height:660px;aspect-ratio:1668/1520;object-fit:contain;background:#fbf9f4;border-radius:18px}#player.single{aspect-ratio:480/540}#state-label{margin:16px 0 3px;font-size:18px;font-weight:500}.detail{min-height:24px;font-size:14px}.time{font-variant-numeric:tabular-nums;margin-left:auto;color:var(--muted)}details{margin-top:28px;border-top:1px solid var(--line);padding-top:18px}summary{cursor:pointer;font-weight:500}.board{display:block;width:100%;height:auto;margin-top:18px;border-radius:18px}footer{margin-top:24px;color:var(--muted);font-size:13px}@media(max-width:540px){main{padding:24px 16px}header{display:block}h1{font-size:27px}.controls{gap:12px}label{flex:1}select{min-width:0;width:100%}.time{width:100%;margin-left:0}#player{max-height:none}}
+</style>
+</head>
+<body>
+<main>
+<header><div><h1>Sieghart — Papel vivo</h1><p>Seis identidades. Movimento com volume.</p></div><p class="note">Conceito para revisão · 60 fps</p></header>
+<p class="note"><a href="../responsibility-companions-v5/preview.html">Nova revisão: entrada da equipe, Rita sem faixa, papel da Toni e catálogo de movimentos</a></p>
+<div class="controls">
+<label for="avatar">Avatar<select id="avatar"><option value="all">Todos</option><option value="sig">Sig</option><option value="rita">Rita</option><option value="ada">Ada</option><option value="gantt">Gantt</option><option value="elinor">Elinor</option><option value="toni">Toni</option></select></label>
+<label for="state">Ir para o estado<select id="state"><option value="0">Alô / primeira abertura</option><option value="1">Repouso</option><option value="2">Olhar</option><option value="3">Passear</option><option value="4">Preparando</option><option value="5">Escutando</option><option value="6">Loading / pensando</option><option value="7">Atividade própria</option><option value="8">Falando</option><option value="9">Entendi</option><option value="10">Contente</option><option value="11">Comemorando</option><option value="12">Irritado</option><option value="13">Susto</option><option value="14">Algo deu errado</option><option value="15">Dormindo</option><option value="16">Despertando</option></select></label>
+<button id="first-opening" type="button">Ver o alô</button><span class="time" id="time">00:00 / 00:41</span>
+</div>
+<video id="player" controls playsinline preload="metadata" poster="idle-3d.png" src="all-states-3d-60fps.mp4" aria-label="Animações dos seis avatares Sieghart">Seu navegador não reproduz este vídeo. Abra all-states-3d-60fps.mp4 nesta pasta.</video>
+<div id="state-label" aria-live="polite">Alô / primeira abertura</div>
+<p class="detail" id="detail">Chegada, saudação e acomodação em repouso.</p>
+<details><summary>Prancha de referência e nova Toni</summary><img class="board" src="concept-board.png" alt="Sig carvão, Rita folha verde, Ada pixel amarela, Gantt agenda quadrada, Elinor com monóculo e Toni como carta viva."></details>
+<footer>Estudo visual de 17 estados e seis atividades. As funções dos agentes são conceitos. Nenhuma alteração foi aplicada ao aplicativo.</footer>
+</main>
+<script>
+(() => {
+const player=document.getElementById('player'),avatar=document.getElementById('avatar'),state=document.getElementById('state'),label=document.getElementById('state-label'),detail=document.getElementById('detail'),clock=document.getElementById('time'),first=document.getElementById('first-opening');
+const starts=[0,4,6,8,10,12,14,17,21,23,25,27,30,32,33.5,35.5,38.5];
+const names=Array.from(state.options,option=>option.textContent);
+const descriptions=['Chegada, saudação e acomodação em repouso.','Respiração e piscadas; indicador de atividade ausente.','Os olhos e a cabeça acompanham os dois lados.','Pequeno deslocamento e mudança de direção.','Entrada do indicador de atividade.','Atenção, olhos e movimento discreto de escuta.','Indicador na silhueta do avatar durante o pensamento.','Cada avatar demonstra a sua atividade.','Ritmo dos olhos, do corpo e das dobras.','Confirmação com gesto, olhar ou piscada.','Olhos alegres e movimento leve.','Pequeno salto e acomodação.','Olhos inclinados e reação breve do corpo.','Olhos abertos e recuo.','Olhar para baixo e acomodação.','Olhos fechados, inclinação e respiração.','Abertura dos olhos e alongamento.'];
+const tasks={sig:'Sig acompanha dois sinais de trabalho.',rita:'Rita acompanha a respiração com contorno e pulso do coração.',ada:'Ada revela linhas de código e conclui com um salto.',gantt:'Gantt move a dobra da página e organiza os compromissos.',elinor:'Elinor inspeciona pelo monóculo e acompanha um gráfico.',toni:'Toni abre a dobra como uma asa e acompanha a mensagem de papel.'};
+let pendingTime=null,lastState=-1;
+function format(t){return String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0')}
+function update(){const t=player.currentTime||0;let i=starts.length-1;while(i>0&&starts[i]>t)i--;clock.textContent=format(t)+' / 00:41';if(i!==lastState){label.textContent=names[i];lastState=i;}detail.textContent=i===7&&tasks[avatar.value]?tasks[avatar.value]:descriptions[i];}
+function seek(t,play){if(player.readyState>=1){player.currentTime=t;if(play)player.play().catch(()=>{});}else{pendingTime=t;}}
+avatar.addEventListener('change',()=>{pendingTime=player.currentTime||0;const wasPlaying=!player.paused;player.src=avatar.value==='all'?'all-states-3d-60fps.mp4':avatar.value+'-all-states-3d.mp4';player.classList.toggle('single',avatar.value!=='all');player.removeAttribute('poster');player.load();player.addEventListener('loadedmetadata',()=>{if(wasPlaying)player.play().catch(()=>{});},{once:true});update();});
+state.addEventListener('change',()=>seek(starts[Number(state.value)]+0.08,true));
+first.addEventListener('click',()=>{state.value='0';seek(0,true);});
+player.addEventListener('loadedmetadata',()=>{if(pendingTime!==null){player.currentTime=pendingTime;pendingTime=null;}update();});
+player.addEventListener('timeupdate',update);player.addEventListener('seeked',update);update();
+})();
+</script>
+</body>
+</html>

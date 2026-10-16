@@ -1,0 +1,2 @@
+# Build and test scripts must remain executable by Unix shells after checkout.
+*.sh text eol=lf

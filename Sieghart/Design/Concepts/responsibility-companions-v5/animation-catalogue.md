@@ -1,0 +1,90 @@
+# Catálogo de movimentos — Coucou → conceitos Sieghart
+
+Pesquisa do código público em 10 de outubro de 2026. Commit auditado: `1dc314f632ff646b44191dbd4e89b042e07b3670`. A animação de lançamento é idêntica à referência do commit anterior usado na v4.
+
+O inventário abaixo agrupa comportamentos encontrados no motor do personagem no macOS, minis dos agentes, voz, arquivos e transições da ilha/desktop. Não é uma contagem oficial de animações do projeto nem uma auditoria de todos os clientes iOS/Linux/Windows. Expressões dos olhos e partículas também fazem parte de movimentos maiores.
+
+**Demonstrado** significa que a família tem uma adaptação visual nos vídeos v5; não significa que toda partícula, badge ou detalhe do original foi reproduzido. **Catalogado** significa que o código foi encontrado e há uma proposta de uso, sem novo clipe para esse comportamento nesta revisão. Nada foi integrado ao aplicativo.
+
+## Inventário
+
+| Família | Movimento encontrado | Uso proposto nos nossos avatares | Situação da prévia | Código |
+|---|---|---|---|---|
+| Entrada | **Alô de lançamento** — Queda, rebote, mãos, partículas e halo dourado → azul. | Sig e os cinco na primeira abertura. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/GreetingCanvasView.swift#L95) |
+| Vida cotidiana | **Olhar para o cursor** — Yaw e pitch seguem alvos suavizados por tempo de quadro. | Avatar principal e especialista em foco. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L887) |
+| Vida cotidiana | **Olhar independente dos minis** — Minis alternam alvos próprios em intervalos distintos. | Especialistas em repouso sem se moverem todos juntos. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L903) |
+| Vida cotidiana | **Respiração dos minis** — Pulso discreto de escala, com fase própria por motor. | Respiração suave de cada silhueta. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L979) |
+| Vida cotidiana | **Piscar e piscar duas vezes** — Fecha em 70 ms, abre em 130 ms; há chance de piscada dupla. | Todos, preservando olhos quadrados da Ada. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L340) |
+| Interação | **Reagir ao toque** — Compressão, alongamento e acomodação com mola. | Uma reação breve ao toque, sem estado permanente de loading. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L348) |
+| Interação | **Irritação por toque** — Olhos em linha por 800 ms; minis podem sacudir a cabeça. | Cada avatar se irrita sem perder sua forma. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L389) |
+| Interação | **Tontura por insistência** — Três toques em 1,7 s provocam duas voltas em 1,3 s. | Easter egg de insistência, com olhos e volta próprios. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L389) |
+| Agentes | **Trabalhando** — Estado azul com badge e acompanhamento de tarefa. | Atividade própria por responsabilidade. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L97) |
+| Agentes | **Pensando** — Olhar fixo deslocado, indicador e halo violeta. | Loading só enquanto há uma tarefa em preparação. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L105) |
+| Agentes | **Buscando** — Olhar varre lateralmente com sin(t × 2,6). | Ada/GitHub, Gantt/agenda, Toni/arquivos etc. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L112) |
+| Agentes | **Aguardando aprovação** — Olhos abertos, salto inicial e pequenos rebotes âmbar. | Especialista pede uma decisão e aguarda. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L120) |
+| Agentes | **Tem uma pergunta** — Inclinação de 0,17 rad, piscada e badge de dúvida. | Sig esclarece qual agente ou tarefa o usuário quer. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L127) |
+| Agentes | **Erro** — Olhos achatados e tremor horizontal em quatro trechos. | Falha visível, acompanhada de texto do que ocorreu. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L295) |
+| Agentes | **Concluiu** — Uma volta em 950 ms, acomodação e cinco faíscas. | Demonstração usa a volta; os gestos de tarefa podem ter finais próprios. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L285) |
+| Agentes | **Limite de uso** — Olhos cansados e partícula de suor, estado laranja. | Ada/Sig mostram o limite com uma reação discreta. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L147) |
+| Vida cotidiana | **Dormindo** — Olhos fechados, respiração em 1,8 rad/s e partículas Z. | Todos dormem respirando; sem indicador de atividade. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L154) |
+| Emoções | **Carinho** — Rubor, pequeno movimento e quatro corações. | Expressão afetuosa no estilo de cada rosto. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L752) |
+| Emoções | **Surpresa** — Salto e aumento dos olhos, seguidos de acomodação. | Recebe novidade ou alerta inesperado. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L767) |
+| Emoções | **Orgulho** — Compressão, inclinação, rubor e cinco estrelas. | Um objetivo concluído pode usar orgulho em vez de giro. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L777) |
+| Emoções | **Piscadela** — Fecha um olho com inclinação temporária. | Confirmação breve, adequada à identidade do avatar. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L791) |
+| Emoções | **Bocejo** — Alongamento de 500 ms e retorno de 500 ms; olhos fecham. | Entrada do descanso ou lembrete de pausa da Rita. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L797) |
+| Emoções | **Contente** — Rubor sobe e desaparece; minis têm um salto periódico. | Alegria leve; reações dos minis têm tempos distintos. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L810) |
+| Voz | **Escuta expandida** — Pequeno salto, inclinação, olhos atentos e mão levantada. | Gestos no corpo e acessórios; sem a orelha rejeitada. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L603) |
+| Voz | **Escuta compacta** — Olhos atentos e inclinação entram em 260 ms. | Sig continua visível ouvindo sem movimento exagerado. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L646) |
+| Voz | **Pensamento após a fala** — Olhos diminuem em 280 ms e olham para cima/lado. | Transição da transcrição para processamento do comando. | Demonstrado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L671) |
+| Voz | **Falando** — Expressão muda; corpo tem ritmo suave de cerca de 3,5 Hz. | Resposta falada do principal ou especialista. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L967) |
+| Voz | **Terminou de escutar** — Abaixa mão; confirma com aceno ou faz um encolhimento sem comando. | Entendi / não recebi um comando, com estados claros. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L695) |
+| Música | **Dançando** — Dança a 112 BPM; entra em 300 ms e sai em 500 ms. | Cada silhueta tem sua dança, sem trocar por uma bola. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L1073) |
+| Arquivos | **Seguir arquivo arrastado** — Segue cursor com mola e trava próximo do arquivo. | Toni acompanha o arquivo; Sig pode encaminhá-lo. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L177) |
+| Arquivos | **Abrir receptor** — Forma vira caixa e abertura usa uma mola física. | Toni abre uma dobra de envelope; Ada preserva sua forma pixelada. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L295) |
+| Arquivos | **Receber / engolir arquivo** — Arquivo é atraído de 2,03 a 2,33 s no relógio de referência. | Arquivo entra na dobra/envelope, respeitando seu formato. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L27) |
+| Arquivos | **Processar o arquivo recebido** — Compressão alternada e mastigação breve. | Dobra se fecha e o avatar demonstra que está processando. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L360) |
+| Arquivos | **Avançar com o upload** — Avatar diminui e acompanha a barra conforme o progresso. | Usar progresso real; manter miniatura da própria silhueta. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L295) |
+| Arquivos | **Upload completo** — Pequeno salto, check e brilho verde na conclusão. | Confirmar arquivo pronto antes da escolha de ação. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L329) |
+| Arquivos | **Retornar para escolher ação** — Volta ao tamanho maior e revela opções de destino. | Toni oferece conversar sobre o arquivo ou preparar envio. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/UploadSequenceEngine.swift#L338) |
+| Acessórios | **Inércia de acessórios** — Mola com rigidez 60 e amortecimento 9 acompanha o movimento. | Selo da Toni, páginas do Gantt e monóculo da Elinor. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L1049) |
+| Acessórios | **Troca de roupa/acessório** — Saída em 180 ms, entrada em 350 ms e reação corporal. | Troca opcional de acessório sem descaracterizar a forma. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L501) |
+| Ilha e desktop | **Voar da ilha / voltar** — Painel se desloca por 450 ms com easeInEaseOut. | Especialista aparece perto do contexto de sua tarefa. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/DesktopMochi.swift#L245) |
+| Ilha e desktop | **Voltar para atender alerta** — Avatar volta para a ilha e retoma seu local ao resolver. | Alertas de agenda, revisão e aprovação. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/DesktopMochi.swift#L349) |
+| Ilha e desktop | **Interromper e recolher** — Alô recolhe mãos em 150 ms; ilha tem estados e temporizadores próprios. | Interromper sem deixar mãos, loading ou poses presas. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L592) |
+| Agentes | **Badge de estado entra/troca** — Badge sai em 90 ms e o novo entra em 280 ms. | Indicador pequeno no estilo do personagem, sem três pontos genéricos. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L324) |
+| Entrada | **Alô curto do motor** — Saudação de aproximadamente 2 s com olhos alegres, salto, mãos e oscilação. | Usar como cumprimento breve ao chamar um especialista. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L533) |
+| Arquivos | **Engolir reativo do motor** — Abre receptor, fecha após 460 ms e processa por mais 800 ms. | Reação a arquivo recebido fora da sequência completa de upload. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L364) |
+| Voz | **Fim da conversa compacta** — Restaura olhos e inclinação anteriores em 260 ms. | Retornar ao repouso ou à tarefa anterior sem pose de escuta presa. | Catalogado | [Fonte](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L658) |
+
+## Expressões e partículas disponíveis no motor
+
+- Olhos: pill, wide, dot, line, flat, happy, closed, spiral, heart, star, tired, wink e cup. Fonte: [EyeShape](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L64).
+- Partículas: coração, estrela, faísca, suor e Z. Fonte: [Particle](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/BotEngine.swift#L34).
+- Badge original: ponto, pontos animados, exclamação ou pergunta. A prévia mantém a escolha anterior de evitar três pontos e usa a silhueta do personagem nas atividades.
+
+## O que usar para os especialistas
+
+Cada mini do Coucou tem seu próprio motor, cor, estado, expressão opcional e olhar independente. Isso está em [MiniBotCanvasView](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/App/BotCanvasView.swift#L232). A aplicação abaixo é uma proposta para os seis conceitos, não uma integração pronta:
+
+| Avatar | Papel | Gesto próprio que complementa os estados comuns |
+|---|---|---|
+| Sig | Coordena e responde | Apresenta os especialistas, encaminha a tarefa e recebe a confirmação de volta. |
+| Ada | Código e GitHub | Colchetes/linhas de código; acompanha revisão e conclui mantendo a forma pixelada. |
+| Gantt | Agenda e rotina | Abre página, organiza cartões de compromissos e marca conclusão. |
+| Rita | Saúde e pausas | Respiração, alongamento e pulso discreto; sem faixa branca ou coração flutuante. |
+| Elinor | Finanças e recursos | Monóculo acompanha análise, com barras pequenas na tarefa. |
+| Toni | Comunicação e arquivos | Dobra curva acena para fora, abre para receber arquivo e encaminha mensagem de papel. |
+
+O motor comum pode fornecer olhar, expressão, ritmo, easing e interrupção. O gesto do acessório e da tarefa deve acompanhar a identidade de cada avatar. Só o agente ativo deve mostrar atividade; os demais permanecem em repouso com fases próprias. O Sig pode chamar a atenção do especialista que está esperando uma decisão.
+
+## Ordem dos eventos e transições
+
+A referência prioriza aprovação → pergunta → erro/limite → atividade → concluído → repouso em [MochiActivityState](https://github.com/Louis-CFM/coucou/blob/1dc314f632ff646b44191dbd4e89b042e07b3670/NotchBuddy/Sources/CoucouKit/MochiActivityState.swift#L31). Essa ordem é adequada como ponto de partida para não misturar uma pose de repouso com loading ou celebração pendente.
+
+Para a futura integração: estados explícitos por tarefa, transições canceláveis, continuidade de posição/velocidade, intensidade menor na ilha compacta e opção de reduzir movimento. O original já usa locks por propriedade, tokens no alô e molas/suavização independentes do tempo entre quadros. Essas rotinas foram estudadas; não foi ativado nenhum agente ou serviço real nesta revisão.
+
+## O que é novo nesta prévia
+
+A saída dos cinco especialistas de trás do Sig, a órbita e a acomodação por área são coreografia criada para o Sieghart. O gesto de papel da Toni é uma adaptação própria com superfície curva, duas faces e espessura. Não são animações encontradas prontas no Coucou.
+
+Não usamos arte do Mochi nem áudios do Coucou. Código de tempos/easing adaptado mantém a licença MIT em `source/COUCOU-MIT-LICENSE.txt`.

@@ -25,6 +25,7 @@ struct ContentView: View {
         .preferredColorScheme(preferences.appearance.colorScheme)
         .environment(\.workspaceGlass, true)
         .environment(\.islandReduceMotion, preferences.usesReducedMotion)
+        .environment(\.companionMotionEnabled, preferences.characterMotion)
         .background { WorkspaceBackdrop() }
         .environment(\.surfaceGlassEnabled, preferences.windowGlass)
     }
@@ -60,7 +61,13 @@ struct ContentView: View {
             case .overview: overview
             case .calendar:
                 heading("Your day, at a glance.", subtitle: "Events and reminders from the calendars you choose.")
-                CalendarView(model: notch.calendar).companionCard()
+                CalendarView(model: notch.calendar, events: notch.events).companionCard()
+            case .files:
+                heading("A place for the things you need.", subtitle: "Files, selected-folder downloads and useful file actions.")
+                FilesView(model: notch.files).companionCard()
+            case .capture:
+                heading("Keep one useful piece.", subtitle: "Capture, annotate and read text or QR locally.")
+                CaptureToolsView(model: notch.capture).companionCard()
             case .focus: focusSettings
             case .activation: activationSettings
             case .appearance: appearanceSettings
@@ -87,9 +94,11 @@ struct ContentView: View {
                     PreferenceRow("Microphone mute shortcut", detail: "Toggle hardware mute on your selected microphone when supported.") { ShortcutRecorder(action: .muteMicrophone) }
                     Text(activation.audioShortcutStatuses[.muteMicrophone] ?? "Shortcut off").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }.companionCard()
+            case .agentRoom:
+                AgentRoomView(model: notch.agentRoom).companionCard()
             case .aiLimits:
                 heading("Your AI, in view.", subtitle: "Limits, tokens and activity from the tools you use.")
-                AIUsageView()
+                AIUsageView(onOpenRoom: { viewModel.section = .agentRoom })
             }
         }
         .padding(30)
@@ -228,6 +237,14 @@ struct ContentView: View {
             }
         }.companionCard()
         VStack(alignment: .leading, spacing: 18) {
+            Label("Finder file shortcuts", systemImage: "folder").font(.headline)
+            Text("Optional, off by default. Active only while Finder is in front. Moves and renames still need your review and confirmation.").font(.caption).foregroundStyle(CompanionStyle.muted)
+            ForEach(ShortcutAction.finderActions) { action in
+                PreferenceRow(action.title, detail: action == .finderRename ? "Record F2 or your own keys. Select one file in Finder." : "Prepare the selected files, then review the current Finder destination.") { ShortcutRecorder(action: action) }
+                Text(activation.fileShortcutStatuses[action] ?? "Shortcut off").font(.caption).foregroundStyle(CompanionStyle.muted)
+            }
+        }.companionCard()
+        VStack(alignment: .leading, spacing: 18) {
             Label("Island", systemImage: "rectangle.topthird.inset.filled").font(.headline)
             PreferenceRow("Island hover feedback", detail: "Your companion reacts on hover. Click to open the island.") {
                 Toggle("Island hover feedback", isOn: $preferences.hoverEnabled).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
@@ -316,8 +333,8 @@ struct ContentView: View {
             Button("Preview") { notch.show() }.buttonStyle(CompanionButtonStyle())
         }
         .companionCard()
-        CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
-        Text("Your choice is saved automatically and follows you into the island, voice, and celebrations.")
+        CompanionTeamGallery(animates: preferences.characterMotion && !preferences.usesReducedMotion, onAda: { viewModel.section = .agentRoom })
+        Text("Sig is always your main companion. Tap a team member to explore their movements.")
             .font(.caption).foregroundStyle(CompanionStyle.muted)
         VStack(spacing: 20) {
             PreferenceRow("Compact active timer", detail: "Keep remaining time and controls close together.") {
@@ -326,6 +343,11 @@ struct ContentView: View {
             Divider()
             PreferenceRow("Launch greeting", detail: "Your companion drops in, waves hello and settles into the island.") {
                 Toggle("Launch greeting", isOn: $preferences.launchGreeting).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            PreferenceRow("Introduction language", detail: "English by default. Choose Portuguese for the team's introduction.") {
+                Picker("Introduction language", selection: $preferences.introductionLanguage) {
+                    ForEach(CompanionIntroductionLanguage.allCases) { language in Text(language.name).tag(language) }
+                }.labelsHidden().frame(width: 190)
             }
             PreferenceRow("Character motion", detail: "Use restrained expressions during focus and voice.") {
                 Toggle("Character motion", isOn: $preferences.characterMotion).labelsHidden().toggleStyle(WorkspaceSwitchStyle())

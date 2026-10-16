@@ -5,6 +5,8 @@ import Foundation
 
 @MainActor
 final class CalendarViewModel: ObservableObject {
+    var onReminderAdded: ((SieghartReminder) -> Void)?
+    var onNotificationDelivered: ((String, String, Bool) -> Void)?
     enum Span: String, CaseIterable { case day = "Day", week = "Week", month = "Month" }
     @Published private(set) var accessState: CalendarAccessState = .notDetermined
     @Published private(set) var events: [CalendarEventSummary] = []
@@ -138,7 +140,7 @@ final class CalendarViewModel: ObservableObject {
         guard !trimmed.isEmpty else { status = "Enter a reminder title"; return }
         guard due > Date() else { status = "Choose a future time"; return }
         let reminder = SieghartReminder(id: UUID(), title: trimmed, dueDate: due)
-        reminders.append(reminder); saveReminders(); rescheduleReminders(); status = "Reminder added"
+        reminders.append(reminder); saveReminders(); rescheduleReminders(); status = "Reminder added"; onReminderAdded?(reminder)
     }
     func dismiss(_ id: UUID) {
         guard let index = reminders.firstIndex(where: { $0.id == id }) else { return }
@@ -167,6 +169,14 @@ final class CalendarViewModel: ObservableObject {
         } else {
             if upcomingEventsForAlerts.isEmpty { prepare() }
             if let event = upcomingEventsForAlerts.first(where: { Self.eventKey($0) == key }) { snoozeEventAlert(event) }
+        }
+    }
+    func handleNotificationDelivered(reminderID: String?, eventKey: String?) {
+        if let raw = reminderID, let id = UUID(uuidString: raw), let reminder = visibleReminders.first(where: { $0.id == id }) {
+            onNotificationDelivered?("reminder:\(raw):\(reminder.effectiveDate.timeIntervalSince1970)", reminder.title, true)
+        } else if let key = eventKey {
+            if upcomingEventsForAlerts.isEmpty { prepare() }
+            if let event = upcomingEventsForAlerts.first(where: { Self.eventKey($0) == key }) { onNotificationDelivered?(key, event.title, false) }
         }
     }
     func isEventAlertDismissed(_ event: CalendarEventSummary) -> Bool { dismissedEventKeys.contains(Self.eventKey(event)) }

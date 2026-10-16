@@ -3,9 +3,11 @@ import Carbon
 import SwiftUI
 
 enum ShortcutAction: String, CaseIterable, Identifiable {
-    case companion, voice, clipboard, nextOutput, muteMicrophone
+    case companion, voice, clipboard, nextOutput, muteMicrophone, finderCut, finderPaste, finderRename
     var id: String { rawValue }
-    var title: String { switch self { case .companion: "Companion"; case .voice: "Voice"; case .clipboard: "Clipboard"; case .nextOutput: "Switch output"; case .muteMicrophone: "Mute microphone" } }
+    var title: String { switch self { case .companion: "Companion"; case .voice: "Voice"; case .clipboard: "Clipboard"; case .nextOutput: "Switch output"; case .muteMicrophone: "Mute microphone"; case .finderCut: "Prepare Finder move"; case .finderPaste: "Review Finder destination"; case .finderRename: "Rename Finder selection" } }
+    var finderOnly: Bool { [.finderCut, .finderPaste, .finderRename].contains(self) }
+    static let finderActions: [Self] = [.finderCut, .finderPaste, .finderRename]
 }
 
 enum ShortcutDeliverySource { case carbon, monitor }

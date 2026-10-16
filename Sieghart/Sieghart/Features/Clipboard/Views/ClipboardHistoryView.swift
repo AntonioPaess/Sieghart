@@ -23,6 +23,8 @@ struct ClipboardHistoryView: View {
             HStack(spacing: 10) {
                 if !compact && showsTitle { Label("Keep the things you copy.", systemImage: "doc.on.clipboard").font(.title3.weight(.semibold)) }
                 Spacer(minLength: 0)
+                Button("Paste plain text") { Task { await clipboard.pasteCurrentPlainText(dismiss: dismiss) } }
+                    .buttonStyle(.plain).font(.caption).help("Paste the current text without formatting, then restore the original clipboard. Requires Accessibility.")
                 Text("Save history").font(.caption)
                 Toggle("Save history", isOn: $clipboard.isEnabled).labelsHidden().toggleStyle(WorkspaceSwitchStyle()).fixedSize()
                 Button { showSettings.toggle() } label: { Image(systemName: "slider.horizontal.3") }

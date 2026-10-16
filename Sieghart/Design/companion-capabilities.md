@@ -1,6 +1,14 @@
 # Useful companions
 
-Updated October 8, 2026. Product proposals requested by the user. These features are backlog options, not shipped capabilities. Sprint 3 is accepted; core Mac utilities remain the delivery priority. Any of the six companions can be the primary companion. Optional task roles let the other characters act as agents while retaining the same base capabilities.
+Updated October 12, 2026. Product proposals requested by the user. These features are backlog options, not shipped capabilities. Core Mac utilities remain the delivery priority. Sig is the fixed principal and orchestrator; Rita, Ada, Gantt, Elinor and Toni are the specialists. Earlier selectable-principal explorations below are historical; the fixed-team direction in the [consolidated feature map](sieg-feature-map-2026-10-12.md) takes precedence.
+
+## Latest requested responsibilities
+
+- **Ada and Sig local AI (October 13):** Ada owns code/GitHub/AI activity and its spending view; the proposed developer workspace connects supported coding runtimes and depicts real workers in a compact room. Sig uses shared local intelligence for intention routing, a small next step and interruption/continuation. Local code generation requires a separate validated capability. [Detailed proposal and official integration findings](ada-sig-local-ai-direction-2026-10-13.md). The AI-page ownership correction is implemented; the provider integrations/agent room are proposals.
+- **Finance:** Elinor's bank connection is offered by Sieg through its own Open Finance flow. Pierre is a reference, not the chosen connector. Start by studying authorized data access, organization, budgets and reminders; regulated infrastructure, contracts and bank coverage are future decisions. The Challenge edition uses local financial examples without bank login or network requests.
+- **Tech/AI news:** one specialist curates principal news with real sources, publication dates and a short finite briefing. Ada is the proposed owner; sources/topics/cadence are user-selected, and optional delivery respects focus/quiet hours.
+- **Focus/Pomodoro:** Sig is the proposed owner, as explicitly permitted by the user. Gantt retains calendar/commitments; Rita retains wellbeing reminders.
+- **Phone distraction blocking:** future work tied to explicitly chosen focus sessions. Investigate selected app/site restrictions on the chosen phone platform, cross-device linking and cleanup/recovery before promising device control. See [news and focus scope](product-direction-2026-10-11.md#news-and-focus-follow-up). No runtime agent assignment, news fetch or phone blocking is enabled by this note.
 
 The new [Coucou reference study](coucou-reference.md) informs task/result hierarchy, coordinated motion, file receive/carry gestures and compact task-agent indicators. Sieghart retains its six companions, click-only opening, pointer-exit collapse and optional Glass.
 
@@ -83,7 +91,7 @@ Prerequisites: semantic request interpretation, a persistent task/state model, p
 
 Each character uses its own silhouette, palette and timing: CRT visor/antenna, Arcade pixel accents, Minimal Spirit face-only cues, Coast curl, Paper folds and Ink's capsule. The October 8 visual review rejects the extra listening ear, floating dots and full-turn celebration. Preserve the simple 2.5D family; new props require visual review. Crossfades and body transitions must begin from the visible current pose when interrupted. Reduced-motion and quiet-intensity settings retain state text and controls. Celebration does not force the island open or obscure a current decision.
 
-Recommended sequencing: evolve this shared state vocabulary alongside S5's real calendar/reminder/file events; implement connected specialist workflows after the required core tools and adapters are verified. This recommendation does not expand Sprint 4's acceptance gate or claim S5 has started.
+Current sequencing: Sprint 5 now supplies shared real calendar/reminder/file/capture events and bounded companion reactions. Its local implementation is delivered with physical Mac acceptance pending; see [the closeout](sprint-5-closeout.md). Implement connected specialist workflows after the required core tools and adapters are accepted. The proposals here do not expand Sprint 4's closed acceptance gate or claim autonomous specialist execution is already delivered.
 
 The first October 8 implementation used expectant preparation, an attentive listening ear/tilt, processing dots/gaze, successful hop/turn/landing, and failure shake in all six. The ear/dots/full turn were rejected and replaced below; [earlier motion preview](Concepts/simple-companions-voice.gif) is history. Speaking/lip-sync, role-specific working props, agent reasoning/planning and specialist delegation remain unimplemented.
 

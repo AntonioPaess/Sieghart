@@ -11,7 +11,7 @@ import CoreAudio
         AIProviderResources.bundle = Bundle(path: "/private/tmp/sieghart-simple-build/Build/Products/Debug/Sieghart.app")!
         let suite = "Sieghart.WorkspacePreview.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        let preferences = CompanionPreferences(defaults: defaults); preferences.avatar = .paperPal; preferences.onboardingComplete = true; preferences.characterMotion = false
+        let preferences = CompanionPreferences(defaults: defaults); preferences.onboardingComplete = true; preferences.characterMotion = false
         preferences.appearance = .dark
         let now = Date(), calendar = Calendar.current
         let data = Data("{\"rateLimitsByLimitId\":{\"codex\":{\"limitId\":\"codex\",\"planType\":\"plus\",\"primary\":{\"usedPercent\":36,\"windowDurationMins\":300,\"resetsAt\":\(now.addingTimeInterval(3600).timeIntervalSince1970)},\"secondary\":{\"usedPercent\":33,\"windowDurationMins\":10080,\"resetsAt\":\(now.addingTimeInterval(518400).timeIntervalSince1970)}}}}".utf8)

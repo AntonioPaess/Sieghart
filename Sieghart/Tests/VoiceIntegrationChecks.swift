@@ -41,7 +41,7 @@ import Foundation
         defaults = UserDefaults(suiteName: suite)!
         assistant = AssistantViewModel(defaults: defaults, schedulesTimer: false)
         let preferences = CompanionPreferences(defaults: defaults)
-        notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, managesWindows: false,
+        notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences, calendar: IsolatedCalendarFixture.make(defaults: defaults), managesWindows: false,
                                     pointerExitDelay: .milliseconds(20), keyboardRevealDelay: .milliseconds(40))
         controller = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false,
             openApplication: { [weak self] name in self?.apps.append(name); return name },
