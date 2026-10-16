@@ -1,0 +1,56 @@
+{
+  "verified": [
+    {
+      "file": "sig-hello-60fps.mp4",
+      "width": 1280,
+      "height": 480,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    },
+    {
+      "file": "rita-hello-60fps.mp4",
+      "width": 1280,
+      "height": 480,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    },
+    {
+      "file": "ada-hello-60fps.mp4",
+      "width": 1280,
+      "height": 480,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    },
+    {
+      "file": "gantt-hello-60fps.mp4",
+      "width": 1280,
+      "height": 480,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    },
+    {
+      "file": "elinor-hello-60fps.mp4",
+      "width": 1280,
+      "height": 480,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    },
+    {
+      "file": "toni-hello-60fps.mp4",
+      "width": 1280,
+      "height": 480,
+      "r_frame_rate": "60/1",
+      "duration": "6.000000",
+      "nb_frames": "360"
+    }
+  ],
+  "source_commit": "5cb2a27af352cf7319569920aac899efd42b54bc",
+  "source_reference_identical": true,
+  "preview_js_syntax": "passed",
+  "app_integrated": false
+}

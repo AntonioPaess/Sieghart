@@ -38,19 +38,21 @@ struct NotchWidgetView: View {
         .environment(\.surfaceGlassEnabled, preferences.islandGlass)
         .environment(\.islandGlass, !compact)
         .environment(\.islandReduceMotion, preferences.usesReducedMotion)
+        .environment(\.companionMotionEnabled, preferences.characterMotion)
         .onHover { notch.setPointerInsidePanel($0) }
+        .overlay { if !staticPreview { IslandFileDropOverlay(notch: notch) } }
         .focusEffectDisabled()
         .onExitCommand { notch.hide() }
         .onChange(of: notch.utilityReaction) { _, _ in reactions.utility(notch.utilitySucceeded) }
         .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
-        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset(); notch.finishWelcome() } }
+        .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset(); notch.finishWelcome(); notch.fileReceiverPageDidChange() } }
     }
 
     private var surface: some View {
         VStack(spacing: 0) {
             Color.clear.frame(height: notch.geometry.contentTop).allowsHitTesting(false)
             VStack(spacing: 14) {
-                if !compact { pageHeader.modifier(WelcomeContentPhase(started: notch.presentation == .home ? notch.welcomeStartedAt : nil, animates: animates)) }
+                if !compact { pageHeader }
                 switch notch.presentation {
                 case .home: home
                 case .focusSetup: pageScroll { setup }
@@ -59,15 +61,18 @@ struct NotchWidgetView: View {
                 case .island: island
                 case .celebration: celebration
                 case .tools: tools
-                case .calendar: pageScroll { CalendarView(model: notch.calendar, compact: true, island: true) }
+                case .calendar: pageScroll { CalendarView(model: notch.calendar, events: notch.events, compact: true, island: true) }
+                case .files: pageScroll { FilesView(model: notch.files) }
+                case .capture: pageScroll { CaptureToolsView(model: notch.capture) }
                 case .clipboard: ClipboardHistoryView(clipboard: notch.clipboard, showsTitle: false, listHeight: 180, dismiss: { notch.hide() })
                 case .system: pageScroll { SystemMonitorView(monitor: notch.monitor) }
                 case .keepAwake: pageScroll { KeepAwakeView(controller: notch.keepAwake) }
                 case .displayPower: pageScroll { DisplayPowerView(controller: notch.displayPower) }
                 case .audio: pageScroll { AudioControlsView().environmentObject(notch.audio) }
-                case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: animates, compact: true)
+                case .avatars: CompanionTeamGallery(animates: animates, compact: true, onAda: { notch.showAgentRoom() })
                 case .aiLimits:
-                    pageScroll { AIUsageView(showsHeader: false) }
+                    pageScroll { AIUsageView(showsHeader: false, onOpenRoom: { notch.showAgentRoom() }) }
+                case .agentRoom: AgentRoomView(model: notch.agentRoom, compact: true, observesActivity: notch.isVisible)
                 }
             }
             .padding(.horizontal, compact ? 0 : 44)
@@ -99,13 +104,16 @@ struct NotchWidgetView: View {
                 Button("Companion") { notch.show() }
                 Button("Timers") { notch.showTimer() }
                 Button("AI agents") { notch.showAILimits() }
+                Button("Ada’s room") { notch.showAgentRoom() }
                 Button("System") { notch.showSystem() }
                 Button("Keep awake") { notch.showKeepAwake() }
                 Button("Display & power") { notch.showDisplayPower() }
                 Button("Audio") { notch.showAudio() }
                 Button("Clipboard") { notch.showClipboard() }
                 Button("Calendar") { notch.showCalendar() }
-                Button("Change companion") { notch.showAvatars() }
+                Button("Files") { notch.showFiles() }
+                Button("Downloads") { notch.showFiles(downloads: true) }
+                Button("Capture") { notch.showCapture() }
                 Button("Tools") { notch.showTools() }
                 Divider()
                 Button("Close") { notch.hide() }
@@ -120,6 +128,7 @@ struct NotchWidgetView: View {
         case .home: "Companion"
         case .focusSetup, .timer: "Timers"
         case .aiLimits: "AI agents"
+        case .agentRoom: notch.agentRoom.page == .chat ? "Chat with Ada" : "Ada’s room"
         case .tools: "Your tools"
         case .system: "System"
         case .keepAwake: "Keep awake"
@@ -127,7 +136,9 @@ struct NotchWidgetView: View {
         case .audio: "Audio"
         case .clipboard: "Clipboard"
         case .calendar: "Calendar"
-        case .avatars: "Choose your companion"
+        case .files: "Files"
+        case .capture: "Capture"
+        case .avatars: "Your team"
         case .completion, .celebration: "Session complete"
         case .island: ""
         }
@@ -158,6 +169,9 @@ struct NotchWidgetView: View {
         case .timer: notch.showTimer()
         case .clipboard: notch.showClipboard()
         case .calendar: notch.showCalendar()
+        case .files: notch.showFiles()
+        case .downloads: notch.showFiles(downloads: true)
+        case .capture: notch.showCapture()
         case .preferences: notch.focusMainWindow()
         case .system: notch.showSystem()
         case .keepAwake: notch.showKeepAwake()
@@ -191,17 +205,32 @@ struct NotchWidgetView: View {
         }.accessibilityLabel("Show companion")
     }
 
-    private var home: some View {
-        VStack(spacing: 12) {
+    @ViewBuilder private var home: some View {
+        if notch.fileReceptionPhase != .idle {
+            VStack(spacing: 8) {
+                CompanionFileReceiver(model: notch.fileReception, animates: animates)
+                if notch.fileReceptionPhase == .ready || notch.fileReceptionPhase == .failed {
+                    CompanionFileAttachment(model: notch.fileReception, onFiles: { notch.showFiles() }, onPreview: { ref in
+                        notch.showFiles(); Task { await notch.files.open(ref, preview: true) }
+                    })
+                }
+            }
+        } else if let start = notch.welcomeStartedAt {
+            CompanionTeamArrival(animates: animates, started: start, language: preferences.introductionLanguage)
+                .frame(height: CompanionHomeLayout.height)
+                .contentShape(Rectangle()).onTapGesture { notch.finishWelcome() }
+        } else { companionHome }
+    }
+
+    private var companionHome: some View {
+        VStack(spacing: CompanionHomeLayout.rowSpacing) {
             HStack(spacing: 18) {
                 CompanionInteraction(action: reactToTouch) {
-                    TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !animates)) { context in
-                        let phase = context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12)
-                        let greeting = notch.welcomeStartedAt.map { context.date.timeIntervalSince($0) < 4.2 } ?? false
-                        let walking = !greeting && animates && reactions.mood == .idle && !activation.voicePresented && phase < 4
-                        CompanionCharacter(size: 96, avatar: preferences.avatar, animates: animates, listening: activation.isListening, voicePhase: companionPhase(), gaze: avatarPointer, mood: activation.commandAcknowledged ? .understood : activation.isVoiceBusy ? .idle : reactions.mood, strolling: walking, entrance: notch.welcomeStartedAt.map { CompanionEntranceMotion.sample(elapsed: context.date.timeIntervalSince($0), reducedMotion: !animates) })
-                            .offset(x: walking ? sin(phase / 4 * .pi * 2) * 14 : 0)
-                    }.frame(width: 124, height: 96)
+                    CompanionCharacter(size: 96, avatar: preferences.avatar,
+                                       animates: animates,
+                                       listening: activation.isListening, voicePhase: companionPhase(), gaze: avatarPointer,
+                                       mood: activation.commandAcknowledged ? .understood : activation.isVoiceBusy ? .idle : reactions.mood)
+                        .frame(width: 124, height: 96)
                 }
                 .accessibilityLabel("Interact with Sieghart")
                 .accessibilityValue(reactionDescription)
@@ -212,7 +241,7 @@ struct NotchWidgetView: View {
                     case .ended: avatarPointer = .zero
                     }
                 }
-                .modifier(WelcomeContentPhase(started: notch.welcomeStartedAt, animates: animates))
+
                 VStack(alignment: .leading, spacing: 6) {
                     Text(activation.voicePresented ? "YOUR COMPANION · VOICE" : assistant.hasActiveSession ? assistant.activityTitle.uppercased() : "YOUR COMPANION")
                         .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
@@ -227,14 +256,10 @@ struct NotchWidgetView: View {
                         else { Label(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "\(assistant.focusMinutes) min focus", systemImage: "timer").monospacedDigit() }
                     }.font(.caption.weight(.medium)).foregroundStyle(CompanionStyle.accentInk)
                 }.frame(maxWidth: .infinity, alignment: .leading)
-                    .modifier(WelcomeContentPhase(started: notch.welcomeStartedAt, animates: animates))
-            }
-            .overlay {
-                if animates, let start = notch.welcomeStartedAt {
-                    CompanionIslandGreeting(avatar: preferences.avatar, started: start, onTouch: { notch.finishWelcome(); reactToTouch() })
-                }
-            }
-        }
+
+            }.frame(height: CompanionHomeLayout.heroSize)
+            CompanionTeamDock(animates: animates, events: notch.events, onAda: { notch.showAgentRoom() })
+        }.frame(height: CompanionHomeLayout.height, alignment: .top)
     }
 
     private var tools: some View {
@@ -256,6 +281,9 @@ struct NotchWidgetView: View {
         case .timer: notch.showTimer()
         case .clipboard: notch.showClipboard()
         case .calendar: notch.showCalendar()
+        case .files: notch.showFiles()
+        case .downloads: notch.showFiles(downloads: true)
+        case .capture: notch.showCapture()
         case .avatars: notch.showAvatars()
         case .system: notch.showSystem()
         case .keepAwake: notch.showKeepAwake()
@@ -353,7 +381,7 @@ struct NotchWidgetView: View {
                     TimelineView(.periodic(from: .now, by: 1)) { context in
                         HStack(spacing: 0) {
                             HStack(spacing: 3) {
-                                CompanionCharacter(size: 21, avatar: preferences.avatar, animates: animates, focusing: true, mood: notch.isPointerHovering ? .happy : .idle)
+                                CompanionCharacter(size: 21, avatar: .ada, animates: animates, focusing: true, mood: notch.isPointerHovering ? .happy : .idle)
                                 ProviderMark(provider: work.provider, size: 20)
                             }.frame(maxWidth: .infinity)
                             Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
@@ -396,12 +424,7 @@ struct NotchWidgetView: View {
 
     private var pomodoroIsland: some View {
         Button { notch.clickIsland() } label: {
-            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animates)) { context in
-                let time = animates ? context.date.timeIntervalSinceReferenceDate : 0
-                let phase = time.truncatingRemainder(dividingBy: 60)
                 let finishing = assistant.isRunning && assistant.remainingSeconds <= 30
-                let walking = animates && assistant.isRunning && !finishing && phase < 4
-                let nudge = finishing && animates ? max(0, sin(time * 3)) : 0
                 HStack(spacing: 0) {
                     Group {
                         if finishing {
@@ -410,8 +433,7 @@ struct NotchWidgetView: View {
                                 islandProgress
                             }.foregroundStyle(CompanionStyle.accentInk)
                         } else {
-                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, mood: notch.isPointerHovering ? .happy : .idle, strolling: walking)
-                                .offset(x: walking ? sin(phase / 4 * .pi * 2) * 12 : 0)
+                            CompanionCharacter(size: 26, avatar: preferences.avatar, animates: animates, focusing: assistant.isRunning && assistant.interval == .focus, mood: notch.isPointerHovering ? .happy : .idle)
                         }
                     }.frame(maxWidth: .infinity)
                     Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 40))
@@ -420,22 +442,18 @@ struct NotchWidgetView: View {
                             // On the timer side, the companion nudges the digits.
                             // Both poses remain outside the physical camera gap.
                             CompanionCharacter(size: 20, avatar: preferences.avatar, animates: animates, gaze: CGSize(width: 3, height: 0), mood: .startled, strolling: animates)
-                                .rotationEffect(.degrees(nudge * 8))
-                                .offset(x: nudge * 2)
                         }
                         VStack(spacing: 3) {
                             Text(assistant.pomodoroTimeLabel)
                                 .font(.system(size: finishing ? 10 : 12, weight: .semibold, design: .rounded)).monospacedDigit()
                                 .foregroundStyle(finishing ? CompanionStyle.accent : CompanionStyle.ink)
                                 .contentTransition(.numericText(countsDown: true))
-                                .offset(x: nudge * 2, y: -nudge)
                                 .animation(animates ? .easeOut(duration: 0.2) : nil, value: assistant.pomodoroTimeLabel)
                             if !finishing { islandProgress }
                         }
                     }.frame(maxWidth: .infinity)
                 }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight).contentShape(Rectangle())
                     .animation(animates ? .easeInOut(duration: 0.35) : nil, value: finishing)
-            }
         }
         .buttonStyle(.plain).focusEffectDisabled()
         .accessibilityLabel("\(assistant.activityTitle), \(assistant.pomodoroTimeLabel) remaining. Open timer controls.")

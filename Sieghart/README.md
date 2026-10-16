@@ -1,5 +1,11 @@
 # Sieghart
 
+## Current chat direction · October 16
+
+Ada’s Sieg-owned chat now targets **Apple Foundation Models on macOS 27**: Apple Cloud with **Deep thinking** for the complete app, and the new AFM 3 on-device model for offline inference. Both modes require macOS 27; the development Mac was verified on macOS 27.0.1 on October 15, satisfying that OS prerequisite. Actual model availability and quality still require acceptance. PCC additionally needs Apple’s managed entitlement and an authorized signed build; it is not falsely enabled in development entitlements. No older-model fallback or Codex/Claude chat runtime is selected.
+
+The resident senior coding persona uses genuine tools. Coucou’s GitHub PAT → own Keychain → bounded PR/review/CI service-data pattern is ported for Ada. Third-party AI keys remain future work. [Requirements, GitHub connection, tests and limits](Design/ada-room-test-guide.md).
+
 ## Current voice/search and architecture update — October 8
 
 Physical source/Xcode groups use feature Views/ViewModels, Core services/helpers and reused Shared components/services/resources. [Architecture](ARCHITECTURE.md). Voice pins expanded Companion through capture, finalization and actual actions. Search accepts questions/bare topics and can recover a settled transcript after bounded drain when `isFinal` is missing; native app/timer commands retain final-only gating. Listening ear/tilt, processing dots, completed hop/turn/landing and failure gesture are native, interruptible and available to all six. [Motion preview](Design/Concepts/simple-companions-voice.gif) · [Mac checks and evidence limits](Design/voice-search-regression-checks.md). Real speech/AirPods acceptance remains open; development keeps the app closed.
@@ -18,7 +24,7 @@ The **Swift Student Challenge** is the primary product goal. The `.xcodeproj` is
 
 ## App and notch
 
-First launch shows Welcome → choose one of six avatars → optional local AI/clipboard tools. Optional voice and direct-paste access setup does not start listening. Finish saves the choices and opens Companion with its special arrival. Existing avatar choices are preselected. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; **Appearance** or the menu-bar **Avatars** subpage changes the avatar later.
+First launch introduces the six companions with **Sig as the fixed principal**, followed by optional local AI/clipboard tools. Optional voice and direct-paste access setup does not start listening. Finish saves preferences and opens Companion with its team arrival. Legacy avatar choices migrate to Sig. The offline companion/focus journey works when monitoring is declined. **Review introduction** can revisit the flow; specialists keep their own responsibilities rather than replacing the principal.
 
 - **Overview** shows the current session and completed count.
 - **Timers** opens Timer, Pomodoro and Stopwatch in the app, menu bar and widget. Pomodoro shares these settings: focus 5–60 minutes, short breaks 5/10/15, long breaks 15/20/30, rounds 2/4/6/8, and automatic breaks. Draft changes apply when starting a new session.

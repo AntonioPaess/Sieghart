@@ -1,6 +1,19 @@
 # Sieghart roadmap
 
-Updated October 11, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 12, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+
+October 13 follow-up: [native file-receiving correction](Sieghart/Design/sprint-5-file-drop-followup.md) adds collapsed drag admission, automatic opening, a smaller Toni following the file in both axes within the measured receiver, with her coral radial background, original top intake and explicit attachment actions. Physical drag/CPU acceptance remains pending. The [reference study index](Sieghart/Design/Research/reference-study-index-2026-10-13.md) records Coucou/Vorssaint source, further Taby REA, Clicky static limits, Muse ESP32 and the user-confirmed Minhas Finanças docs, plus focused additional references. This study does not connect devices, banks or accounts.
+
+October 13 role follow-up: Ada now represents AI activity in idle/active usage rows and the compact coding-work island. [Ada/Sig shared local intelligence and developer workspace proposal](Sieghart/Design/ada-sig-local-ai-direction-2026-10-13.md) records the requested coding integrations, agent room, local-model limits and Sig's intent/continuation purpose. An additional October 13 slice now delivers an initial Ada session room with Codex App Server and Claude Agent SDK adapters: explicit connection, stored history excerpts, new/resumed chats, streamed replies, provider state, interrupt and scoped decisions inside the widget and main window. [Reference architecture](Sieghart/Design/Research/coucou-chat-2026-10-13.md) · [Manual tests and limits](Sieghart/Design/ada-room-test-guide.md). Foundation Models and cross-worker orchestration remain planned.
+
+October 14 final chat direction: Ada’s conversations belong to Sieg and now target **macOS 27 Apple Foundation Models**. The complete app defaults to Apple Private Cloud Compute with **Deep thinking**; the offline option uses the actual AFM 3 on-device variant, without an older-model/cloud fallback. PCC still requires Apple’s managed approval/provisioning, and neither mode can run on the current macOS 26.6.2 host. Coucou’s explicit GitHub token/Keychain/service-tool pattern is ported for account/repository stars, PRs, reviews and CI; it does not grant repository editing or terminal execution. Room cards, direct chat, streaming, cancellation and local history remain. AI quota monitoring is separate. Third-party AI keys and further Ada tools are future work. [Requirements and acceptance](Sieghart/Design/ada-room-test-guide.md).
+
+## October 12 — Consolidated scope and offline delivery
+
+- The [consolidated feature map](Sieghart/Design/sieg-feature-map-2026-10-12.md) combines the Vorssaint, Coucou, Clicky, Taby and OpenJarvis studies with the fixed six-companion direction. It distinguishes delivered foundations, proposed task intelligence and connected product extensions.
+- Sig remains the principal/orchestrator. Elinor's bank connections are a Sieg-owned Open Finance feature: the user connects and authorizes banks through Sieg's flow. Pierre remains a product reference, not the selected financial connector. Regulated infrastructure/participation, contracts, coverage and cost remain a future technical decision.
+- The entire Challenge experience is offline, including use after onboarding. Online integrations belong to the complete product; the submission uses included local resources and labeled sample data and finishes without accounts, remote services or model downloads. Optional on-device intelligence must have a useful fallback.
+- Sprint 5's local implementation is delivered; physical Mac acceptance remains pending. The feature map adds no bank integration. Preserve the approved greeting; verify current sharpness and whole-app resource usage in the new build.
 
 ## Status and release gates
 
@@ -8,9 +21,9 @@ Updated October 11, 2026. This is the current execution plan; older Obsidian che
 - **Sprint 2:** published as `db2ea4f` — implementation closeout: six companions, nine poses, repeated-touch moods, focus configuration, compact island, celebration, voice acknowledgement, shortcut recovery, tools entry, Codex quotas, local token counters and separate spending ledger. Build/headless checks are evidence of implementation, not real-Mac acceptance.
 - **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
 - **Sprint 4:** complete and accepted October 8, 2026, on the user’s “tudo funcionando” report after `f77ac65`; utilities, voice/search/AirPods/motion follow-ups and Safari/app selection acceptance are closed on that report. [Closeout](Sieghart/Design/sprint-4-closeout.md).
-- **Sprint 5:** in progress on `sprint-5` — Calendar/day-week-month, calendar choice, next event, meeting links and local reminders/notification preferences and native alert actions are implemented as a first slice. The Calendar permission bundle metadata was repaired after user feedback; the island now opens Calendar with month plus agenda, and Your tools has ten configurable tiles. CLI signed build and offscreen previews pass, while physical acceptance remains pending. Selected-folder downloads, shelf, file helpers, capture and real-event companion reactions follow. [Scope and exit criteria](Sieghart/Design/sprint-5-plan.md).
+- **Sprint 5:** local implementation delivered on `sprint-5` — Calendar/reminders/Gantt, selected-folder downloads, bookmarked shelf, reviewed move/rename with optional Finder-only shortcuts, plain text paste, URL cleanup, DMG app copy, capture/annotation/local OCR/QR/color and real task cards/reactions. New pages share state across app/menu/island and fit configurable rails/tiles. The approved opening's rectangle is removed. All 16 isolated check groups, signed Debug bundle and nine local layout/PNG exports pass. Native permissions/interactions and whole-app CPU/Retina acceptance remain with the user. [Delivery](Sieghart/Design/sprint-5-closeout.md) · [Mac tests](Sieghart/Design/sprint-5-test-guide.md).
 - **Mac acceptance:** Sprint 3 and Sprint 4 are accepted on the user’s reports, not assistant hardware runs. SG-001 through SG-008 and the Safari follow-up are closed; reopen a specific issue for a reported regression. Keep Sieghart/Xcode closed during assistant verification; CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed.
-- **Calendar:** reintroduced in the first S5 implementation slice; [checkpoint and verification limits](Sieghart/Design/sprint-5-calendar-checkpoint.md).
+- **Calendar:** reintroduced in the first S5 implementation slice. October 12 adds Gantt's brief hello to permission and agenda views, day-grouped appointments and a cleaner month layout. The team greeting's horizontal rectangle is removed while retaining the approved choreography. [Checkpoint and verification limits](Sieghart/Design/sprint-5-calendar-checkpoint.md).
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
 
 ## Sprint 4 — Complete and accepted, October 8, 2026
@@ -183,7 +196,7 @@ The user reported all checks passed. The original checklist is retained below; t
 | Challenge track | Three-minute offline companion/focus story, accepted playground destination, physical-sensor compatibility, local resources under edition size limit. Reference screenshots and network integrations stay outside its package. |
 | Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. User Mac acceptance passed October 8. |
 | S4 | Complete and accepted October 8 on the final user report after `f77ac65`. Extended hardware capabilities stay separate backlog. |
-| S5 | Next planned sprint: calendar/reminders, notifications, selected-folder downloads, file shelf, clipboard/file helpers, capture and real-event companion reactions. [Detailed scope](Sieghart/Design/sprint-5-plan.md). |
+| S5 | Local implementation delivered: calendar/reminders, downloads, shelf, file helpers/optional Finder shortcuts, capture and actual companion task events. Physical Mac acceptance pending. [Delivery and tests](Sieghart/Design/sprint-5-closeout.md). |
 | S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
 
@@ -196,6 +209,14 @@ The user reported all checks passed. The original checklist is retained below; t
 ## Companion usefulness after core utilities
 
 This is a future product direction, not an active integration sprint. First deliver and validate the utility sequence above. The user requested concrete differentiating options: [Useful companions](Sieghart/Design/companion-capabilities.md) spells out each experience, its real event source and its dependencies. Prioritize task handoff plus contextual quick actions, then consider work-resume notes, meeting audio context and optional gentle routines.
+
+### October 11 — News and focus roles
+
+- [ ] Principal tech/AI news briefing from verified feeds: proposed owner Ada, configurable topics/sources/cadence, links and publication dates, deduplication and a finite list. Optional delivery respects focus and quiet hours.
+- [ ] Sig-owned focus/Pomodoro workflow with a persistent next step and coherent pause/resume. Sig remains the fixed principal; Gantt handles calendar commitments.
+- [ ] Future phone distraction blocking during chosen focus sessions. Platform, companion app, supported restrictions, cross-device link and expiration/recovery need validation; this is not a delivered full-device lock or a new Sprint 5 exit gate.
+
+[Detailed product direction](Sieghart/Design/product-direction-2026-10-11.md#news-and-focus-follow-up).
 
 | Future companion role | Behavior | Dependency |
 | --- | --- | --- |
@@ -272,12 +293,12 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
 | `clipboardHistory` | Local clipboard history | Implemented — local text/images/files, 5/10/20, cleanup, search/pins, direct paste fallback; user accepted October 8 | S4 |
-| `pastePlain` | Paste plain text | Planned | S5 |
-| `finderCutPaste` | Finder cut and paste | Planned | S5 |
-| `finderRename` | Rename shortcut | Planned | S5 |
-| `shelf` | Temporary file shelf | Planned | S5 |
-| `urlCleaner` | Remove URL tracking | Planned | S5 |
-| `diskImageInstaller` | Disk image app installer | Planned | S5 |
+| `pastePlain` | Paste plain text | Implemented — native matching-style or temporary plain clipboard/conditional format restoration; physical target acceptance pending | S5 |
+| `finderCutPaste` | Finder cut and paste | Implemented — selected files/current folder, review/confirm, optional Finder-only shortcuts, conflicts/rollback; native Automation acceptance pending | S5 |
+| `finderRename` | Rename shortcut | Implemented — shelf/Finder selection review and configurable Finder-only key, off by default; native key acceptance pending | S5 |
+| `shelf` | Temporary file shelf | Implemented — bounded bookmarked references, Quick Look/share/drag, reconnect and original-preserving removal; native interactions pending | S5 |
+| `urlCleaner` | Remove URL tracking | Implemented — reviewed HTTP(S) cleanup preserves useful encoded data and signed links | S5 |
+| `diskImageInstaller` | Disk image app installer | Implemented — explicit read-only DMG inspection, app/destination review, staged copy and cleanup; native mount/install acceptance pending | S5 |
 
 ### Sound (5)
 
@@ -302,17 +323,17 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `quickLauncher` | Quick tool panel | Partial — Shared clipboard route, avatar artwork and six customizable side slots; broader launcher pending | S5–S7 |
+| `quickLauncher` | Quick tool panel | Partial — ten configurable tiles, six side slots and shared utility routes including Files/Downloads/Capture; broader launcher pending | S5–S7 |
 | `quickToggles` | Quick actions | Planned | S5–S7 |
-| `colorPicker` | Screen color picker | Planned | S5–S7 |
-| `screenOCR` | Screen text/QR copy | Planned | S5–S7 |
+| `colorPicker` | Screen color picker | Implemented — native sampler/hex/copy and cancellation; physical sampler acceptance pending | S5 |
+| `screenOCR` | Screen text/QR copy | Implemented — local Vision on captured/imported images, copy and explicit QR links; actual screen selection pending | S5 |
 | `cleaningMode` | Screen/keyboard cleaning mode | Planned | S5–S7 |
 | `mediaTools` | Image/video/GIF compression | Planned | S5–S7 |
 | `cleaner` | Cache and file cleanup | Planned | S5–S7 |
 | `uninstaller` | App and leftovers removal | Planned | S5–S7 |
 | `homebrew` | Homebrew package management | Planned | S5–S7 |
 | `appUpdates` | App updates | Planned | S5–S7 |
-| `screenshot` | Screenshot capture/annotation | Planned | S5–S7 |
+| `screenshot` | Screenshot capture/annotation | Core implemented — selection/import, pen/box/arrow/text, undo/export/shelf; physical permission/capture pending. Advanced capture later | S5–S7 |
 | `cameraPreview` | Private camera mirror | Planned | S5–S7 |
 | `radialMenu` | Radial action menu | Planned | S5–S7 |
 | `scratchpad` | Floating scratchpad | Planned | S5–S7 |
@@ -327,18 +348,18 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
 | `notch` | Island and control center | Partial — Compact companion/focus island and tools; broader control center pending | S3 + S5 |
-| `notchCalendar` | Week/month agenda and meeting links | Planned | S3–S5 |
-| `notchNotifications` | New notification cards | Planned | S3–S5 |
+| `notchCalendar` | Week/month agenda and meeting links | Implemented — shared calendar/reminders, Gantt consent/agenda, next event/links/actions; physical permission/delivery pending | S5 |
+| `notchNotifications` | New notification cards | Core implemented — actual Sieghart task cards, quiet/module preferences and reminder dismiss/snooze; arbitrary other-app notifications require an adapter | S5 |
 | `notchGestures` | Island scroll/swipe gestures | Planned | S3–S5 |
 | `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro core implemented and user accepted; S5 extensions remain | S3 + S5 |
 | `notchAccessories` | Accessory status and battery alerts | Planned | S3–S5 |
 | `notchLyrics` | Lyrics | Planned | S3–S5 |
 | `notchQueue` | Playback queue | Planned | S3–S5 |
 | `notchLiveEqualizer` | Live audio bars | Planned | S3–S5 |
-| `notchDownloads` | Selected-folder downloads | Planned | S3–S5 |
+| `notchDownloads` | Selected-folder downloads | Implemented — selected roots/partial events, truthful completion, bounded history/actions and disable/sleep teardown; physical browser acceptance pending | S5 |
 | `notchAgents` | AI limits/tokens/cost/live work | Partial — S3 live work, quota/history/import adapters, charts and price/FX estimates delivered and user accepted; broader S5 scope remains | S3 + S5 |
 | `notchWatch` | Selected screen-area monitoring | Planned | S3–S5 |
-| `notchMascot` | Companion interaction | Partial — Six original companions and reactions; feature-specific interactions expand per module | S3 + S5 |
+| `notchMascot` | Companion interaction | Core implemented — six fixed identities, approved greeting, shared actual calendar/file/capture events, bounded reactions and motion preferences; further specialist integrations later | S3 + S5 |
 
 ### System monitor (8)
 

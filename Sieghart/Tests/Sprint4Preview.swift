@@ -27,7 +27,7 @@ private final class NoPreviewSensor: AccelerometerProviding {
         AIProviderResources.bundle = Bundle(path: "/private/tmp/sieghart-simple-build/Build/Products/Debug/Sieghart.app")!
         let suite = "Sieghart.Sprint4Preview.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        let prefs = CompanionPreferences(defaults: defaults); prefs.avatar = .crtBuddy; prefs.appearance = .dark; prefs.onboardingComplete = true
+        let prefs = CompanionPreferences(defaults: defaults); prefs.appearance = .dark; prefs.onboardingComplete = true
         let clipboard = ClipboardViewModel(defaults: defaults, access: PreviewClipboard(), storage: PreviewStorage(), monitorsSystem: false)
         await clipboard.restore(); clipboard.isEnabled = true
         let copies = ["One thing at a time. A little progress is still progress.", "Make space for the work that matters.", "https://example.com/project-notes", "Next: review the draft, then send the final version.", "Remember where you stopped. Resume when you are ready."]

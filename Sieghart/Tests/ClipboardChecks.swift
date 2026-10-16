@@ -131,11 +131,14 @@ actor FixtureClipboardStorage: ClipboardStorage {
         precondition(CompanionPreferences(defaults: defaults).toolActions == IslandToolAction.defaultSelection)
         let temporary = FileManager.default.temporaryDirectory.appendingPathComponent("Sieghart-Clipboard-\(UUID())")
         defer { try? FileManager.default.removeItem(at: temporary) }
+        try FileManager.default.createDirectory(at: temporary, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o755])
         let file = temporary.appendingPathComponent("history.json"), disk = LocalClipboardStorage(url: file)
         try await disk.save([pinned], revision: 2); try await disk.save([], revision: 1)
         let diskItems = try await disk.load(); precondition(diskItems == [pinned])
         let permission = (try FileManager.default.attributesOfItem(atPath: file.path)[.posixPermissions] as! NSNumber).intValue
         precondition(permission == 0o600)
+        let parentPermission = (try FileManager.default.attributesOfItem(atPath: temporary.path)[.posixPermissions] as! NSNumber).intValue
+        precondition(parentPermission == 0o700, "An existing history directory is private too")
         for t in stride(from: 0.0, through: 3.5, by: 1.0 / 240) {
             let a = CompanionEntranceMotion.sample(elapsed: t), b = CompanionEntranceMotion.sample(elapsed: t + 1.0 / 240)
             precondition(a.opacity >= 0 && a.opacity <= 1 && a.eyeOpen >= 0.08 && a.eyeOpen <= 1)

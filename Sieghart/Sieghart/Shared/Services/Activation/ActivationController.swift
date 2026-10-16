@@ -11,6 +11,8 @@ final class ActivationController: ObservableObject {
     @Published private(set) var clipboardShortcut: ShortcutChord?
     @Published private(set) var audioShortcuts: [ShortcutAction: ShortcutChord] = [:]
     @Published private(set) var audioShortcutStatuses: [ShortcutAction: String] = [:]
+    @Published private(set) var fileShortcuts: [ShortcutAction: ShortcutChord] = [:]
+    @Published private(set) var fileShortcutStatuses: [ShortcutAction: String] = [:]
     @Published private(set) var clipboardShortcutStatus = ""
     @Published var recordingShortcut: ShortcutAction? {
         didSet { modifierTracker.reset(); if registersShortcuts && shortcutsStarted { registerHotkeys() } }
@@ -47,6 +49,8 @@ final class ActivationController: ObservableObject {
     private var voiceRetryPending = false
     private let defaults: UserDefaults
     private let registersShortcuts: Bool
+    private let activeBundleID: @MainActor () -> String?
+    private var registeredFinderContext = false
     private var shortcutsStarted = false
     private let openApplication: @MainActor (String) async throws -> String
     private let searchBrowser: @MainActor (String) async throws -> String
@@ -77,11 +81,12 @@ final class ActivationController: ObservableObject {
     private let minimumVoiceProcessingDuration: Duration
     private var processingStartedAt = ContinuousClock.now
 
-    init(assistant: AssistantViewModel, notch: NotchWidgetViewModel, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open, voiceCapture: (any VoiceCapturing)? = nil, voiceNow: @escaping @MainActor () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }, minimumVoiceProcessingDuration: Duration = .milliseconds(700)) {
+    init(assistant: AssistantViewModel, notch: NotchWidgetViewModel, defaults: UserDefaults = .standard, registersShortcuts: Bool = true, lifecycleNotifications: NotificationCenter? = nil, openApplication: @escaping @MainActor (String) async throws -> String = LocalAppLauncher.open, searchBrowser: @escaping @MainActor (String) async throws -> String = BrowserSearch.open, voiceCapture: (any VoiceCapturing)? = nil, voiceNow: @escaping @MainActor () -> TimeInterval = { ProcessInfo.processInfo.systemUptime }, minimumVoiceProcessingDuration: Duration = .milliseconds(700), activeBundleID: @escaping @MainActor () -> String? = { NSWorkspace.shared.frontmostApplication?.bundleIdentifier }) {
         self.assistant = assistant
         self.notch = notch
         self.defaults = defaults
         self.registersShortcuts = registersShortcuts
+        self.activeBundleID = activeBundleID
         self.openApplication = openApplication
         self.searchBrowser = searchBrowser
         self.voiceCapture = voiceCapture ?? NativeVoiceCapture()
@@ -103,6 +108,9 @@ final class ActivationController: ObservableObject {
         voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
         for action in [ShortcutAction.nextOutput, .muteMicrophone] {
             if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), !defaults.bool(forKey: "activation.\(action.rawValue).disabled"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { audioShortcuts[action] = chord }
+        }
+        for action in ShortcutAction.finderActions {
+            if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), !defaults.bool(forKey: "activation.\(action.rawValue).disabled"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data), chord.keyCode != nil { fileShortcuts[action] = chord }
         }
         clipboardShortcutStatus = clipboardShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
         shortcutStatus = companionShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
@@ -158,6 +166,10 @@ final class ActivationController: ObservableObject {
     private func scheduleShortcutRecovery() {
         modifierTracker.reset()
         if recordingShortcut != nil { recordingShortcut = nil }
+        // Release Finder-only chords immediately on app changes. Standard
+        // copy/paste keys must remain available in every other application.
+        if registersShortcuts, shortcutsStarted, !fileShortcuts.isEmpty,
+           registeredFinderContext != (activeBundleID() == "com.apple.finder") { registerHotkeys() }
         shortcutRecoveryTask?.cancel()
         shortcutRecoveryTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(150))
@@ -174,25 +186,26 @@ final class ActivationController: ObservableObject {
         if NSEvent.modifierFlags.intersection(ShortcutChord.allowedModifiers).isEmpty { modifierTracker.reset() }
         eventTap?.ensureEnabled()
         if eventTap?.isValid == false { registrationNeedsRetry = true }
-        if trusted != lastShortcutTrust || CGPreflightListenEventAccess() != lastInputTrust || secureInput != lastSecureInput || registrationNeedsRetry {
+        if trusted != lastShortcutTrust || CGPreflightListenEventAccess() != lastInputTrust || secureInput != lastSecureInput || registrationNeedsRetry || (!fileShortcuts.isEmpty && registeredFinderContext != (activeBundleID() == "com.apple.finder")) {
             registerHotkeys()
         }
     }
 
     func shortcut(for action: ShortcutAction) -> ShortcutChord? {
-        switch action { case .companion: companionShortcut; case .voice: voiceShortcut; case .clipboard: clipboardShortcut; case .nextOutput, .muteMicrophone: audioShortcuts[action] }
+        switch action { case .companion: companionShortcut; case .voice: voiceShortcut; case .clipboard: clipboardShortcut; case .nextOutput, .muteMicrophone: audioShortcuts[action]; case .finderCut, .finderPaste, .finderRename: fileShortcuts[action] }
     }
     private func setStatus(_ text: String, for action: ShortcutAction) {
-        switch action { case .companion: shortcutStatus = text; case .voice: voiceShortcutStatus = text; case .clipboard: clipboardShortcutStatus = text; case .nextOutput, .muteMicrophone: audioShortcutStatuses[action] = text }
+        switch action { case .companion: shortcutStatus = text; case .voice: voiceShortcutStatus = text; case .clipboard: clipboardShortcutStatus = text; case .nextOutput, .muteMicrophone: audioShortcutStatuses[action] = text; case .finderCut, .finderPaste, .finderRename: fileShortcutStatuses[action] = text }
     }
 
     func setShortcut(_ chord: ShortcutChord?, for action: ShortcutAction) {
         recordingShortcut = nil
+        if action.finderOnly, let chord, chord.keyCode == nil { setStatus("Use a shortcut with a key for Finder", for: action); return }
         if let chord, let otherAction = ShortcutAction.allCases.first(where: { $0 != action && shortcut(for: $0)?.keyCode == chord.keyCode && shortcut(for: $0)?.modifiers == chord.modifiers }) {
             setStatus("Already used for \(otherAction.title.lowercased())", for: action)
             return
         }
-        switch action { case .companion: companionShortcut = chord; case .voice: voiceShortcut = chord; case .clipboard: clipboardShortcut = chord; case .nextOutput, .muteMicrophone: audioShortcuts[action] = chord }
+        switch action { case .companion: companionShortcut = chord; case .voice: voiceShortcut = chord; case .clipboard: clipboardShortcut = chord; case .nextOutput, .muteMicrophone: audioShortcuts[action] = chord; case .finderCut, .finderPaste, .finderRename: fileShortcuts[action] = chord }
         defaults.set(chord == nil, forKey: "activation.\(action.rawValue).disabled")
         if let chord, let data = try? JSONEncoder().encode(chord) { defaults.set(data, forKey: "activation.\(action.rawValue).chord") }
         else { defaults.removeObject(forKey: "activation.\(action.rawValue).chord") }
@@ -237,16 +250,23 @@ final class ActivationController: ObservableObject {
         lastInputTrust = CGPreflightListenEventAccess()
         lastShortcutTrust = trusted
         lastSecureInput = IsSecureEventInputEnabled()
+        registeredFinderContext = activeBundleID() == "com.apple.finder"
         needsShortcutPermission = !trusted && !lastInputTrust && ShortcutAction.allCases.contains { shortcut(for: $0)?.isModifierOnly == true }
         for (index, action) in ShortcutAction.allCases.enumerated() {
             let id = UInt32(index + 1)
             var statusText = "Shortcut off"
             if let chord = shortcut(for: action) {
+                if action.finderOnly && !registeredFinderContext { setStatus("\(chord.label) · Active only in Finder", for: action); continue }
                 if let code = chord.keyCode {
                     var reference: EventHotKeyRef?
                     let status = installed == noErr ? RegisterEventHotKey(code, chord.carbonModifiers, EventHotKeyID(signature: 0x53494748, id: id), target, 0, &reference) : installed
                     if status == noErr, let reference { hotkeys.append(reference); statusText = "\(chord.label) · Global shortcut registered" }
-                    else { fallbackActions.insert(action); registrationNeedsRetry = true; statusText = "Shortcut unavailable; record another combination" }
+                    else {
+                        // A passive monitor cannot suppress Finder's native
+                        // command. Never run both paste/move paths on failure.
+                        if !action.finderOnly { fallbackActions.insert(action); registrationNeedsRetry = true }
+                        statusText = "Shortcut unavailable; record another combination"
+                    }
                 } else {
                     statusText = !trusted && !lastInputTrust ? "\(chord.label) · Allow keyboard access to use in other apps" : lastSecureInput ? "\(chord.label) · Secure keyboard input is active" : "\(chord.label) · Press and release to activate"
                 }
@@ -308,7 +328,7 @@ final class ActivationController: ObservableObject {
             // When a keyboard grant exists, the session monitor is a live
             // fallback even when Carbon registered successfully. Some Space
             // transitions can interrupt one delivery path without unregistering it.
-            for action in ShortcutAction.allCases where shortcut(for: action)?.matches(keyCode: keyCode, flags: flags) == true {
+            for action in ShortcutAction.allCases where !action.finderOnly && shortcut(for: action)?.matches(keyCode: keyCode, flags: flags) == true {
                 deliverShortcut(action, source: .monitor, eventTime: eventTime)
             }
         } else if let modifiers = modifierTracker.update(flags) {
@@ -330,10 +350,20 @@ final class ActivationController: ObservableObject {
     }
 
     func performShortcut(_ action: ShortcutAction) {
-        guard recordingShortcut == nil else { return }
+        guard recordingShortcut == nil, shortcutAvailable(action) else { return }
         lastShortcutActivation = Date()
-        switch action { case .voice: toggleListening(); case .companion: notch.toggle(); case .clipboard: notch.toggleClipboard(); case .nextOutput: notch.audio.cycleOutput(); case .muteMicrophone: notch.audio.toggleMicrophoneMute() }
+        switch action {
+        case .voice: toggleListening()
+        case .companion: notch.toggle()
+        case .clipboard: notch.toggleClipboard()
+        case .nextOutput: notch.audio.cycleOutput()
+        case .muteMicrophone: notch.audio.toggleMicrophoneMute()
+        case .finderCut: notch.showFiles(); notch.files.page = .helpers; notch.files.cutFinderSelection()
+        case .finderPaste: notch.showFiles(); notch.files.page = .helpers; notch.files.useFinderDestination(conflict: .cancel)
+        case .finderRename: notch.showFiles(); notch.files.page = .helpers; notch.files.prepareFinderRename()
+        }
     }
+    func shortcutAvailable(_ action: ShortcutAction) -> Bool { !action.finderOnly || activeBundleID() == "com.apple.finder" }
 
     // Onboarding can request access without starting recognition or audio.
     func prepareVoiceAccess() async -> String {

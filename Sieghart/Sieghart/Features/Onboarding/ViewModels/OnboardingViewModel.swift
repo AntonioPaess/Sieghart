@@ -5,7 +5,6 @@ final class OnboardingViewModel: ObservableObject {
     @Published var preparingAccess = false
     @Published var accessStatus = ""
     @Published var step: Int
-    @Published var selection: CompanionAvatar?
     @Published var detected: Set<AIProvider> = []
     @Published var allowUsage = true
     @Published var allowClipboard = false
@@ -16,7 +15,6 @@ final class OnboardingViewModel: ObservableObject {
         allowClipboard = clipboard?.isEnabled ?? false
     }
     func complete(preferences: CompanionPreferences, usage: AIUsageViewModel, codex: CodexUsageViewModel, clipboard: ClipboardViewModel?) {
-        preferences.avatar = selection ?? preferences.avatar
         usage.automaticDetection = allowUsage
         codex.enabled = allowUsage && detected.contains(.codex)
         usage.claudeEnabled = allowUsage && detected.contains(.claude)

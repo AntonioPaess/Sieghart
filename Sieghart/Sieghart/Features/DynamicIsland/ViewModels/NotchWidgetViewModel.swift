@@ -28,8 +28,20 @@ final class NotchWidgetViewModel: ObservableObject {
     var activation: ActivationController?
     var codexUsage: CodexUsageViewModel?
     var aiUsage: AIUsageViewModel?
+    let agentRoom: AgentRoomViewModel
     let clipboard: ClipboardViewModel
     let calendar: CalendarViewModel
+    let events: CompanionEventCenter
+    let files: FilesViewModel
+    let fileReception: FileReceptionViewModel
+    @Published private(set) var fileReceptionPhase = FileReceptionPhase.idle
+    private var fileDragOrigin: (visible: Bool, page: NotchPresentation)?
+    private var fileReceiverBounds: CGRect?
+    let capture: CaptureViewModel
+    private var captureWasVisible = false
+    private var capturePreviousPage: NotchPresentation?
+    private var captureHidesOverlay = false
+    private var capturePendingReveal = false
     let middleClick: MiddleClickController
     let audio: AudioViewModel
     let monitor: SystemMonitorViewModel
@@ -41,6 +53,7 @@ final class NotchWidgetViewModel: ObservableObject {
     private var utilityMoodReset: Task<Void, Never>?
     private var lastMonitorWarning: Date?
     private var activityObservation: AnyCancellable?
+    private var roomLayoutObservation: AnyCancellable?
     private var panel: NSPanel?
     private var canvas: IslandWindowCanvas<AnyView>?
     private var hoverPanel: HoverZonePanel?
@@ -84,8 +97,10 @@ final class NotchWidgetViewModel: ObservableObject {
         }
     }
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioViewModel? = nil, monitor: SystemMonitorViewModel? = nil, keepAwake: KeepAwakeViewModel? = nil, displayPower: DisplayPowerViewModel? = nil, clipboard: ClipboardViewModel? = nil, calendar: CalendarViewModel? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetViewModel.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetViewModel.keyboardRevealDelay) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioViewModel? = nil, monitor: SystemMonitorViewModel? = nil, keepAwake: KeepAwakeViewModel? = nil, displayPower: DisplayPowerViewModel? = nil, clipboard: ClipboardViewModel? = nil, calendar: CalendarViewModel? = nil, events: CompanionEventCenter? = nil, files: FilesViewModel? = nil, capture: CaptureViewModel? = nil, fileReception: FileReceptionViewModel? = nil, agentRoom: AgentRoomViewModel? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetViewModel.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetViewModel.keyboardRevealDelay) {
         self.assistant = assistant
+        self.agentRoom = agentRoom ?? AgentRoomViewModel(services: [:], defaults: preferences.featureDefaults,
+            localChat: managesWindows ? .production(defaults: preferences.featureDefaults) : .isolated())
         self.middleClick = MiddleClickController()
         self.audio = audio ?? AudioViewModel()
         self.monitor = monitor ?? SystemMonitorViewModel()
@@ -93,6 +108,13 @@ final class NotchWidgetViewModel: ObservableObject {
         self.displayPower = displayPower ?? DisplayPowerViewModel()
         self.clipboard = clipboard ?? ClipboardViewModel(monitorsSystem: managesWindows)
         self.calendar = calendar ?? CalendarViewModel(observesSystem: managesWindows)
+        let taskEvents = events ?? CompanionEventCenter(defaults: preferences.featureDefaults, notifier: managesWindows ? LocalCompanionTaskNotifier() : SilentCompanionTaskNotifier())
+        self.events = taskEvents
+        self.files = files ?? FilesViewModel(defaults: preferences.featureDefaults, events: taskEvents, store: managesWindows ? LocalFilesStore() : MemoryFilesStore(),
+                                            observer: managesWindows ? nil : InactiveFolderObserver(), observesSystem: managesWindows)
+        self.fileReception = fileReception ?? FileReceptionViewModel(files: self.files, shouldAnimate: { preferences.characterMotion && !preferences.usesReducedMotion })
+        self.capture = capture ?? CaptureViewModel(events: taskEvents, backend: managesWindows ? MacCaptureBackend() : OfflineCaptureBackend(),
+                                                  sampler: managesWindows ? MacColorSampler() : InactiveColorSampler(), fileAccess: self.files.access)
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay
@@ -121,6 +143,7 @@ final class NotchWidgetViewModel: ObservableObject {
                 if note.name == NSWorkspace.sessionDidResignActiveNotification || note.name == NSWorkspace.willSleepNotification {
                     self.sessionIsActive = false
                     self.activation?.cancelVoiceCommand()
+                    self.fileReception.cancel()
                     self.panel?.orderOut(nil)
                     self.hoverPanel?.orderOut(nil)
                 } else {
@@ -158,6 +181,26 @@ final class NotchWidgetViewModel: ObservableObject {
         self.audio.onReaction = { [weak self] success in self?.reactToUtility(success) }
         self.keepAwake.onReaction = { [weak self] success in self?.reactToUtility(success) }
         self.displayPower.onReaction = { [weak self] success in self?.reactToUtility(success) }
+        self.events.onEvent = { [weak self] event in
+            guard !event.quiet else { return }; self?.reactToUtility(event.kind != .failed)
+        }
+        self.calendar.onReminderAdded = { [weak taskEvents] reminder in
+            taskEvents?.post(.reminderAdded, key: "reminder-added:\(reminder.id)", title: "Reminder kept nearby", detail: reminder.title)
+        }
+        self.calendar.onNotificationDelivered = { [weak taskEvents] key, title, reminder in
+            taskEvents?.post(reminder ? .reminderDue : .calendarDue, key: "due:\(key)", title: reminder ? "Time for your reminder" : "Your next commitment", detail: title)
+        }
+        self.capture.beforeSelection = { [weak self] in self?.beginCaptureSelection() }
+        self.capture.afterSelection = { [weak self] in self?.finishCaptureSelection() }
+        self.capture.onSavedImage = { [weak self] url in Task { @MainActor [weak self] in await self?.files.add([url], announce: false) } }
+        self.fileReception.onPhaseChange = { [weak self] phase in self?.fileReceptionChanged(phase) }
+        self.fileReception.onAbandonDrag = { [weak self] in self?.restoreBeforeFileDrag() }
+        roomLayoutObservation = self.agentRoom.$page
+            .combineLatest(self.agentRoom.localChat.$conversations.map { $0.count > 2 }.removeDuplicates())
+            .dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in
+            guard let self, self.presentation == .agentRoom else { return }
+            self.screenDidChange()
+        }
         // A saved completion is context, never a new announcement on launch.
         latestCompletion = assistant.completionNotice
         shownCompletionID = assistant.completionNotice?.id
@@ -204,10 +247,10 @@ final class NotchWidgetViewModel: ObservableObject {
         finishWelcome()
         let start = Date().addingTimeInterval(0.35)
         welcomeStartedAt = start; presentation = .home; reveal()
-        revealGraceDeadline = ContinuousClock.now + .seconds(5)
-        scheduleHide(delay: .seconds(5))
+        revealGraceDeadline = ContinuousClock.now + .seconds(CompanionTeamFormation.duration + 1)
+        scheduleHide(delay: .seconds(CompanionTeamFormation.duration + 1))
         welcomeTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(4500))
+            try? await Task.sleep(for: .seconds(CompanionTeamFormation.duration + 0.35))
             guard !Task.isCancelled, self?.welcomeStartedAt == start else { return }
             self?.welcomeStartedAt = nil
         }
@@ -260,6 +303,58 @@ final class NotchWidgetViewModel: ObservableObject {
     }
 
     func showCalendar() { calendar.prepare(); presentation = .calendar; reveal() }
+    func showFiles(downloads: Bool = false) { clipboard.preparePasteTarget(); files.page = downloads ? .downloads : .shelf; presentation = .files; reveal() }
+    func showCapture() { presentation = .capture; reveal() }
+    func enterFileDrag(sequence: Int, point: CGPoint) -> Bool {
+        guard sessionIsActive, !captureHidesOverlay, activation?.isVoiceBusy != true else { return false }
+        if fileReceptionPhase != .hovering {
+            fileDragOrigin = (isVisible, presentation)
+            finishWelcome(); presentation = .home
+        }
+        fileReception.enter(sequence: sequence, position: normalizedDropPoint(point))
+        reveal(approachGrace: false); hideTask?.cancel()
+        return true
+    }
+    func moveFileDrag(sequence: Int, point: CGPoint) { fileReception.move(sequence: sequence, position: normalizedDropPoint(point)) }
+    func setFileReceiverBounds(_ bounds: CGRect?) {
+        fileReceiverBounds = bounds.flatMap { $0.width > 0 && $0.height > 0 ? $0 : nil }
+    }
+    private func normalizedDropPoint(_ point: CGPoint) -> CGPoint {
+        if fileReceptionPhase != .idle, let bounds = fileReceiverBounds {
+            return FileReceiverGeometry.normalizedPoint(point, in: bounds)
+        }
+        guard let screen = notchScreen else { return CGPoint(x: 0.5, y: 0.5) }
+        let scale = preferences.widgetSize.scale
+        // Used only while opening, before the actual receiver reports its bounds.
+        let surface = min(min(620, screen.frame.width - 176) * scale, screen.frame.width - 176)
+        let measured = NotchGeometry(screen: screen)
+        let top = screen.frame.maxY + 1 / screen.backingScaleFactor - measured.contentTop - 66 * scale
+        let bounds = CGRect(x: notchCenterX(on: screen) - surface / 2 + 44 * scale,
+                            y: top - FileReceiverGeometry.stageHeight * scale,
+                            width: max(1, surface - 88 * scale), height: FileReceiverGeometry.stageHeight * scale)
+        return FileReceiverGeometry.normalizedPoint(point, in: bounds)
+    }
+    func fileReceiverPageDidChange() {
+        guard presentation != .home, fileReception.receiving else { return }
+        fileDragOrigin = nil; fileReception.cancel()
+    }
+    private func fileReceptionChanged(_ phase: FileReceptionPhase) {
+        fileReceptionPhase = phase
+        if phase == .idle {
+            fileReceiverBounds = nil
+            restoreBeforeFileDrag()
+        } else if phase == .ready || phase == .failed {
+            fileDragOrigin = nil
+            if presentation == .home { reveal(approachGrace: false); revealGraceDeadline = .now + .seconds(8); scheduleHide(delay: .seconds(8)) }
+        }
+        screenDidChange()
+    }
+    private func restoreBeforeFileDrag() {
+        let origin = fileDragOrigin; fileDragOrigin = nil
+        guard let origin, presentation == .home else { return }
+        presentation = origin.page
+        if origin.visible { reveal(approachGrace: false) } else { dismissPanel() }
+    }
     func showClipboard() { clipboard.preparePasteTarget(); presentation = .clipboard; reveal() }
     func toggleClipboard() { if isVisible && presentation == .clipboard { hide() } else { showClipboard() } }
 
@@ -270,8 +365,21 @@ final class NotchWidgetViewModel: ObservableObject {
             try? await Task.sleep(for: .seconds(2)); guard !Task.isCancelled else { return }; self?.utilityMood = .idle
         }
     }
-    func startUtilities() { keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle() }
-    func stopUtilities() { keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown() }
+    func startUtilities() { sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
+    func stopUtilities() { agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
+    private func beginCaptureSelection() {
+        finishWelcome()
+        captureWasVisible = isVisible; capturePreviousPage = presentation; captureHidesOverlay = true; capturePendingReveal = false
+        hideTask?.cancel(); pointerPresenceTask?.cancel(); isVisible = false
+        panel?.orderOut(nil); hoverPanel?.orderOut(nil)
+    }
+    private func finishCaptureSelection() {
+        captureHidesOverlay = false
+        if capturePendingReveal || (captureWasVisible && capturePreviousPage == presentation) { reveal() }
+        else if sessionIsActive { hoverPanel?.orderFrontRegardless() }
+        capturePreviousPage = nil; captureWasVisible = false; capturePendingReveal = false
+    }
+    func showAgentRoom() { finishWelcome(); agentRoom.page = .room; presentation = .agentRoom; reveal(approachGrace: false); panel?.makeKey() }
     func showSystem() { presentation = .system; reveal() }
     func showKeepAwake() { presentation = .keepAwake; reveal() }
     func showDisplayPower() { presentation = .displayPower; reveal() }
@@ -296,7 +404,7 @@ final class NotchWidgetViewModel: ObservableObject {
     func collapseAfterPointerExit() {
         // Explicit Cancel/Close still works. Automatic pointer departure never
         // hides the transcript or controls during preparation/capture/draining.
-        guard activation?.isVoiceBusy != true else { return }
+        guard activation?.isVoiceBusy != true, !fileReception.receiving, presentation != .agentRoom else { return }
         guard activation?.voicePresented == true else { hide(); return }
         guard !voiceCollapsed || presentation != .island else { return }
         voiceCollapsed = true
@@ -339,6 +447,7 @@ final class NotchWidgetViewModel: ObservableObject {
     }
 
     func hide() {
+        fileReception.cancel(); fileDragOrigin = nil
         voiceCollapsed = false
         completionTask?.cancel()
         if activation?.voicePresented == true || activation?.isVoiceBusy == true { activation?.cancelVoiceCommand(); return }
@@ -364,7 +473,7 @@ final class NotchWidgetViewModel: ObservableObject {
 
     private func handlePomodoroPhaseChange(_ phase: PomodoroPhase) {
         guard phase == assistant.pomodoroPhase else { return }
-        if activation?.isVoiceBusy == true || presentation == .celebration || presentation == .aiLimits || presentation == .tools || presentation == .audio || presentation == .avatars { return }
+        if activation?.isVoiceBusy == true || presentation == .celebration || presentation == .aiLimits || presentation == .agentRoom || presentation == .tools || presentation == .audio || presentation == .avatars { return }
         switch phase {
         case .focusing, .paused:
             if !isVisible || presentation == .island { showIsland() }
@@ -377,7 +486,7 @@ final class NotchWidgetViewModel: ObservableObject {
     private func presentCompletion(_ notice: SessionCompletion) {
         latestCompletion = notice
         guard notice.id != shownCompletionID else { return }
-        guard activation?.isVoiceBusy != true else { return }
+        guard activation?.isVoiceBusy != true, presentation != .agentRoom else { return }
         shownCompletionID = notice.id
         presentation = .celebration
         reveal()
@@ -400,6 +509,7 @@ final class NotchWidgetViewModel: ObservableObject {
     }
 
     private func reveal(approachGrace: Bool = true) {
+        if captureHidesOverlay { capturePendingReveal = true; return }
         guard sessionIsActive else { return }
         hideTask?.cancel()
         hideTask = nil
@@ -509,6 +619,10 @@ final class NotchWidgetViewModel: ObservableObject {
         configureOverlay(hover)
 
         let view = HoverZoneView()
+        view.onFileEnter = { [weak self] id, point in self?.enterFileDrag(sequence: id, point: point) == true }
+        view.onFileMove = { [weak self] id, point in self?.moveFileDrag(sequence: id, point: point) }
+        view.onFileExit = { [weak self] id in self?.fileReception.exit(sequence: id) }
+        view.onFileDrop = { [weak self] id, board, count in self?.fileReception.receive(sequence: id, pasteboard: board, changeCount: count) == true }
         view.onEnter = { [weak self] in
             self?.setPointerInsideHoverZone(true)
         }
@@ -586,7 +700,12 @@ final class NotchWidgetViewModel: ObservableObject {
     private func screenDidChange() {
         let height: CGFloat
         switch presentation {
-        case .home: height = 240
+        case .home:
+            switch fileReceptionPhase {
+            case .idle: height = 318
+            case .hovering, .receiving, .processing: height = 316
+            case .ready, .failed: height = 380 // Additional space only for the attachment card.
+            }
         case .focusSetup: height = 330
         case .timer: height = 330
         case .completion: height = 212
@@ -595,18 +714,21 @@ final class NotchWidgetViewModel: ObservableObject {
         case .tools: height = 350
         case .clipboard: height = 480
         case .calendar: height = 480
+        case .files, .capture: height = 480
         case .system: height = 440
         case .keepAwake: height = 400
         case .displayPower: height = 420
         case .audio: height = 460
         case .avatars: height = 340
+        case .agentRoom: height = agentRoom.page == .chat ? 404 : min(agentRoom.localChat.conversations.count > 2 ? 450 : 300, (notchScreen?.visibleFrame.height ?? 800) - 80)
         case .aiLimits: height = min(470, (notchScreen?.visibleFrame.height ?? 700) - 80)
         }
         let width: CGFloat
         switch presentation {
         case .island: width = 240
         case .aiLimits: width = 800
-        case .tools, .audio, .clipboard, .calendar, .system, .displayPower: width = 760
+        case .agentRoom: width = agentRoom.page == .chat ? 620 : 760
+        case .tools, .audio, .clipboard, .calendar, .system, .displayPower, .files, .capture: width = 760
         case .keepAwake: width = 700
         case .focusSetup, .timer: width = 720
         default: width = 620
@@ -650,7 +772,7 @@ final class NotchWidgetViewModel: ObservableObject {
 
     private func scheduleHide(delay: Duration) {
         hideTask?.cancel()
-        guard activation?.isVoiceBusy != true else { hideTask = nil; return }
+        guard activation?.isVoiceBusy != true, !fileReception.receiving else { hideTask = nil; return }
         let grace = revealGraceDeadline.map { ContinuousClock.now.duration(to: $0) } ?? .zero
         let delay = max(delay, grace)
         hideTask = Task { @MainActor [weak self] in

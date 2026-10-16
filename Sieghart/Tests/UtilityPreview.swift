@@ -46,7 +46,7 @@ private final class NoUtilitySensor: AccelerometerProviding {
     @MainActor static func main() async throws {
         let suite = "Sieghart.UtilityPreview.\(UUID())", defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        let prefs = CompanionPreferences(defaults: defaults); prefs.onboardingComplete = true; prefs.avatar = .paperPal; prefs.appearance = .dark
+        let prefs = CompanionPreferences(defaults: defaults); prefs.onboardingComplete = true; prefs.appearance = .dark
         let monitor = SystemMonitorViewModel(backend: PreviewSystem()); for _ in 0..<30 { monitor.refresh() }
         let awake = KeepAwakeViewModel(backend: PreviewAwake(), defaults: defaults)
         let display = DisplayPowerViewModel(backend: PreviewDisplay(), defaults: defaults); display.refresh()

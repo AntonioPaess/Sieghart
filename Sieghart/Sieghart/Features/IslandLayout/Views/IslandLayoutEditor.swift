@@ -169,11 +169,11 @@ struct IslandLayoutEditor: View {
                         .frame(width: 44, height: 44).background(.black, in: Circle())
                         .environment(\.colorScheme, .dark)
                 }.buttonStyle(IslandButtonStyle()).focusEffectDisabled()
-                    .help("Change your companion").accessibilityLabel("Change your companion: \(preferences.avatar.name)")
+                    .help("Meet your team").accessibilityLabel("Meet your team: \(preferences.avatar.name)")
                     .popover(isPresented: $viewModel.choosingCompanion) {
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Choose your companion").font(.headline)
-                            CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
+                            Text("Your team").font(.headline)
+                            CompanionTeamGallery(animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
                         }.padding(20).frame(width: 480)
                             .environment(\.surfaceGlassEnabled, preferences.windowGlass)
                     }

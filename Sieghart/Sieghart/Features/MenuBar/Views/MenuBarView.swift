@@ -33,9 +33,12 @@ struct MenuBarView: View {
                     }.buttonStyle(.plain).help(item.rawValue).accessibilityLabel(item.rawValue).accessibilityAddTraits(viewModel.page == item ? .isSelected : [])
                 }
                 Menu {
+                    Button("Meet the team") { viewModel.page = .avatars }
                     Button("System") { viewModel.page = .system }
                     Button("Keep awake") { viewModel.page = .keepAwake }
                     Button("Display & power") { viewModel.page = .displayPower }
+                    Button("Files & downloads") { viewModel.page = .files }
+                    Button("Capture") { viewModel.page = .capture }
                 } label: { Image(systemName: "ellipsis").frame(width: 24, height: 34) }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("More tools")
             }.padding(4).modifier(WorkspaceSurface(radius: 14))
             Group {
@@ -56,7 +59,9 @@ struct MenuBarView: View {
                             Button(activation.isVoiceBusy ? "Cancel voice" : "Speak a command") { activation.toggleListening() }.buttonStyle(CompanionButtonStyle(compact: true))
                         }
                     }.frame(maxWidth: .infinity, alignment: .topLeading)
-                case .calendar: CalendarView(model: notch.calendar, compact: true)
+                case .calendar: CalendarView(model: notch.calendar, events: notch.events, compact: true)
+                case .files: FilesView(model: notch.files, compact: true)
+                case .capture: CaptureToolsView(model: notch.capture, compact: true)
                 case .timers: TimerToolsView(compact: true, onStart: { notch.showIsland() })
                 case .ai:
                     AIUsageSummary(compact: true)
@@ -67,7 +72,7 @@ struct MenuBarView: View {
                 case .system: SystemMonitorView(monitor: notch.monitor, compact: true)
                 case .keepAwake: KeepAwakeView(controller: notch.keepAwake, compact: true)
                 case .displayPower: DisplayPowerView(controller: notch.displayPower)
-                case .avatars: CompanionAvatarPicker(selection: $preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
+                case .avatars: CompanionTeamGallery(animates: preferences.characterMotion && !preferences.usesReducedMotion, compact: true)
                 }
             }.fixedSize(horizontal: false, vertical: true)
             Divider().overlay(CompanionStyle.edge.opacity(0.1))
@@ -79,5 +84,6 @@ struct MenuBarView: View {
         }.padding(20).frame(width: 380).foregroundStyle(CompanionStyle.ink)
             .background { WorkspaceBackdrop() }.preferredColorScheme(preferences.appearance.colorScheme)
             .environment(\.workspaceGlass, true).environment(\.surfaceGlassEnabled, preferences.windowGlass).environment(\.islandReduceMotion, preferences.usesReducedMotion).focusEffectDisabled()
+            .environment(\.companionMotionEnabled, preferences.characterMotion)
     }
 }

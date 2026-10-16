@@ -46,6 +46,9 @@ struct SieghartApp: App {
         appDelegate.activation = activation
         appDelegate.clipboard = notch.clipboard
         appDelegate.calendar = notch.calendar
+        appDelegate.files = notch.files
+        appDelegate.capture = notch.capture
+        appDelegate.notch = notch
         appDelegate.onLaunch = {
             notch.startUtilities()
             if preferences.onboardingComplete && preferences.launchGreeting { notch.showWelcome() }

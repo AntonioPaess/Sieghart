@@ -8,4 +8,6 @@
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>Sieghart shows your upcoming events in the calendar and Dynamic Island. Events stay on this Mac.</string>
     <key>LSUIElement</key><true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Sieghart reads your Finder selection and destination only when you choose its file move tools.</string>
 </dict></plist>

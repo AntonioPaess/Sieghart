@@ -75,14 +75,20 @@ enum CompanionGaze {
 struct WelcomeContentPhase: ViewModifier {
     var started: Date?
     var animates: Bool
+    @State private var visible = false
     func body(content: Content) -> some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: started == nil || !animates)) { context in
-            let time = started.map { context.date.timeIntervalSince($0) } ?? 10
-            content.opacity(animates && started != nil ? Self.dock(time) : 1)
-        }
+        content.opacity(animates && started != nil && !visible ? 0 : 1)
+            .task(id: started) {
+                guard let started, animates else { visible = true; return }
+                visible = false
+                let delay = max(0, 9.4 - Date().timeIntervalSince(started))
+                try? await Task.sleep(for: .seconds(delay))
+                guard !Task.isCancelled else { return }
+                withAnimation(.easeInOut(duration: 0.8)) { visible = true }
+            }
     }
     static func dock(_ time: Double) -> Double {
-        let t = min(1, max(0, (time - 3.15) / 0.9))
+        let t = min(1, max(0, (time - 9.4) / 0.8))
         return t * t * (3 - 2 * t)
     }
 }

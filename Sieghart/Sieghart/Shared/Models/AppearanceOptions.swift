@@ -15,7 +15,8 @@ enum WidgetSize: String, CaseIterable, Identifiable {
 }
 
 enum IslandRailAction: String, CaseIterable, Identifiable {
-    case tools = "All tools", timer = "Timers", calendar = "Calendar", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Avatars", voice = "Speak", companion = "Companion", system = "System", keepAwake = "Keep awake", displayPower = "Display & power", none = "Hidden"
+    case tools = "All tools", timer = "Timers", calendar = "Calendar", clipboard = "Clipboard", preferences = "Preferences", audio = "Audio", ai = "AI agents", avatars = "Team", voice = "Speak", companion = "Companion", system = "System", keepAwake = "Keep awake", displayPower = "Display & power", files = "Files", downloads = "Downloads", capture = "Capture", none = "Hidden"
+    static let allCases: [Self] = [.tools, .timer, .calendar, .clipboard, .preferences, .audio, .ai, .voice, .companion, .system, .keepAwake, .displayPower, .files, .downloads, .capture, .none]
     var id: String { rawValue }
     var symbol: String {
         switch self {
@@ -32,6 +33,9 @@ enum IslandRailAction: String, CaseIterable, Identifiable {
         case .system: "cpu"
         case .keepAwake: "cup.and.saucer"
         case .displayPower: "sun.max"
+        case .files: "tray"
+        case .downloads: "arrow.down.circle"
+        case .capture: "viewfinder"
         case .none: "minus"
         }
     }
@@ -50,12 +54,15 @@ enum IslandRailPreset: String, CaseIterable, Identifiable {
 
 enum IslandToolAction: String, CaseIterable, Identifiable {
     case companion = "Companion", audio = "Audio", ai = "AI agents", timer = "Timers"
-    case clipboard = "Clipboard", calendar = "Calendar", avatars = "Avatars", system = "System"
+    case clipboard = "Clipboard", calendar = "Calendar", avatars = "Team", system = "System"
     case keepAwake = "Keep awake", displayPower = "Display & power", preferences = "Preferences"
+    case files = "Files", downloads = "Downloads", capture = "Capture"
 
     var id: String { rawValue }
+    // Team is decoded only for old preferences; it is no longer a tool.
+    static let allCases: [Self] = [.companion, .audio, .ai, .timer, .clipboard, .calendar, .system, .keepAwake, .displayPower, .preferences, .files, .downloads, .capture]
     static let defaultSelection: [Self] = [.companion, .audio, .ai, .timer, .clipboard,
-                                            .calendar, .avatars, .system, .keepAwake, .displayPower]
+                                            .calendar, .files, .system, .keepAwake, .displayPower]
     var symbol: String {
         switch self {
         case .companion: "face.smiling"
@@ -69,6 +76,9 @@ enum IslandToolAction: String, CaseIterable, Identifiable {
         case .keepAwake: "cup.and.saucer"
         case .displayPower: "sun.max"
         case .preferences: "gearshape"
+        case .files: "tray"
+        case .downloads: "arrow.down.circle"
+        case .capture: "viewfinder"
         }
     }
     var subtitle: String {
@@ -84,6 +94,9 @@ enum IslandToolAction: String, CaseIterable, Identifiable {
         case .keepAwake: "On your terms"
         case .displayPower: "Screen and sleep"
         case .preferences: "Your workspace"
+        case .files: "Shelf & file helpers"
+        case .downloads: "Your selected folders"
+        case .capture: "Text, QR & color"
         }
     }
 }
