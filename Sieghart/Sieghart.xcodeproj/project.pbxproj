@@ -364,11 +364,14 @@
 		CDBC83951B4CEB5D689E54D6 /* MouseButtonController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBF22CEA0D27179B7EFC7F4 /* MouseButtonController.swift */; };
 		C094C81904E7DFFAA1DAFBB3 /* MouseButtonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C891BC3F0EEF29A7F04D953E /* MouseButtonTests.swift */; };
 		CA2FC439DC2DB025CD52526A /* InputGuardsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCACE472FCBB497FE1FE57BC /* InputGuardsSettingsView.swift */; };
+		CE50A70F784D9E4D23ED3D57 /* DockSpacesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97A770D3A43C8A819C4CA5 /* DockSpacesController.swift */; };
 		CF8E6C65C8E7D99A60B8A259 /* InputGuards.swift in Sources */ = {isa = PBXBuildFile; fileRef = C722F7E470E9E4EEC1037C62 /* InputGuards.swift */; };
 		CEACF6DC80E7315BE8780015 /* InputGuardsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D7026BFE161F7046CB7735 /* InputGuardsController.swift */; };
 		CB83A616C3C78D2F082F790E /* InputGuardsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCACE472FCBB497FE1FE57BC /* InputGuardsSettingsView.swift */; };
+		C9BAD43C9ABF154A31543BA9 /* DockSpacesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC97A770D3A43C8A819C4CA5 /* DockSpacesController.swift */; };
 		C8A7EE26C27A19ED7502C509 /* InputGuards.swift in Sources */ = {isa = PBXBuildFile; fileRef = C722F7E470E9E4EEC1037C62 /* InputGuards.swift */; };
 		CE17A5C1677AD1665DE43917 /* InputGuardsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D7026BFE161F7046CB7735 /* InputGuardsController.swift */; };
+		C2C7414855B5A1BCA1ED2FBE /* DockSpacesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D9A73A5B7552244F484AB0 /* DockSpacesTests.swift */; };
 		C40310182DE403BB832EBDF9 /* InputGuardsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C92BFCD6ABB32D2C76943FE6 /* InputGuardsTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -599,8 +602,10 @@
 		CFBF22CEA0D27179B7EFC7F4 /* MouseButtonController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonController.swift; sourceTree = "<group>"; };
 		C891BC3F0EEF29A7F04D953E /* MouseButtonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonTests.swift; sourceTree = "<group>"; };
 		CCACE472FCBB497FE1FE57BC /* InputGuardsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputGuardsSettingsView.swift; sourceTree = "<group>"; };
+		CC97A770D3A43C8A819C4CA5 /* DockSpacesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockSpacesController.swift; sourceTree = "<group>"; };
 		C722F7E470E9E4EEC1037C62 /* InputGuards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputGuards.swift; sourceTree = "<group>"; };
 		C4D7026BFE161F7046CB7735 /* InputGuardsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputGuardsController.swift; sourceTree = "<group>"; };
+		C9D9A73A5B7552244F484AB0 /* DockSpacesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockSpacesTests.swift; sourceTree = "<group>"; };
 		C92BFCD6ABB32D2C76943FE6 /* InputGuardsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputGuardsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1490,6 +1495,7 @@
 				C7DA4D353724B4F39C66CA2A /* CompanionGazeTests.swift */,
 				C25711004E8B4C99B6A5E53A /* DesktopTests.swift */,
 				C2655714E19D279684A8337D /* DisplayPowerTests.swift */,
+				C9D9A73A5B7552244F484AB0 /* DockSpacesTests.swift */,
 				C0AFF1937B327B57C51A0E00 /* ExchangeQuoteTests.swift */,
 				C5900A79D34BC416D118C6FF /* ExpandedHistoryTests.swift */,
 				C92BFCD6ABB32D2C76943FE6 /* InputGuardsTests.swift */,
@@ -1603,6 +1609,7 @@
 			children = (
 				C77EE23B35F6DAD71BD5767E /* DesktopBackend.swift */,
 				CC7CED1271199F76A6123982 /* DesktopController.swift */,
+				CC97A770D3A43C8A819C4CA5 /* DockSpacesController.swift */,
 				CCB486958FF409F992E27F11 /* PointerFocus.swift */,
 				C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */,
 			);
@@ -1827,6 +1834,7 @@
 				B4106200B15BF38D52AAB6FF /* ActivationController.swift in Sources */,
 				CE953B357DC9D951EC305505 /* DesktopBackend.swift in Sources */,
 				CDCB0C2BF139B7E7BDDA6ECC /* DesktopController.swift in Sources */,
+				CE50A70F784D9E4D23ED3D57 /* DockSpacesController.swift in Sources */,
 				C8807B7E3CEC9A74C3CB112F /* PointerFocus.swift in Sources */,
 				C657553DE1E297078BE36EC6 /* WindowGeometry.swift in Sources */,
 				BE78F1B04E965C35941847F0 /* ImpactGestureCoordinator.swift in Sources */,
@@ -1972,6 +1980,7 @@
 				C8F8B04188282A23D4DE331F /* ActivationController.swift in Sources */,
 				CB6CE15EC58E9432F6579419 /* DesktopBackend.swift in Sources */,
 				CC17E4ABE781B8EF55225D1C /* DesktopController.swift in Sources */,
+				C9BAD43C9ABF154A31543BA9 /* DockSpacesController.swift in Sources */,
 				C9AB6BAA101BB811ECD3C9C1 /* PointerFocus.swift in Sources */,
 				C6F57B0DFFF9A2C6D38B5ECA /* WindowGeometry.swift in Sources */,
 				C9A3C7468CA32F3A60BA9393 /* ImpactGestureCoordinator.swift in Sources */,
@@ -2025,6 +2034,7 @@
 				C47585129D0E3F2604358BF1 /* CompanionGazeTests.swift in Sources */,
 				C32D9D27B429D23C98803B41 /* DesktopTests.swift in Sources */,
 				C0850788EF690C00BB05259D /* DisplayPowerTests.swift in Sources */,
+				C2C7414855B5A1BCA1ED2FBE /* DockSpacesTests.swift in Sources */,
 				C35C6B4F0EDD93FC3350E679 /* ExchangeQuoteTests.swift in Sources */,
 				CDA1F3AB8921F5B7394ED52F /* ExpandedHistoryTests.swift in Sources */,
 				C40310182DE403BB832EBDF9 /* InputGuardsTests.swift in Sources */,

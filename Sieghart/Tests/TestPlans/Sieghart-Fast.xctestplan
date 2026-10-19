@@ -139,6 +139,12 @@
                 ]
               },
               {
+                "name": "DockSpacesLogicTests",
+                "testFunctions": [
+                  "previewAspectAndProtectedBundles()"
+                ]
+              },
+              {
                 "name": "ExchangeQuoteTests",
                 "testFunctions": [
                   "datedExchange()"
@@ -522,6 +528,15 @@
                 "name": "DisplayPowerTests",
                 "testFunctions": [
                   "displayOwnership()"
+                ]
+              },
+              {
+                "name": "DockSpacesContracts",
+                "testFunctions": [
+                  "autoQuitLastWindow()",
+                  "dockPreviewAndClick()",
+                  "greenButtonMaximizeAndRestore()",
+                  "spacesOrderRestore()"
                 ]
               },
               {

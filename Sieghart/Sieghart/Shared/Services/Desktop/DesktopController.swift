@@ -16,6 +16,7 @@ import Combine
     @Published var edgeSnapping: Bool {
         didSet { defaults.set(edgeSnapping, forKey: "desktop.edgeSnapping"); configureMonitor() }
     }
+    let dockSpaces: DockSpacesController
     private struct UndoEntry { let id: UUID; let before: CGRect; let after: CGRect }
     private let backend: any DesktopManaging
     private let monitor: any DesktopDragMonitoring
@@ -39,10 +40,12 @@ import Combine
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     init(defaults: UserDefaults = .standard, backend: (any DesktopManaging)? = nil, monitor: (any DesktopDragMonitoring)? = nil,
          pointer: (any PointerFocusMonitoring)? = nil, dwell: (any PointerDwellScheduling)? = nil,
+         dockSpaces: DockSpacesController? = nil,
          trusted: @escaping () -> Bool = AXIsProcessTrusted,
          requestAccess: @escaping () -> Void = { AccessibilityAccess.request() }) {
         self.defaults = defaults; self.backend = backend ?? NativeDesktopBackend(); self.monitor = monitor ?? NativeDesktopDragMonitor()
         self.pointer = pointer ?? NativePointerFocusMonitor(); self.dwell = dwell ?? NativePointerDwellScheduler()
+        self.dockSpaces = dockSpaces ?? DockSpacesController(defaults: defaults, trusted: trusted)
         self.trusted = trusted; self.requestAccess = requestAccess
         edgeSnapping = defaults.bool(forKey: "desktop.edgeSnapping")
         focusFollowsPointer = defaults.bool(forKey: "desktop.focusFollowsPointer")
@@ -57,13 +60,14 @@ import Combine
         return true
     }
     func allowAccess() {
-        requestAccess(); configureMonitor()
+        requestAccess(); configureMonitor(); dockSpaces.configureZoomInterceptor()
         status = trusted() ? "Accessibility is allowed. Refresh the list to choose a window." : "Enable this copy of Sieghart in macOS Privacy & Security, then return and refresh."
     }
     func refresh() {
         guard permitted() else { return }
         let snapshot = backend.discover()
         apps = snapshot.apps; windows = snapshot.windows
+        dockSpaces.observeSnapshot(snapshot)
         if !windows.contains(where: { $0.id == selectedID }) { selectedID = nil }
         status = snapshot.limited ? "Partial list: refresh again if a window is missing. Full-screen and minimized windows are excluded." :
             "\(apps.count) apps, \(windows.count) windows. Full-screen and minimized windows are excluded."
@@ -117,7 +121,7 @@ import Combine
         }
     }
     func start(observeSystem: Bool = true) {
-        guard !started else { return }; started = true; configureMonitor()
+        guard !started else { return }; started = true; dockSpaces.start(); configureMonitor()
         guard observeSystem else { return }
         let workspace = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification, NSWorkspace.sessionDidResignActiveNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
@@ -137,9 +141,9 @@ import Combine
             }))
         }
     }
-    func setSleeping(_ value: Bool) { asleep = value; configureMonitor() }
-    func setLocked(_ value: Bool) { locked = value; configureMonitor() }
-    func setSessionActive(_ value: Bool) { sessionActive = value; configureMonitor() }
+    func setSleeping(_ value: Bool) { asleep = value; dockSpaces.setSleeping(value); configureMonitor() }
+    func setLocked(_ value: Bool) { locked = value; dockSpaces.setLocked(value); configureMonitor() }
+    func setSessionActive(_ value: Bool) { sessionActive = value; dockSpaces.setSessionActive(value); configureMonitor() }
     func retrySnapping() { configureMonitor() }
     func retryPointerFocus() { configureMonitor() }
     private func configureMonitor() {
@@ -207,7 +211,7 @@ import Combine
         focusStatus = backend.activate(window: window.id) ? "Focus requested for \(window.app.name)." : "Could not focus this window. Move the pointer away and try again."
     }
     func stop() {
-        started = false; configureMonitor()
+        started = false; dockSpaces.stop(); configureMonitor()
         for (center, token) in observers { center.removeObserver(token) }; observers = []
         apps = []; windows = []; selectedID = nil; history = []; canUndo = false
         status = "Window tools are paused."

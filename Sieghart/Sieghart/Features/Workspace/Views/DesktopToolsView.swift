@@ -63,9 +63,78 @@ struct DesktopToolsView: View {
             Toggle("Snap windows at screen edges", isOn: $model.edgeSnapping)
             Text(model.snapStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
             Button("Retry edge snapping") { model.retrySnapping() }.disabled(!model.edgeSnapping)
+            Divider()
+            DockSpacesSection(dockSpaces: model.dockSpaces, apps: model.apps)
         }
         .onChange(of: query) { _, _ in
             if !matchingWindows.contains(where: { $0.id == model.selectedID }) { model.selectedID = nil }
         }
     }
 }
+
+private struct DockSpacesSection: View {
+    @ObservedObject var dockSpaces: DockSpacesController
+    let apps: [DesktopApp]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Dock, Maximize & Desktop Order").font(.subheadline.weight(.semibold))
+
+            Toggle("Dock window previews", isOn: $dockSpaces.dockPreviewEnabled)
+            if dockSpaces.dockPreviewEnabled {
+                if !apps.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(apps) { app in
+                                Button(app.name) { dockSpaces.loadDockPreview(for: app) }
+                                    .buttonStyle(.bordered).controlSize(.small)
+                            }
+                        }
+                    }
+                }
+                if !dockSpaces.previewWindows.isEmpty {
+                    ForEach(dockSpaces.previewWindows) { item in
+                        HStack {
+                            RoundedRectangle(cornerRadius: 4)
+                                .strokeBorder(CompanionStyle.muted, lineWidth: 1)
+                                .frame(width: 28 * item.aspectRatio, height: 22)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.title).font(.caption).lineLimit(1)
+                                Text("\(Int(item.frame.width))×\(Int(item.frame.height)) · \(item.isMinimized ? "Minimized" : "Visible")")
+                                    .font(.caption2).foregroundStyle(CompanionStyle.muted)
+                            }
+                            Spacer()
+                            Button(item.isMinimized ? "Restore" : "Minimize") {
+                                _ = dockSpaces.togglePreviewMinimize(item.id)
+                            }.buttonStyle(.bordered).controlSize(.small)
+                        }
+                    }
+                } else {
+                    Text("Select a refreshed app above to preview its windows and minimize/restore state.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                }
+            }
+
+            Picker("Dock click behavior", selection: $dockSpaces.dockClickBehavior) {
+                ForEach(DockClickBehavior.allCases, id: \.self) { Text($0.title).tag($0) }
+            }
+
+            Toggle("Green button maximizes to usable desktop", isOn: $dockSpaces.greenButtonMaximizes)
+            Text(dockSpaces.zoomStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
+
+            Toggle("Quit app when last window closes", isOn: $dockSpaces.autoQuitEnabled)
+            if dockSpaces.autoQuitEnabled {
+                Stepper("Auto-quit delay: \(dockSpaces.autoQuitDelaySeconds)s", value: $dockSpaces.autoQuitDelaySeconds, in: DockSpacesController.autoQuitDelayRange)
+                    .font(.caption)
+                Text(dockSpaces.autoQuitStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
+            }
+
+            Toggle("Lock Desktop / Spaces order (disable auto-rearrange)", isOn: $dockSpaces.keepSpacesOrderFixed)
+            Text(dockSpaces.spacesStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
+            if dockSpaces.savedOriginalMruSpaces != nil {
+                Button("Restore original Spaces setting") { dockSpaces.restoreOriginalSpacesOrder() }
+                    .buttonStyle(.bordered).controlSize(.small)
+            }
+        }
+    }
+}
+
