@@ -50,6 +50,39 @@ extension LogicTests {
             var keyed = chord; keyed.keyCode = 3
             #expect(!modifier.conflicts(with: [keyed]))
         }
+        @Test("G23.01 linear wheel scrolling normalizes accelerated wheel spikes to constant steps and preserves continuous trackpad")
+        func linearScrollCurve() {
+            let gentle = ScrollSample(lines: .init(y: 1), points: .init(y: 10), fixed: .init(y: 655_360))
+            let spike = ScrollSample(lines: .init(y: 6), points: .init(y: 220), fixed: .init(y: 220 * 65_536))
+            let options = ScrollOptions(linear: true, stepPixels: 24)
+            let outGentle = ScrollTransform.apply(gentle, options: options)
+            let outSpike = ScrollTransform.apply(spike, options: options)
+            #expect(outGentle == outSpike)
+            #expect(outSpike.lines == ScrollVector(x: 0, y: 1))
+            #expect(outSpike.points == ScrollVector(x: 0, y: 24))
+            #expect(outSpike.fixed == ScrollVector(x: 0, y: 24 * 65_536))
+            let trackpad = ScrollSample(points: .init(y: 19), continuous: true)
+            #expect(ScrollTransform.apply(trackpad, options: options) == trackpad)
+        }
+        @Test("G23.02 smooth wheel scrolling synthesizes sub-line pixel and fixed deltas and composes with inversion and horizontal redirect")
+        func smoothScrollCurve() {
+            let lineOnly = ScrollSample(lines: .init(y: 2), flags: ScrollModifier.shift.flags)
+            let smoothOnly = ScrollTransform.apply(lineOnly, options: ScrollOptions(smooth: true, stepPixels: 20))
+            #expect(smoothOnly.lines.y == 2 && smoothOnly.points.y == 40 && smoothOnly.fixed.y == 40 * 65_536)
+            let combined = ScrollTransform.apply(lineOnly, options: ScrollOptions(inverted: true, horizontal: true, modifier: .shift, linear: true, smooth: true, stepPixels: 24))
+            #expect(combined.lines == ScrollVector(x: -1, y: 0))
+            #expect(combined.points == ScrollVector(x: -30, y: 0))
+            #expect(combined.fixed == ScrollVector(x: -24 * 81_920, y: 0))
+            #expect(combined.flags == 0)
+        }
+        @Test("G23.03 pointer acceleration options clamp speed and select flat scaling")
+        func pointerAccelerationBounds() {
+            #expect(PointerAccelerationOptions(speed: 0.05).clampedSpeed == 0.25)
+            #expect(PointerAccelerationOptions(speed: 9.0).clampedSpeed == 3.0)
+            #expect(PointerAccelerationOptions(speed: .nan).clampedSpeed == 1.0)
+            #expect(PointerAccelerationOptions(enabled: true, flatCurve: true, speed: 2.0).targetScaling == -1.0)
+            #expect(PointerAccelerationOptions(enabled: true, flatCurve: false, speed: 1.5).targetScaling == 1.5)
+        }
     }
 }
 
@@ -65,6 +98,16 @@ extension LogicTests {
         if fail { throw CocoaError(.featureUnsupported) }
     }
     func stop() { stops += 1; transform = nil; interrupted = nil }
+}
+@MainActor private final class PointerAccelerationFixture: PointerAccelerationBackend {
+    var currentScaling: Double? = 0.875
+    var writes: [Double] = []
+    var allowWrite = true
+    func readScaling() -> Double? { currentScaling }
+    func writeScaling(_ value: Double) -> Bool {
+        guard allowWrite else { return false }
+        writes.append(value); currentScaling = value; return true
+    }
 }
 extension MacContractsTests {
     @Suite(.tags(.input, .isolated)) @MainActor struct ScrollLifecycleTests {
@@ -194,6 +237,36 @@ extension MacContractsTests {
             #expect(transform(input) == input && model.hasConflict && backend.transform == nil)
             #expect(model.status.contains("conflicts"))
             chords = []; model.configure(); #expect(backend.starts == 2); model.stop()
+        }
+        @Test("G23.04 mouse acceleration backs up original value, refuses unverified write and restores on disable, sleep or stop")
+        func accelerationRestore() throws {
+            let store = try TestDefaults(); defer { store.cleanup() }
+            let scroll = ScrollBackendFixture()
+            let accel = PointerAccelerationFixture(); accel.currentScaling = nil
+            let model = ScrollInputController(defaults: store.value, backend: scroll, accelerationBackend: accel, trusted: { true })
+            model.start(observeSystem: false)
+            model.pointerAcceleration = PointerAccelerationOptions(enabled: true, flatCurve: false, speed: 1.75)
+            #expect(accel.writes.isEmpty && model.savedOriginalScaling == nil)
+            #expect(model.accelerationStatus.contains("nothing was changed"))
+            accel.currentScaling = 0.875
+            model.configureAcceleration()
+            #expect(model.savedOriginalScaling == 0.875 && accel.writes == [1.75])
+            model.pointerAcceleration.flatCurve = true
+            #expect(accel.writes.last == -1.0 && model.savedOriginalScaling == 0.875)
+            model.setSleeping(true)
+            #expect(accel.writes.last == 0.875 && model.savedOriginalScaling == 0.875)
+            model.setSleeping(false)
+            #expect(accel.writes.last == -1.0)
+            accel.allowWrite = false
+            model.restoreOriginalAcceleration()
+            #expect(model.savedOriginalScaling == 0.875 && model.accelerationStatus.contains("Restore original"))
+            accel.allowWrite = true
+            model.restoreOriginalAcceleration()
+            #expect(model.savedOriginalScaling == nil && accel.currentScaling == 0.875)
+            model.pointerAcceleration = PointerAccelerationOptions(enabled: true, flatCurve: false, speed: 2.0)
+            #expect(model.savedOriginalScaling == 0.875 && accel.currentScaling == 2.0)
+            model.stop()
+            #expect(accel.currentScaling == 0.875)
         }
     }
 }

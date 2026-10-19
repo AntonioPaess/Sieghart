@@ -240,7 +240,10 @@
                   "conflict(_:)",
                   "continuous()",
                   "inversion(_:)",
-                  "overflow()"
+                  "linearScrollCurve()",
+                  "overflow()",
+                  "pointerAccelerationBounds()",
+                  "smoothScrollCurve()"
                 ]
               },
               {
@@ -623,6 +626,7 @@
               {
                 "name": "ScrollLifecycleTests",
                 "testFunctions": [
+                  "accelerationRestore()",
                   "consent()",
                   "failedStart()",
                   "lateConflict()",

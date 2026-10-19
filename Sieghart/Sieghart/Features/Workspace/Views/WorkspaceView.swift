@@ -469,7 +469,7 @@ private struct ScrollInputSettings: View {
     @ObservedObject var controller: ScrollInputController
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Scrolling").font(.headline)
+            Text("Scrolling & Pointer").font(.headline)
             PreferenceRow("Invert scrolling", detail: "Reverse both scroll axes.") {
                 Toggle("Invert scrolling", isOn: $controller.options.inverted).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
             }
@@ -480,6 +480,16 @@ private struct ScrollInputSettings: View {
                 Picker("Scroll modifier", selection: $controller.options.modifier) {
                     ForEach(ScrollModifier.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
                 }
+            }
+            PreferenceRow("Linear wheel scrolling", detail: "Use a constant step per wheel notch without OS scroll acceleration.") {
+                Toggle("Linear wheel scrolling", isOn: $controller.options.linear).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            PreferenceRow("Smooth wheel scrolling", detail: "Add proportional sub-line pixel steps to discrete mouse wheels.") {
+                Toggle("Smooth wheel scrolling", isOn: $controller.options.smooth).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            if controller.options.wheelCurveEnabled {
+                Stepper("Wheel step: \(controller.options.clampedStepPixels) px", value: $controller.options.stepPixels, in: ScrollOptions.stepRange, step: 4)
+                    .font(.caption)
             }
             if controller.options.enabled {
                 PreferenceRow("Include trackpad and smooth-scroll mice", detail: "Turn this on to apply inversion and horizontal scrolling to your MacBook trackpad or a smooth-scroll mouse.") {
@@ -494,6 +504,27 @@ private struct ScrollInputSettings: View {
                 Button("Locate this copy of Sieghart") { AccessibilityAccess.revealRunningApp() }.font(.caption)
                 Text("Enable this copy of Sieghart in macOS Privacy & Security, then return and click Retry.").font(.caption).foregroundStyle(CompanionStyle.muted)
             }
+            Divider()
+            PreferenceRow("Mouse acceleration", detail: "Customize or flatten macOS mouse pointer acceleration with automatic restore.") {
+                Toggle("Mouse acceleration", isOn: $controller.pointerAcceleration.enabled).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            if controller.pointerAcceleration.enabled {
+                PreferenceRow("Flat 1:1 pointer curve", detail: "Disable pointer acceleration curve while keeping your original Mac value backed up.") {
+                    Toggle("Flat 1:1 pointer curve", isOn: $controller.pointerAcceleration.flatCurve).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+                }
+                if !controller.pointerAcceleration.flatCurve {
+                    HStack {
+                        Text(String(format: "Acceleration: %.2fx", controller.pointerAcceleration.clampedSpeed)).font(.caption)
+                        Slider(value: $controller.pointerAcceleration.speed, in: PointerAccelerationOptions.speedRange, step: 0.25)
+                    }
+                }
+            }
+            Text(controller.accelerationStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
+            if controller.savedOriginalScaling != nil {
+                Button("Restore original Mac acceleration") { controller.restoreOriginalAcceleration() }
+                    .buttonStyle(CompanionButtonStyle(compact: true))
+            }
         }
     }
 }
+
