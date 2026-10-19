@@ -36,6 +36,36 @@ Evidências duráveis resumidas: [Fast revisado](../Validation/sprint-6-part1/fa
 | Entrada — `smoothScroll`, `linearScroll`, `mouseAcceleration` | Planejados; definir pipeline de suavização/linearidade e limites de configuração sem alterar preferências globais sem restauração |
 | Entrada — `focusFollowsMouse`, `mouseNavigation`, `mouseButtonShortcuts` | Planejados; definir foco, navegação e conflitos de botões |
 | Entrada — `mouseClickDebounce`, `keyboardDebounce`, `textSnippets`, `superKey`, `quitWindowProtection` | Planejados; cada módulo exige escopo, permissões e aceite próprios |
-| Windows/Dock — `switcher`, `dockPreview`, `dockClick`, `windowMaximizer`, `windowLayout`, `autoQuit`, `spacesOrder` | Sete IDs planejados; sequência e contratos a definir pela coordenação |
+| 2: `switcher`, `windowLayout` | Implementados; Fast/build e aceite detalhados abaixo |
+| Windows/Dock — `dockPreview`, `dockClick`, `windowMaximizer`, `autoQuit`, `spacesOrder` | Cinco IDs planejados; não confundir ação de preencher a tela com interceptação do botão verde |
 
-Total: dois IDs implementados neste lote, dezoito ainda planejados. `middleClick` já era entrega S4 e não é recontado como módulo novo de S6. Nenhum lote futuro foi iniciado.
+Total após a parte 2: quatro IDs com implementação, dezesseis ainda planejados. `middleClick` já era entrega S4 e não é recontado como módulo novo de S6. Os demais lotes não foram iniciados.
+
+
+## Parte 2 — layouts, encaixe e seletor de apps/janelas
+
+19 de outubro de 2026, na mesma branch `sprint-6`, após `2b9d5e8`. Implementação sequencial pela sessão principal; nenhum agente adicional iniciado. Este lote cobre os IDs `windowLayout` e `switcher`. `windowMaximizer` significa o botão verde e permanece planejado. As referências de voz/ditado/desenho e Aegis continuam fora deste lote, com os limites registrados na auditoria.
+
+Workspace → Windows e menu → More tools → Windows compartilham o mesmo controller. A lista só consulta o sistema após Refresh, tem busca local, seleção explícita para layouts, botões próprios para solicitar ativação do app ou elevar uma janela e feedback de falha. Não substitui Cmd-Tab. As mensagens de ativação descrevem a solicitação enviada à API, não confirmação visual de foco. A lista exclui o próprio app, apps sem interface regular, janelas minimizadas/full-screen e janelas sem geometria legível. Apps com data de lançamento não verificável não são ativados pelo backend.
+
+O backend nativo usa Accessibility pública e revalida permissão, PID/data de lançamento e elemento AX antes da operação. IDs de janela são UUIDs associados à igualdade do elemento AX e à instância do processo, nunca à posição na lista. A descoberta consulta até 64 apps, 32 janelas por app e 128 janelas no total, com orçamento de um segundo verificado entre consultas e timeout AX de 80 ms por mensagem; a última sequência de atributos pode ultrapassar o orçamento. Uma lista interrompida é marcada Partial e pode ser atualizada explicitamente. Mantém no máximo 256 handles AX. Não lê imagens, conteúdo das janelas ou teclas.
+
+Os oito layouts são metades esquerda/direita, quatro cantos, preencher a área útil e centralizar. Usam visibleFrame convertido para coordenadas AX a partir da tela primária; telas acima/à esquerda e origens negativas são suportadas. A tela de destino do botão é a de maior interseção com a janela atual; se desconectada, usa a mais próxima. O Dock/menu ficam fora da área útil. Centralizar limita o tamanho à área útil. Escrita verifica se posição e tamanho são alteráveis, lê o resultado efetivo e informa restrições do app. Falha parcial tenta restaurar ambos os atributos e distingue restauração confirmada de falha de restauração.
+
+Undo guarda até 32 mudanças efetivas e só restaura a mesma janela se sua geometria atual ainda corresponder à última escrita (tolerância de dois pontos). Não sobrescreve reposicionamento manual posterior nem janela fechada. Se a restauração for recusada e a geometria continuar inalterada, conserva a entrada para Retry. Não altera preferências globais nem restaura automaticamente no encerramento.
+
+Edge snapping fica desligado por padrão, persistido em `desktop.edgeSnapping`. O monitor global só é instalado após opt-in e Accessibility; observa down/dragged/up do botão esquerdo, sem consumir nem publicar eventos e sem polling. Guarda a janela sob o ponto de down; exige arrasto do ponteiro superior a quatro pontos, mesma janela/processo, deslocamento real de origem e tamanho sem mudança relevante. Clique simples, movimento do app sem arrasto, resize e janela fechada são ignorados. No release, proximidade de 20 pontos da borda física escolhe metade/canto; topo preenche área útil e base isolada não age. Undo restaura a posição onde o usuário soltou, preservando seu próprio arrasto.
+
+Sono, lock e sessão inativa são gates independentes. Disable, stop e suspensão removem o monitor e invalidam candidatos/callbacks por geração; retomar requer o opt-in ainda ativo. Revogação é reavaliada em cada evento e ação; não existe tarefa periódica de saúde neste controller. Retry é explícito após permissão ou falha de instalação. Inicialização, previews e fixtures `managesWindows: false` não instalam monitor nem consultam janelas.
+
+### Validação da parte 2
+
+- Infraestrutura Python: 3 testes do gerador e 4 do índice aprovados. Projeto: 131 fontes no app, 129 de produção e 77 de testes/support no target de testes.
+- Primeira execução focada `/private/tmp/sieghart-s6-desktop-part2`: 13 funções / 20 invocações aprovadas. Depois dessa execução, a revisão adicionou a exigência de evento dragged, posição obtida do próprio CGEvent, validação de data de lançamento e Retry seguro do Undo.
+- Fast final `/private/tmp/sieghart-s6-part2-fast-reviewed`: **195/195 funções e 887/887 invocações aprovadas**, 129/129 fontes de produção, nenhuma fonte alterada, nenhum caso ausente ou inesperado. Todos os contratos G20.01–G20.13 foram incluídos. Complete descobriu 259 funções; não foi reexecutado integralmente nesta parte.
+- Build Debug do aplicativo completo: **BUILD SUCCEEDED**, arm64 + x86_64, sem assinatura e sem executar o app. A tentativa inicial no workspace exclusivo dos testes não tinha o Info.plist da raiz; a execução final usou o projeto original. Nenhuma fonte diverge do manifesto Fast aprovado.
+- Geometria, múltiplas telas, falha parcial/rollback, limite de Undo, handles antigos, constraints, opt-in/permissão, clique/resize/arrasto, callbacks obsoletos, lock/sono/sessão e ativação explícita foram exercitados com fixtures. Nenhum teste instalou monitor global, chamou AX nativo ou ativou apps/janelas reais.
+
+Aceite físico pendente: Refresh e ativação em apps nativos/terceiros, app sem janelas, limites de tamanho e janelas que recusam AX; monitores Retina e secundários acima/à esquerda; Dock em lados diferentes; encaixe real por título, resize/clique sem encaixe, Spaces/full-screen; Undo após mover manualmente/fechar janela; revogação, lock/wake e encerramento; CPU e responsividade de apps lentos. A revisão independente de fechamento da Sprint 6 continua pendente, além do aceite físico. Este commit não declara a sprint inteira concluída.
+
+Evidências da parte 2: [Fast](../Validation/sprint-6-part2/verification.json), [contratos G20](../Validation/sprint-6-part2/contract-results.json), [manifesto](../Validation/sprint-6-part2/source-manifest.json) e [build do app](../Validation/sprint-6-part2/app-build.json). Logs e xcresult ficam nas pastas temporárias acima.

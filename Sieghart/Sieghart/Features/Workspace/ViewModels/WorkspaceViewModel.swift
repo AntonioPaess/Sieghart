@@ -3,9 +3,10 @@ import SwiftUI
 enum AppSection: String, CaseIterable, Identifiable {
     case overview = "Overview", calendar = "Calendar", focus = "Timers", activation = "Activation", appearance = "Appearance", dynamicIsland = "Dynamic Island", aiLimits = "AI agents", audio = "Audio", clipboard = "Clipboard", system = "System", keepAwake = "Keep awake", displayPower = "Display & power"
     var id: String { rawValue }
-    case files = "Files", capture = "Capture", agentRoom = "Ada’s room"
+    case desktop = "Windows", files = "Files", capture = "Capture", agentRoom = "Ada’s room"
     var symbol: String {
         switch self {
+        case .desktop: "macwindow.on.rectangle"
         case .overview: "square.grid.2x2"
         case .calendar: "calendar"
         case .focus: "timer"

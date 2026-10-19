@@ -21,6 +21,7 @@ import tempfile
 
 
 GROUP_TAGS = {
+    "desktop": "desktop",
     "input": "input",
     "timer": "timer",
     "callbacks": "callbacks",

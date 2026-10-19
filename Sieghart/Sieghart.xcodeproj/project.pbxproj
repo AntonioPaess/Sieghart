@@ -341,6 +341,15 @@
 		C43B6AFB5A6BBA1D84920DC3 /* ScrollInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */; };
 		CB2CD01C1008A76B2B993938 /* ScrollInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */; };
 		CCD76D6AA70AF3B4483DADD3 /* ScrollInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20E0B6FB5EB2B560AE1D4BA /* ScrollInputTests.swift */; };
+		C50B4B2C5A92F6A9A16C7282 /* DesktopToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C93054FCABBBA99EC4560E27 /* DesktopToolsView.swift */; };
+		CE953B357DC9D951EC305505 /* DesktopBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77EE23B35F6DAD71BD5767E /* DesktopBackend.swift */; };
+		CDCB0C2BF139B7E7BDDA6ECC /* DesktopController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7CED1271199F76A6123982 /* DesktopController.swift */; };
+		C657553DE1E297078BE36EC6 /* WindowGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */; };
+		CBA621349F0C40F795055983 /* DesktopToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C93054FCABBBA99EC4560E27 /* DesktopToolsView.swift */; };
+		CB6CE15EC58E9432F6579419 /* DesktopBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77EE23B35F6DAD71BD5767E /* DesktopBackend.swift */; };
+		CC17E4ABE781B8EF55225D1C /* DesktopController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7CED1271199F76A6123982 /* DesktopController.swift */; };
+		C6F57B0DFFF9A2C6D38B5ECA /* WindowGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */; };
+		C32D9D27B429D23C98803B41 /* DesktopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25711004E8B4C99B6A5E53A /* DesktopTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -557,6 +566,11 @@
 		C04F3DF20C11FB21484EA27A /* AgentProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentProtocolTests.swift; sourceTree = "<group>"; };
 		CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollInput.swift; sourceTree = "<group>"; };
 		C20E0B6FB5EB2B560AE1D4BA /* ScrollInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollInputTests.swift; sourceTree = "<group>"; };
+		C93054FCABBBA99EC4560E27 /* DesktopToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopToolsView.swift; sourceTree = "<group>"; };
+		C77EE23B35F6DAD71BD5767E /* DesktopBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopBackend.swift; sourceTree = "<group>"; };
+		CC7CED1271199F76A6123982 /* DesktopController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopController.swift; sourceTree = "<group>"; };
+		C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowGeometry.swift; sourceTree = "<group>"; };
+		C25711004E8B4C99B6A5E53A /* DesktopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1237,11 +1251,12 @@
 			sourceTree = "<group>";
 		};
 		B86900E83F0CE1E7C87CFBFA /* Views */ = {
+			path = Views;
 			isa = PBXGroup;
 			children = (
+				C93054FCABBBA99EC4560E27 /* DesktopToolsView.swift */,
 				B2011AC87B09F2360279D4AC /* WorkspaceView.swift */,
 			);
-			path = Views;
 			sourceTree = "<group>";
 		};
 		B44C7E229889FE9D1BB841A7 /* Shared */ = {
@@ -1328,14 +1343,15 @@
 			sourceTree = "<group>";
 		};
 		B419A93392BEF6A764D0D6B0 /* Services */ = {
+			path = Services;
 			isa = PBXGroup;
 			children = (
 				BE03DCB291877FE295E2CF99 /* Activation */,
+				CAD0D65F41F67DE61A34F905 /* Desktop */,
 				BB8BE5213E7DE490726DD8A8 /* Input */,
 				B3618C2E1323682DFE6CDD67 /* Preferences */,
 				B1AC879FA12B51577AD5BFFA /* Tasks */,
 			);
-			path = Services;
 			sourceTree = "<group>";
 		};
 		BE03DCB291877FE295E2CF99 /* Activation */ = {
@@ -1433,6 +1449,7 @@
 				CFA898D7F9A77C38FB45EE03 /* CodexUsageProcessTests.swift */,
 				CA90329792BEFEA3F1C1F659 /* CompanionEntranceTests.swift */,
 				C7DA4D353724B4F39C66CA2A /* CompanionGazeTests.swift */,
+				C25711004E8B4C99B6A5E53A /* DesktopTests.swift */,
 				C2655714E19D279684A8337D /* DisplayPowerTests.swift */,
 				C0AFF1937B327B57C51A0E00 /* ExchangeQuoteTests.swift */,
 				C5900A79D34BC416D118C6FF /* ExpandedHistoryTests.swift */,
@@ -1536,6 +1553,16 @@
 			children = (
 				C7B84B710E933E0300BB2527 /* Sieghart-Complete.xctestplan */,
 				C12A4CC0D68B6A6BFB00F2B0 /* Sieghart-Fast.xctestplan */,
+			);
+		};
+		CAD0D65F41F67DE61A34F905 /* Desktop */ = {
+			isa = PBXGroup;
+			path = Desktop;
+			sourceTree = "<group>";
+			children = (
+				C77EE23B35F6DAD71BD5767E /* DesktopBackend.swift */,
+				CC7CED1271199F76A6123982 /* DesktopController.swift */,
+				C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */,
 			);
 		};
 /* End PBXGroup section */
@@ -1718,6 +1745,7 @@
 				BAD642CEBD476AFFF8470330 /* AssistantViewModel.swift in Sources */,
 				B949C559D7A611EB09470848 /* TimerToolsView.swift in Sources */,
 				B339E119D00A6CFA6308E521 /* WorkspaceViewModel.swift in Sources */,
+				C50B4B2C5A92F6A9A16C7282 /* DesktopToolsView.swift in Sources */,
 				B3DD106801EE889A2FE16759 /* WorkspaceView.swift in Sources */,
 				BFC9900FDAB481FCAABC0074 /* AgentChatComposer.swift in Sources */,
 				B8F4DABD2F5961DC6039DAD6 /* AgentChatStyle.swift in Sources */,
@@ -1752,6 +1780,9 @@
 				BFA1B0B8A8CF21F409E1AAC4 /* FileItems.swift in Sources */,
 				B71FDDBB7C3CC0C12B16A060 /* LocalChatItems.swift in Sources */,
 				B4106200B15BF38D52AAB6FF /* ActivationController.swift in Sources */,
+				CE953B357DC9D951EC305505 /* DesktopBackend.swift in Sources */,
+				CDCB0C2BF139B7E7BDDA6ECC /* DesktopController.swift in Sources */,
+				C657553DE1E297078BE36EC6 /* WindowGeometry.swift in Sources */,
 				BE78F1B04E965C35941847F0 /* ImpactGestureCoordinator.swift in Sources */,
 				BF7D254CAD92DCAEDF635382 /* MiddleClickController.swift in Sources */,
 				C43B6AFB5A6BBA1D84920DC3 /* ScrollInput.swift in Sources */,
@@ -1850,6 +1881,7 @@
 				CBF9222082056A45937AF84C /* AssistantViewModel.swift in Sources */,
 				CD8CD1BD672F22195D6C6147 /* TimerToolsView.swift in Sources */,
 				CF3CBC317BEBB19B29A69DB5 /* WorkspaceViewModel.swift in Sources */,
+				CBA621349F0C40F795055983 /* DesktopToolsView.swift in Sources */,
 				C1AC0648F1249A25488DA3F9 /* WorkspaceView.swift in Sources */,
 				C9081747247293C8040EBF85 /* AgentChatComposer.swift in Sources */,
 				C57EC54D8084D1F54FFDE9A4 /* AgentChatStyle.swift in Sources */,
@@ -1884,6 +1916,9 @@
 				C5CFC6B49A73525A9CA76612 /* FileItems.swift in Sources */,
 				C638319199987BA934F63959 /* LocalChatItems.swift in Sources */,
 				C8F8B04188282A23D4DE331F /* ActivationController.swift in Sources */,
+				CB6CE15EC58E9432F6579419 /* DesktopBackend.swift in Sources */,
+				CC17E4ABE781B8EF55225D1C /* DesktopController.swift in Sources */,
+				C6F57B0DFFF9A2C6D38B5ECA /* WindowGeometry.swift in Sources */,
 				C9A3C7468CA32F3A60BA9393 /* ImpactGestureCoordinator.swift in Sources */,
 				C32F4E115048E7686AD44D51 /* MiddleClickController.swift in Sources */,
 				CB2CD01C1008A76B2B993938 /* ScrollInput.swift in Sources */,
@@ -1928,6 +1963,7 @@
 				CC0E608EE636820916E1F499 /* CodexUsageProcessTests.swift in Sources */,
 				C22A625B65A98A4B2CE3E46A /* CompanionEntranceTests.swift in Sources */,
 				C47585129D0E3F2604358BF1 /* CompanionGazeTests.swift in Sources */,
+				C32D9D27B429D23C98803B41 /* DesktopTests.swift in Sources */,
 				C0850788EF690C00BB05259D /* DisplayPowerTests.swift in Sources */,
 				C35C6B4F0EDD93FC3350E679 /* ExchangeQuoteTests.swift in Sources */,
 				CDA1F3AB8921F5B7394ED52F /* ExpandedHistoryTests.swift in Sources */,

@@ -58,6 +58,9 @@ struct ContentView: View {
                     .foregroundStyle(CompanionStyle.muted.opacity(0.65))
             }
             switch viewModel.section {
+            case .desktop:
+                heading("A place for every window.", subtitle: "Choose an app, arrange a window or enable edge snapping.")
+                DesktopToolsView(model: notch.desktop).companionCard()
             case .overview: overview
             case .calendar:
                 heading("Your day, at a glance.", subtitle: "Events and reminders from the calendars you choose.")

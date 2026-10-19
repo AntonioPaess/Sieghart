@@ -293,6 +293,15 @@
                   "quietSpeechAndRecovery()",
                   "timeouts()"
                 ]
+              },
+              {
+                "name": "WindowGeometryTests",
+                "testFunctions": [
+                  "displays()",
+                  "edges()",
+                  "layouts(_:)",
+                  "movement()"
+                ]
               }
             ]
           },
@@ -472,6 +481,20 @@
                 "testFunctions": [
                   "touchSequence()",
                   "utilityResult()"
+                ]
+              },
+              {
+                "name": "DesktopContracts",
+                "testFunctions": [
+                  "activation()",
+                  "consent()",
+                  "drag()",
+                  "history()",
+                  "lifecycle()",
+                  "retry()",
+                  "selectedWindow()",
+                  "staleUndo()",
+                  "transaction()"
                 ]
               },
               {

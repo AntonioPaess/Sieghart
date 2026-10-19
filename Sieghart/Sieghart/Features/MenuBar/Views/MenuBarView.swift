@@ -39,6 +39,7 @@ struct MenuBarView: View {
                     Button("Display & power") { viewModel.page = .displayPower }
                     Button("Files & downloads") { viewModel.page = .files }
                     Button("Capture") { viewModel.page = .capture }
+                    Button("Windows") { viewModel.page = .desktop }
                 } label: { Image(systemName: "ellipsis").frame(width: 24, height: 34) }.menuStyle(.borderlessButton).fixedSize().accessibilityLabel("More tools")
             }.padding(4).modifier(WorkspaceSurface(radius: 14))
             Group {
@@ -59,6 +60,7 @@ struct MenuBarView: View {
                             Button(activation.isVoiceBusy ? "Cancel voice" : "Speak a command") { activation.toggleListening() }.buttonStyle(CompanionButtonStyle(compact: true))
                         }
                     }.frame(maxWidth: .infinity, alignment: .topLeading)
+                case .desktop: DesktopToolsView(model: notch.desktop, compact: true)
                 case .calendar: CalendarView(model: notch.calendar, events: notch.events, compact: true)
                 case .files: FilesView(model: notch.files, compact: true)
                 case .capture: CaptureToolsView(model: notch.capture, compact: true)

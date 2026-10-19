@@ -1,6 +1,6 @@
 # Sieghart roadmap
 
-Updated October 18, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 19, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 October 13 follow-up: [native file-receiving correction](Sieghart/Design/sprint-5-file-drop-followup.md) adds collapsed drag admission, automatic opening, a smaller Toni following the file in both axes within the measured receiver, with her coral radial background, original top intake and explicit attachment actions. Physical drag/CPU acceptance remains pending. The [reference study index](Sieghart/Design/Research/reference-study-index-2026-10-13.md) records Coucou/Vorssaint source, further Taby REA, Clicky static limits, Muse ESP32 and the user-confirmed Minhas Finanças docs, plus focused additional references. This study does not connect devices, banks or accounts.
 
@@ -198,7 +198,7 @@ The user reported all checks passed. The original checklist is retained below; t
 | S4 | Complete and accepted October 8 on the final user report after `f77ac65`. Extended hardware capabilities stay separate backlog. |
 | S5 | Local implementation delivered: calendar/reminders, downloads, shelf, file helpers/optional Finder shortcuts, capture and actual companion task events. Physical Mac acceptance pending. [Delivery and tests](Sieghart/Design/sprint-5-closeout.md). |
 | Before S6 | Swift Testing migration implemented, executed and independently approved on 2026-10-18; [results and scope](Sieghart/Design/Workflow/pre-sprint-6-execucao.md). Physical acceptance remains separate. |
-| S6 | Started: scroll inversion and modifier horizontal scrolling implemented, Mac acceptance pending; remaining Windows/Dock and input modules planned. [Per-part execution](Sieghart/Design/Workflow/sprint-6-execucao.md). |
+| S6 | In progress: parts 1–2 implement scroll inversion, modifier horizontal scrolling, app/window switcher, layouts and opt-in edge snapping; Mac acceptance pending. Sixteen modules remain planned. [Per-part execution](Sieghart/Design/Workflow/sprint-6-execucao.md). |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
 
 ## Parallel Challenge experience track
@@ -262,11 +262,11 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `switcher` | App/window switcher | Planned | S6 |
+| `switcher` | App/window switcher | Implemented — explicit app/window list, search and activation requests; Mac acceptance pending | S6 part 2 |
 | `dockPreview` | Dock previews | Planned | S6 |
 | `dockClick` | Dock click behavior | Planned | S6 |
 | `windowMaximizer` | Green-button maximize | Planned | S6 |
-| `windowLayout` | Window layouts and edge snapping | Planned | S6 |
+| `windowLayout` | Window layouts and edge snapping | Implemented — usable-screen layouts, guarded undo and opt-in edge snapping; Mac acceptance pending | S6 part 2 |
 | `autoQuit` | Quit on last window close | Planned | S6 |
 | `spacesOrder` | Desktop order | Planned | S6 |
 
