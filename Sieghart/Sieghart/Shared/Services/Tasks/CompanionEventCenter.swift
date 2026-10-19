@@ -85,8 +85,15 @@ enum CompanionNotificationModule: String, CaseIterable, Identifiable {
         if enabled { notificationModules.insert(module.rawValue) } else { notificationModules.remove(module.rawValue) }
         defaults.set(Array(notificationModules).sorted(), forKey: "tasks.notifications")
         if !enabled {
-            for (id, pending) in notificationTasks where pending.0 == module { pending.1.cancel(); notificationTasks[id] = nil }
+            for pending in notificationTasks.values where pending.0 == module { pending.1.cancel() }
         }
+    }
+    var pendingNotificationCount: Int { notificationTasks.count }
+    /// Waits for the deliveries already enqueued by this center, including
+    /// canceled deliveries whose tasks still need to release their state.
+    func waitForNotificationDelivery() async {
+        let pending = notificationTasks.values.map(\.1)
+        for task in pending { await task.value }
     }
     func requestNotificationAccess() {
         Task { status = await notifier.requestAccess() ? "Notifications allowed" : "Enable Sieghart notifications in System Settings" }
@@ -104,8 +111,9 @@ enum CompanionNotificationModule: String, CaseIterable, Identifiable {
         // Their delivery can drive reactions without posting a second alert.
         if notificationsEnabled(event.module), ![.calendarDue, .reminderDue, .reminderAdded].contains(kind) {
             let task = Task { [weak self] in
+                defer { self?.notificationTasks[event.id] = nil }
                 guard let self, !Task.isCancelled, self.notificationsEnabled(event.module) else { return }
-                await self.notifier.post(event); self.notificationTasks[event.id] = nil
+                await self.notifier.post(event)
             }
             notificationTasks[event.id] = (event.module, task)
         }

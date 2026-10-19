@@ -197,7 +197,8 @@ The user reported all checks passed. The original checklist is retained below; t
 | Before S4 | Roomier island, tile launcher, reference-density AI cards, horizontal timers, menu subpages/avatar switching, and core audio controls implemented. User Mac acceptance passed October 8. |
 | S4 | Complete and accepted October 8 on the final user report after `f77ac65`. Extended hardware capabilities stay separate backlog. |
 | S5 | Local implementation delivered: calendar/reminders, downloads, shelf, file helpers/optional Finder shortcuts, capture and actual companion task events. Physical Mac acceptance pending. [Delivery and tests](Sieghart/Design/sprint-5-closeout.md). |
-| S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling. |
+| Before S6 | Swift Testing migration implemented, executed and independently approved on 2026-10-18; [results and scope](Sieghart/Design/Workflow/pre-sprint-6-execucao.md). Physical acceptance remains separate. |
+| S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling; begins after the pre-S6 Swift Testing gate. |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
 
 ## Parallel Challenge experience track

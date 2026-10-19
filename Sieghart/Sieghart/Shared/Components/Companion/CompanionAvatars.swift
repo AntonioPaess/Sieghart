@@ -282,11 +282,12 @@ struct CompanionFace: View {
 
 @MainActor enum CompanionArtwork {
     private static var portraits: [String: NSImage] = [:]
-    private static let displayRasters: NSCache<NSString, DisplayRaster> = {
+    private static var displayRasters = makeDisplayRasterCache()
+    private static func makeDisplayRasterCache() -> NSCache<NSString, DisplayRaster> {
         let cache = NSCache<NSString, DisplayRaster>()
         cache.countLimit = 48; cache.totalCostLimit = 8 * 1024 * 1024
         return cache
-    }()
+    }
     private final class DisplayRaster {
         let source: CGImage, image: CGImage
         init(source: CGImage, image: CGImage) { self.source = source; self.image = image }
@@ -335,6 +336,22 @@ struct CompanionFace: View {
         return image
     }
     private static var menuImages: [CompanionAvatar: NSImage] = [:]
+    /// Runs a synchronous artwork operation with a fresh cache, then restores
+    /// its caller's portraits, display rasters, menu images and image names.
+    /// Main-actor isolation prevents another operation from seeing this scope.
+    static func withIsolatedCaches<T>(_ operation: () throws -> T) rethrows -> T {
+        let savedPortraits = portraits, savedMenuImages = menuImages, savedRasters = displayRasters
+        let names = CompanionAvatar.allCases.map { NSImage.Name("Companion-\($0.rawValue)") }
+        let savedNamedImages = names.map { ($0, NSImage(named: $0)) }
+        savedNamedImages.forEach { $0.1?.setName(nil) }
+        portraits = [:]; menuImages = [:]; displayRasters = makeDisplayRasterCache()
+        defer {
+            names.forEach { NSImage(named: $0)?.setName(nil) }
+            savedNamedImages.forEach { name, image in image?.setName(name) }
+            portraits = savedPortraits; menuImages = savedMenuImages; displayRasters = savedRasters
+        }
+        return try operation()
+    }
     static func menuBarImage(for avatar: CompanionAvatar) -> NSImage? {
         if let image = menuImages[avatar] { return image }
         let image = portrait(for: avatar).copy() as! NSImage

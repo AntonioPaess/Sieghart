@@ -1,0 +1,30 @@
+{
+  "configurations": [
+    {
+      "id": "8CDE55D7-0DE2-46DB-9D8C-8212F6919E31",
+      "name": "Isolated macOS",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "testInteropMode": "complete",
+    "testTimeoutsEnabled": true,
+    "codeCoverage": true,
+    "targetForVariableExpansion": {
+      "containerPath": "container:Sieghart.xcodeproj",
+      "identifier": "C6AB6C4DC6E52EC8F74130B0",
+      "name": "SieghartTests"
+    }
+  },
+  "testTargets": [
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Sieghart.xcodeproj",
+        "identifier": "C6AB6C4DC6E52EC8F74130B0",
+        "name": "SieghartTests"
+      }
+    }
+  ],
+  "version": 1
+}

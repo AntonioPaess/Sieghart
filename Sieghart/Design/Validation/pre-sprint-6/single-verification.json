@@ -1,0 +1,16 @@
+{
+  "plan": "Sieghart-Complete",
+  "selectedFunctions": 1,
+  "functionResults": {
+    "Passed": 1
+  },
+  "invocationResults": {
+    "Passed": 1
+  },
+  "sourceChangedDuringRun": [],
+  "missingTests": [],
+  "unexpectedTests": [],
+  "productionCoverageFiles": 124,
+  "expectedProductionCoverageFiles": 124,
+  "xcodeExitCode": 0
+}

@@ -1,0 +1,10 @@
+◇ Test a_deliberateFailure() started.
+✘ Test a_deliberateFailure() recorded an issue at CompanionNativeTests.swift:230:40: Expectation failed: Bool(false)
+◇ Test a_deliberateFailure() started (repetition 2).
+✘ Test a_deliberateFailure() recorded an issue at CompanionNativeTests.swift:230:40: Expectation failed: Bool(false)
+✘ Test a_deliberateFailure() failed after 0.001 seconds with 1 issue.
+◇ Test b_cacheRestorationInBothOrders() started.
+◇ Test b_cacheRestorationInBothOrders() started (repetition 2).
+✔ Test b_cacheRestorationInBothOrders() passed after 0.158 seconds.
+✘ Test run with 2 tests in 1 suite failed after 0.160 seconds with 1 issue.
+** TEST FAILED **

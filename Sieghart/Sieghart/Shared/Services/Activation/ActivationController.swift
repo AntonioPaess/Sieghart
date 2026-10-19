@@ -65,6 +65,7 @@ final class ActivationController: ObservableObject {
     private var localMonitor: Any?
     private var appObservers: [NSObjectProtocol] = []
     private var workspaceObservers: [NSObjectProtocol] = []
+    private var observedWorkspaceCenter: NotificationCenter?
     private var shortcutRecoveryTask: Task<Void, Never>?
     private var shortcutHealthTask: Task<Void, Never>?
     private var lastShortcutTrust = false
@@ -146,6 +147,7 @@ final class ActivationController: ObservableObject {
             })
         }
         let workspace = suppliedWorkspace ?? NSWorkspace.shared.notificationCenter
+        observedWorkspaceCenter = workspace
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
                      NSWorkspace.sessionDidBecomeActiveNotification, NSWorkspace.activeSpaceDidChangeNotification,
                      NSWorkspace.didActivateApplicationNotification] {
@@ -176,6 +178,27 @@ final class ActivationController: ObservableObject {
             guard !Task.isCancelled, let self, self.recordingShortcut == nil else { return }
             if self.registersShortcuts { self.checkShortcutHealth() }
         }
+    }
+
+    /// Releases only this controller's registrations and cancels delayed deliveries.
+    /// Explicit teardown also supports isolated, non-window presentation lifecycles.
+    func shutdown() {
+        shortcutsStarted = false
+        shortcutRecoveryTask?.cancel(); shortcutRecoveryTask = nil
+        shortcutHealthTask?.cancel(); shortcutHealthTask = nil
+        feedbackTask?.cancel(); feedbackTask = nil
+        cancelVoiceCommand()
+        recordingShortcut = nil
+        hotkeys.forEach { UnregisterEventHotKey($0) }; hotkeys = []
+        if let handler { RemoveEventHandler(handler) }; handler = nil
+        if let globalMonitor { NSEvent.removeMonitor(globalMonitor) }; globalMonitor = nil
+        if let localMonitor { NSEvent.removeMonitor(localMonitor) }; localMonitor = nil
+        eventTap?.stop(); eventTap = nil
+        appObservers.forEach { NotificationCenter.default.removeObserver($0) }; appObservers = []
+        workspaceObservers.forEach { observedWorkspaceCenter?.removeObserver($0) }; workspaceObservers = []
+        observedWorkspaceCenter = nil
+        if Self.activeHotkeyOwner === self { Self.activeHotkeyOwner = nil }
+        modifierTracker.reset(); fallbackActions = []
     }
 
     private func checkShortcutHealth() {

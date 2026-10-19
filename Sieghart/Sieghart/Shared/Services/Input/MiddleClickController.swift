@@ -114,6 +114,7 @@ private let contactCallback: ContactCallback = { device, data, count, time, _ in
     private let trusted: () -> Bool
     private let requestAccess: () -> Void
     private let emit: () -> Void
+    private let deliver: @Sendable (@escaping @MainActor @Sendable () -> Void) -> Void
     private var started = false
     private var suspended = false
     private var generation = 0
@@ -125,8 +126,8 @@ private let contactCallback: ContactCallback = { device, data, count, time, _ in
         let down = CGEvent(mouseEventSource: nil, mouseType: .otherMouseDown, mouseCursorPosition: location, mouseButton: .center)
         let up = CGEvent(mouseEventSource: nil, mouseType: .otherMouseUp, mouseCursorPosition: location, mouseButton: .center)
         down?.post(tap: .cghidEventTap); up?.post(tap: .cghidEventTap)
-    }) {
-        self.defaults = defaults; self.backend = backend ?? SystemMiddleClickBackend(); self.trusted = trusted; self.requestAccess = requestAccess; self.emit = emit
+    }, deliver: @escaping @Sendable (@escaping @MainActor @Sendable () -> Void) -> Void = { action in Task { @MainActor in action() } }) {
+        self.defaults = defaults; self.backend = backend ?? SystemMiddleClickBackend(); self.trusted = trusted; self.requestAccess = requestAccess; self.emit = emit; self.deliver = deliver
         isEnabled = defaults.bool(forKey: "gestures.middleClick")
     }
     func start(observeSystem: Bool = true) {
@@ -146,9 +147,9 @@ private let contactCallback: ContactCallback = { device, data, count, time, _ in
         guard isEnabled else { status = "Three-finger middle click is off"; return }
         guard !suspended else { status = "Paused while the Mac sleeps or is locked"; return }
         guard trusted() else { status = "Allow Accessibility, then retry"; return }
-        let current = generation
+        let current = generation, deliver = self.deliver
         do {
-            try backend.start { [weak self] in Task { @MainActor in
+            try backend.start { [weak self] in deliver { [weak self] in
                 guard let self, self.isEnabled, !self.suspended, self.generation == current, self.trusted() else { return }
                 self.emit()
             } }

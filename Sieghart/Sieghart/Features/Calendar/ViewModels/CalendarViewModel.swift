@@ -18,12 +18,15 @@ final class CalendarViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var lastUpdated: Date?
     @Published var span: Span = .week { didSet { refresh() } }
-    @Published var selectedDate = Date() { didSet { refresh() } }
+    @Published var selectedDate: Date { didSet { refresh() } }
     @Published var notificationsEnabled: Bool { didSet { defaults.set(notificationsEnabled, forKey: "calendar.notifications"); rescheduleReminders() } }
     @Published var eventAlertsEnabled: Bool { didSet { defaults.set(eventAlertsEnabled, forKey: "calendar.eventAlerts"); rescheduleEvents() } }
     @Published var eventLeadMinutes: Int { didSet { defaults.set(eventLeadMinutes, forKey: "calendar.eventLeadMinutes"); rescheduleEvents() } }
     @Published var quietStart: Int { didSet { defaults.set(quietStart, forKey: "calendar.quietStart"); rescheduleReminders(); rescheduleEvents() } }
     @Published var quietEnd: Int { didSet { defaults.set(quietEnd, forKey: "calendar.quietEnd"); rescheduleReminders(); rescheduleEvents() } }
+    private let now: () -> Date
+    private let calendar: Calendar
+    private let activateApplication: () -> Void
     private let reader: CalendarReading
     private let notifier: ReminderNotifying
     private let defaults: UserDefaults
@@ -34,7 +37,9 @@ final class CalendarViewModel: ObservableObject {
     private var activationObserver: AnyCancellable?
     private var storeChangeObserver: AnyCancellable?
 
-    init(reader: CalendarReading = EventKitCalendarReader(), notifier: ReminderNotifying = LocalReminderNotifier(), defaults: UserDefaults = .standard, observesSystem: Bool = true) {
+    init(reader: CalendarReading = EventKitCalendarReader(), notifier: ReminderNotifying = LocalReminderNotifier(), defaults: UserDefaults = .standard, observesSystem: Bool = true, now: @escaping () -> Date = Date.init, calendar: Calendar = .autoupdatingCurrent, activateApplication: @escaping () -> Void = { NSApp?.activate(ignoringOtherApps: true) }) {
+        self.now = now; self.calendar = calendar; self.activateApplication = activateApplication
+        self.selectedDate = now()
         self.reader = reader; self.notifier = notifier; self.defaults = defaults
         self.excludedIDs = Set(defaults.stringArray(forKey: "calendar.excludedIDs") ?? [])
         self.notificationsEnabled = defaults.bool(forKey: "calendar.notifications")
@@ -81,7 +86,7 @@ final class CalendarViewModel: ObservableObject {
         case .denied, .restricted: openCalendarSettings()
         case .notDetermined, .writeOnly:
             isRequestingAccess = true; status = "Waiting for Calendar permission..."
-            NSApp?.activate(ignoringOtherApps: true)
+            activateApplication()
             Task {
                 do {
                     let granted = try await reader.requestAccess()
@@ -101,8 +106,8 @@ final class CalendarViewModel: ObservableObject {
         let snapshot = reader.load(from: range.start, to: range.end, selectedIDs: nil)
         calendars = snapshot.calendars
         events = snapshot.events.filter { !excludedIDs.contains($0.calendarID) }
-        let now = Date()
-        let upcoming = reader.load(from: now, to: Calendar.current.date(byAdding: .day, value: 30, to: now) ?? now.addingTimeInterval(30 * 86_400), selectedIDs: nil)
+        let now = now()
+        let upcoming = reader.load(from: now, to: calendar.date(byAdding: .day, value: 30, to: now) ?? now.addingTimeInterval(30 * 86_400), selectedIDs: nil)
         nextEvent = upcoming.events.first { !excludedIDs.contains($0.calendarID) && $0.endDate > now }
         upcomingEventsForAlerts = upcoming.events.filter { !excludedIDs.contains($0.calendarID) }
         rescheduleEvents()
@@ -112,10 +117,10 @@ final class CalendarViewModel: ObservableObject {
     }
     func shift(_ amount: Int) {
         let component: Calendar.Component = span == .day ? .day : span == .week ? .weekOfYear : .month
-        selectedDate = Calendar.current.date(byAdding: component, value: amount, to: selectedDate) ?? selectedDate
+        selectedDate = calendar.date(byAdding: component, value: amount, to: selectedDate) ?? selectedDate
     }
     func dateRange() -> DateInterval {
-        let calendar = Calendar.current
+        let calendar = self.calendar
         let component: Calendar.Component = span == .day ? .day : span == .week ? .weekOfYear : .month
         return calendar.dateInterval(of: component, for: selectedDate) ?? DateInterval(start: selectedDate, duration: 86_400)
     }
@@ -138,7 +143,7 @@ final class CalendarViewModel: ObservableObject {
     func addReminder(title: String, due: Date) {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { status = "Enter a reminder title"; return }
-        guard due > Date() else { status = "Choose a future time"; return }
+        guard due > now() else { status = "Choose a future time"; return }
         let reminder = SieghartReminder(id: UUID(), title: trimmed, dueDate: due)
         reminders.append(reminder); saveReminders(); rescheduleReminders(); status = "Reminder added"; onReminderAdded?(reminder)
     }
@@ -148,7 +153,7 @@ final class CalendarViewModel: ObservableObject {
     }
     func snooze(_ id: UUID, minutes: Int = 10) {
         guard let index = reminders.firstIndex(where: { $0.id == id }) else { return }
-        reminders[index].snoozedUntil = Date().addingTimeInterval(Double(minutes * 60))
+        reminders[index].snoozedUntil = now().addingTimeInterval(Double(minutes * 60))
         saveReminders(); rescheduleReminders(); status = "Reminder postponed"
     }
     func requestNotificationAccess() {
@@ -189,7 +194,7 @@ final class CalendarViewModel: ObservableObject {
     }
     func snoozeEventAlert(_ event: CalendarEventSummary, minutes: Int = 10) {
         let key = Self.eventKey(event)
-        let time = Date().addingTimeInterval(Double(minutes * 60))
+        let time = now().addingTimeInterval(Double(minutes * 60))
         guard time < event.endDate else { status = "Event ends before the postponed alert"; return }
         snoozedEventKeys[key] = time
         defaults.set(snoozedEventKeys, forKey: "calendar.snoozedEventKeys")
@@ -209,7 +214,7 @@ final class CalendarViewModel: ObservableObject {
     }
     private func rescheduleEvents() {
         guard eventAlertsEnabled, accessState == .fullAccess else { cancelEventAlerts(); return }
-        let now = Date()
+        let now = now()
         snoozedEventKeys = snoozedEventKeys.filter { $0.value > now }
         defaults.set(snoozedEventKeys, forKey: "calendar.snoozedEventKeys")
         let chosen = Array(upcomingEventsForAlerts.filter { $0.startDate > now && !dismissedEventKeys.contains(Self.eventKey($0)) }.prefix(32))

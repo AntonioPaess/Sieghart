@@ -58,6 +58,14 @@ Chats próprios não compartilham memória automaticamente. O contexto persisten
 - Preparar commits com seleção explícita de arquivos, inspeção do diff e verificação de segredos. Excluir ambientes virtuais, builds, dumps de terceiros, credenciais e material acadêmico alheio à entrega.
 - Não fazer push forçado, rebase de histórico publicado, merge em main ou publicação por consequência implícita de uma revisão.
 
+## Gate obrigatório antes da sprint 6
+
+Em 18 de outubro, a pré-Sprint 6 autorizada pelo usuário foi implementada, executada e [aprovada em revisão independente](pre-sprint-6-revisao-final.md). O [registro de execução](pre-sprint-6-execucao.md) fecha o gate da migração, com Complete 235/945 e Fast 171/850 funções/invocações aprovadas. Nenhuma funcionalidade da Sprint 6 foi iniciada. Astra é proibido, o máximo é GPT-6.1 Sol e a continuação ocorre com um agente por vez; essa regra prevalece sobre configurações anteriores de papéis.
+
+Em 17 de outubro, o usuário determinou organizar a migração dos runners atuais para **Swift Testing**, sem iniciar implementação. O [plano pré-sprint 6](pre-sprint-6-swift-testing.md) define ordem, responsáveis e aceite: inventário dos cenários, arquitetura/target, migração por funcionalidade, isolamento, resultados individuais, cobertura e revisão independente. A sprint 6 depende da execução e aprovação desse gate. Esta preparação altera somente documentação e não dispara trabalho nos chats especialistas.
+
+O desenho original está no [inventário dos 18 grupos e auxiliares](pre-sprint-6-inventario.md) e na [proposta de targets/schemes](pre-sprint-6-targets-schemes.md). A implementação usa um target não hospedado com fontes reais fora de `App/`, planos completo/rápido e isolamento explícito. Resultados e limites atuais estão no registro acima; os documentos de preparação preservam o contexto histórico de 17 de outubro.
+
 ## Estado de fechamento da sprint 5
 
 Entrega de implementação e preservação em Git não equivalem ao aceite físico completo. Permanecem verificações reais de CPU/RAM, permissões/alertas, Finder/arraste/captura/clipboard, modelo Apple e conexão GitHub. O Mac foi observado com macOS 27.0.1 em 15 de outubro; o requisito antigo de atualização do sistema já não é a pendência observada. A disponibilidade do modelo ainda precisa ser conferida e thinking PCC depende da autorização/assinatura gerenciada da Apple. Consultar o guia atual da Ada antes de anunciar disponibilidade.
