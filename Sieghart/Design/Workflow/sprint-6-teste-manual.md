@@ -1,4 +1,4 @@
-# Sprint 6 — roteiro manual das partes 1–3
+# Sprint 6 — roteiro manual completo (partes 1–7)
 
 Projeto: `/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart.xcodeproj`, branch `sprint-6`. Use o scheme **Sieghart**, destino **My Mac** e ⌘R. Encerre a instância anterior antes de executar o build atualizado. `Sieghart-Checks` é o scheme dos testes automáticos.
 
@@ -52,8 +52,46 @@ Se a lista continuar vazia e pedir acesso, volte ao primeiro bloco. Não é poss
 5. Passe rapidamente sobre a outra janela sem parar: não deve ativá-la. Clique, role ou comece um arrasto durante a espera: a ativação pendente deve ser cancelada.
 6. Desligue a opção: mover a seta sem clicar não deve mais provocar ativação pelo Sieg.
 
+## Parte 4: botões extras do mouse (Side 4 / Side 5 e auxiliares)
+
+1. Em **Activation** → **Extra mouse buttons**, ligue **Back and Forward with side buttons** (ou configure ações individuais para Side 4, Side 5 e Extra 6–8).
+2. Com mouse externo que possua botões laterais, abra o Safari ou Finder com histórico de navegação e pressione Side 4 / Side 5: o app sob o cursor deve voltar/avançar sem afetar cliques esquerdo/direito/meio.
+3. A ação ocorre uma vez ao pressionar o botão lateral. Segurar, arrastar e soltar não devem executar uma segunda ação. Desligar enquanto o botão está pressionado deve preservar o pareamento da liberação.
+
+## Parte 5: rolagem linear/suave e aceleração do ponteiro
+
+1. Em **Activation** → **Scrolling & Pointer**, ligue **Linear wheel scrolling** e **Smooth wheel scrolling**, ajustando **Wheel step**. Com roda de mouse discreta, picos rápidos devem manter passo previsível por notch; o trackpad permanece intacto enquanto **Include trackpad and smooth-scroll mice** estiver desligado.
+2. Em **Scrolling & Pointer**, ligue **Mouse acceleration**; observe o backup exibido de `com.apple.mouse.scaling`. Teste **Flat 1:1 pointer curve** ou o controle de velocidade e clique **Restore original Mac acceleration**: o valor original deve ser restaurado imediatamente.
+
+## Parte 6: debounce de clique/teclado, Hyper Key, proteção ⌘Q/⌘W e snippets
+
+1. Em **Activation** → **Input Guards, Hyper Key & Snippets**, teste **Mouse click debounce** (`15–100 ms`) e **Keyboard key debounce** (`15–80 ms`): cliques normais e autorepeat contínuo de tecla continuam funcionando.
+2. Ligue **Hyper key (⌃⌥⌘⇧)** (ex.: **F18**): segurar a tecla gatilho e pressionar uma letra deve enviar `⌃⌥⌘⇧`.
+3. Ligue **Quit & close confirmation (⌘Q / ⌘W)** (e opcionalmente **Also require confirmation for ⌘W (Close Window)**): no Safari ou Notes, o primeiro `⌘Q` é interceptado e mostra o lembrete no Sieg; pressionar `⌘Q` novamente em até 1,5 s confirma o encerramento.
+4. Em **Text Snippets**, adicione um gatilho (ex.: `;sig` → `Sieghart Companion`), ligue **Expand text snippets while typing** e digite `;sig` no Notes: o gatilho deve ser apagado e substituído pelo texto. Em campos de senha (Secure Input), o estado informa pausa automática.
+
+## Parte 7: Dock preview, clique no Dock, botão verde, auto-quit e ordem dos Spaces
+
+1. Em **Windows** → **Dock, Green Button & Spaces**, ligue **Inspect Dock app windows** e clique em **Preview Dock** ao lado de um app na seção **Apps — bring an app forward**: os cartões mostram a proporção de cada janela e permitem **Show** ou **Minimize/Restore**.
+2. Em **Active Dock click action**, escolha **Minimize or restore windows** e use **Dock action** em um app ativo para alternar minimização/restauração de suas janelas.
+3. Ligue **Green button fills usable desktop (instead of full-screen)**: clicar no botão verde de uma janela externa deve preencher a área útil (sem criar Space de tela cheia) e um segundo clique no botão verde deve restaurar o tamanho anterior.
+4. Ligue **Quit app when its last window closes**: abra uma janela em um app comum (ex.: Notes ou TextEdit) e feche sua última janela; após o tempo configurado (`1–15 s`), o app deve encerrar. O Finder, Ajustes do Sistema e o próprio Sieghart nunca são encerrados.
+5. Ligue **Keep Spaces in fixed numerical order (disable MRU)** e depois clique **Restore original** (ou desligue a opção): `mru-spaces` deve retornar ao valor original salvo.
+
+## Extensão de IA: Monitoramento local do Antigravity
+
+1. Na barra lateral do Sieg, clique em **AI limits** (ou abra **Tokens, charges & connections**).
+2. Caso o Antigravity ainda não esteja conectado, clique em **Connect local Antigravity usage** no cartão **Antigravity activity**.
+3. Verifique que o seletor de provedores no topo da tela **AI agents** passa a exibir **Antigravity** ao lado de **Codex** e **Claude**, lendo automaticamente as sessões locais em `~/.gemini/antigravity/brain` (contagem de sessões, tokens de entrada, saída, leitura de cache, estimativa de custo equivalente de API, gráfico de barras por hora, ranking de modelos/projetos e mapa de 13 semanas).
+
 ## Retomada e registro
 
 Com cada recurso ligado, teste lock/desbloqueio e sono/retomada. Desligue o recurso antes de mudar para o próximo teste, para isolar o resultado. Se tiver segundo monitor, repita os layouts e encaixes nele. Os testes físicos, a experiência de permissões, a responsividade e CPU continuam pendentes até relato/execução real.
 
 Para relatar uma falha, registre: **bloco/passo, app, mouse ou trackpad, texto de estado do Sieg e resultado observado**. O relato de 19/out de ausência de alerta e scroll inoperante no trackpad motivou a recuperação por Ajustes e a explicação de eventos contínuos; a causa física completa e o aceite desse relato continuam pendentes.
+
+
+
+## Limites encontrados na revisão rápida
+
+Os cartões de janelas ficam na UI do Sieg; hover/clique diretamente nos ícones do Dock ainda não têm integração completa. Não considerar esses testes aprovados por contratos injetados. **Deixe auto-quit desligado** até corrigir a leitura AX desconhecida e a observação do fechamento. As correções estão reservadas para [Sieg — Revisão](revisao-pos-sprint-6/README.md).

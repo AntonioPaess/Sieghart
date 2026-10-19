@@ -1,0 +1,230 @@
+{
+  "G06.01": [
+    {
+      "identifier": "SieghartTests/LogicTests/CodexQuotaTests/quotas()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/CodexQuotaTests.swift",
+      "sourceLine": 11,
+      "profile": "logic"
+    }
+  ],
+  "G06.02": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/CodexUsageProcessTests/handshake()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/CodexUsageProcessTests.swift",
+      "sourceLine": 12,
+      "profile": "localIntegration"
+    }
+  ],
+  "G06.03": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/CodexUsageProcessTests/timeout()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/CodexUsageProcessTests.swift",
+      "sourceLine": 37,
+      "profile": "localIntegration"
+    }
+  ],
+  "G06.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/CodexQuotaModelTests/quotaConsent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/CodexQuotaModelTests.swift",
+      "sourceLine": 12,
+      "profile": "isolated"
+    }
+  ],
+  "G06.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/CodexQuotaModelTests/lateQuota()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/CodexQuotaModelTests.swift",
+      "sourceLine": 33,
+      "profile": "isolated"
+    }
+  ],
+  "G07.01": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/LocalTokenReaderTests/codexCounters()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/LocalTokenReaderTests.swift",
+      "sourceLine": 7,
+      "profile": "localIntegration"
+    }
+  ],
+  "G07.02": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/LocalTokenReaderTests/claudeCounters()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/LocalTokenReaderTests.swift",
+      "sourceLine": 40,
+      "profile": "localIntegration"
+    }
+  ],
+  "G07.03": [
+    {
+      "identifier": "SieghartTests/LogicTests/TokenEstimateTests/decimalEstimates()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/TokenEstimateTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/LocalTokenReaderTests/antigravityCounters()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/LocalTokenReaderTests.swift",
+      "sourceLine": 82,
+      "profile": "localIntegration"
+    }
+  ],
+  "G07.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/SpendingModelTests/providerConsent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/SpendingModelTests.swift",
+      "sourceLine": 7,
+      "profile": "isolated"
+    }
+  ],
+  "G07.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ChargeLedgerTests/ledger()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ChargeLedgerTests.swift",
+      "sourceLine": 7,
+      "profile": "isolated"
+    }
+  ],
+  "G07.06": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ClaudeReportTests/datedReports()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ClaudeReportTests.swift",
+      "sourceLine": 7,
+      "profile": "isolated"
+    }
+  ],
+  "G08.01": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityReaderTests/countersAndLifecycle()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityReaderTests.swift",
+      "sourceLine": 7,
+      "profile": "localIntegration"
+    }
+  ],
+  "G08.02": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityStateTests/processingState()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityStateTests.swift",
+      "sourceLine": 7,
+      "profile": "isolated"
+    }
+  ],
+  "G08.03": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityReaderTests/tailMetadata()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityReaderTests.swift",
+      "sourceLine": 74,
+      "profile": "localIntegration"
+    }
+  ],
+  "G08.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityReaderTests/responseRecords()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityReaderTests.swift",
+      "sourceLine": 144,
+      "profile": "localIntegration"
+    }
+  ],
+  "G08.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityReaderTests/pollingHistory()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityReaderTests.swift",
+      "sourceLine": 197,
+      "profile": "localIntegration"
+    }
+  ],
+  "G08.06": [
+    {
+      "identifier": "SieghartTests/LogicTests/AccountActivityDecodeTests/accountHeatmap()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AccountActivityDecodeTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityReaderTests/claudeState()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityReaderTests.swift",
+      "sourceLine": 248,
+      "profile": "localIntegration"
+    }
+  ],
+  "G08.07": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/AIActivityReaderTests/antigravityState()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/AIActivityReaderTests.swift",
+      "sourceLine": 286,
+      "profile": "localIntegration"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/OnboardingPreferenceTests/onboarding()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/OnboardingPreferenceTests.swift",
+      "sourceLine": 7,
+      "profile": "isolated"
+    }
+  ],
+  "G09.01": [
+    {
+      "identifier": "SieghartTests/LogicTests/PriceCatalogTests/versionedCatalog()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/PriceCatalogTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    }
+  ],
+  "G09.02": [
+    {
+      "identifier": "SieghartTests/LogicTests/PriceCatalogParserTests/markdownTables()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/PriceCatalogParserTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    }
+  ],
+  "G09.03": [
+    {
+      "identifier": "SieghartTests/LogicTests/ExchangeQuoteTests/datedExchange()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ExchangeQuoteTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    }
+  ],
+  "G09.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/UsagePricingTests/modelEstimates()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/UsagePricingTests.swift",
+      "sourceLine": 7,
+      "profile": "isolated"
+    }
+  ],
+  "G09.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/UsagePricingTests/priceOverride()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/UsagePricingTests.swift",
+      "sourceLine": 45,
+      "profile": "isolated"
+    }
+  ]
+}

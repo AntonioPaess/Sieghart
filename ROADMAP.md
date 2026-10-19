@@ -22,6 +22,7 @@ October 14 final chat direction: Ada’s conversations belong to Sieg and now ta
 - **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
 - **Sprint 4:** complete and accepted October 8, 2026, on the user’s “tudo funcionando” report after `f77ac65`; utilities, voice/search/AirPods/motion follow-ups and Safari/app selection acceptance are closed on that report. [Closeout](Sieghart/Design/sprint-4-closeout.md).
 - **Sprint 5:** local implementation delivered on `sprint-5` — Calendar/reminders/Gantt, selected-folder downloads, bookmarked shelf, reviewed move/rename with optional Finder-only shortcuts, plain text paste, URL cleanup, DMG app copy, capture/annotation/local OCR/QR/color and real task cards/reactions. New pages share state across app/menu/island and fit configurable rails/tiles. The approved opening's rectangle is removed. All 16 isolated check groups, signed Debug bundle and nine local layout/PNG exports pass. Native permissions/interactions and whole-app CPU/Retina acceptance remain with the user. [Delivery](Sieghart/Design/sprint-5-closeout.md) · [Mac tests](Sieghart/Design/sprint-5-test-guide.md).
+- **Sprint 6:** local implementation on `sprint-6`, Parts 1–7 plus Antigravity usage/activity integration. Input tools, layouts, switcher and pointer focus are delivered for Mac acceptance. Dock hover/click integration and automatic last-window observation remain partial; keep auto-quit disabled until its unknown-window-count handling is fixed. Final-source validation: Fast 233 functions/935 invocations, Complete AI slice 26 functions, 7 infrastructure tests and Debug app build passed. [Execution and validation](Sieghart/Design/Workflow/sprint-6-execucao.md) · [Deferred review](Sieghart/Design/Workflow/revisao-pos-sprint-6/README.md) · [Mac tests](Sieghart/Design/Workflow/sprint-6-teste-manual.md).
 - **Mac acceptance:** Sprint 3 and Sprint 4 are accepted on the user’s reports, not assistant hardware runs. SG-001 through SG-008 and the Safari follow-up are closed; reopen a specific issue for a reported regression. Keep Sieghart/Xcode closed during assistant verification; CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed.
 - **Calendar:** reintroduced in the first S5 implementation slice. October 12 adds Gantt's brief hello to permission and agenda views, day-grouped appointments and a cleaner month layout. The team greeting's horizontal rectangle is removed while retaining the approved choreography. [Checkpoint and verification limits](Sieghart/Design/sprint-5-calendar-checkpoint.md).
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
@@ -263,12 +264,12 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
 | `switcher` | App/window switcher | Implemented — explicit app/window list, search and activation requests; Mac acceptance pending | S6 part 2 |
-| `dockPreview` | Dock previews | Planned | S6 |
-| `dockClick` | Dock click behavior | Planned | S6 |
-| `windowMaximizer` | Green-button maximize | Planned | S6 |
+| `dockPreview` | Dock previews | Partial — explicit per-app geometric window cards and raise/minimize controls; native Dock hover trigger pending | S6 part 7 |
+| `dockClick` | Dock click behavior | Partial — configurable action logic without production Dock-click trigger | S6 part 7 |
+| `windowMaximizer` | Green-button maximize | Implemented — opt-in AX zoom button click interception to fill usable desktop and restore previous frame; Mac acceptance pending | S6 part 7 |
 | `windowLayout` | Window layouts and edge snapping | Implemented — usable-screen layouts, guarded undo and opt-in edge snapping; Mac acceptance pending | S6 part 2 |
-| `autoQuit` | Quit on last window close | Planned | S6 |
-| `spacesOrder` | Desktop order | Planned | S6 |
+| `autoQuit` | Quit on last window close | Partial — snapshot-driven scheduling; close observer and unknown AX count guard pending; keep disabled | S6 part 7 |
+| `spacesOrder` | Desktop order | Implemented — opt-in fixed numerical Spaces order with reversible `com.apple.dock` `mru-spaces` backup/restore; Mac acceptance pending | S6 part 7 |
 
 ### Mouse and keyboard (14)
 
@@ -277,17 +278,17 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `scrollInverter` | Invert mouse scrolling | Implemented — opt-in, both axes, continuous events preserved by default; Mac acceptance pending | S6 part 1 |
 | `scrollHorizontal` | Modifier horizontal scroll | Implemented — configurable modifier, combination with inversion, dynamic shortcut conflicts; Mac acceptance pending | S6 part 1 |
 | `focusFollowsMouse` | Focus follows pointer | Implemented — opt-in, 300 ms dwell, mouse or trackpad, permission/lifecycle guards; Mac acceptance pending | S6 part 3 |
-| `smoothScroll` | Smooth scrolling | Planned | S6 |
-| `linearScroll` | Linear scrolling | Planned | S6 |
-| `mouseAcceleration` | Mouse acceleration control | Planned | S6 |
-| `mouseNavigation` | Side-button navigation | Planned | S6 |
-| `mouseButtonShortcuts` | Extra mouse button bindings | Planned | S6 |
+| `smoothScroll` | Smooth scrolling | Implemented — opt-in sub-line pixel and 16.16 fixed-point wheel interpolation composing with inversion/horizontal; Mac acceptance pending | S6 part 5 |
+| `linearScroll` | Linear scrolling | Implemented — opt-in discrete wheel step normalization (`8...96 px`) preserving continuous trackpad by default; Mac acceptance pending | S6 part 5 |
+| `mouseAcceleration` | Mouse acceleration control | Implemented — opt-in speed (`0.25...3.0`) and flat curve (`-1.0`) with reversible `com.apple.mouse.scaling` backup/restore; Mac acceptance pending | S6 part 5 |
+| `mouseNavigation` | Side-button navigation | Implemented — opt-in Side 4/5 back/forward navigation with captured down/up pairing and target guard; Mac acceptance pending | S6 part 4 |
+| `mouseButtonShortcuts` | Extra mouse button bindings | Implemented — opt-in AX menu actions for raw buttons `3...7` with bounded queue; Mac acceptance pending | S6 part 4 |
 | `middleClick` | Three-finger middle click | Implemented optional tap; Accessibility and supported trackpad required; user accepted October 8 | S4 (Mac only) |
-| `mouseClickDebounce` | Mouse click debounce | Planned | S6 |
-| `keyboardDebounce` | Keyboard debounce | Planned | S6 |
-| `textSnippets` | Text expansion snippets | Planned | S6 |
-| `superKey` | Hyper key | Planned | S6 |
-| `quitWindowProtection` | Quit/close protection | Planned | S6 |
+| `mouseClickDebounce` | Mouse click debounce | Implemented — opt-in stationary switch-chatter suppression (`15...100 ms`) with paired release/drag handling; Mac acceptance pending | S6 part 6 |
+| `keyboardDebounce` | Keyboard debounce | Implemented — opt-in mechanical key-chatter suppression (`15...80 ms`) preserving OS autorepeat and modifiers; Mac acceptance pending | S6 part 6 |
+| `textSnippets` | Text expansion snippets | Implemented — opt-in validated trigger expansion with Backspace/reset buffer and Secure Input pause; Mac acceptance pending | S6 part 6 |
+| `superKey` | Hyper key | Implemented — opt-in F18/Right Option/Caps Lock `⌃⌥⌘⇧` modifier injection with shortcut conflict detection; Mac acceptance pending | S6 part 6 |
+| `quitWindowProtection` | Quit/close protection | Implemented — opt-in double-press `⌘Q` (and optional `⌘W`) confirmation window per frontmost PID; Mac acceptance pending | S6 part 6 |
 
 ### Clipboard and files (7)
 

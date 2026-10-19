@@ -1,0 +1,10 @@
+{
+  "result": "BUILD SUCCEEDED",
+  "scheme": "Sieghart",
+  "configuration": "Debug",
+  "architecture": "arm64",
+  "codeSigningAllowed": false,
+  "binarySHA256": "362a8b09a1dae41db328deb00c623aaa2bb43a31f1c72447f5c1fc680d77b194",
+  "log": "/private/tmp/sieghart-s6-publish-app-build.log",
+  "appLaunched": false
+}

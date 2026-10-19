@@ -1,0 +1,128 @@
+{
+  "G22.01": [
+    {
+      "identifier": "SieghartTests/LogicTests/MouseButtonRules/options()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 6,
+      "profile": "logic"
+    }
+  ],
+  "G22.02": [
+    {
+      "identifier": "SieghartTests/LogicTests/MouseButtonRules/menuMatch(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 20,
+      "profile": "logic"
+    }
+  ],
+  "G22.03": [
+    {
+      "identifier": "SieghartTests/LogicTests/MouseButtonRules/navigationScope()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 29,
+      "profile": "logic"
+    }
+  ],
+  "G22.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/eventBridge()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 101,
+      "profile": "isolated"
+    }
+  ],
+  "G22.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/consent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 115,
+      "profile": "isolated"
+    }
+  ],
+  "G22.06": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/clickPair()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 130,
+      "profile": "isolated"
+    }
+  ],
+  "G22.07": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/disableWhileHeld()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 145,
+      "profile": "isolated"
+    }
+  ],
+  "G22.08": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/recovery()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 161,
+      "profile": "isolated"
+    }
+  ],
+  "G22.09": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/lifecycle()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 173,
+      "profile": "isolated"
+    }
+  ],
+  "G22.10": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/targetChange()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 186,
+      "profile": "isolated"
+    }
+  ],
+  "G22.11": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/queue()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 199,
+      "profile": "isolated"
+    }
+  ],
+  "G22.12": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/unsupported()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 226,
+      "profile": "isolated"
+    }
+  ],
+  "G22.13": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/revoked()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 239,
+      "profile": "isolated"
+    }
+  ],
+  "G22.14": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/MouseButtonContracts/missedRelease()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/MouseButtonTests.swift",
+      "sourceLine": 252,
+      "profile": "isolated"
+    }
+  ]
+}

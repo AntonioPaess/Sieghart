@@ -28,24 +28,24 @@ A [auditoria de aderência ao roadmap](sprint-roadmap-audit-2026-10-18.md) confe
 
 Evidências duráveis resumidas: [Fast revisado](../Validation/sprint-6-part1/fast-verification.json), [verificação](../Validation/sprint-6-part1/verification.json), [contratos](../Validation/sprint-6-part1/contract-results.json), [hashes das fontes](../Validation/sprint-6-part1/source-manifest.json). Logs, índice completo, descoberta e xcresult permanecem na pasta temporária da execução.
 
-## Vinte IDs de S6 e próximos lotes
+## Vinte IDs de S6 e lotes entregues
 
 | Lote / IDs | Estado |
 | --- | --- |
-| 1: `scrollInverter`, `scrollHorizontal` | Implementação e revisão de integração nesta parte; aceite Mac pendente |
-| Entrada — `smoothScroll`, `linearScroll`, `mouseAcceleration` | Planejados; definir pipeline de suavização/linearidade e limites de configuração sem alterar preferências globais sem restauração |
-| 3: `focusFollowsMouse` | Implementado, desligado por padrão; aceite Mac pendente |
-| Entrada — `mouseNavigation`, `mouseButtonShortcuts` | Planejados; definir navegação e conflitos de botões |
-| Entrada — `mouseClickDebounce`, `keyboardDebounce`, `textSnippets`, `superKey`, `quitWindowProtection` | Planejados; cada módulo exige escopo, permissões e aceite próprios |
-| 2: `switcher`, `windowLayout` | Implementados; Fast/build e aceite detalhados abaixo |
-| Windows/Dock — `dockPreview`, `dockClick`, `windowMaximizer`, `autoQuit`, `spacesOrder` | Cinco IDs planejados; não confundir ação de preencher a tela com interceptação do botão verde |
+| 1: `scrollInverter`, `scrollHorizontal` | Implementados (`G19.01`–`G19.13`); aceite Mac pendente |
+| 2: `switcher`, `windowLayout` | Implementados (`G20.01`–`G20.13`); aceite Mac pendente |
+| 3: `focusFollowsMouse` | Implementado (`G21.01`–`G21.07`), desligado por padrão; aceite Mac pendente |
+| 4: `mouseNavigation`, `mouseButtonShortcuts` | Implementados (`G22.01`–`G22.14`), botões 3..7, fila limitada e guarda de alvo; aceite Mac pendente |
+| 5: `smoothScroll`, `linearScroll`, `mouseAcceleration` | Implementados (`G23.01`–`G23.04`), curvas de roda e backup/restauração reversível de `com.apple.mouse.scaling`; aceite Mac pendente |
+| 6: `mouseClickDebounce`, `keyboardDebounce`, `textSnippets`, `superKey`, `quitWindowProtection` | Implementados (`G24.01`–`G24.06`), desligados por padrão, pausa em Secure Input e detecção de conflitos; aceite Mac pendente |
+| 7: `dockPreview`, `dockClick`, `windowMaximizer`, `autoQuit`, `spacesOrder` | Implementados (`G25.01`–`G25.05`), opt-in explícito, lista de exclusão e backup/restauração de `mru-spaces`; aceite Mac pendente |
 
-Total após a parte 3: cinco IDs com implementação, quinze ainda planejados. `middleClick` já era entrega S4 e não é recontado como módulo novo de S6. Os demais lotes não foram iniciados.
+Após a revisão rápida: os 20 IDs têm código correspondente, mas `dockPreview`, `dockClick` e `autoQuit` permanecem **parciais** por falta dos gatilhos nativos/observação contínua. Contratos com backends injetados não comprovam essa integração. `middleClick` já era entrega S4 e permanece separado. O aceite físico no Mac continua pendente de execução pelo usuário.
 
 
 ## Parte 2 — layouts, encaixe e seletor de apps/janelas
 
-19 de outubro de 2026, na mesma branch `sprint-6`, após `2b9d5e8`. Implementação sequencial pela sessão principal; nenhum agente adicional iniciado. Este lote cobre os IDs `windowLayout` e `switcher`. `windowMaximizer` significa o botão verde e permanece planejado. As referências de voz/ditado/desenho e Aegis continuam fora deste lote, com os limites registrados na auditoria.
+19 de outubro de 2026, na mesma branch `sprint-6`, após `2b9d5e8`. Implementação sequencial pela sessão principal; nenhum agente adicional iniciado. Este lote cobre os IDs `windowLayout` e `switcher`. `windowMaximizer` significa o botão verde e foi entregue na Parte 7. As referências de voz/ditado/desenho e Aegis continuam fora deste lote, com os limites registrados na auditoria.
 
 Workspace → Windows e menu → More tools → Windows compartilham o mesmo controller. A lista só consulta o sistema após Refresh, tem busca local, seleção explícita para layouts, botões próprios para solicitar ativação do app ou elevar uma janela e feedback de falha. Não substitui Cmd-Tab. As mensagens de ativação descrevem a solicitação enviada à API, não confirmação visual de foco. A lista exclui o próprio app, apps sem interface regular, janelas minimizadas/full-screen e janelas sem geometria legível. Apps com data de lançamento não verificável não são ativados pelo backend.
 
@@ -66,8 +66,6 @@ Sono, lock e sessão inativa são gates independentes. Disable, stop e suspensã
 - Fast final `/private/tmp/sieghart-s6-part2-fast-reviewed`: **195/195 funções e 887/887 invocações aprovadas**, 129/129 fontes de produção, nenhuma fonte alterada, nenhum caso ausente ou inesperado. Todos os contratos G20.01–G20.13 foram incluídos. Complete descobriu 259 funções; não foi reexecutado integralmente nesta parte.
 - Build Debug do aplicativo completo: **BUILD SUCCEEDED**, arm64 + x86_64, sem assinatura e sem executar o app. A tentativa inicial no workspace exclusivo dos testes não tinha o Info.plist da raiz; a execução final usou o projeto original. Nenhuma fonte diverge do manifesto Fast aprovado.
 - Geometria, múltiplas telas, falha parcial/rollback, limite de Undo, handles antigos, constraints, opt-in/permissão, clique/resize/arrasto, callbacks obsoletos, lock/sono/sessão e ativação explícita foram exercitados com fixtures. Nenhum teste instalou monitor global, chamou AX nativo ou ativou apps/janelas reais.
-
-Aceite físico pendente: Refresh e ativação em apps nativos/terceiros, app sem janelas, limites de tamanho e janelas que recusam AX; monitores Retina e secundários acima/à esquerda; Dock em lados diferentes; encaixe real por título, resize/clique sem encaixe, Spaces/full-screen; Undo após mover manualmente/fechar janela; revogação, lock/wake e encerramento; CPU e responsividade de apps lentos. A revisão independente de fechamento da Sprint 6 continua pendente, além do aceite físico. Este commit não declara a sprint inteira concluída.
 
 Evidências da parte 2: [Fast](../Validation/sprint-6-part2/verification.json), [contratos G20](../Validation/sprint-6-part2/contract-results.json), [manifesto](../Validation/sprint-6-part2/source-manifest.json) e [build do app](../Validation/sprint-6-part2/app-build.json). Logs e xcresult ficam nas pastas temporárias acima.
 
@@ -92,6 +90,83 @@ O botão **Open Accessibility settings** usa uma ação compartilhada: pede cons
 - Contratos novos G19.12–G19.13 e G21.01–G21.07. A primeira tentativa teve somente erro de expressão opcional em teste novo; foi corrigida antes da execução. Focada `input|desktop`, `/private/tmp/sieghart-s6-part3-input-desktop-verified`: **33 funções / 46 invocações aprovadas**, sem fonte alterada ou casos divergentes.
 - Após a revisão da independência de falhas dos monitores, Fast final `/private/tmp/sieghart-s6-part3-fast-final`: **204/204 funções e 896/896 invocações aprovadas**, 131/131 fontes, nenhum caso ausente/inesperado, nenhuma fonte alterada. Complete descobriu 268 funções; não foi executado integralmente nesta parte.
 - Build do aplicativo: **BUILD SUCCEEDED**, Debug arm64, sem assinatura, sem abrir/reiniciar o Sieg ou interferir no app usado pelo usuário. Hashes das fontes coincidem com o Fast final. Os testes usam monitores, scheduler, janelas e efeitos de permissão injetados; não instalam monitores reais nem ativam apps/janelas.
-- Aceite físico de scroll/permissões/layout/encaixe e novo foco continua pendente. Foco exige avaliação real de responsividade, CPU, sobreposição de janelas, troca de apps, segundo monitor, uso de cliques/scroll e lock/sono. A revisão independente de fechamento da Sprint 6 permanece pendente. Quinze IDs da sprint ainda estão planejados.
 
-Evidências: [Fast](../Validation/sprint-6-part3/verification.json), [contratos novos](../Validation/sprint-6-part3/contract-results.json), [fontes](../Validation/sprint-6-part3/source-manifest.json), [build](../Validation/sprint-6-part3/app-build.json). Logs/xcresult ficam nas pastas temporárias da execução. Sem push solicitado para esta parte.
+Evidências: [Fast](../Validation/sprint-6-part3/verification.json), [contratos novos](../Validation/sprint-6-part3/contract-results.json), [fontes](../Validation/sprint-6-part3/source-manifest.json), [build](../Validation/sprint-6-part3/app-build.json).
+
+
+## Parte 4 — navegação lateral e atalhos para botões extras do mouse
+
+19 de outubro de 2026, após `12ba043`, mesma branch `sprint-6`. Implementa os IDs `mouseNavigation` e `mouseButtonShortcuts`.
+
+- **Escopo e opt-in:** desligado por padrão em `input.mouseButtons.*`. Atende somente botões extras (`3...7`, como Side 4 / Side 5 e botões auxiliares) sem tocar em cliques primário (0), secundário (1) ou middle click (2), nem em cliques modificados por teclado.
+- **Regras de captura e fila:** `MouseButtonBindings` e `MouseButtonPressState` exigem clique estacionário no mesmo botão (rejeitando arrastos > 4 pt ou mais de 600 ms), consomem o par down/drag/up do botão configurado e despacham a ação no release. Uma fila assíncrona limitada (máximo 8 ações) revalida que o app/janela alvo sob o clique não mudou antes de sintetizar atalhos (`⌘[`, `⌘]`, trocar abas, Mission Control/App Exposé, copiar/colar) ou acionar rotas internas do Sieghart (ilha, voz, área de transferência, janelas).
+- **Validação da parte 4:** contratos `G22.01`–`G22.14` em `MouseButtonsTests.swift` (`mouse-buttons`). Na validação revisada (`/private/tmp/sieghart-s6-part4-fast-reviewed`), **218/218 funções e 918/918 invocações aprovadas**, com build Debug do app concluído (`74c5b43306b23dc6b927299eb5fb711ddb8a707d7ddd2dafde5beb02c263bb46`). Evidências arquivadas em [sprint-6-part4](../Validation/sprint-6-part4/verification.json).
+
+
+## Parte 5 — curvas de rolagem (linear e suave) e aceleração do ponteiro
+
+19 de outubro de 2026, mesma branch `sprint-6`. Implementa os IDs `linearScroll`, `smoothScroll` e `mouseAcceleration` em `ScrollInput.swift` e `WorkspaceView.swift`.
+
+- **Curvas de roda (`linearScroll`, `smoothScroll`):** desligadas por padrão (`input.scroll.linear`, `input.scroll.smooth`, `input.scroll.stepPixels` em `8...96`, padrão `24`). Atuam sobre eventos discretos de roda (`!continuous`), normalizando picos de aceleração para passo fixo por notch (linear) e sintetizando deltas sub-linha em pontos e fixed-point 16.16 (smooth), compondo na mesma passagem com `scrollInverter` e `scrollHorizontal` e preservando trackpad contínuo intacto salvo opt-in explícito.
+- **Aceleração do ponteiro (`mouseAcceleration`):** desligada por padrão (`input.pointer.acceleration.*`), com velocidade `0.25...3.0` e curva plana (`-1.0`). O `ScrollInputController` lê e faz backup persistente do valor original de `com.apple.mouse.scaling` antes da primeira escrita, recusa aplicar se a leitura inicial não for verificável e restaura automaticamente o valor original ao desligar, dormir, bloquear a tela, perder sessão, parar ou acionar **Restore macOS default**.
+- **Validação:** contratos `G23.01`–`G23.04` em `ScrollInputTests.swift`.
+
+
+## Parte 6 — debounce de clique e teclado, Hyper Key, proteção Cmd+Q/Cmd+W e snippets
+
+19 de outubro de 2026, mesma branch `sprint-6`. Implementa os IDs `mouseClickDebounce`, `keyboardDebounce`, `superKey`, `quitWindowProtection` e `textSnippets` em `InputGuards.swift`, `InputGuardsController.swift` e `InputGuardsSettingsView.swift`.
+
+- **Debounce de clique (`mouseClickDebounce`, `15...100 ms`) e teclado (`keyboardDebounce`, `15...80 ms`):** suprimem bounce mecânico no mesmo botão/tecla logo após a liberação, pareando o `up`/`dragged` correspondente para nunca deixar botão ou tecla presa. Cliques distantes (> 2 pt), autorepeat do macOS (`keyboardEventAutorepeat != 0`) e teclas modificadoras nunca são suprimidos.
+- **Hyper Key (`superKey`):** transforma F18, Right Option ou Caps Lock em `⌃⌥⌘⇧` enquanto mantida pressionada, e bloqueia ativação caso o gatilho conflite com atalho global registrado.
+- **Proteção contra encerramento/fechamento acidental (`quitWindowProtection`):** intercepta o primeiro `⌘Q` (e opcionalmente `⌘W`) em apps externos e exige segundo pressionamento entre `80 ms` e `1,5 s` no mesmo PID, ignorando autorepeat contínuo do primeiro aperto.
+- **Snippets de texto (`textSnippets`):** validação anti-recursão/duplicidade (`2...32` caracteres sem espaço para o gatilho; `1...500` para o texto), buffer com suporte a Backspace e limpeza em clique/setas/Enter/Tab/Escape, expandindo via eventos Unicode anotados. Pausa automaticamente todo o processamento de teclado durante `IsSecureEventInputEnabled()`.
+- **Validação:** contratos `G24.01`–`G24.06` em `InputGuardsTests.swift`.
+
+
+## Parte 7 — previews e clique do Dock, botão verde, auto-quit e ordem fixa dos Spaces
+
+19 de outubro de 2026, mesma branch `sprint-6`. Implementa os IDs `dockPreview`, `dockClick`, `windowMaximizer`, `autoQuit` e `spacesOrder` em `DockSpacesController.swift`, integrado ao `DesktopController` e `DesktopToolsView.swift`.
+
+- **Previews e clique do Dock (`dockPreview`, `dockClick`):** inspeção opt-in de janelas por app do Dock (incluindo minimizadas, proporção geométrica, elevar e minimizar/restaurar) e ação configurável ao clicar em app já ativo (`minimizeOrRestore`, `hideActiveApp`, `bringAllForward`).
+- **Botão verde (`windowMaximizer`):** intercepta opt-in cliques sobre o elemento AX `kAXZoomButtonAttribute`, preenchendo a área útil da tela (`visibleFrame`) sem entrar em full-screen nativo e restaurando o frame anterior da janela no segundo clique.
+- **Auto-quit ao fechar última janela (`autoQuit`):** encerra após janela de graça (`1...15 s`) apenas apps regulares previamente observados com `>= 1` janela aberta cujo total permaneceu em `0`, protegendo `com.apple.finder`, `com.apple.systempreferences` e `com.sieghart.app`.
+- **Ordem fixa dos Spaces (`spacesOrder`):** faz backup persistente de `com.apple.dock` → `mru-spaces` antes de gravar `false` e restaura o valor original ao desligar, dormir, bloquear a tela, perder sessão ou parar.
+- **Validação:** contratos `G25.01`–`G25.05` em `DockSpacesTests.swift`.
+
+
+## Extensão de IA na Sprint 6 — Integração local do Antigravity (`~/.gemini/antigravity`)
+
+19 de outubro de 2026, a pedido do usuário, mesma branch `sprint-6`. Adiciona o provedor `.antigravity` ao monitoramento local de uso, atividade, preços e onboarding de IA do Sieghart, ao lado de Codex (OpenAI) e Claude Code (Anthropic).
+
+- **Descoberta e contadores locais (`AIUsage.swift`, `AIActivity.swift`):** lê sessões locais em `~/.gemini/antigravity/brain/<conversation-id>/.system_generated/logs/transcript.jsonl` (ignorando `transcript_full.jsonl` para evitar contagem dupla), deduplicando `PLANNER_RESPONSE` por `step_index`, somando `input_tokens` (novos) + `cache_read_tokens` (cache lido) e `output_tokens`, e detectando trabalho ativo (`status == "RUNNING"` ou turno em aberto nos últimos 5 minutos) e nome de projeto via `cwd` / `tool_calls[].arguments.Cwd` sem reter textos de prompt.
+- **Preços e UI (`ModelPricing.swift`, `ModelTokenPrices.json`, `ProviderMark.swift`, `AIUsageView.swift`, `AIUsageDetailsView.swift`, `OnboardingViewModel.swift`):** adiciona marca vetorial `AntigravityMark`, preços embutidos e parser oficial para modelos Gemini/Antigravity (`gemini-antigravity`, `gemini-4-argon`, `gemini-3-8-flash`, `gemini-2-5-pro`, `gemini-2-5-flash`), detecção no Onboarding (`InstalledAIProviders.detect`) e cartões de conexão/tokens na visão de IA.
+- **Contratos novos:** `G07.03` em `LocalTokenReaderTests.swift` e `G08.07` em `AIActivityReaderTests.swift` (**26/26 funções aprovadas** no plano `Sieghart-Complete` filtrado por `spending|activity|pricing|usage`).
+
+
+## Validação consolidada de fechamento da Sprint 6 (Partes 1–7 + Antigravity)
+
+- **Infraestrutura Python:** `update-project-sources.py` (`App: 141 sources; tests: 139 production + 80 tests/support. Project valid.`), `test-project-sources.py` (3/3 OK) e `test-swift-test-index.py` (4/4 OK).
+- **Execução focada de utilitários (`input|desktop|mouse-buttons`):** `/private/tmp/sieghart-s6-final-focused` — **62/62 funções e 85/85 invocações aprovadas**, 139/139 fontes de produção cobertas.
+- **Execução completa de IA (`Sieghart-Complete`, `spending|activity|pricing|usage`):** `/private/tmp/sieghart-s6-antigravity-complete` — **26/26 funções e 26/26 invocações aprovadas** (incluindo `G07.03` e `G08.07` para Antigravity).
+- **Suíte completa `Sieghart-Fast`:** `/private/tmp/sieghart-s6-final-fast` — **233/233 funções e 935/935 invocações aprovadas**, `missingTests: []`, `unexpectedTests: []`, `sourceChangedDuringRun: []`, `productionCoverageFiles: 139/139`, `xcodeExitCode: 0`.
+- **Build CLI Debug do app (`Sieghart`):** **BUILD SUCCEEDED** em `/tmp/sieghart-s6-app-build/Build/Products/Debug/Sieghart.app/Contents/MacOS/Sieghart` (`SHA-256: e4dff51d8bcfa63c7e64da6e8be551698cb6c2aaa211c463388c5f2b779c5d57`), sem abrir `Sieghart.app` ou `Xcode.app`.
+- **Evidências duráveis finais:** [verificação Fast](../Validation/sprint-6-final/verification.json), [contratos Fast](../Validation/sprint-6-final/contract-results.json), [verificação Complete IA](../Validation/sprint-6-final/ai-usage-complete-verification.json), [contratos Complete IA](../Validation/sprint-6-final/ai-usage-complete-contracts.json), [manifesto de fontes](../Validation/sprint-6-final/source-manifest.json) e [build do app](../Validation/sprint-6-final/app-build.json).
+- **Pendências externas ao CLI:** aceite físico no Mac pelo usuário conforme [roteiro manual](sprint-6-teste-manual.md). Nenhum commit ou push foi executado sem solicitação explícita.
+
+
+
+## Revisão rápida e fila posterior — 19 de outubro de 2026
+
+O pedido atual autoriza commit/push da entrega e adia correções para branch separada. A [fila do chat Sieg — Revisão](revisao-pos-sprint-6/README.md) preserva a revisão recebida, a triagem e os achados novos; o chat não foi acionado. A revisão rápida não equivale à aprovação completa da Sprint 6.
+
+Correções de escopo na documentação: os cartões de janelas são abertos pela UI, sem hover no Dock; a ação de clique do Dock não tem chamador de produção; auto-quit depende de Refresh e pode confundir falha AX com zero janelas. Esses IDs permanecem parciais. Manter auto-quit desligado até corrigir o tratamento de leitura desconhecida. Mouse Buttons executa comandos AX de menu e captura a ação no down; não oferece rotas arbitrárias/atalhos sintéticos nem rejeição de hold após a ação já executada.
+
+A validação histórica acima antecede oito alterações de IA detectadas pelo manifesto. Não representa o estado final desses arquivos. A atualização de validação desta revisão será registrada abaixo com o resultado efetivo, sem substituir os artefatos recebidos.
+
+### Validação das fontes finais para publicação
+
+A lacuna dos oito arquivos de IA foi resolvida por nova execução: **Fast 233/233 funções e 935/935 invocações; Complete IA 26/26 funções e invocações; 139/139 fontes de produção, nenhum teste ausente/inesperado e nenhuma fonte alterada durante as execuções**. Os dois manifestos foram comparados novamente com as fontes atuais, sem divergências. Infraestrutura Python: 3 + 4 testes aprovados. App Debug arm64: **BUILD SUCCEEDED**, assinatura desabilitada, sem abrir o app/Xcode.
+
+[Evidência Fast](../Validation/sprint-6-publicacao/verification.json) · [Complete IA](../Validation/sprint-6-publicacao/ai-verification.json) · [Manifesto final](../Validation/sprint-6-publicacao/source-manifest.json) · [Build](../Validation/sprint-6-publicacao/app-build.json). Logs temporários em `/private/tmp/sieghart-s6-publish-fast`, `/private/tmp/sieghart-s6-publish-ai` e `/private/tmp/sieghart-s6-publish-app-build.log`.
+
+Há apenas dois avisos de linha em branco extra no fim de `DesktopToolsView.swift` e `WorkspaceView.swift`, preservados para não alterar fontes após a validação. Testes aprovados não fecham os achados da revisão nem o aceite físico. Publicação separada em commits das partes 4, 5, 6, 7, integração de IA e documentação; sem referências a assistente ou coassinatura. A seção Aegis de outro chat e os arquivos de pesquisa/estudo permanecem fora desses commits.
