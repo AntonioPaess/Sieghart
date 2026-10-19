@@ -44,6 +44,7 @@ final class NotchWidgetViewModel: ObservableObject {
     private var capturePendingReveal = false
     let desktop: DesktopController
     let mouseButtons: MouseButtonController
+    let inputGuards: InputGuardsController
     let scrollInput: ScrollInputController
     let middleClick: MiddleClickController
     let audio: AudioViewModel
@@ -106,6 +107,7 @@ final class NotchWidgetViewModel: ObservableObject {
             localChat: managesWindows ? .production(defaults: preferences.featureDefaults) : .isolated())
         self.desktop = DesktopController(defaults: preferences.featureDefaults)
         self.mouseButtons = MouseButtonController(defaults: preferences.featureDefaults)
+        self.inputGuards = InputGuardsController(defaults: preferences.featureDefaults)
         self.scrollInput = ScrollInputController(defaults: preferences.featureDefaults)
         self.middleClick = MiddleClickController()
         self.audio = audio ?? AudioViewModel()
@@ -371,8 +373,8 @@ final class NotchWidgetViewModel: ObservableObject {
             try? await Task.sleep(for: .seconds(2)); guard !Task.isCancelled else { return }; self?.utilityMood = .idle
         }
     }
-    func startUtilities() { if managesWindows { mouseButtons.start(); desktop.start(); scrollInput.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; scrollInput.start() }; sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
-    func stopUtilities() { mouseButtons.stop(); desktop.stop(); scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
+    func startUtilities() { if managesWindows { mouseButtons.start(); inputGuards.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; inputGuards.start(); desktop.start(); scrollInput.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; scrollInput.start() }; sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
+    func stopUtilities() { mouseButtons.stop(); inputGuards.stop(); desktop.stop(); scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
     private func beginCaptureSelection() {
         finishWelcome()
         captureWasVisible = isVisible; capturePreviousPage = presentation; captureHidesOverlay = true; capturePendingReveal = false
