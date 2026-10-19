@@ -75,19 +75,21 @@ struct AIUsageDetailsView: View {
                     Button("Cancel") { usage.cancelHistory() }.buttonStyle(.plain)
                 } else {
                     Button("Expand history") { usage.expandHistory(codexEnabled: codex.enabled) }.buttonStyle(CompanionButtonStyle())
-                        .disabled(!codex.enabled && !usage.claudeEnabled)
+                        .disabled(!codex.enabled && !usage.claudeEnabled && !usage.antigravityEnabled)
                 }
             }.padding(16).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
             Text("Reads up to one year of available local and archived sessions. Account activity stays separate. Nothing is uploaded.")
                 .font(.caption2).foregroundStyle(CompanionStyle.muted)
             claudeCard
             if usage.claudeEnabled { tokenCard(.claude) }
+            antigravityCard
+            if usage.antigravityEnabled { tokenCard(.antigravity) }
             Text("Quota percentages describe your subscription limits. Token estimates and recorded charges are separate amounts.")
                 .font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
         }
-        .task(id: "\(codex.enabled)-\(usage.claudeEnabled)") {
+        .task(id: "\(codex.enabled)-\(usage.claudeEnabled)-\(usage.antigravityEnabled)") {
             await usage.refresh(codexEnabled: codex.enabled)
-            await usage.refreshPricing(providers: AIProvider.allCases.filter { $0 == .codex ? codex.enabled : usage.claudeEnabled })
+            await usage.refreshPricing(providers: AIProvider.allCases.filter { usage.isEnabled($0, codexEnabled: codex.enabled) })
         }
         .sheet(item: $editingProvider) { provider in UsageSettingsView(provider: provider).environmentObject(usage) }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
@@ -144,6 +146,50 @@ struct AIUsageDetailsView: View {
                     .buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
             }
             if let importError { Text(importError).font(.caption).foregroundStyle(.orange) }
+        }.padding(20).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var antigravityCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                ProviderMark(provider: .antigravity)
+                Text("Antigravity limits").font(.headline)
+                if let plan = usage.effectiveAntigravityReport?.planType {
+                    Text(plan).font(.caption2.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk)
+                }
+                Spacer()
+                if usage.antigravityEnabled {
+                    Button { Task { await usage.refresh(codexEnabled: codex.enabled) } } label: { Image(systemName: "arrow.clockwise") }
+                        .buttonStyle(.plain).focusEffectDisabled().disabled(usage.isRefreshing).accessibilityLabel("Refresh Antigravity limits")
+                    Button { usage.disable(.antigravity, codex: codex) } label: { Image(systemName: "xmark") }
+                        .buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("Disconnect Antigravity usage")
+                }
+            }
+            if usage.antigravityEnabled {
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    if let report = usage.effectiveAntigravityReport {
+                        VStack(alignment: .leading, spacing: 10) {
+                            if let window = report.primary { QuotaWindowView(window: window.window, now: context.date) }
+                            if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date) }
+                            ForEach(Array((report.scoped ?? []).enumerated()), id: \.offset) { _, window in
+                                Text(window.scope ?? "Model allowance").font(.caption.weight(.semibold))
+                                QuotaWindowView(window: window.window, now: context.date)
+                            }
+                            Text("Antigravity local server · " + report.capturedAt.formatted(date: .abbreviated, time: .shortened))
+                                .font(.caption2).foregroundStyle(CompanionStyle.muted)
+                        }
+                    } else {
+                        Text("Limits unavailable").font(.callout.weight(.medium))
+                        Text("Open Antigravity to refresh live model quota windows, or read local transcripts from ~/.gemini/antigravity.")
+                            .font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            } else {
+                Text("Connect to read Antigravity limits, local conversation transcripts, token counters, and live agent work.")
+                    .font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
+                Button("Connect local Antigravity usage") { usage.antigravityEnabled = true }
+                    .buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
+            }
         }.padding(20).background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 16))
     }
 

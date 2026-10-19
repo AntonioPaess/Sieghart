@@ -5,6 +5,9 @@ import Foundation
     @Published var claudeEnabled: Bool {
         didSet { readRevision += 1; defaults.set(claudeEnabled, forKey: "integrations.claudeUsage"); if !claudeEnabled { tokens[.claude] = nil; automaticClaudeReport = nil; claudeHistoryStatus = "Claude monitoring is off" } }
     }
+    @Published var antigravityEnabled: Bool {
+        didSet { readRevision += 1; defaults.set(antigravityEnabled, forKey: "integrations.antigravityUsage"); if !antigravityEnabled { tokens[.antigravity] = nil; automaticAntigravityReport = nil } }
+    }
     @Published var automaticDetection: Bool { didSet { defaults.set(automaticDetection, forKey: "integrations.autoDetect") } }
     @Published private(set) var analytics = AIAnalytics()
     @Published private(set) var accountActivity: CodexAccountActivity?
@@ -23,14 +26,22 @@ import Foundation
     @Published private(set) var claudeReport: ClaudeLimitsReport?
     @Published private(set) var automaticClaudeReport: ClaudeLimitsReport?
     @Published private(set) var claudeHistoryStatus = "No recent Claude desktop reading"
+    @Published private(set) var antigravityReport: ClaudeLimitsReport?
+    @Published private(set) var automaticAntigravityReport: ClaudeLimitsReport?
     @Published private(set) var historyIsReading = false
     @Published private(set) var historyStatus = "Recent sessions · Partial local history"
     private let readClaude: @Sendable () throws -> ClaudeLimitsReport?
+    private let readAntigravity: @Sendable () -> ClaudeLimitsReport?
     var effectiveClaudeReport: ClaudeLimitsReport? {
         guard claudeEnabled else { return nil }
         if let automatic = automaticClaudeReport, Date().timeIntervalSince(automatic.capturedAt) < 1800,
            claudeReport.map({ $0.capturedAt <= automatic.capturedAt }) ?? true { return automatic }
         return claudeReport
+    }
+    var effectiveAntigravityReport: ClaudeLimitsReport? {
+        guard antigravityEnabled else { return nil }
+        if let automatic = automaticAntigravityReport { return automatic }
+        return antigravityReport
     }
     var claudeSource: String { effectiveClaudeReport?.capturedAt == automaticClaudeReport?.capturedAt && effectiveClaudeReport != nil ? "Claude desktop · Local history · Renewal time unavailable" : "Imported dated report" }
     private var historyTask: Task<Void, Never>?
@@ -39,19 +50,38 @@ import Foundation
     private let analyticsReader = AIAnalyticsReader()
     private let defaults: UserDefaults
     private let read: @Sendable (AIProvider) -> LocalTokenUsage?
-    init(defaults: UserDefaults = .standard, readClaude: @escaping @Sendable () throws -> ClaudeLimitsReport? = { try ClaudePlanHistory.read() }, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
+    init(defaults: UserDefaults = .standard, readClaude: @escaping @Sendable () throws -> ClaudeLimitsReport? = { try ClaudePlanHistory.read() }, readAntigravity: @escaping @Sendable () -> ClaudeLimitsReport? = { AntigravityPlanHistory.read() }, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
         let configured = ProcessInfo.processInfo.environment["CODEX_HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
         return LocalTokenReader.read(provider, codexHome: configured)
     }) {
-        self.defaults = defaults; self.read = read; self.readClaude = readClaude
-        let cache = defaults.data(forKey: "integrations.modelPrices").flatMap { try? JSONDecoder().decode(PriceCatalog.self, from: $0) }
-        priceCatalog = initialPrices ?? cache ?? PriceCatalog.bundled()
+        self.defaults = defaults; self.read = read; self.readClaude = readClaude; self.readAntigravity = readAntigravity
+        let bundled = PriceCatalog.bundled()
+        if let initialPrices {
+            priceCatalog = initialPrices
+        } else if var cache = defaults.data(forKey: "integrations.modelPrices").flatMap({ try? JSONDecoder().decode(PriceCatalog.self, from: $0) }) {
+            for entry in bundled.entries where !cache.entries.contains(where: { $0.provider == entry.provider && $0.id == entry.id && $0.tier == entry.tier }) {
+                cache.entries.append(entry)
+            }
+            priceCatalog = cache
+        } else {
+            priceCatalog = bundled
+        }
         exchangeQuote = defaults.data(forKey: "integrations.exchangeQuote").flatMap { try? JSONDecoder().decode(ExchangeQuote.self, from: $0) }.flatMap { $0.valid ? $0 : nil }
         analytics = initialAnalytics; accountActivity = initialAccountActivity
         automaticDetection = defaults.bool(forKey: "integrations.autoDetect")
         claudeEnabled = defaults.bool(forKey: "integrations.claudeUsage")
+        antigravityEnabled = defaults.bool(forKey: "integrations.antigravityUsage")
         ledger = defaults.data(forKey: "integrations.usageLedger").flatMap { try? JSONDecoder().decode(AIUsageLedger.self, from: $0) } ?? AIUsageLedger()
         claudeReport = defaults.data(forKey: "integrations.claudeReport").flatMap { try? JSONDecoder().decode(ClaudeLimitsReport.self, from: $0) }
+        antigravityReport = defaults.data(forKey: "integrations.antigravityReport").flatMap { try? JSONDecoder().decode(ClaudeLimitsReport.self, from: $0) }
+    }
+
+    func isEnabled(_ provider: AIProvider, codexEnabled: Bool) -> Bool {
+        switch provider {
+        case .codex: codexEnabled
+        case .claude: claudeEnabled
+        case .antigravity: antigravityEnabled
+        }
     }
 
     var hasPendingRead: Bool { isRefreshing || pricingRefreshing || historyIsReading }
@@ -61,19 +91,26 @@ import Foundation
         guard !isRefreshing else { return }
         isRefreshing = true; defer { isRefreshing = false }
         let revision = readRevision
-        let reader = read, claudeReader = readClaude, readsClaude = claudeEnabled, providers = AIProvider.allCases.filter { $0 == .codex ? codexEnabled : claudeEnabled }
+        let reader = read, claudeReader = readClaude, agyReader = readAntigravity, readsClaude = claudeEnabled, readsAgy = antigravityEnabled
+        let providers = AIProvider.allCases.filter { isEnabled($0, codexEnabled: codexEnabled) }
         let result = await Task.detached(priority: .utility) {
             var result: [AIProvider: LocalTokenUsage] = [:]
             for provider in providers { result[provider] = reader(provider) }
             let quota: ClaudeLimitsReport?, failure: String?
             do { quota = readsClaude ? try claudeReader() : nil; failure = nil }
             catch { quota = nil; failure = error.localizedDescription }
-            return (result, quota, failure)
+            let agyQuota = readsAgy ? agyReader() : nil
+            return (result, quota, failure, agyQuota)
         }.value
         guard !Task.isCancelled, revision == readRevision else { return }
         automaticClaudeReport = claudeEnabled ? result.1 : nil
         claudeHistoryStatus = result.2 ?? (result.1 == nil ? "No recent Claude desktop reading. Open Claude and enable its usage menu to refresh the local history." : "Claude desktop local history")
-        tokens = result.0.filter { $0.key != .claude || claudeEnabled }; updatedAt = .now
+        if antigravityEnabled, let agyQuota = result.3 {
+            automaticAntigravityReport = agyQuota
+            antigravityReport = agyQuota
+            if let encoded = try? JSONEncoder().encode(agyQuota) { defaults.set(encoded, forKey: "integrations.antigravityReport") }
+        }
+        tokens = result.0.filter { isEnabled($0.key, codexEnabled: codexEnabled) }; updatedAt = .now
     }
 
     func startMonitoring(codex: CodexUsageViewModel) {
@@ -86,11 +123,12 @@ import Foundation
                     let detected = InstalledAIProviders.detect()
                     if detected.contains(.codex) && !codex.enabled { codex.enabled = true }
                     if detected.contains(.claude) && !self.claudeEnabled { self.claudeEnabled = true }
+                    if detected.contains(.antigravity) && !self.antigravityEnabled { self.antigravityEnabled = true }
                     lastDetection = .now
                 }
-                let providers = AIProvider.allCases.filter { $0 == .codex ? codex.enabled : self.claudeEnabled }
+                let providers = AIProvider.allCases.filter { self.isEnabled($0, codexEnabled: codex.enabled) }
                 let result = await self.analyticsReader.read(providers: providers)
-                let allowed = AIProvider.allCases.filter { $0 == .codex ? codex.enabled : self.claudeEnabled }
+                let allowed = AIProvider.allCases.filter { self.isEnabled($0, codexEnabled: codex.enabled) }
                 self.analytics = AIAnalytics(points: result.points.filter { allowed.contains($0.provider) }, work: result.work.filter { allowed.contains($0.provider) }, scannedFiles: result.scannedFiles)
                 self.activityUpdatedAt = .now
                 if !codex.enabled { self.tokens[.codex] = nil; self.accountActivity = nil; self.accountUpdatedAt = nil; self.accountRefreshFailed = false }
@@ -116,7 +154,7 @@ import Foundation
     func expandHistory(codexEnabled: Bool) {
         guard !historyIsReading else { return }
         historyIsReading = true
-        let revision = readRevision, providers = AIProvider.allCases.filter { $0 == .codex ? codexEnabled : claudeEnabled }
+        let revision = readRevision, providers = AIProvider.allCases.filter { isEnabled($0, codexEnabled: codexEnabled) }
         historyTask = Task { [weak self] in
             guard let self else { return }
             let result = await self.analyticsReader.readFullHistory(providers: providers)
@@ -130,8 +168,14 @@ import Foundation
     func cancelHistory() { historyTask?.cancel() }
     func disable(_ provider: AIProvider, codex: CodexUsageViewModel) {
         automaticDetection = false; readRevision += 1
-        if provider == .codex { codex.enabled = false; tokens[.codex] = nil; accountActivity = nil; accountUpdatedAt = nil; accountRefreshFailed = false }
-        else { claudeEnabled = false }
+        switch provider {
+        case .codex:
+            codex.enabled = false; tokens[.codex] = nil; accountActivity = nil; accountUpdatedAt = nil; accountRefreshFailed = false
+        case .claude:
+            claudeEnabled = false
+        case .antigravity:
+            antigravityEnabled = false
+        }
         analytics.points.removeAll { $0.provider == provider }; analytics.work.removeAll { $0.provider == provider }
     }
 
@@ -145,10 +189,13 @@ import Foundation
     // Presence is based on readings or recorded work, not installation alone.
     func usedProviders(codex: CodexUsageViewModel) -> [AIProvider] {
         AIProvider.allCases.filter { provider in
-            let enabled = provider == .codex ? codex.enabled : claudeEnabled
-            guard enabled else { return false }
-            return (tokens[provider]?.total ?? 0) > 0 || analytics.points.contains { $0.provider == provider && $0.total > 0 } || analytics.work.contains { $0.provider == provider }
-                || (provider == .codex ? codex.bucket != nil : effectiveClaudeReport != nil)
+            guard isEnabled(provider, codexEnabled: codex.enabled) else { return false }
+            let hasLimits: Bool = switch provider {
+            case .codex: codex.bucket != nil
+            case .claude: effectiveClaudeReport != nil
+            case .antigravity: false
+            }
+            return (tokens[provider]?.total ?? 0) > 0 || analytics.points.contains { $0.provider == provider && $0.total > 0 } || analytics.work.contains { $0.provider == provider } || hasLimits
         }
     }
     func usesCustomPrices(_ provider: AIProvider) -> Bool { ledger.customPriceProviders?.contains(provider) == true }

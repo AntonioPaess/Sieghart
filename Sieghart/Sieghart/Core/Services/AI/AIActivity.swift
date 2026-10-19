@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 
 struct AIUsagePoint: Codable, Sendable, Identifiable {
     let id: String
@@ -61,14 +62,19 @@ enum AIActivityParser {
         try? handle.seek(toOffset: offset)
         guard let data = try? handle.read(upToCount: fullHistory ? 67_108_864 : 2_097_152) else { return AIAnalytics() }
         let lines = data.split(separator: 10)
-        var session = headerSession ?? UUID(uuidString: String(url.deletingPathExtension().lastPathComponent.suffix(36)))?.uuidString ?? url.path
-        var model = older?.model ?? "Unknown model", started: Date?, turnID: String?, lastSeen = Date.distantPast
+        var session = headerSession ?? LocalTokenReader.conversationID(for: url)
+        let agyMeta = provider == .antigravity ? antigravityMetadata(for: url, session: session) : (stepModels: [], initialProject: nil)
+        var model = older?.model ?? agyMeta.stepModels.first?.model ?? (provider == .antigravity ? "gemini-antigravity" : "Unknown model"), started: Date?, turnID: String?, lastSeen = Date.distantPast
+        if provider == .antigravity && project == "Local project" { project = agyMeta.initialProject ?? "Antigravity" }
+        let homeName = FileManager.default.homeDirectoryForCurrentUser.lastPathComponent
         var sawLifecycle = false, serviceTier = older?.tier, sawResponseRecords = usesResponseRecords
         var output: Int64 = 0, previous: [Int64]?, points: [String: AIUsagePoint] = [:]
         let cutoff = now.addingTimeInterval(-(fullHistory ? 365 : 91) * 86400)
         for line in offset > 0 ? lines.dropFirst() : lines[...] {
             if Task.isCancelled || points.count >= 30000 { break }
-            guard let record = object(line), let timestamp = record["timestamp"] as? String, let date = parseDate(timestamp) else { continue }
+            guard let record = object(line),
+                  let timestamp = (record["timestamp"] as? String) ?? (record["created_at"] as? String),
+                  let date = parseDate(timestamp) else { continue }
             let type = record["type"] as? String
             if provider == .codex {
                 guard let payload = record["payload"] as? [String: Any] else { continue }
@@ -113,7 +119,7 @@ enum AIActivityParser {
                 guard date >= cutoff, date <= now, delta[0] + delta[1] > 0 else { continue }
                 let id = "codex:total:\(session):\(current[0] + current[1])"
                 points[id] = AIUsagePoint(id: id, provider: provider, date: date, model: model, project: project, input: delta[0], output: delta[1], cached: delta[2], cacheCreation: delta[3], serviceTier: serviceTier, perRequest: info["last_token_usage"] != nil)
-            } else {
+            } else if provider == .claude {
                 if let cwd = record["cwd"] as? String { project = URL(fileURLWithPath: cwd).lastPathComponent }
                 if type == "user", started == nil { started = date; turnID = record["uuid"] as? String; output = 0 }
                 if type == "system", record["subtype"] as? String == "turn_duration" { started = nil }
@@ -127,6 +133,47 @@ enum AIActivityParser {
                 if let earlier = points[key], earlier.total >= count[0] + count[1] { continue }
                 points[key] = AIUsagePoint(id: key, provider: provider, date: date, model: model, project: project, input: count[0], output: count[1], cached: count[2], cacheCreation: count[3], cacheCreationLong: min(count[3], Self.count((usage["cache_creation"] as? [String: Any])?["ephemeral_1h_input_tokens"])), serviceTier: usage["service_tier"] as? String)
                 output = count[1]
+            } else {
+                if let cwd = record["cwd"] as? String, !cwd.isEmpty {
+                    let candidate = URL(fileURLWithPath: cwd).lastPathComponent
+                    if !candidate.isEmpty, candidate != homeName { project = candidate }
+                } else if let calls = record["tool_calls"] as? [[String: Any]] {
+                    for call in calls {
+                        let args = (call["args"] as? [String: Any]) ?? (call["arguments"] as? [String: Any])
+                        if let rawCwd = args?["Cwd"] as? String {
+                            let cleaned = rawCwd.trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))
+                            let candidate = URL(fileURLWithPath: cleaned).lastPathComponent
+                            if !cleaned.isEmpty, !candidate.isEmpty, candidate != homeName, UUID(uuidString: candidate) == nil {
+                                project = candidate
+                                break
+                            }
+                        }
+                    }
+                }
+                let stepNum = (record["step_index"] as? NSNumber)?.intValue
+                if let recordedModel = record["model"] as? String, !recordedModel.isEmpty {
+                    model = recordedModel
+                } else if let stepNum, !agyMeta.stepModels.isEmpty {
+                    for entry in agyMeta.stepModels {
+                        if entry.step <= stepNum { model = entry.model } else { break }
+                    }
+                }
+                let status = record["status"] as? String
+                let step = record["step_index"].map { "\($0)" } ?? timestamp
+                if type == "USER_INPUT" || status == "RUNNING" {
+                    if started == nil { started = date; turnID = step; output = 0 }
+                }
+                lastSeen = max(lastSeen, date)
+                if type == "PLANNER_RESPONSE" || record["source"] as? String == "MODEL" {
+                    if record["tool_calls"] == nil && status == "DONE" { started = nil }
+                    let fresh = Self.count(record["input_tokens"]), cached = Self.count(record["cache_read_tokens"]), created = Self.count(record["cache_creation_tokens"]), out = Self.count(record["output_tokens"])
+                    let totalInput = fresh + cached + created
+                    guard date >= cutoff, date <= now, totalInput + out > 0 else { continue }
+                    let key = "antigravity:\(session):\(step)"
+                    if let earlier = points[key], earlier.total >= totalInput + out { continue }
+                    points[key] = AIUsagePoint(id: key, provider: .antigravity, date: date, model: model, project: project, input: totalInput, output: out, cached: cached, cacheCreation: created)
+                    output += out
+                }
             }
         }
         // Long-running turns can start before the counter tail. Search only
@@ -190,6 +237,89 @@ enum AIActivityParser {
         parser.formatOptions = [.withInternetDateTime]
         return parser.date(from: value)
     }
+
+    private static func antigravityMetadata(for url: URL, session: String) -> (stepModels: [(step: Int, model: String)], initialProject: String?) {
+        let components = url.pathComponents
+        guard let brainIdx = components.lastIndex(of: "brain"), brainIdx > 0 else { return ([], nil) }
+        let agyRoot = URL(fileURLWithPath: NSString.path(withComponents: Array(components.prefix(brainIdx))))
+        let geminiRoot = agyRoot.deletingLastPathComponent()
+
+        var initialProject: String?
+        let summariesDB = geminiRoot.appendingPathComponent("antigravity/conversation_summaries.db")
+        if FileManager.default.fileExists(atPath: summariesDB.path) {
+            var db: OpaquePointer?
+            if sqlite3_open_v2(summariesDB.path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK, let db {
+                defer { sqlite3_close(db) }
+                var stmt: OpaquePointer?
+                if sqlite3_prepare_v2(db, "SELECT project_id FROM conversation_summaries WHERE conversation_id = ? LIMIT 1", -1, &stmt, nil) == SQLITE_OK, let stmt {
+                    defer { sqlite3_finalize(stmt) }
+                    _ = session.withCString { sqlite3_bind_text(stmt, 1, $0, -1, nil) }
+                    if sqlite3_step(stmt) == SQLITE_ROW, let cStr = sqlite3_column_text(stmt, 0) {
+                        let pid = String(cString: cStr)
+                        if !pid.isEmpty, pid != "outside-of-project" {
+                            let projFile = geminiRoot.appendingPathComponent("config/projects/\(pid).json")
+                            if let data = try? Data(contentsOf: projFile),
+                               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                               let name = obj["name"] as? String, !name.isEmpty {
+                                initialProject = URL(fileURLWithPath: name).lastPathComponent
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        var stepModels: [(step: Int, model: String)] = []
+        let convDB = agyRoot.appendingPathComponent("conversations/\(session).db")
+        if FileManager.default.fileExists(atPath: convDB.path) {
+            var db: OpaquePointer?
+            if sqlite3_open_v2(convDB.path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK, let db {
+                defer { sqlite3_close(db) }
+                var stmt: OpaquePointer?
+                if sqlite3_prepare_v2(db, "SELECT idx, data FROM gen_metadata ORDER BY idx", -1, &stmt, nil) == SQLITE_OK, let stmt {
+                    defer { sqlite3_finalize(stmt) }
+                    let stepTag = Data("last_step_index\u{12}".utf8)
+                    while sqlite3_step(stmt) == SQLITE_ROW {
+                        let idx = Int(sqlite3_column_int(stmt, 0))
+                        let len = Int(sqlite3_column_bytes(stmt, 1))
+                        guard len > 0, let raw = sqlite3_column_blob(stmt, 1) else { continue }
+                        let blob = Data(bytes: raw, count: len)
+                        guard let modelName = extractProtobufModel(from: blob) else { continue }
+                        let stepIndex = extractStepIndex(from: blob, tag: stepTag) ?? idx
+                        stepModels.append((step: stepIndex, model: modelName))
+                    }
+                }
+            }
+        }
+        return (stepModels, initialProject)
+    }
+
+    private static func extractProtobufModel(from blob: Data) -> String? {
+        let bytes = [UInt8](blob)
+        guard bytes.count > 4 else { return nil }
+        for i in 0..<(bytes.count - 3) {
+            if bytes[i] == 0x9A && bytes[i + 1] == 0x01 {
+                let length = Int(bytes[i + 2])
+                guard length >= 5, length <= 64, i + 3 + length <= bytes.count else { continue }
+                let slice = bytes[(i + 3)..<(i + 3 + length)]
+                let valid = slice.allSatisfy { ($0 >= 0x61 && $0 <= 0x7A) || ($0 >= 0x30 && $0 <= 0x39) || $0 == 0x2D || $0 == 0x2E || $0 == 0x5F }
+                if valid, let str = String(bytes: slice, encoding: .utf8),
+                   (str.hasPrefix("gemini-") || str.hasPrefix("claude-") || str.hasPrefix("gpt-")) {
+                    return str
+                }
+            }
+        }
+        return nil
+    }
+
+    private static func extractStepIndex(from blob: Data, tag: Data) -> Int? {
+        guard let range = blob.range(of: tag), range.upperBound < blob.endIndex else { return nil }
+        let len = Int(blob[range.upperBound])
+        let start = range.upperBound + 1
+        guard len >= 1, len <= 8, start + len <= blob.endIndex else { return nil }
+        guard let str = String(data: blob[start..<(start + len)], encoding: .utf8) else { return nil }
+        return Int(str)
+    }
 }
 
 actor AIAnalyticsReader {
@@ -208,15 +338,7 @@ actor AIAnalyticsReader {
         var result = AIAnalytics(), unique = history.filter { providers.contains($0.value.provider) && now.timeIntervalSince($0.value.date) <= 365 * 86400 }, work: [String: AIWork] = [:]
         for provider in providers {
             if discovered[provider].map({ now.timeIntervalSince($0) >= 60 }) ?? true {
-                let root = provider == .codex ? (codexHome ?? home.appendingPathComponent(".codex")).appendingPathComponent("sessions") : home.appendingPathComponent(".claude/projects")
-                var candidates: [(URL, Date)] = []
-                if let items = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey], options: [.skipsHiddenFiles]) {
-                    for case let url as URL in items {
-                        guard candidates.count < 5000 else { break }
-                        guard url.pathExtension == "jsonl", let info = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey]), info.isRegularFile == true else { continue }
-                        candidates.append((url, info.contentModificationDate ?? .distantPast))
-                    }
-                }
+                let candidates = LocalTokenReader.discoverFiles(for: provider, home: home, codexHome: codexHome)
                 files[provider] = candidates.sorted { $0.1 > $1.1 }.prefix(80).map(\.0); discovered[provider] = now
             }
             for url in files[provider] ?? [] {
@@ -260,18 +382,8 @@ actor AIAnalyticsReader {
     func readFullHistory(providers: [AIProvider], now: Date = .now) -> AIAnalytics {
         var unique: [String: AIUsagePoint] = [:], scanned = 0, bytes = 0
         for provider in providers {
-            let codex = codexHome ?? home.appendingPathComponent(".codex")
-            let roots = provider == .codex ? [codex.appendingPathComponent("sessions"), codex.appendingPathComponent("archived_sessions")] : [home.appendingPathComponent(".claude/projects")]
-            var candidates: [(URL, Date, Int)] = []
-            for root in roots {
-                guard let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey], options: [.skipsHiddenFiles]) else { continue }
-                for case let url as URL in files {
-                    if Task.isCancelled || candidates.count >= 5000 { break }
-                    guard url.pathExtension == "jsonl", let info = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey, .contentModificationDateKey]), info.isRegularFile == true, info.isSymbolicLink != true,
-                          let size = info.fileSize, size <= 67_108_864 else { continue }
-                    candidates.append((url, info.contentModificationDate ?? .distantPast, size))
-                }
-            }
+            let candidates = LocalTokenReader.discoverFiles(for: provider, home: home, codexHome: codexHome, includeArchived: true)
+                .filter { $0.2 <= 67_108_864 }
             for (url, _, size) in candidates.sorted(by: { $0.1 > $1.1 }) {
                 if Task.isCancelled || scanned >= 1000 || bytes + size > 536_870_912 || unique.count >= 30000 { break }
                 let result = AIActivityParser.parse(url, provider: provider, now: now, fullHistory: true)
@@ -298,6 +410,12 @@ enum InstalledAIProviders {
         if LocalCodexUsage.executable() != nil || FileManager.default.fileExists(atPath: home.appendingPathComponent(".codex/sessions").path) { result.insert(.codex) }
         let claudePaths = [ClaudePlanHistory.location(home: home).path, home.appendingPathComponent(".claude/projects").path, home.appendingPathComponent(".local/bin/claude").path, "/opt/homebrew/bin/claude", "/usr/local/bin/claude"]
         if claudePaths.contains(where: { FileManager.default.fileExists(atPath: $0) }) { result.insert(.claude) }
+        let antigravityPaths = [
+            home.appendingPathComponent(".gemini/antigravity/brain").path,
+            home.appendingPathComponent(".gemini/antigravity/installation_id").path,
+            "/Applications/Antigravity.app"
+        ]
+        if antigravityPaths.contains(where: { FileManager.default.fileExists(atPath: $0) }) { result.insert(.antigravity) }
         return result
     }
 }
