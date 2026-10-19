@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Scheme LastUpgradeVersion="2700" version="1.7">
+  <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="NO">
+    <BuildActionEntries><BuildActionEntry buildForTesting="YES" buildForRunning="NO" buildForProfiling="NO" buildForArchiving="NO" buildForAnalyzing="YES"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="C6AB6C4DC6E52EC8F74130B0" BuildableName="SieghartTests.xctest" BlueprintName="SieghartTests" ReferencedContainer="container:Sieghart.xcodeproj"/></BuildActionEntry></BuildActionEntries>
+  </BuildAction>
+  <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES" codeCoverageEnabled="YES" onlyGenerateCoverageForSpecifiedTargets="NO">
+    <TestPlans>
+      <TestPlanReference reference="container:Tests/TestPlans/Sieghart-Complete.xctestplan" default="YES"/>
+      <TestPlanReference reference="container:Tests/TestPlans/Sieghart-Fast.xctestplan"/>
+    </TestPlans>
+  </TestAction>
+  <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" allowLocationSimulation="NO"/>
+  <AnalyzeAction buildConfiguration="Debug"/>
+</Scheme>

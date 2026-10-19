@@ -1,0 +1,879 @@
+{
+  "module": "SieghartTests",
+  "expectedProductionFiles": 124,
+  "includedProductionFiles": 124,
+  "missingProductionFiles": [],
+  "coveredLines": 9552,
+  "executableLines": 27519,
+  "lineCoverage": 0.3471056361059632,
+  "files": [
+    {
+      "coveredLines": 0,
+      "executableLines": 17,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/CompanionTeam/ViewModels/CompanionMotionStudioViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 460,
+      "executableLines": 923,
+      "lineCoverage": 0.49837486457204766,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DynamicIsland/ViewModels/NotchWidgetViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 3,
+      "executableLines": 30,
+      "lineCoverage": 0.1,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Windowing/IslandPanels.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 157,
+      "executableLines": 188,
+      "lineCoverage": 0.8351063829787234,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Helpers/VoiceCommands.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 165,
+      "executableLines": 177,
+      "lineCoverage": 0.9322033898305084,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/UsageImports.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 77,
+      "executableLines": 100,
+      "lineCoverage": 0.77,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/FileAccess.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 379,
+      "executableLines": 425,
+      "lineCoverage": 0.8917647058823529,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/ViewModels/AgentRoomViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 28,
+      "executableLines": 168,
+      "lineCoverage": 0.16666666666666666,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionArrival.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 270,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/Views/AdaGitHubConnectionView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 1,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/IslandLayout/ViewModels/IslandLayoutEditorViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 869,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Files/Views/FilesView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 143,
+      "executableLines": 221,
+      "lineCoverage": 0.6470588235294118,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Capture/ViewModels/CaptureViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 14,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AdaGitHubTool.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 330,
+      "executableLines": 545,
+      "lineCoverage": 0.6055045871559633,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Files/ViewModels/FilesViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 47,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionTaskCharacter.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 57,
+      "executableLines": 61,
+      "lineCoverage": 0.9344262295081968,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/CodexRoomObservation.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 63,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/UtilityControls.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 7,
+      "executableLines": 9,
+      "lineCoverage": 0.7777777777777778,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/MemoryFilesStore.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 10,
+      "executableLines": 41,
+      "lineCoverage": 0.24390243902439024,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AppleChatEligibility.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 27,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/TaskNotificationPreferences.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 427,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Timers/Views/TimerToolsView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 130,
+      "executableLines": 132,
+      "lineCoverage": 0.9848484848484849,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AgentRPCProcess.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 184,
+      "executableLines": 219,
+      "lineCoverage": 0.8401826484018264,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Timers/ViewModels/AssistantViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 34,
+      "executableLines": 50,
+      "lineCoverage": 0.68,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Helpers/KeyboardShortcuts.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 134,
+      "executableLines": 140,
+      "lineCoverage": 0.9571428571428572,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Files/ViewModels/FileReceptionViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 82,
+      "executableLines": 91,
+      "lineCoverage": 0.9010989010989011,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/KeepAwake/ViewModels/KeepAwakeViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 156,
+      "executableLines": 277,
+      "lineCoverage": 0.5631768953068592,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Voice/VoiceCapture.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 31,
+      "executableLines": 41,
+      "lineCoverage": 0.7560975609756098,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AIUsage/ViewModels/CodexUsageViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 93,
+      "executableLines": 122,
+      "lineCoverage": 0.7622950819672131,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Helpers/TimerModels.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 98,
+      "executableLines": 100,
+      "lineCoverage": 0.98,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/DiskImageInstaller.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 90,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DisplayPower/Views/DisplayPowerView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 1185,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DynamicIsland/Views/NotchWidgetView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 102,
+      "executableLines": 134,
+      "lineCoverage": 0.7611940298507462,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/FolderObservation.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 20,
+      "executableLines": 140,
+      "lineCoverage": 0.14285714285714285,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Calendar/CalendarContext.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 176,
+      "executableLines": 260,
+      "lineCoverage": 0.676923076923077,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Calendar/ViewModels/CalendarViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 3,
+      "executableLines": 12,
+      "lineCoverage": 0.25,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Models/AppleChatConfiguration.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 15,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AdaAgentInstructions.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 29,
+      "executableLines": 32,
+      "lineCoverage": 0.90625,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Helpers/NotchGeometry.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 427,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Clipboard/Views/ClipboardHistoryView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 48,
+      "executableLines": 49,
+      "lineCoverage": 0.9795918367346939,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/LocalChatStore.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 76,
+      "executableLines": 391,
+      "lineCoverage": 0.19437340153452684,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Audio/AudioEngine.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 593,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Audio/Views/AudioControlsView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 560,
+      "executableLines": 876,
+      "lineCoverage": 0.639269406392694,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Activation/ActivationController.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 204,
+      "executableLines": 218,
+      "lineCoverage": 0.9357798165137615,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/ViewModels/LocalChatViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 22,
+      "executableLines": 73,
+      "lineCoverage": 0.3013698630136986,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/FileDropReceiver.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 294,
+      "executableLines": 333,
+      "lineCoverage": 0.8828828828828829,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AIActivity.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 796,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AIUsage/Views/AIUsageView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 25,
+      "executableLines": 39,
+      "lineCoverage": 0.6410256410256411,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Capture/CaptureAnnotationRenderer.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 225,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AIUsage/Views/CodexUsageView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 403,
+      "executableLines": 465,
+      "lineCoverage": 0.8666666666666667,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/CodexCodingAgent.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 72,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/ShortcutRecorder.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 130,
+      "executableLines": 130,
+      "lineCoverage": 1,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/ToolProcess.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 511,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/Views/AgentWorkroomView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 3,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/MenuBar/ViewModels/MenuBarViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 30,
+      "executableLines": 67,
+      "lineCoverage": 0.44776119402985076,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/ViewModels/AdaGitHubViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 115,
+      "executableLines": 128,
+      "lineCoverage": 0.8984375,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionGreetingRig.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 62,
+      "executableLines": 63,
+      "lineCoverage": 0.9841269841269841,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Models/LocalChatItems.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 372,
+      "executableLines": 372,
+      "lineCoverage": 1,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionRigActor.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 41,
+      "executableLines": 63,
+      "lineCoverage": 0.6507936507936508,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/AgentChatComposer.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 11,
+      "executableLines": 34,
+      "lineCoverage": 0.3235294117647059,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/SystemMonitor/ViewModels/SystemMonitorViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 54,
+      "executableLines": 136,
+      "lineCoverage": 0.39705882352941174,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DisplayPower/ViewModels/DisplayPowerViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 135,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/CompanionTeam/Views/CompanionMotionStudio.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 21,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Workspace/ViewModels/WorkspaceViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 1,
+      "executableLines": 8,
+      "lineCoverage": 0.125,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Capture/OfflineCaptureBackend.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 450,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Capture/Views/CaptureToolsView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 100,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Input/ImpactGestureCoordinator.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 33,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AdaGitHubCredentials.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 1,
+      "executableLines": 126,
+      "lineCoverage": 0.007936507936507936,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AppleLocalChatEngine.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 155,
+      "executableLines": 318,
+      "lineCoverage": 0.48742138364779874,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AIUsage/ViewModels/AIUsageViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 169,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/SystemMonitor/Views/SystemMonitorView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 225,
+      "executableLines": 448,
+      "lineCoverage": 0.5022321428571429,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionTeamArrival.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 261,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Onboarding/Views/CompanionOnboardingView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 46,
+      "executableLines": 72,
+      "lineCoverage": 0.6388888888888888,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Models/CodingAgentItems.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 27,
+      "executableLines": 30,
+      "lineCoverage": 0.9,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionIntroductionCopy.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 66,
+      "executableLines": 164,
+      "lineCoverage": 0.4024390243902439,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Input/MiddleClickController.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 280,
+      "executableLines": 389,
+      "lineCoverage": 0.7197943444730077,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AdaGitHubContext.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 33,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Onboarding/ViewModels/OnboardingViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 153,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/CompanionFileReceiver.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 89,
+      "executableLines": 103,
+      "lineCoverage": 0.8640776699029126,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Preferences/CompanionPreferences.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 255,
+      "executableLines": 290,
+      "lineCoverage": 0.8793103448275862,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Audio/ViewModels/AudioViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 58,
+      "executableLines": 209,
+      "lineCoverage": 0.27751196172248804,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/System/MacSystemSampler.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 302,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/MenuBar/Views/MenuBarView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 25,
+      "executableLines": 29,
+      "lineCoverage": 0.8620689655172413,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionAnimation.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 105,
+      "executableLines": 131,
+      "lineCoverage": 0.8015267175572519,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/ClaudeCodingAgent.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 69,
+      "executableLines": 104,
+      "lineCoverage": 0.6634615384615384,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Tasks/CompanionEventCenter.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 164,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/AgentMarkdownView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 116,
+      "executableLines": 125,
+      "lineCoverage": 0.928,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AIUsage.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 56,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/ImpactGestures/ViewModels/SensorViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 219,
+      "executableLines": 236,
+      "lineCoverage": 0.9279661016949152,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionGreetingTiming.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 142,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/KeepAwake/Views/KeepAwakeView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 162,
+      "executableLines": 176,
+      "lineCoverage": 0.9204545454545454,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/CodexDesktopStore.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 109,
+      "executableLines": 142,
+      "lineCoverage": 0.7676056338028169,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/ModelPricing.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 315,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/Views/LocalChatPrompt.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 44,
+      "executableLines": 111,
+      "lineCoverage": 0.3963963963963964,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Capture/MacCaptureBackend.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 254,
+      "executableLines": 416,
+      "lineCoverage": 0.6105769230769231,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/Views/AgentChatCompanion.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 29,
+      "executableLines": 221,
+      "lineCoverage": 0.13122171945701358,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Island/IslandChrome.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 68,
+      "executableLines": 183,
+      "lineCoverage": 0.37158469945355194,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Clipboard/ClipboardHistory.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 133,
+      "executableLines": 155,
+      "lineCoverage": 0.8580645161290322,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/CodexUsage.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 161,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/Views/AdaChatSettingsView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 7,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/FileQuickLookView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 311,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AgentRoom/Views/AgentRoomView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 942,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/AIUsage/Views/AIUsageDetailsView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 107,
+      "executableLines": 142,
+      "lineCoverage": 0.7535211267605634,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/FileOperations.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 226,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Input/SensorEngine.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 14,
+      "executableLines": 14,
+      "lineCoverage": 1,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Models/CaptureItems.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 76,
+      "executableLines": 202,
+      "lineCoverage": 0.37623762376237624,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionRenderer.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 126,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionTeamGallery.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 238,
+      "executableLines": 264,
+      "lineCoverage": 0.9015151515151515,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionRigPose.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 20,
+      "executableLines": 207,
+      "lineCoverage": 0.0966183574879227,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Clipboard/PlainTextPaste.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 8,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/ProviderMark.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 945,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Calendar/Views/CalendarView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 8,
+      "executableLines": 72,
+      "lineCoverage": 0.1111111111111111,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Models/AppearanceOptions.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 82,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/TaskCardsView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 104,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/AgentChatStyle.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 22,
+      "executableLines": 43,
+      "lineCoverage": 0.5116279069767442,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Power/MacAwakeBackend.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 801,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/IslandLayout/Views/IslandLayoutEditor.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 1,
+      "executableLines": 69,
+      "lineCoverage": 0.014492753623188406,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Display/MacDisplayPowerBackend.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 113,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/AgentMarkdown.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 1022,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Workspace/Views/WorkspaceView.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 364,
+      "executableLines": 522,
+      "lineCoverage": 0.6973180076628352,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionAvatars.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 173,
+      "executableLines": 294,
+      "lineCoverage": 0.5884353741496599,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Clipboard/ViewModels/ClipboardViewModel.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 0,
+      "executableLines": 133,
+      "lineCoverage": 0,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/DesignSystem.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 24,
+      "executableLines": 26,
+      "lineCoverage": 0.9230769230769231,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Models/FileItems.swift",
+      "module": "SieghartTests.xctest"
+    },
+    {
+      "coveredLines": 434,
+      "executableLines": 436,
+      "lineCoverage": 0.9954128440366973,
+      "path": "/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Components/Companion/CompanionRigGeometry.swift",
+      "module": "SieghartTests.xctest"
+    }
+  ]
+}
