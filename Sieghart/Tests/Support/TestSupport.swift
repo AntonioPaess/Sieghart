@@ -23,6 +23,7 @@ extension Tag {
     @Tag static var imports: Self
     @Tag static var clipboard: Self
     @Tag static var desktop: Self
+    @Tag static var mouseButtons: Self
     @Tag static var input: Self
     @Tag static var middleClick: Self
     @Tag static var utilities: Self

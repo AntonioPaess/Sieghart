@@ -207,6 +207,7 @@ struct ContentView: View {
     @ViewBuilder private var activationSettings: some View {
         heading("Bring Sieghart into view.", subtitle: "Choose the inputs that fit your day.")
         ScrollInputSettings(controller: notch.scrollInput).companionCard()
+        MouseButtonsSettingsView(controller: notch.mouseButtons).companionCard()
         MiddleClickSettings(controller: notch.middleClick).companionCard()
         VStack(alignment: .leading, spacing: 18) {
             Label("Keyboard", systemImage: "keyboard").font(.headline)

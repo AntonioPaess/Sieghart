@@ -354,6 +354,15 @@
 		C8807B7E3CEC9A74C3CB112F /* PointerFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCB486958FF409F992E27F11 /* PointerFocus.swift */; };
 		C2FCAC288254D43EFAE82867 /* AccessibilityAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1DF8D60F39CA2C8A1B53CCF /* AccessibilityAccess.swift */; };
 		C9AB6BAA101BB811ECD3C9C1 /* PointerFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCB486958FF409F992E27F11 /* PointerFocus.swift */; };
+		CAA91348693A8059626D01D4 /* MouseButtonsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3642FCF06A996A5CBC5318F /* MouseButtonsSettingsView.swift */; };
+		C6340A346241CFE111C75292 /* MouseButtonActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD9CC46279F95FFE88EA0718 /* MouseButtonActions.swift */; };
+		C9C1A59CACFE1BC73DFB94D4 /* MouseButtonBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAD9E875CF09F66D7AC3396 /* MouseButtonBackend.swift */; };
+		C603B8CEC2DA866CD31218CC /* MouseButtonController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBF22CEA0D27179B7EFC7F4 /* MouseButtonController.swift */; };
+		CA53DE29443DB4B9EF34F3BB /* MouseButtonsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3642FCF06A996A5CBC5318F /* MouseButtonsSettingsView.swift */; };
+		C3F2E9FE75D71B34501C81CC /* MouseButtonActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD9CC46279F95FFE88EA0718 /* MouseButtonActions.swift */; };
+		C7E77E67B3638BB5EA671940 /* MouseButtonBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAD9E875CF09F66D7AC3396 /* MouseButtonBackend.swift */; };
+		CDBC83951B4CEB5D689E54D6 /* MouseButtonController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFBF22CEA0D27179B7EFC7F4 /* MouseButtonController.swift */; };
+		C094C81904E7DFFAA1DAFBB3 /* MouseButtonTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C891BC3F0EEF29A7F04D953E /* MouseButtonTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -577,6 +586,11 @@
 		C25711004E8B4C99B6A5E53A /* DesktopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopTests.swift; sourceTree = "<group>"; };
 		C1DF8D60F39CA2C8A1B53CCF /* AccessibilityAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityAccess.swift; sourceTree = "<group>"; };
 		CCB486958FF409F992E27F11 /* PointerFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerFocus.swift; sourceTree = "<group>"; };
+		C3642FCF06A996A5CBC5318F /* MouseButtonsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonsSettingsView.swift; sourceTree = "<group>"; };
+		CD9CC46279F95FFE88EA0718 /* MouseButtonActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonActions.swift; sourceTree = "<group>"; };
+		CAAD9E875CF09F66D7AC3396 /* MouseButtonBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonBackend.swift; sourceTree = "<group>"; };
+		CFBF22CEA0D27179B7EFC7F4 /* MouseButtonController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonController.swift; sourceTree = "<group>"; };
+		C891BC3F0EEF29A7F04D953E /* MouseButtonTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseButtonTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1261,6 +1275,7 @@
 			isa = PBXGroup;
 			children = (
 				C93054FCABBBA99EC4560E27 /* DesktopToolsView.swift */,
+				C3642FCF06A996A5CBC5318F /* MouseButtonsSettingsView.swift */,
 				B2011AC87B09F2360279D4AC /* WorkspaceView.swift */,
 			);
 			sourceTree = "<group>";
@@ -1375,6 +1390,9 @@
 			children = (
 				B3BA1D9FC10AF34062AEEF00 /* ImpactGestureCoordinator.swift */,
 				B705D5020102031A4F84F975 /* MiddleClickController.swift */,
+				CD9CC46279F95FFE88EA0718 /* MouseButtonActions.swift */,
+				CAAD9E875CF09F66D7AC3396 /* MouseButtonBackend.swift */,
+				CFBF22CEA0D27179B7EFC7F4 /* MouseButtonController.swift */,
 				CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */,
 			);
 			sourceTree = "<group>";
@@ -1465,6 +1483,7 @@
 				CC9F0D6FD98EA480D192CF2C /* LocalTokenReaderTests.swift */,
 				CE9AFF34134F8426290F5FCC /* MiddleClickStateTests.swift */,
 				CB192B3DBA9C92298D3F07DD /* MonitorReadingTests.swift */,
+				C891BC3F0EEF29A7F04D953E /* MouseButtonTests.swift */,
 				C7345AE210CBA72166D95604 /* OnboardingPreferenceTests.swift */,
 				C61E9265EBA2A6DC741FBDAE /* PlaybackGateTests.swift */,
 				C7865AC399966697FF9E84E8 /* PriceCatalogParserTests.swift */,
@@ -1754,6 +1773,7 @@
 				B949C559D7A611EB09470848 /* TimerToolsView.swift in Sources */,
 				B339E119D00A6CFA6308E521 /* WorkspaceViewModel.swift in Sources */,
 				C50B4B2C5A92F6A9A16C7282 /* DesktopToolsView.swift in Sources */,
+				CAA91348693A8059626D01D4 /* MouseButtonsSettingsView.swift in Sources */,
 				B3DD106801EE889A2FE16759 /* WorkspaceView.swift in Sources */,
 				BFC9900FDAB481FCAABC0074 /* AgentChatComposer.swift in Sources */,
 				B8F4DABD2F5961DC6039DAD6 /* AgentChatStyle.swift in Sources */,
@@ -1795,6 +1815,9 @@
 				C657553DE1E297078BE36EC6 /* WindowGeometry.swift in Sources */,
 				BE78F1B04E965C35941847F0 /* ImpactGestureCoordinator.swift in Sources */,
 				BF7D254CAD92DCAEDF635382 /* MiddleClickController.swift in Sources */,
+				C6340A346241CFE111C75292 /* MouseButtonActions.swift in Sources */,
+				C9C1A59CACFE1BC73DFB94D4 /* MouseButtonBackend.swift in Sources */,
+				C603B8CEC2DA866CD31218CC /* MouseButtonController.swift in Sources */,
 				C43B6AFB5A6BBA1D84920DC3 /* ScrollInput.swift in Sources */,
 				B613ED7141CABBA26E731D53 /* CompanionPreferences.swift in Sources */,
 				B420C9E2B13BA4B91B7F05A7 /* CompanionEventCenter.swift in Sources */,
@@ -1892,6 +1915,7 @@
 				CD8CD1BD672F22195D6C6147 /* TimerToolsView.swift in Sources */,
 				CF3CBC317BEBB19B29A69DB5 /* WorkspaceViewModel.swift in Sources */,
 				CBA621349F0C40F795055983 /* DesktopToolsView.swift in Sources */,
+				CA53DE29443DB4B9EF34F3BB /* MouseButtonsSettingsView.swift in Sources */,
 				C1AC0648F1249A25488DA3F9 /* WorkspaceView.swift in Sources */,
 				C9081747247293C8040EBF85 /* AgentChatComposer.swift in Sources */,
 				C57EC54D8084D1F54FFDE9A4 /* AgentChatStyle.swift in Sources */,
@@ -1933,6 +1957,9 @@
 				C6F57B0DFFF9A2C6D38B5ECA /* WindowGeometry.swift in Sources */,
 				C9A3C7468CA32F3A60BA9393 /* ImpactGestureCoordinator.swift in Sources */,
 				C32F4E115048E7686AD44D51 /* MiddleClickController.swift in Sources */,
+				C3F2E9FE75D71B34501C81CC /* MouseButtonActions.swift in Sources */,
+				C7E77E67B3638BB5EA671940 /* MouseButtonBackend.swift in Sources */,
+				CDBC83951B4CEB5D689E54D6 /* MouseButtonController.swift in Sources */,
 				CB2CD01C1008A76B2B993938 /* ScrollInput.swift in Sources */,
 				C121FB6B972C156C376AB0BC /* CompanionPreferences.swift in Sources */,
 				CC0C63D093F2ABE388F90CDA /* CompanionEventCenter.swift in Sources */,
@@ -1984,6 +2011,7 @@
 				CBBD202FEC1C235CF503BF3C /* LocalTokenReaderTests.swift in Sources */,
 				C43326B4FDF8454DB9393225 /* MiddleClickStateTests.swift in Sources */,
 				CAEE0A6C2240F3C201E78665 /* MonitorReadingTests.swift in Sources */,
+				C094C81904E7DFFAA1DAFBB3 /* MouseButtonTests.swift in Sources */,
 				CE1F534DFFAD14D9A3B1B8F6 /* OnboardingPreferenceTests.swift in Sources */,
 				CF0F52363ACF385FFED413DA /* PlaybackGateTests.swift in Sources */,
 				CCDF077056AE4B64F09D62C5 /* PriceCatalogParserTests.swift in Sources */,

@@ -21,6 +21,7 @@ import tempfile
 
 
 GROUP_TAGS = {
+    "mouse-buttons": "mouseButtons",
     "desktop": "desktop",
     "input": "input",
     "timer": "timer",

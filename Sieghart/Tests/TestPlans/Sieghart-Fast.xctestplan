@@ -202,6 +202,14 @@
                 ]
               },
               {
+                "name": "MouseButtonRules",
+                "testFunctions": [
+                  "menuMatch(_:)",
+                  "navigationScope()",
+                  "options()"
+                ]
+              },
+              {
                 "name": "PlaybackGateTests",
                 "testFunctions": [
                   "musicGate()"
@@ -568,6 +576,22 @@
                 "testFunctions": [
                   "gestureConsent()",
                   "obsoleteCallback()"
+                ]
+              },
+              {
+                "name": "MouseButtonContracts",
+                "testFunctions": [
+                  "clickPair()",
+                  "consent()",
+                  "disableWhileHeld()",
+                  "eventBridge()",
+                  "lifecycle()",
+                  "missedRelease()",
+                  "queue()",
+                  "recovery()",
+                  "revoked()",
+                  "targetChange()",
+                  "unsupported()"
                 ]
               },
               {
