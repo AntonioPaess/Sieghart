@@ -11,17 +11,16 @@ struct DesktopToolsView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Button("Refresh list") { model.refresh() }
-                Button("Allow Accessibility") { model.allowAccess() }
             }.buttonStyle(.bordered)
+            Button("Open Accessibility settings") { model.allowAccess() }.buttonStyle(.bordered)
+            Button("Locate this copy of Sieghart") { AccessibilityAccess.revealRunningApp() }.font(.caption)
+            Text("Enable this copy in macOS Privacy & Security, then return and refresh.").font(.caption).foregroundStyle(CompanionStyle.muted)
             Text(model.status).font(.caption).foregroundStyle(CompanionStyle.muted).accessibilityIdentifier("desktop.status")
+            Text("1. Refresh the list. 2. Select a window below. 3. Choose a layout. Show brings a window forward; Open activates an app.").font(.caption).foregroundStyle(CompanionStyle.muted)
             TextField("Find an app or window", text: $query).textFieldStyle(.roundedBorder)
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(model.apps.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }) { app in
-                        Button { model.activate(app: app) } label: {
-                            Label("Open \(app.name)", systemImage: "app").frame(maxWidth: .infinity, alignment: .leading)
-                        }.buttonStyle(.bordered)
-                    }
+                    Text("Windows — select one for layouts").font(.caption.weight(.semibold))
                     ForEach(matchingWindows) { window in
                         HStack {
                             Button {
@@ -37,10 +36,19 @@ struct DesktopToolsView: View {
                             Button("Show") { model.activate(window: window.id) }.buttonStyle(.bordered)
                         }
                     }
-                    if model.apps.isEmpty && model.windows.isEmpty { Text("Refresh to choose an app or window.").font(.caption).foregroundStyle(CompanionStyle.muted) }
+                    if matchingWindows.isEmpty {
+                        Text(model.apps.isEmpty ? "Refresh to choose a window." : "No matching windows. Open a window outside full screen, then refresh.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    }
+                    Text("Apps — bring an app forward").font(.caption.weight(.semibold)).padding(.top, 8)
+                    ForEach(model.apps.filter { query.isEmpty || $0.name.localizedCaseInsensitiveContains(query) }) { app in
+                        Button { model.activate(app: app) } label: {
+                            Label("Open \(app.name)", systemImage: "app").frame(maxWidth: .infinity, alignment: .leading)
+                        }.buttonStyle(.bordered)
+                    }
                 }
-            }.frame(maxHeight: compact ? 190 : 300)
-            Text("Layout for the selected window").font(.subheadline.weight(.semibold))
+            }.frame(maxHeight: compact ? 150 : 300)
+            Text(model.windows.first(where: { $0.id == model.selectedID }).map { "Layout: \($0.title.isEmpty ? $0.app.name : $0.title)" } ?? "Select a window above to enable layouts")
+                .font(.subheadline.weight(.semibold)).lineLimit(2)
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 7) {
                 ForEach(WindowLayout.allCases) { layout in
                     Button(layout.title) { model.apply(layout) }.buttonStyle(.bordered).disabled(model.selectedID == nil)
@@ -48,9 +56,16 @@ struct DesktopToolsView: View {
             }
             Button("Undo last layout") { model.undo() }.disabled(!model.canUndo)
             Divider()
+            Toggle("Focus window under pointer", isOn: $model.focusFollowsPointer)
+            Text(model.focusStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
+            if model.focusFollowsPointer { Button("Retry pointer focus") { model.retryPointerFocus() } }
+            Divider()
             Toggle("Snap windows at screen edges", isOn: $model.edgeSnapping)
             Text(model.snapStatus).font(.caption).foregroundStyle(CompanionStyle.muted)
             Button("Retry edge snapping") { model.retrySnapping() }.disabled(!model.edgeSnapping)
+        }
+        .onChange(of: query) { _, _ in
+            if !matchingWindows.contains(where: { $0.id == model.selectedID }) { model.selectedID = nil }
         }
     }
 }

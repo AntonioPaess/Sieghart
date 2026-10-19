@@ -350,6 +350,10 @@
 		CC17E4ABE781B8EF55225D1C /* DesktopController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7CED1271199F76A6123982 /* DesktopController.swift */; };
 		C6F57B0DFFF9A2C6D38B5ECA /* WindowGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */; };
 		C32D9D27B429D23C98803B41 /* DesktopTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25711004E8B4C99B6A5E53A /* DesktopTests.swift */; };
+		CDAA8EC8C97C2D486F68F3CB /* AccessibilityAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1DF8D60F39CA2C8A1B53CCF /* AccessibilityAccess.swift */; };
+		C8807B7E3CEC9A74C3CB112F /* PointerFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCB486958FF409F992E27F11 /* PointerFocus.swift */; };
+		C2FCAC288254D43EFAE82867 /* AccessibilityAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1DF8D60F39CA2C8A1B53CCF /* AccessibilityAccess.swift */; };
+		C9AB6BAA101BB811ECD3C9C1 /* PointerFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCB486958FF409F992E27F11 /* PointerFocus.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -571,6 +575,8 @@
 		CC7CED1271199F76A6123982 /* DesktopController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopController.swift; sourceTree = "<group>"; };
 		C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowGeometry.swift; sourceTree = "<group>"; };
 		C25711004E8B4C99B6A5E53A /* DesktopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesktopTests.swift; sourceTree = "<group>"; };
+		C1DF8D60F39CA2C8A1B53CCF /* AccessibilityAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityAccess.swift; sourceTree = "<group>"; };
+		CCB486958FF409F992E27F11 /* PointerFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerFocus.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1355,11 +1361,12 @@
 			sourceTree = "<group>";
 		};
 		BE03DCB291877FE295E2CF99 /* Activation */ = {
+			path = Activation;
 			isa = PBXGroup;
 			children = (
+				C1DF8D60F39CA2C8A1B53CCF /* AccessibilityAccess.swift */,
 				B6FE2F77E1306210526CDD1C /* ActivationController.swift */,
 			);
-			path = Activation;
 			sourceTree = "<group>";
 		};
 		BB8BE5213E7DE490726DD8A8 /* Input */ = {
@@ -1556,12 +1563,13 @@
 			);
 		};
 		CAD0D65F41F67DE61A34F905 /* Desktop */ = {
-			isa = PBXGroup;
 			path = Desktop;
+			isa = PBXGroup;
 			sourceTree = "<group>";
 			children = (
 				C77EE23B35F6DAD71BD5767E /* DesktopBackend.swift */,
 				CC7CED1271199F76A6123982 /* DesktopController.swift */,
+				CCB486958FF409F992E27F11 /* PointerFocus.swift */,
 				C60A229FAD42B8E6F91914C1 /* WindowGeometry.swift */,
 			);
 		};
@@ -1779,9 +1787,11 @@
 				B93526A489190BCA3371B41B /* CodingAgentItems.swift in Sources */,
 				BFA1B0B8A8CF21F409E1AAC4 /* FileItems.swift in Sources */,
 				B71FDDBB7C3CC0C12B16A060 /* LocalChatItems.swift in Sources */,
+				CDAA8EC8C97C2D486F68F3CB /* AccessibilityAccess.swift in Sources */,
 				B4106200B15BF38D52AAB6FF /* ActivationController.swift in Sources */,
 				CE953B357DC9D951EC305505 /* DesktopBackend.swift in Sources */,
 				CDCB0C2BF139B7E7BDDA6ECC /* DesktopController.swift in Sources */,
+				C8807B7E3CEC9A74C3CB112F /* PointerFocus.swift in Sources */,
 				C657553DE1E297078BE36EC6 /* WindowGeometry.swift in Sources */,
 				BE78F1B04E965C35941847F0 /* ImpactGestureCoordinator.swift in Sources */,
 				BF7D254CAD92DCAEDF635382 /* MiddleClickController.swift in Sources */,
@@ -1915,9 +1925,11 @@
 				CCB28FB0FD7BF582E8AC0E77 /* CodingAgentItems.swift in Sources */,
 				C5CFC6B49A73525A9CA76612 /* FileItems.swift in Sources */,
 				C638319199987BA934F63959 /* LocalChatItems.swift in Sources */,
+				C2FCAC288254D43EFAE82867 /* AccessibilityAccess.swift in Sources */,
 				C8F8B04188282A23D4DE331F /* ActivationController.swift in Sources */,
 				CB6CE15EC58E9432F6579419 /* DesktopBackend.swift in Sources */,
 				CC17E4ABE781B8EF55225D1C /* DesktopController.swift in Sources */,
+				C9AB6BAA101BB811ECD3C9C1 /* PointerFocus.swift in Sources */,
 				C6F57B0DFFF9A2C6D38B5ECA /* WindowGeometry.swift in Sources */,
 				C9A3C7468CA32F3A60BA9393 /* ImpactGestureCoordinator.swift in Sources */,
 				C32F4E115048E7686AD44D51 /* MiddleClickController.swift in Sources */,

@@ -9,12 +9,18 @@ import Combine
     @Published private(set) var status = "Refresh to list apps and windows."
     @Published private(set) var snapStatus = "Edge snapping is off."
     @Published private(set) var canUndo = false
+    @Published private(set) var focusStatus = "Pointer focus is off."
+    @Published var focusFollowsPointer: Bool {
+        didSet { defaults.set(focusFollowsPointer, forKey: "desktop.focusFollowsPointer"); configureMonitor() }
+    }
     @Published var edgeSnapping: Bool {
         didSet { defaults.set(edgeSnapping, forKey: "desktop.edgeSnapping"); configureMonitor() }
     }
     private struct UndoEntry { let id: UUID; let before: CGRect; let after: CGRect }
     private let backend: any DesktopManaging
     private let monitor: any DesktopDragMonitoring
+    private let pointer: any PointerFocusMonitoring
+    private let dwell: any PointerDwellScheduling
     private let defaults: UserDefaults
     private let trusted: () -> Bool
     private let requestAccess: () -> Void
@@ -27,13 +33,19 @@ import Combine
     private var locked = false
     private var sessionActive = true
     private var generation = 0
+    private var focusTicket = 0
+    private var focusMonitoring = false
+    private var snapMonitoring = false
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     init(defaults: UserDefaults = .standard, backend: (any DesktopManaging)? = nil, monitor: (any DesktopDragMonitoring)? = nil,
+         pointer: (any PointerFocusMonitoring)? = nil, dwell: (any PointerDwellScheduling)? = nil,
          trusted: @escaping () -> Bool = AXIsProcessTrusted,
-         requestAccess: @escaping () -> Void = { _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary) }) {
+         requestAccess: @escaping () -> Void = { AccessibilityAccess.request() }) {
         self.defaults = defaults; self.backend = backend ?? NativeDesktopBackend(); self.monitor = monitor ?? NativeDesktopDragMonitor()
+        self.pointer = pointer ?? NativePointerFocusMonitor(); self.dwell = dwell ?? NativePointerDwellScheduler()
         self.trusted = trusted; self.requestAccess = requestAccess
         edgeSnapping = defaults.bool(forKey: "desktop.edgeSnapping")
+        focusFollowsPointer = defaults.bool(forKey: "desktop.focusFollowsPointer")
     }
     private var available: Bool { started && !asleep && !locked && sessionActive }
     private func permitted() -> Bool {
@@ -44,7 +56,10 @@ import Combine
         }
         return true
     }
-    func allowAccess() { requestAccess(); configureMonitor() }
+    func allowAccess() {
+        requestAccess(); configureMonitor()
+        status = trusted() ? "Accessibility is allowed. Refresh the list to choose a window." : "Enable this copy of Sieghart in macOS Privacy & Security, then return and refresh."
+    }
     func refresh() {
         guard permitted() else { return }
         let snapshot = backend.discover()
@@ -126,14 +141,16 @@ import Combine
     func setLocked(_ value: Bool) { locked = value; configureMonitor() }
     func setSessionActive(_ value: Bool) { sessionActive = value; configureMonitor() }
     func retrySnapping() { configureMonitor() }
+    func retryPointerFocus() { configureMonitor() }
     private func configureMonitor() {
-        generation += 1; monitor.stop(); drag = nil; dragOrigin = nil; pointerDragged = false
+        generation += 1; snapMonitoring = false; monitor.stop(); drag = nil; dragOrigin = nil; pointerDragged = false
+        focusMonitoring = false; pointer.stop(); cancelFocusWait(); configurePointerFocus()
         guard started, edgeSnapping else { snapStatus = "Edge snapping is off."; return }
         guard available else { snapStatus = "Edge snapping is paused."; return }
         guard trusted() else { snapStatus = "Allow Accessibility, then retry edge snapping."; return }
         let current = generation
         let installed = monitor.start { [weak self] phase, point in
-            guard let self, self.generation == current, self.available, self.edgeSnapping else { return }
+            guard let self, self.generation == current, self.snapMonitoring, self.available, self.edgeSnapping else { return }
             guard self.trusted() else { self.configureMonitor(); return }
             switch phase {
             case .down:
@@ -151,8 +168,43 @@ import Combine
                 self.apply(layout, to: moved, on: screen)
             }
         }
-        if !installed { generation += 1; monitor.stop() }
+        snapMonitoring = installed
+        if !installed { monitor.stop() }
         snapStatus = installed ? "Drag a window to an edge or corner, then release. Top edge fills the usable screen." : "Edge snapping unavailable. Check Accessibility and retry."
+    }
+    private func cancelFocusWait() { focusTicket += 1; dwell.cancel() }
+    private func configurePointerFocus() {
+        guard started, focusFollowsPointer else { focusStatus = "Pointer focus is off."; return }
+        guard available else { focusStatus = "Pointer focus is paused."; return }
+        guard trusted() else { focusStatus = "Allow Accessibility, then retry pointer focus."; return }
+        let current = generation
+        let installed = pointer.start { [weak self] event in
+            guard let self, self.generation == current, self.focusMonitoring, self.available, self.focusFollowsPointer else { return }
+            self.cancelFocusWait()
+            guard self.trusted() else { self.configureMonitor(); return }
+            guard case .moved(let point) = event, point.x.isFinite, point.y.isFinite, !self.pointer.buttonsPressed else { return }
+            let ticket = self.focusTicket
+            self.dwell.schedule { [weak self] in self?.focus(at: point, generation: current, ticket: ticket) }
+        }
+        if !installed { pointer.stop(); cancelFocusWait() }
+        focusMonitoring = installed
+        focusStatus = installed ? "Rest the pointer on another window for 0.3 seconds to bring it forward. Works with a mouse or trackpad." : "Pointer focus unavailable. Check Accessibility and retry."
+    }
+    private func focus(at point: CGPoint, generation current: Int, ticket: Int) {
+        guard generation == current, focusMonitoring, focusTicket == ticket,
+              available, focusFollowsPointer else { return }
+        guard trusted() else { configureMonitor(); return }
+        guard !pointer.buttonsPressed,
+              let location = pointer.location(), hypot(location.x - point.x, location.y - point.y) <= 2,
+              let window = backend.window(at: location), window.frame.contains(location),
+              let refreshed = backend.window(window.id), refreshed.app.id == window.app.id,
+              refreshed.frame.contains(location) else { return }
+        guard let latestPoint = pointer.location(), hypot(latestPoint.x - point.x, latestPoint.y - point.y) <= 2,
+              trusted(), !pointer.buttonsPressed else { return }
+        if backend.isFocused(window: window.id) { return }
+        guard let finalPoint = pointer.location(), hypot(finalPoint.x - point.x, finalPoint.y - point.y) <= 2,
+              !pointer.buttonsPressed, trusted(), backend.window(at: finalPoint)?.id == window.id else { return }
+        focusStatus = backend.activate(window: window.id) ? "Focus requested for \(window.app.name)." : "Could not focus this window. Move the pointer away and try again."
     }
     func stop() {
         started = false; configureMonitor()

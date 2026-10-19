@@ -481,14 +481,17 @@ private struct ScrollInputSettings: View {
                 }
             }
             if controller.options.enabled {
-                PreferenceRow("Include smooth scrolling", detail: "Also affect trackpads and mice with smooth scrolling.") {
-                    Toggle("Include smooth scrolling", isOn: $controller.options.affectsContinuous).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+                PreferenceRow("Include trackpad and smooth-scroll mice", detail: "Turn this on to apply inversion and horizontal scrolling to your MacBook trackpad or a smooth-scroll mouse.") {
+                    Toggle("Include trackpad and smooth-scroll mice", isOn: $controller.options.affectsContinuous).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
                 }
                 Text(controller.status).font(.caption).foregroundStyle(CompanionStyle.muted)
+                if let hint = controller.inputHint { Text(hint).font(.caption).foregroundStyle(CompanionStyle.accentInk) }
                 HStack {
-                    Button("Allow Accessibility") { controller.allowAccess() }.buttonStyle(CompanionButtonStyle(compact: true))
+                    Button("Open Accessibility settings") { controller.allowAccess() }.buttonStyle(CompanionButtonStyle(compact: true))
                     Button("Retry") { controller.configure() }.buttonStyle(CompanionButtonStyle(compact: true))
                 }
+                Button("Locate this copy of Sieghart") { AccessibilityAccess.revealRunningApp() }.font(.caption)
+                Text("Enable this copy of Sieghart in macOS Privacy & Security, then return and click Retry.").font(.caption).foregroundStyle(CompanionStyle.muted)
             }
         }
     }

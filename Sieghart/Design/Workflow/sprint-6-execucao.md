@@ -34,12 +34,13 @@ Evidências duráveis resumidas: [Fast revisado](../Validation/sprint-6-part1/fa
 | --- | --- |
 | 1: `scrollInverter`, `scrollHorizontal` | Implementação e revisão de integração nesta parte; aceite Mac pendente |
 | Entrada — `smoothScroll`, `linearScroll`, `mouseAcceleration` | Planejados; definir pipeline de suavização/linearidade e limites de configuração sem alterar preferências globais sem restauração |
-| Entrada — `focusFollowsMouse`, `mouseNavigation`, `mouseButtonShortcuts` | Planejados; definir foco, navegação e conflitos de botões |
+| 3: `focusFollowsMouse` | Implementado, desligado por padrão; aceite Mac pendente |
+| Entrada — `mouseNavigation`, `mouseButtonShortcuts` | Planejados; definir navegação e conflitos de botões |
 | Entrada — `mouseClickDebounce`, `keyboardDebounce`, `textSnippets`, `superKey`, `quitWindowProtection` | Planejados; cada módulo exige escopo, permissões e aceite próprios |
 | 2: `switcher`, `windowLayout` | Implementados; Fast/build e aceite detalhados abaixo |
 | Windows/Dock — `dockPreview`, `dockClick`, `windowMaximizer`, `autoQuit`, `spacesOrder` | Cinco IDs planejados; não confundir ação de preencher a tela com interceptação do botão verde |
 
-Total após a parte 2: quatro IDs com implementação, dezesseis ainda planejados. `middleClick` já era entrega S4 e não é recontado como módulo novo de S6. Os demais lotes não foram iniciados.
+Total após a parte 3: cinco IDs com implementação, quinze ainda planejados. `middleClick` já era entrega S4 e não é recontado como módulo novo de S6. Os demais lotes não foram iniciados.
 
 
 ## Parte 2 — layouts, encaixe e seletor de apps/janelas
@@ -69,3 +70,28 @@ Sono, lock e sessão inativa são gates independentes. Disable, stop e suspensã
 Aceite físico pendente: Refresh e ativação em apps nativos/terceiros, app sem janelas, limites de tamanho e janelas que recusam AX; monitores Retina e secundários acima/à esquerda; Dock em lados diferentes; encaixe real por título, resize/clique sem encaixe, Spaces/full-screen; Undo após mover manualmente/fechar janela; revogação, lock/wake e encerramento; CPU e responsividade de apps lentos. A revisão independente de fechamento da Sprint 6 continua pendente, além do aceite físico. Este commit não declara a sprint inteira concluída.
 
 Evidências da parte 2: [Fast](../Validation/sprint-6-part2/verification.json), [contratos G20](../Validation/sprint-6-part2/contract-results.json), [manifesto](../Validation/sprint-6-part2/source-manifest.json) e [build do app](../Validation/sprint-6-part2/app-build.json). Logs e xcresult ficam nas pastas temporárias acima.
+
+
+## Parte 3 — foco por ponteiro e recuperação do teste manual
+
+19 de outubro de 2026, após `b6f4b94`, mesma branch `sprint-6`. A pedido do usuário, o aceite físico das partes anteriores foi deixado pendente e o próximo módulo avançou sem outros agentes. Esta parte acrescenta somente o ID `focusFollowsMouse`, usando também o trackpad; não exige mouse externo. Corrige explicações/recuperação das partes anteriores sem recontá-las como novos módulos.
+
+**Foco:** Workspace e menu → Windows incluem **Focus window under pointer**, desligado por padrão, com persistência em `desktop.focusFollowsPointer`. Após o ponteiro parar por 300 ms sobre uma janela externa elegível e visível, solicita ativação e AXRaise usando o backend existente. AppKit observa movimento e cancelamento por clique/scroll, global e localmente, sempre retornando o evento original; não lê teclas/texto nem publica eventos. O dwell é cancelável e não existe consulta periódica de janelas em repouso.
+
+Antes de ativar, revalida opção, geração/ticket, permissão, sessão/lock/sono, botões pressionados, posição atual do ponteiro e identidade/frame da janela. Um segundo hit-test antes da ativação evita usar o alvo antigo quando a janela sob o ponteiro mudou. Ignora o próprio app, full-screen/minimizadas e janela já focada. A seleção manual dos layouts permanece intacta. Clique, scroll, nova movimentação, disable, stop, revogação e suspensão invalidam trabalho pendente; callbacks de monitores falhos/antigos não têm efeito. Falha de instalação do encaixe não invalida foco por ponteiro; desligar foco não desliga encaixe.
+
+**Relato de teste:** o usuário informou que o pedido de Accessibility não apareceu e o scroll não funcionou mesmo após autorizar no macOS; confirmou estar usando trackpad do MacBook. O pipeline já excluía eventos contínuos por padrão, mas **Include smooth scrolling** não explicava esse caso de forma suficiente. A opção agora se chama **Include trackpad and smooth-scroll mice** e explica sua aplicação ao trackpad. Ao receber evento contínuo ignorado, o controller mostra um aviso sem mudar o comportamento/persistência de opt-in; o aviso só publica alterações de texto, não cada amostra. Isso é uma causa possível reproduzida em teste, não comprovação de causa física única ou de aceite concluído.
+
+O botão **Open Accessibility settings** usa uma ação compartilhada: pede consentimento se não autorizado e abre explicitamente o painel, pois o pedido assíncrono não garante novo alerta ou autorização imediata. **Locate this copy of Sieghart** revela o bundle da instância atual no Finder para distinguir cópias. A permissão continua sendo concedida pelo usuário. Nenhuma aprovação foi alterada, nenhuma entrada TCC foi apagada e nenhuma permissão real foi pedida durante a validação. A inspeção somente de leitura confirmou que o build Xcode em execução vinha do projeto esperado; isso não confirma confiança AX daquele processo.
+
+**Clareza da tela Windows:** janelas aparecem antes dos apps, com rótulos próprios, três passos curtos e nome do alvo selecionado acima dos layouts. Filtrar uma janela para fora da lista limpa sua seleção. O menu usa área rolável de altura limitada para acomodar os controles. O [roteiro manual](sprint-6-teste-manual.md) usa duas janelas concretas do Finder e distingue selecionar, Show e Open.
+
+### Validação da parte 3
+
+- Infraestrutura Python: 3 testes do gerador e 4 do índice aprovados. Projeto com 133 fontes no app, 131 de produção e 77 de testes/support no target de testes.
+- Contratos novos G19.12–G19.13 e G21.01–G21.07. A primeira tentativa teve somente erro de expressão opcional em teste novo; foi corrigida antes da execução. Focada `input|desktop`, `/private/tmp/sieghart-s6-part3-input-desktop-verified`: **33 funções / 46 invocações aprovadas**, sem fonte alterada ou casos divergentes.
+- Após a revisão da independência de falhas dos monitores, Fast final `/private/tmp/sieghart-s6-part3-fast-final`: **204/204 funções e 896/896 invocações aprovadas**, 131/131 fontes, nenhum caso ausente/inesperado, nenhuma fonte alterada. Complete descobriu 268 funções; não foi executado integralmente nesta parte.
+- Build do aplicativo: **BUILD SUCCEEDED**, Debug arm64, sem assinatura, sem abrir/reiniciar o Sieg ou interferir no app usado pelo usuário. Hashes das fontes coincidem com o Fast final. Os testes usam monitores, scheduler, janelas e efeitos de permissão injetados; não instalam monitores reais nem ativam apps/janelas.
+- Aceite físico de scroll/permissões/layout/encaixe e novo foco continua pendente. Foco exige avaliação real de responsividade, CPU, sobreposição de janelas, troca de apps, segundo monitor, uso de cliques/scroll e lock/sono. A revisão independente de fechamento da Sprint 6 permanece pendente. Quinze IDs da sprint ainda estão planejados.
+
+Evidências: [Fast](../Validation/sprint-6-part3/verification.json), [contratos novos](../Validation/sprint-6-part3/contract-results.json), [fontes](../Validation/sprint-6-part3/source-manifest.json), [build](../Validation/sprint-6-part3/app-build.json). Logs/xcresult ficam nas pastas temporárias da execução. Sem push solicitado para esta parte.

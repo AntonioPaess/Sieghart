@@ -26,6 +26,7 @@ struct DesktopSnapshot {
     func setFrame(_ frame: CGRect, of id: UUID) -> WindowWriteResult
     func activate(app: DesktopApp) -> Bool
     func activate(window: UUID) -> Bool
+    func isFocused(window: UUID) -> Bool
 }
 
 @MainActor final class NativeDesktopBackend: DesktopManaging {
@@ -150,6 +151,14 @@ struct DesktopSnapshot {
     func activate(window id: UUID) -> Bool {
         guard AXIsProcessTrusted(), let entry = entries[id], summary(entry, id: id) != nil, activate(app: entry.app) else { return false }
         return AXUIElementPerformAction(entry.element, kAXRaiseAction as CFString) == .success
+    }
+    func isFocused(window id: UUID) -> Bool {
+        guard AXIsProcessTrusted(), let entry = entries[id], running(entry.app) != nil,
+              NSWorkspace.shared.frontmostApplication?.processIdentifier == entry.app.pid else { return false }
+        let application = AXUIElementCreateApplication(entry.app.pid)
+        AXUIElementSetMessagingTimeout(application, 0.08)
+        guard let focused = element(value(application, kAXFocusedWindowAttribute)) else { return false }
+        return CFEqual(focused, entry.element)
     }
 }
 

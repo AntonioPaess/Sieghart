@@ -577,6 +577,18 @@
                 ]
               },
               {
+                "name": "PointerFocusContracts",
+                "testFunctions": [
+                  "cancelMovement()",
+                  "consent()",
+                  "dwellAndSelection()",
+                  "failedMonitor()",
+                  "lifecycle()",
+                  "revoked()",
+                  "staleTarget()"
+                ]
+              },
+              {
                 "name": "PreferenceTests",
                 "testFunctions": [
                   "appearance()",
@@ -591,8 +603,10 @@
                   "failedStart()",
                   "lateConflict()",
                   "nativeFields()",
+                  "permissionRecovery()",
                   "stale()",
-                  "suspension()"
+                  "suspension()",
+                  "trackpadHint()"
                 ]
               },
               {

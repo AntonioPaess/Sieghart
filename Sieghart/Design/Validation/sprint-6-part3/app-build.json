@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-19",
+  "scheme": "Sieghart",
+  "project": "Sieghart/Sieghart.xcodeproj",
+  "configuration": "Debug",
+  "result": "BUILD SUCCEEDED",
+  "codeSigningAllowed": false,
+  "architectures": [
+    "arm64"
+  ],
+  "binarySHA256": "7894e6283e6695646cc92878fd9182e88461d30508a82a409ab46d60a841bc72",
+  "log": "/private/tmp/sieghart-s6-part3-app-build.log",
+  "appLaunched": false,
+  "sourceManifest": "source-manifest.json",
+  "sourceChangedSinceFast": []
+}

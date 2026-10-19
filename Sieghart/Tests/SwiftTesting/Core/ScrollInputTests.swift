@@ -68,6 +68,35 @@ extension LogicTests {
 }
 extension MacContractsTests {
     @Suite(.tags(.input, .isolated)) @MainActor struct ScrollLifecycleTests {
+        @Test("G19.12 ignored continuous input explains trackpad inclusion and enabling it applies the transform")
+        func trackpadHint() throws {
+            let store = try TestDefaults(); defer { store.cleanup() }
+            let backend = ScrollBackendFixture()
+            let model = ScrollInputController(defaults: store.value, backend: backend, trusted: { true })
+            model.options.inverted = true; model.start(observeSystem: false)
+            let continuous = ScrollSample(points: .init(y: 20), continuous: true)
+            #expect(backend.transform?(continuous) == continuous)
+            #expect(model.inputHint?.contains("trackpad") == true)
+            model.options.affectsContinuous = true
+            let transformed = backend.transform?(continuous)
+            #expect(model.inputHint == nil && transformed?.points.y == -20)
+            model.options.affectsContinuous = false
+            _ = backend.transform?(continuous)
+            let wheel = ScrollSample(lines: .init(y: 2))
+            let wheelOutput = backend.transform?(wheel)
+            #expect(wheelOutput?.lines.y == -2 && model.inputHint == nil)
+            model.stop(); #expect(model.inputHint == nil)
+        }
+        @Test("G19.13 explicit permission action opens settings even without a new system prompt")
+        func permissionRecovery() {
+            var prompts = 0, urls: [URL] = []
+            #expect(AccessibilityAccess.request(trusted: { false }, prompt: { prompts += 1 }, open: { urls.append($0); return true }))
+            #expect(prompts == 1 && urls == [AccessibilityAccess.settingsURL])
+            #expect(AccessibilityAccess.request(trusted: { true }, prompt: { prompts += 1 }, open: { urls.append($0); return true }))
+            #expect(prompts == 1 && urls.count == 2)
+            #expect(!AccessibilityAccess.request(trusted: { false }, prompt: { prompts += 1 }, open: { _ in false }))
+            #expect(prompts == 2)
+        }
         @Test("G19.11 native event bridge preserves phase, momentum and fixed-point precision without installing a tap")
         func nativeFields() throws {
             let event = try #require(CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2, wheel1: 8, wheel2: 3, wheel3: 0))

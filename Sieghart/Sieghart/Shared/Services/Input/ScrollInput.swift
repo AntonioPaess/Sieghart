@@ -129,6 +129,7 @@ enum ScrollTransform {
 @MainActor final class ScrollInputController: ObservableObject {
     @Published var options: ScrollOptions { didSet { persist(); if started { configure() } } }
     @Published private(set) var status = "Scroll utilities are off"
+    @Published private(set) var inputHint: String?
     var shortcutChords: () -> [ShortcutChord] = { [] }
     private let defaults: UserDefaults
     private let backend: any ScrollInputBackend
@@ -143,7 +144,7 @@ enum ScrollTransform {
     private var health: Task<Void, Never>?
     init(defaults: UserDefaults = .standard, backend: (any ScrollInputBackend)? = nil,
          trusted: @escaping () -> Bool = AXIsProcessTrusted,
-         requestAccess: @escaping () -> Void = { _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary) }) {
+         requestAccess: @escaping () -> Void = { AccessibilityAccess.request() }) {
         self.defaults = defaults; self.backend = backend ?? NativeScrollInputBackend()
         self.trusted = trusted; self.requestAccess = requestAccess
         options = ScrollOptions(inverted: defaults.bool(forKey: "input.scroll.inverted"),
@@ -187,7 +188,7 @@ enum ScrollTransform {
     func allowAccess() { requestAccess(); if started { configure() } }
     var hasConflict: Bool { options.horizontal && options.modifier.conflicts(with: shortcutChords()) }
     func configure() {
-        generation += 1; backend.stop(); health?.cancel(); health = nil
+        generation += 1; backend.stop(); health?.cancel(); health = nil; inputHint = nil
         guard started, options.enabled else { status = "Scroll utilities are off"; return }
         guard !asleep, !locked, sessionActive else { status = "Scroll paused while the Mac sleeps or is locked"; return }
         guard trusted() else { status = "Allow Accessibility, then retry"; return }
@@ -197,6 +198,9 @@ enum ScrollTransform {
             try backend.start(transform: { [weak self] input in
                 guard let self, self.started, self.generation == current else { return input }
                 guard self.trusted(), !self.hasConflict else { self.configure(); return input }
+                let hint: String? = input.continuous && !self.options.affectsContinuous ?
+                    "This input is unchanged. Turn on Include trackpad and smooth-scroll mice to apply your scroll options." : nil
+                if self.inputHint != hint { self.inputHint = hint }
                 return ScrollTransform.apply(input, options: self.options)
             }, interrupted: { [weak self] in
                 guard let self, self.started, self.generation == current else { return }
@@ -215,6 +219,6 @@ enum ScrollTransform {
     func stop() {
         started = false; generation += 1; health?.cancel(); health = nil; backend.stop()
         for (center, token) in observers { center.removeObserver(token) }; observers = []
-        status = "Scroll utilities are off"
+        status = "Scroll utilities are off"; inputHint = nil
     }
 }

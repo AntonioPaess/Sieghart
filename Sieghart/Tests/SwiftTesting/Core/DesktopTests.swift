@@ -61,6 +61,7 @@ extension LogicTests {
     var writes: [(UUID, CGRect)] = []
     var activations: [String] = []
     var discoveries = 0
+    var focusedID: UUID?
     var limited = false
     var failWrite = false
     var actualOverride: CGRect?
@@ -78,6 +79,7 @@ extension LogicTests {
     }
     func activate(app: DesktopApp) -> Bool { activations.append(app.id); return app == self.app }
     func activate(window: UUID) -> Bool { activations.append(window.uuidString); return records.contains { $0.id == window } }
+    func isFocused(window: UUID) -> Bool { focusedID == window }
 }
 @MainActor private final class DesktopMonitorFixture: DesktopDragMonitoring {
     var callbacks: [@MainActor (DesktopPointerPhase, CGPoint) -> Void] = []
@@ -88,6 +90,135 @@ extension LogicTests {
         starts += 1; callbacks.append(receive); self.receive = receive; return !fail
     }
     func stop() { receive = nil }
+}
+@MainActor private final class PointerFocusFixture: PointerFocusMonitoring {
+    var callbacks: [@MainActor (PointerFocusEvent) -> Void] = []
+    var receive: (@MainActor (PointerFocusEvent) -> Void)?
+    var current: CGPoint? = CGPoint(x: 150, y: 150)
+    var buttonsPressed = false
+    var starts = 0
+    var fail = false
+    func start(_ receive: @escaping @MainActor (PointerFocusEvent) -> Void) -> Bool {
+        starts += 1; callbacks.append(receive); self.receive = receive; return !fail
+    }
+    func stop() { receive = nil }
+    func location() -> CGPoint? { current }
+    func move(_ point: CGPoint = CGPoint(x: 150, y: 150)) { current = point; receive?(.moved(point)) }
+}
+@MainActor private final class PointerDwellFixture: PointerDwellScheduling {
+    var pending: (@MainActor () -> Void)?
+    var history: [@MainActor () -> Void] = []
+    func schedule(_ perform: @escaping @MainActor () -> Void) { pending = perform; history.append(perform) }
+    func cancel() { pending = nil }
+    func fire() { let action = pending; pending = nil; action?() }
+}
+
+extension MacContractsTests {
+    @Suite(.tags(.desktop, .isolated)) @MainActor struct PointerFocusContracts {
+        @Test("G21.01 focus is off by default and never monitors before opt-in and permission")
+        func consent() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture(), drag = DesktopMonitorFixture()
+            var trust = false, requests = 0
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: drag, pointer: pointer, dwell: dwell,
+                                          trusted: { trust }, requestAccess: { requests += 1 })
+            model.start(observeSystem: false)
+            #expect(!model.focusFollowsPointer && pointer.starts == 0 && backend.discoveries == 0)
+            model.focusFollowsPointer = true
+            #expect(pointer.starts == 0 && requests == 0)
+            model.allowAccess(); #expect(requests == 1 && pointer.starts == 0)
+            trust = true; model.retryPointerFocus()
+            #expect(pointer.starts == 1 && drag.starts == 0)
+            let restored = DesktopController(defaults: defaults.value, backend: backend, monitor: drag, pointer: PointerFocusFixture(), dwell: PointerDwellFixture(), trusted: { true })
+            #expect(restored.focusFollowsPointer)
+            model.stop(); #expect(pointer.receive == nil && dwell.pending == nil)
+        }
+        @Test("G21.02 dwell requests the pointed window once and leaves the manual layout selection unchanged")
+        func dwellAndSelection() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture()
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: DesktopMonitorFixture(), pointer: pointer, dwell: dwell, trusted: { true })
+            model.start(observeSystem: false); model.focusFollowsPointer = true
+            let selection = UUID(); model.selectedID = selection
+            pointer.move(); #expect(backend.activations.isEmpty)
+            dwell.fire(); #expect(backend.activations == [backend.records[0].id.uuidString] && model.selectedID == selection)
+            backend.focusedID = backend.records[0].id
+            pointer.move(); dwell.fire(); #expect(backend.activations.count == 1)
+            model.stop()
+        }
+        @Test("G21.03 movement and interaction invalidate old dwell work; held buttons never focus")
+        func cancelMovement() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture()
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: DesktopMonitorFixture(), pointer: pointer, dwell: dwell, trusted: { true })
+            model.start(observeSystem: false); model.focusFollowsPointer = true
+            pointer.move(); let old = try #require(dwell.pending)
+            pointer.move(CGPoint(x: 180, y: 180)); old(); #expect(backend.activations.isEmpty)
+            pointer.receive?(.cancel); dwell.fire(); #expect(backend.activations.isEmpty)
+            pointer.buttonsPressed = true; pointer.move(); #expect(dwell.pending == nil)
+            pointer.buttonsPressed = false; pointer.move(); pointer.buttonsPressed = true
+            dwell.fire(); #expect(backend.activations.isEmpty)
+            model.stop()
+        }
+        @Test("G21.04 final pointer position and current target are checked before activation")
+        func staleTarget() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture()
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: DesktopMonitorFixture(), pointer: pointer, dwell: dwell, trusted: { true })
+            model.start(observeSystem: false); model.focusFollowsPointer = true
+            pointer.move(); pointer.current = CGPoint(x: 900, y: 800); dwell.fire()
+            #expect(backend.activations.isEmpty, "Moving into this app or another area without a global event cannot activate the old target")
+            pointer.move(); backend.hitID = nil; dwell.fire(); #expect(backend.activations.isEmpty)
+            backend.hitID = backend.records[0].id
+            pointer.move(); backend.records = []; dwell.fire(); #expect(backend.activations.isEmpty)
+            model.stop()
+        }
+        @Test("G21.05 lock, sleep and inactive session each cancel focus and cannot be undone by another gate")
+        func lifecycle() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture()
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: DesktopMonitorFixture(), pointer: pointer, dwell: dwell, trusted: { true })
+            model.start(observeSystem: false); model.focusFollowsPointer = true
+            pointer.move(); let old = try #require(dwell.pending), callback = try #require(pointer.receive)
+            model.setLocked(true); model.setSessionActive(false); model.setSessionActive(true)
+            #expect(pointer.receive == nil && dwell.pending == nil)
+            model.setSleeping(true); model.setLocked(false); #expect(pointer.receive == nil)
+            model.setSleeping(false); #expect(pointer.receive != nil)
+            callback(.moved(CGPoint(x: 150, y: 150))); old(); #expect(backend.activations.isEmpty && dwell.pending == nil)
+            pointer.move(); let newer = try #require(dwell.pending)
+            model.focusFollowsPointer = false; newer(); #expect(backend.activations.isEmpty && pointer.receive == nil)
+            model.stop()
+        }
+        @Test("G21.06 revoked permission and stop prevent pending activation and subsequent callbacks")
+        func revoked() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture(); var trust = true
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: DesktopMonitorFixture(), pointer: pointer, dwell: dwell, trusted: { trust })
+            model.start(observeSystem: false); model.focusFollowsPointer = true
+            pointer.move(); let callback = try #require(pointer.receive)
+            trust = false; dwell.fire(); #expect(backend.activations.isEmpty)
+            callback(.moved(CGPoint(x: 150, y: 150))); #expect(pointer.receive == nil)
+            trust = true; model.retryPointerFocus(); pointer.move(); let stopped = try #require(dwell.pending)
+            model.stop(); stopped(); callback(.moved(.zero)); #expect(backend.activations.isEmpty && dwell.pending == nil)
+        }
+        @Test("G21.07 failed monitor callback stays inert after retry and snap option stays independent")
+        func failedMonitor() throws {
+            let defaults = try TestDefaults(); defer { defaults.cleanup() }
+            let backend = DesktopBackendFixture(), pointer = PointerFocusFixture(), dwell = PointerDwellFixture(), drag = DesktopMonitorFixture()
+            pointer.fail = true
+            let model = DesktopController(defaults: defaults.value, backend: backend, monitor: drag, pointer: pointer, dwell: dwell, trusted: { true })
+            model.start(observeSystem: false); model.focusFollowsPointer = true
+            let failed = try #require(pointer.callbacks.first)
+            failed(.moved(CGPoint(x: 150, y: 150))); #expect(dwell.pending == nil && model.focusStatus.contains("unavailable"))
+            pointer.fail = false; model.retryPointerFocus(); failed(.moved(.zero)); #expect(dwell.pending == nil)
+            drag.fail = true; model.edgeSnapping = true
+            pointer.move(); dwell.fire()
+            #expect(backend.activations.count == 1 && model.snapStatus.contains("unavailable"), "A failed snap monitor must not invalidate pointer focus")
+            drag.fail = false; model.retrySnapping(); model.focusFollowsPointer = false
+            #expect(pointer.receive == nil && drag.receive != nil)
+            model.stop()
+        }
+    }
 }
 
 extension MacContractsTests {

@@ -198,7 +198,7 @@ The user reported all checks passed. The original checklist is retained below; t
 | S4 | Complete and accepted October 8 on the final user report after `f77ac65`. Extended hardware capabilities stay separate backlog. |
 | S5 | Local implementation delivered: calendar/reminders, downloads, shelf, file helpers/optional Finder shortcuts, capture and actual companion task events. Physical Mac acceptance pending. [Delivery and tests](Sieghart/Design/sprint-5-closeout.md). |
 | Before S6 | Swift Testing migration implemented, executed and independently approved on 2026-10-18; [results and scope](Sieghart/Design/Workflow/pre-sprint-6-execucao.md). Physical acceptance remains separate. |
-| S6 | In progress: parts 1–2 implement scroll inversion, modifier horizontal scrolling, app/window switcher, layouts and opt-in edge snapping; Mac acceptance pending. Sixteen modules remain planned. [Per-part execution](Sieghart/Design/Workflow/sprint-6-execucao.md). |
+| S6 | In progress: parts 1–3 implement scroll inversion, modifier horizontal scrolling, app/window switcher, layouts, opt-in edge snapping and pointer focus; Mac acceptance pending. Fifteen modules remain planned. [Per-part execution](Sieghart/Design/Workflow/sprint-6-execucao.md). |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
 
 ## Parallel Challenge experience track
@@ -276,7 +276,7 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | --- | --- | --- | --- |
 | `scrollInverter` | Invert mouse scrolling | Implemented — opt-in, both axes, continuous events preserved by default; Mac acceptance pending | S6 part 1 |
 | `scrollHorizontal` | Modifier horizontal scroll | Implemented — configurable modifier, combination with inversion, dynamic shortcut conflicts; Mac acceptance pending | S6 part 1 |
-| `focusFollowsMouse` | Focus follows pointer | Planned | S6 |
+| `focusFollowsMouse` | Focus follows pointer | Implemented — opt-in, 300 ms dwell, mouse or trackpad, permission/lifecycle guards; Mac acceptance pending | S6 part 3 |
 | `smoothScroll` | Smooth scrolling | Planned | S6 |
 | `linearScroll` | Linear scrolling | Planned | S6 |
 | `mouseAcceleration` | Mouse acceleration control | Planned | S6 |

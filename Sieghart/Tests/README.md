@@ -31,3 +31,5 @@ Para o lote de entrada: `bash Sieghart/Tests/run-checks.sh --filter '^input$'`. 
 Na Parte 1 da Sprint 6, a descoberta inclui 246 funções no Complete e 182 elegíveis no Fast. A validação focada `input` executou 11 funções / 17 invocações; isso não representa uma nova execução completa desses planos.
 
 Na Parte 2 da Sprint 6, `--filter '^desktop$'` seleciona os contratos G20.01–G20.13. Complete descobre 259 funções e Fast contém 195. O Fast revisado passou 195 funções / 887 invocações; a validação usa geometria pura e backends injetados, sem AX, monitor global ou ativação de apps reais. O aceite físico continua separado.
+
+Na Parte 3, os mesmos grupos cobrem a recuperação de permissões, feedback de eventos contínuos e foco por ponteiro. Complete descobre 268 funções e Fast executou 204 funções / 896 invocações. `input|desktop` focado passou 33 funções / 46 invocações. O scheduler de foco e seus monitores são substituídos por fixtures determinísticas; o clique de permissão é testado com efeitos injetados, sem abrir Ajustes reais. [Roteiro manual S6](../Design/Workflow/sprint-6-teste-manual.md).

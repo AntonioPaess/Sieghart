@@ -60,7 +60,7 @@ struct MenuBarView: View {
                             Button(activation.isVoiceBusy ? "Cancel voice" : "Speak a command") { activation.toggleListening() }.buttonStyle(CompanionButtonStyle(compact: true))
                         }
                     }.frame(maxWidth: .infinity, alignment: .topLeading)
-                case .desktop: DesktopToolsView(model: notch.desktop, compact: true)
+                case .desktop: ScrollView { DesktopToolsView(model: notch.desktop, compact: true) }.frame(height: 480)
                 case .calendar: CalendarView(model: notch.calendar, events: notch.events, compact: true)
                 case .files: FilesView(model: notch.files, compact: true)
                 case .capture: CaptureToolsView(model: notch.capture, compact: true)
