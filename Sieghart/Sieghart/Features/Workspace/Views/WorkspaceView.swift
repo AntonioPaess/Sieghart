@@ -203,6 +203,7 @@ struct ContentView: View {
 
     @ViewBuilder private var activationSettings: some View {
         heading("Bring Sieghart into view.", subtitle: "Choose the inputs that fit your day.")
+        ScrollInputSettings(controller: notch.scrollInput).companionCard()
         MiddleClickSettings(controller: notch.middleClick).companionCard()
         VStack(alignment: .leading, spacing: 18) {
             Label("Keyboard", systemImage: "keyboard").font(.headline)
@@ -454,6 +455,37 @@ struct MiddleClickSettings: View {
                     Button("Retry") { controller.configure() }.buttonStyle(CompanionButtonStyle(compact: true))
                 }
                 Text("Disable conflicting three-finger Look Up or Drag gestures in macOS settings. This optional gesture depends on trackpad support.").font(.caption2).foregroundStyle(CompanionStyle.muted)
+            }
+        }
+    }
+}
+
+
+private struct ScrollInputSettings: View {
+    @ObservedObject var controller: ScrollInputController
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Scrolling").font(.headline)
+            PreferenceRow("Invert scrolling", detail: "Reverse both scroll axes.") {
+                Toggle("Invert scrolling", isOn: $controller.options.inverted).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            PreferenceRow("Horizontal scrolling", detail: "Hold a modifier to redirect vertical scrolling sideways.") {
+                Toggle("Horizontal scrolling", isOn: $controller.options.horizontal).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            if controller.options.horizontal {
+                Picker("Scroll modifier", selection: $controller.options.modifier) {
+                    ForEach(ScrollModifier.allCases, id: \.self) { Text($0.rawValue.capitalized).tag($0) }
+                }
+            }
+            if controller.options.enabled {
+                PreferenceRow("Include smooth scrolling", detail: "Also affect trackpads and mice with smooth scrolling.") {
+                    Toggle("Include smooth scrolling", isOn: $controller.options.affectsContinuous).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+                }
+                Text(controller.status).font(.caption).foregroundStyle(CompanionStyle.muted)
+                HStack {
+                    Button("Allow Accessibility") { controller.allowAccess() }.buttonStyle(CompanionButtonStyle(compact: true))
+                    Button("Retry") { controller.configure() }.buttonStyle(CompanionButtonStyle(compact: true))
+                }
             }
         }
     }

@@ -21,6 +21,7 @@ import tempfile
 
 
 GROUP_TAGS = {
+    "input": "input",
     "timer": "timer",
     "callbacks": "callbacks",
     "voice-integration": "voiceIntegration",
@@ -522,7 +523,7 @@ def run(arguments: argparse.Namespace) -> dict:
             raise IndexError(f"Invalid group filter regex: {error}") from error
         matched_groups = {group for group in GROUP_TAGS if pattern.search(group)}
         if not matched_groups:
-            raise IndexError(f"Group filter matches none of the 18 legacy groups or new-codex-chat: {arguments.filter!r}")
+            raise IndexError(f"Group filter matches none of the registered groups: {arguments.filter!r}")
     only_identifier = None
     if arguments.only is not None:
         matches = [record["identifier"] for record in records if arguments.only in {record["identifier"], record["selector"]}]
@@ -585,7 +586,7 @@ def main() -> int:
     parser.add_argument("--enumeration", type=Path, required=True, help="Xcode -enumerate-tests JSON")
     parser.add_argument("--output", type=Path, required=True, help="Write complete metadata and the selected identifiers")
     parser.add_argument("--fast-plan", type=Path, help="Update only this copied .xctestplan with all eligible function leaves")
-    parser.add_argument("--filter", help="Regex over the 18 legacy group names plus new-codex-chat")
+    parser.add_argument("--filter", help="Regex over the registered group names")
     parser.add_argument("--plan", choices=("complete", "fast"), default="complete")
     parser.add_argument("--only", help="Exact runtime identifier, optionally omitting SieghartTests/")
     parser.add_argument("--selectors", type=Path, help="Write full selected identifiers, one per line")

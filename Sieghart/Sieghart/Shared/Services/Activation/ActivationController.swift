@@ -119,6 +119,10 @@ final class ActivationController: ObservableObject {
         if registersShortcuts || lifecycleNotifications != nil { observeShortcutLifecycle(workspace: lifecycleNotifications) }
     }
 
+    var scrollConflictChords: [ShortcutChord] {
+        [companionShortcut, voiceShortcut, clipboardShortcut].compactMap { $0 } + Array(audioShortcuts.values)
+    }
+
     // AppKit must finish launching before installing dispatcher hotkeys.
     func startGlobalShortcuts() {
         guard registersShortcuts, !shortcutsStarted else { return }

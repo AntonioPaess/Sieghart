@@ -42,6 +42,7 @@ final class NotchWidgetViewModel: ObservableObject {
     private var capturePreviousPage: NotchPresentation?
     private var captureHidesOverlay = false
     private var capturePendingReveal = false
+    let scrollInput: ScrollInputController
     let middleClick: MiddleClickController
     let audio: AudioViewModel
     let monitor: SystemMonitorViewModel
@@ -101,6 +102,7 @@ final class NotchWidgetViewModel: ObservableObject {
         self.assistant = assistant
         self.agentRoom = agentRoom ?? AgentRoomViewModel(services: [:], defaults: preferences.featureDefaults,
             localChat: managesWindows ? .production(defaults: preferences.featureDefaults) : .isolated())
+        self.scrollInput = ScrollInputController(defaults: preferences.featureDefaults)
         self.middleClick = MiddleClickController()
         self.audio = audio ?? AudioViewModel()
         self.monitor = monitor ?? SystemMonitorViewModel()
@@ -365,8 +367,8 @@ final class NotchWidgetViewModel: ObservableObject {
             try? await Task.sleep(for: .seconds(2)); guard !Task.isCancelled else { return }; self?.utilityMood = .idle
         }
     }
-    func startUtilities() { sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
-    func stopUtilities() { agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
+    func startUtilities() { if managesWindows { scrollInput.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; scrollInput.start() }; sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
+    func stopUtilities() { scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
     private func beginCaptureSelection() {
         finishWelcome()
         captureWasVisible = isVisible; capturePreviousPage = presentation; captureHidesOverlay = true; capturePendingReveal = false

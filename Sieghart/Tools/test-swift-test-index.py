@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
 
@@ -21,6 +22,18 @@ class SelectionChecks(unittest.TestCase):
             "LogicTests/ExampleTests/second(_:)", "LogicTests/ExampleTests/first()",
         ]), {"suites": [{"name": "LogicTests", "suites": [{"name": "ExampleTests",
             "testFunctions": ["first()", "second(_:)"]}]}]})
+
+    def test_new_group_prevalidation_uses_the_index_registry(self):
+        self.assertEqual(index.GROUP_TAGS["input"], "input")
+        # An invalid filter must fail before creating output or invoking Xcode.
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder) / "must-not-exist"
+            result = subprocess.run([sys.executable, str(ROOT / "Tools/run-swift-tests.py"),
+                                     "--filter", "no-such-group", "--output", str(output)],
+                                    text=True, capture_output=True)
+            self.assertEqual(result.returncode, 2)
+            self.assertFalse(output.exists())
+            self.assertIn("matches no", result.stderr)
 
     def test_unknown_runtime_leaf_is_rejected(self):
         with self.assertRaisesRegex(index.IndexError, "Unknown enumerated test"):

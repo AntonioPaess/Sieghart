@@ -49,15 +49,14 @@ def main():
     parser.add_argument("--output", type=Path, help="New directory for logs, discovery, results and coverage")
     parser.add_argument("--derived-data", type=Path)
     args = parser.parse_args()
-    # Fail before any build for invalid/empty legacy filters.
+    # Fail before any build for invalid/empty group filters.
     if args.filter:
         import re
-        groups = ["timer", "callbacks", "voice-integration", "interactions", "companions", "usage",
-                  "spending", "activity", "pricing", "audio", "imports", "clipboard", "middle-click",
-                  "utilities", "calendar", "files-capture", "agent-room", "local-chat", "new-codex-chat"]
+        import runpy
+        groups = runpy.run_path(str(ROOT / "Tools/swift-test-index.py"))["GROUP_TAGS"]
         try:
             if not any(re.search(args.filter, name) for name in groups):
-                parser.error("The filter matches no legacy group; no tests were run.")
+                parser.error("The filter matches no registered group; no tests were run.")
         except re.error as error:
             parser.error(f"Invalid group filter: {error}")
     output = args.output.resolve() if args.output else Path(tempfile.mkdtemp(prefix="sieghart-tests-"))

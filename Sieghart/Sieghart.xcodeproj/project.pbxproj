@@ -338,6 +338,9 @@
 		C8D36CBC88DC2C3B1647662F /* AgentChatMotionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6659561D3A19A15DF9374FC /* AgentChatMotionTests.swift */; };
 		C2321160759CAFC8BE38E3E4 /* AgentFleetTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F468BA929C174B73C39CE2 /* AgentFleetTests.swift */; };
 		C71DCC8251451BF55C83272A /* AgentProtocolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C04F3DF20C11FB21484EA27A /* AgentProtocolTests.swift */; };
+		C43B6AFB5A6BBA1D84920DC3 /* ScrollInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */; };
+		CB2CD01C1008A76B2B993938 /* ScrollInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */; };
+		CCD76D6AA70AF3B4483DADD3 /* ScrollInputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20E0B6FB5EB2B560AE1D4BA /* ScrollInputTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -552,6 +555,8 @@
 		C6659561D3A19A15DF9374FC /* AgentChatMotionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentChatMotionTests.swift; sourceTree = "<group>"; };
 		C9F468BA929C174B73C39CE2 /* AgentFleetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentFleetTests.swift; sourceTree = "<group>"; };
 		C04F3DF20C11FB21484EA27A /* AgentProtocolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentProtocolTests.swift; sourceTree = "<group>"; };
+		CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollInput.swift; sourceTree = "<group>"; };
+		C20E0B6FB5EB2B560AE1D4BA /* ScrollInputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScrollInputTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1342,12 +1347,13 @@
 			sourceTree = "<group>";
 		};
 		BB8BE5213E7DE490726DD8A8 /* Input */ = {
+			path = Input;
 			isa = PBXGroup;
 			children = (
 				B3BA1D9FC10AF34062AEEF00 /* ImpactGestureCoordinator.swift */,
 				B705D5020102031A4F84F975 /* MiddleClickController.swift */,
+				CD5E847596EBC05A89C8A3CB /* ScrollInput.swift */,
 			);
-			path = Input;
 			sourceTree = "<group>";
 		};
 		B3618C2E1323682DFE6CDD67 /* Preferences */ = {
@@ -1439,6 +1445,7 @@
 				C61E9265EBA2A6DC741FBDAE /* PlaybackGateTests.swift */,
 				C7865AC399966697FF9E84E8 /* PriceCatalogParserTests.swift */,
 				CA266A775E5EC4E55994456B /* PriceCatalogTests.swift */,
+				C20E0B6FB5EB2B560AE1D4BA /* ScrollInputTests.swift */,
 				C2502634AAA62123DAC74165 /* SpeechAuthorizationTests.swift */,
 				CCA5A9B1F04881001B01F4EF /* SpeechPCMTests.swift */,
 				C065ABC22529479AFE08A5C2 /* SpendingModelTests.swift */,
@@ -1747,6 +1754,7 @@
 				B4106200B15BF38D52AAB6FF /* ActivationController.swift in Sources */,
 				BE78F1B04E965C35941847F0 /* ImpactGestureCoordinator.swift in Sources */,
 				BF7D254CAD92DCAEDF635382 /* MiddleClickController.swift in Sources */,
+				C43B6AFB5A6BBA1D84920DC3 /* ScrollInput.swift in Sources */,
 				B613ED7141CABBA26E731D53 /* CompanionPreferences.swift in Sources */,
 				B420C9E2B13BA4B91B7F05A7 /* CompanionEventCenter.swift in Sources */,
 			);
@@ -1878,6 +1886,7 @@
 				C8F8B04188282A23D4DE331F /* ActivationController.swift in Sources */,
 				C9A3C7468CA32F3A60BA9393 /* ImpactGestureCoordinator.swift in Sources */,
 				C32F4E115048E7686AD44D51 /* MiddleClickController.swift in Sources */,
+				CB2CD01C1008A76B2B993938 /* ScrollInput.swift in Sources */,
 				C121FB6B972C156C376AB0BC /* CompanionPreferences.swift in Sources */,
 				CC0C63D093F2ABE388F90CDA /* CompanionEventCenter.swift in Sources */,
 				C5CE05D51F5CCF5802B83864 /* AudioFixtures.swift in Sources */,
@@ -1931,6 +1940,7 @@
 				CF0F52363ACF385FFED413DA /* PlaybackGateTests.swift in Sources */,
 				CCDF077056AE4B64F09D62C5 /* PriceCatalogParserTests.swift in Sources */,
 				C31DBFC11BC687A539831E36 /* PriceCatalogTests.swift in Sources */,
+				CCD76D6AA70AF3B4483DADD3 /* ScrollInputTests.swift in Sources */,
 				C0F00BB505BC508A454EA29D /* SpeechAuthorizationTests.swift in Sources */,
 				C5C918FBD230F3A8F0154BD5 /* SpeechPCMTests.swift in Sources */,
 				C8B4FCA6BF32A948711BF290 /* SpendingModelTests.swift in Sources */,

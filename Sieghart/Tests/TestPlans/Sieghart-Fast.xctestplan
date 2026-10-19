@@ -226,6 +226,16 @@
                 ]
               },
               {
+                "name": "ScrollTransformTests",
+                "testFunctions": [
+                  "combined(_:)",
+                  "conflict(_:)",
+                  "continuous()",
+                  "inversion(_:)",
+                  "overflow()"
+                ]
+              },
+              {
                 "name": "ShortcutDeliveryTests",
                 "testFunctions": [
                   "delivery()"
@@ -549,6 +559,17 @@
                   "appearance()",
                   "oldAvatar(_:)",
                   "widgetWidths()"
+                ]
+              },
+              {
+                "name": "ScrollLifecycleTests",
+                "testFunctions": [
+                  "consent()",
+                  "failedStart()",
+                  "lateConflict()",
+                  "nativeFields()",
+                  "stale()",
+                  "suspension()"
                 ]
               },
               {
