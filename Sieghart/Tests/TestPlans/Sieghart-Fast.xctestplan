@@ -139,6 +139,12 @@
                 ]
               },
               {
+                "name": "DockSpacesLogicTests",
+                "testFunctions": [
+                  "previewAspectAndProtectedBundles()"
+                ]
+              },
+              {
                 "name": "ExchangeQuoteTests",
                 "testFunctions": [
                   "datedExchange()"
@@ -174,6 +180,16 @@
                 ]
               },
               {
+                "name": "InputGuardsRuleTests",
+                "testFunctions": [
+                  "clickDebounce()",
+                  "keyDebounce()",
+                  "quitProtection()",
+                  "snippetMatching()",
+                  "superKey(_:)"
+                ]
+              },
+              {
                 "name": "IslandGeometryTests",
                 "testFunctions": [
                   "compactHeight()",
@@ -202,6 +218,14 @@
                 ]
               },
               {
+                "name": "MouseButtonRules",
+                "testFunctions": [
+                  "menuMatch(_:)",
+                  "navigationScope()",
+                  "options()"
+                ]
+              },
+              {
                 "name": "PlaybackGateTests",
                 "testFunctions": [
                   "musicGate()"
@@ -223,6 +247,19 @@
                 "name": "QuietHoursTests",
                 "testFunctions": [
                   "overnight()"
+                ]
+              },
+              {
+                "name": "ScrollTransformTests",
+                "testFunctions": [
+                  "combined(_:)",
+                  "conflict(_:)",
+                  "continuous()",
+                  "inversion(_:)",
+                  "linearScrollCurve()",
+                  "overflow()",
+                  "pointerAccelerationBounds()",
+                  "smoothScrollCurve()"
                 ]
               },
               {
@@ -282,6 +319,15 @@
                   "longSpeech()",
                   "quietSpeechAndRecovery()",
                   "timeouts()"
+                ]
+              },
+              {
+                "name": "WindowGeometryTests",
+                "testFunctions": [
+                  "displays()",
+                  "edges()",
+                  "layouts(_:)",
+                  "movement()"
                 ]
               }
             ]
@@ -465,9 +511,32 @@
                 ]
               },
               {
+                "name": "DesktopContracts",
+                "testFunctions": [
+                  "activation()",
+                  "consent()",
+                  "drag()",
+                  "history()",
+                  "lifecycle()",
+                  "retry()",
+                  "selectedWindow()",
+                  "staleUndo()",
+                  "transaction()"
+                ]
+              },
+              {
                 "name": "DisplayPowerTests",
                 "testFunctions": [
                   "displayOwnership()"
+                ]
+              },
+              {
+                "name": "DockSpacesContracts",
+                "testFunctions": [
+                  "autoQuitLastWindow()",
+                  "dockPreviewAndClick()",
+                  "greenButtonMaximizeAndRestore()",
+                  "spacesOrderRestore()"
                 ]
               },
               {
@@ -476,6 +545,12 @@
                   "captureActionsAndCancellation()",
                   "companionEventDelivery()",
                   "plainPastePreservesClipboard()"
+                ]
+              },
+              {
+                "name": "InputGuardsContracts",
+                "testFunctions": [
+                  "lifecycleAndExpansion()"
                 ]
               },
               {
@@ -538,9 +613,37 @@
                 ]
               },
               {
+                "name": "MouseButtonContracts",
+                "testFunctions": [
+                  "clickPair()",
+                  "consent()",
+                  "disableWhileHeld()",
+                  "eventBridge()",
+                  "lifecycle()",
+                  "missedRelease()",
+                  "queue()",
+                  "recovery()",
+                  "revoked()",
+                  "targetChange()",
+                  "unsupported()"
+                ]
+              },
+              {
                 "name": "OnboardingPreferenceTests",
                 "testFunctions": [
                   "onboarding()"
+                ]
+              },
+              {
+                "name": "PointerFocusContracts",
+                "testFunctions": [
+                  "cancelMovement()",
+                  "consent()",
+                  "dwellAndSelection()",
+                  "failedMonitor()",
+                  "lifecycle()",
+                  "revoked()",
+                  "staleTarget()"
                 ]
               },
               {
@@ -549,6 +652,20 @@
                   "appearance()",
                   "oldAvatar(_:)",
                   "widgetWidths()"
+                ]
+              },
+              {
+                "name": "ScrollLifecycleTests",
+                "testFunctions": [
+                  "accelerationRestore()",
+                  "consent()",
+                  "failedStart()",
+                  "lateConflict()",
+                  "nativeFields()",
+                  "permissionRecovery()",
+                  "stale()",
+                  "suspension()",
+                  "trackpadHint()"
                 ]
               },
               {

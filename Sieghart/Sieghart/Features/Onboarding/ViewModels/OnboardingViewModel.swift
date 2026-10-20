@@ -18,6 +18,7 @@ final class OnboardingViewModel: ObservableObject {
         usage.automaticDetection = allowUsage
         codex.enabled = allowUsage && detected.contains(.codex)
         usage.claudeEnabled = allowUsage && detected.contains(.claude)
+        usage.antigravityEnabled = allowUsage && detected.contains(.antigravity)
         clipboard?.isEnabled = allowClipboard
         preferences.onboardingComplete = true
     }

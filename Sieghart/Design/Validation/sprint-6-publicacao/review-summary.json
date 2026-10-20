@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-19",
+  "baseline": "12ba043",
+  "pythonInfrastructureTests": 7,
+  "fastFunctions": 233,
+  "fastInvocations": 935,
+  "completeAIFunctions": 26,
+  "completeAIInvocations": 26,
+  "sourceChangesDuringRuns": [],
+  "physicalMacAcceptance": "pending",
+  "deferredReview": "../../Workflow/revisao-pos-sprint-6/README.md",
+  "knownWhitespaceOnlyWarnings": [
+    "DesktopToolsView.swift: extra final blank line",
+    "WorkspaceView.swift: extra final blank line"
+  ]
+}

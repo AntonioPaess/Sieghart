@@ -41,18 +41,22 @@ struct PriceCatalog: Codable, Sendable {
         // Only documented snapshot suffixes may inherit a base price. Internal
         // models (including auto-review) remain unpriced unless documented.
         let base = model.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "/").last.map(String.init)?.lowercased() ?? model.lowercased()
-        let normalized = provider == .claude ? base.replacingOccurrences(of: ".", with: "-") : base
+        let normalized = provider == .codex ? base : base.replacingOccurrences(of: ".", with: "-")
         let speed = tier?.lowercased()
         let requestedTier = speed == "priority" || speed == "fast" ? "fast" : ["flex", "batch", "ultrafast"].contains(speed ?? "") ? speed : nil
         let candidates = entries.filter { $0.provider == provider && $0.tier == requestedTier }
         if let exact = candidates.first(where: { $0.id == normalized }) { return exact }
+        let suffixPattern = provider == .antigravity
+            ? "^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8}|trial|medium|high|low|n)$"
+            : "^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})$"
         return candidates.sorted { $0.id.count > $1.id.count }.first { entry in
             guard normalized.hasPrefix(entry.id + "-") else { return false }
             let suffix = String(normalized.dropFirst(entry.id.count + 1))
-            return suffix.range(of: "^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})$", options: .regularExpression) != nil
+            return suffix.range(of: suffixPattern, options: .regularExpression) != nil
         }
     }
     static func parse(_ markdown: String, provider: AIProvider, checked: Date = .now) -> [ModelPrice] {
+        guard provider != .antigravity else { return [] }
         let day = checked.formatted(.iso8601.year().month().day().dateSeparator(.dash))
         var section: String?, headers: [String] = [], result: [ModelPrice] = []
         for line in markdown.components(separatedBy: .newlines) {
@@ -106,8 +110,15 @@ struct ExchangeQuote: Codable, Sendable {
 }
 
 enum PricingSource {
-    static func page(_ provider: AIProvider) -> URL { URL(string: provider == .codex ? "https://developers.openai.com/api/docs/pricing" : "https://platform.claude.com/docs/en/about-claude/pricing")! }
+    static func page(_ provider: AIProvider) -> URL {
+        switch provider {
+        case .codex: URL(string: "https://developers.openai.com/api/docs/pricing")!
+        case .claude: URL(string: "https://platform.claude.com/docs/en/about-claude/pricing")!
+        case .antigravity: URL(string: "https://ai.google.dev/gemini-api/docs/pricing")!
+        }
+    }
     static func fetch(_ provider: AIProvider) async throws -> [ModelPrice] {
+        guard provider != .antigravity else { throw CodexUsageError.invalidResponse }
         let data = try await download(URL(string: page(provider).absoluteString + ".md")!, limit: 1_000_000)
         guard let text = String(data: data, encoding: .utf8) else { throw CodexUsageError.invalidResponse }
         let prices = PriceCatalog.parse(text, provider: provider)

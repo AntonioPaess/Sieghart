@@ -75,30 +75,54 @@ struct AIUsageView: View {
                 ScrollView { AIUsageDetailsView() }.scrollIndicators(.hidden)
             }.padding(28).frame(width: 720, height: 580).background { WorkspaceBackdrop() }.preferredColorScheme(preferences.appearance.colorScheme).environment(\.surfaceGlassEnabled, preferences.windowGlass).environment(\.workspaceGlass, true)
         }
-        .onAppear { if let first = providers.first { provider = first } }
+        .onAppear {
+            if let first = providers.first { provider = first }
+            if usage.antigravityEnabled && usage.effectiveAntigravityReport == nil {
+                Task { await usage.refresh(codexEnabled: codex.enabled) }
+            }
+        }
         .onChange(of: providers) { _, choices in
             if !choices.contains(provider), let first = choices.first { provider = first }
             selectedHour = nil; selectedDay = nil
         }
-        .onChange(of: provider) { _, _ in selectedHour = nil; selectedDay = nil }
+        .onChange(of: provider) { _, next in
+            selectedHour = nil; selectedDay = nil
+            if next == .antigravity && usage.effectiveAntigravityReport == nil {
+                Task { await usage.refresh(codexEnabled: codex.enabled) }
+            }
+        }
     }
 
     @ViewBuilder private var limits: some View {
         if provider == .codex { CodexUsageView(compact: true, dashboard: true, cardHeight: summaryHeight) }
-        else {
-            VStack(alignment: .leading, spacing: dense ? 5 : 10) {
-                Label { Text("Claude").font(heading) } icon: { ProviderMark(provider: .claude, size: dense ? 18 : 28) }
-                if let report = usage.effectiveClaudeReport {
-                    TimelineView(.periodic(from: .now, by: 60)) { context in
-                        VStack(spacing: 8) {
-                            if let window = report.primary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
-                            if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
-                        }
+        else { localLimitsCard }
+    }
+
+    private var localLimitsCard: some View {
+        let report = provider == .claude ? usage.effectiveClaudeReport : usage.effectiveAntigravityReport
+        let title = provider == .claude ? "Claude" : "Antigravity"
+        return VStack(alignment: .leading, spacing: dense ? 5 : 10) {
+            HStack {
+                ProviderMark(provider: provider, size: dense ? 18 : 28)
+                Text(title).font(heading)
+                if let plan = report?.planType { Text(plan).font(.caption2.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk) }
+                Spacer()
+                Button { Task { await usage.refresh(codexEnabled: codex.enabled) } } label: {
+                    Image(systemName: "arrow.clockwise")
+                }.buttonStyle(.plain).focusEffectDisabled().disabled(usage.isRefreshing).accessibilityLabel("Refresh \(title) limits")
+            }
+            if let report {
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    VStack(alignment: .leading, spacing: dense ? 6 : 10) {
+                        if let window = report.primary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
+                        if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
                     }
-                    if !dense { Text(usage.claudeSource).font(.caption2).foregroundStyle(CompanionStyle.muted) }
-                } else { Text("Subscription limits unavailable").font(.callout).foregroundStyle(CompanionStyle.muted) }
-            }.companionCard(height: summaryHeight, padding: cardPadding)
-        }
+                }
+                if !dense && provider == .claude { Text(usage.claudeSource).font(.caption2).foregroundStyle(CompanionStyle.muted) }
+            } else {
+                Text(usage.isRefreshing ? "Reading your limits…" : "Subscription limits unavailable").font(.callout).foregroundStyle(CompanionStyle.muted)
+            }
+        }.companionCard(height: summaryHeight, padding: cardPadding)
     }
 
     private var spending: some View {
@@ -190,20 +214,25 @@ struct AIUsageView: View {
         }.companionCard(height: dense ? 144 : nil, padding: cardPadding)
     }
     private func ranking(_ title: String, symbol: String, key: KeyPath<AIUsagePoint, String>) -> some View {
-        let groups = Dictionary(grouping: points, by: { $0[keyPath: key] }).map { name, values in (name, values.reduce(Int64(0)) { $0 + $1.total }) }.sorted { $0.1 > $1.1 }
+        let isModels = title == "Models"
+        let grouped = Dictionary(grouping: points) { point -> String in
+            let raw = point[keyPath: key]
+            return isModels ? modelName(raw) : raw
+        }
+        let groups: [(String, Int64)] = grouped.map { name, values in (name, values.reduce(Int64(0)) { $0 + $1.total }) }.sorted { $0.1 > $1.1 }
         return VStack(alignment: .leading, spacing: dense ? 6 : 12) {
             Label(title, systemImage: symbol).font(heading)
             if groups.isEmpty { Text("No records for this period").font(detail).foregroundStyle(CompanionStyle.muted) }
             ForEach(Array(groups.prefix(3).enumerated()), id: \.offset) { _, item in
                 HStack(spacing: 8) {
-                    Text(title == "Models" ? modelName(item.0) : item.0).font(dense ? .system(size: 10.5, weight: .medium) : .callout.weight(.medium)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(item.0).font(dense ? .system(size: 10.5, weight: .medium) : .callout.weight(.medium)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
                     GeometryReader { geometry in Capsule().fill(title == "Models" ? CompanionStyle.accent : CompanionStyle.ink).frame(width: max(3, geometry.size.width * Double(item.1) / Double(max(1, groups.first?.1 ?? 1)))) }.frame(width: 64, height: 4)
                     Text(short(item.1)).font(detail).monospacedDigit().foregroundStyle(CompanionStyle.muted).fixedSize()
                 }.accessibilityElement(children: .combine)
                 .help("\(item.0): \(item.1.formatted()) tokens · \(period.rawValue)")
             }
         }.companionCard(height: rankingHeight, padding: cardPadding)
-            .help(title == "Models" && groups.contains(where: { $0.0 == "Unknown model" }) ? "Model not recorded: the source has no model metadata. These tokens remain in totals." : "\(title) · \(period.rawValue)")
+            .help(title == "Models" && points.contains(where: { $0.model == "Unknown model" }) ? "Model not recorded: the source has no model metadata. These tokens remain in totals." : "\(title) · \(period.rawValue)")
     }
     private var daily: [Date: Int64] {
         let calendar = Calendar.current
@@ -222,8 +251,10 @@ struct AIUsageView: View {
         let total = dates.reduce(Int64(0)) { $0 + (values[$1] ?? 0) }
         let active = dates.filter { (values[$0] ?? 0) > 0 }.count
         let source = provider == .codex && usage.accountActivity?.dailyUsageBuckets != nil ? "Codex account activity" : "Partial local history"
+        let accountStreak: Int64? = provider == .codex ? usage.accountActivity?.summary?.currentStreakDays : nil
+        let streak = accountStreak ?? localStreak(values, today: today, calendar: calendar)
         return VStack(alignment: .leading, spacing: dense ? 5 : 16) {
-            HStack { Label("Activity", systemImage: "square.grid.3x3.fill").font(heading); Spacer(); if provider == .codex, let streak = usage.accountActivity?.summary?.currentStreakDays { Label("\(streak)", systemImage: "flame.fill").font(detail.weight(.medium)).foregroundStyle(.orange) } }
+            HStack { Label("Activity", systemImage: "square.grid.3x3.fill").font(heading); Spacer(); if streak > 0 { Label("\(streak)", systemImage: "flame.fill").font(detail.weight(.medium)).foregroundStyle(.orange) } }
             HStack(alignment: .top, spacing: 22) {
                 HStack(spacing: dense ? 3 : 4) {
                     ForEach(0..<13) { week in
@@ -250,15 +281,36 @@ struct AIUsageView: View {
                 .font(detail).foregroundStyle(CompanionStyle.muted).frame(height: dense ? 12 : 18, alignment: .leading)
             if !dense, provider == .codex, let updated = usage.accountUpdatedAt {
                 Text("\(usage.accountRefreshFailed ? "Last account reading" : "Account updated") \(updated.formatted(date: .abbreviated, time: .shortened))").font(.caption2).foregroundStyle(usage.accountRefreshFailed ? .orange : CompanionStyle.muted)
+            } else if !dense, provider != .codex, let updated = usage.activityUpdatedAt ?? usage.updatedAt {
+                Text("Activity updated \(updated.formatted(date: .abbreviated, time: .shortened))").font(.caption2).foregroundStyle(CompanionStyle.muted)
             }
             if let date = dates.max(by: { (values[$0] ?? 0) < (values[$1] ?? 0) }), peak > 0 {
                 HStack { Text("Most intense day"); Spacer(); Text("\(date.formatted(date: .abbreviated, time: .omitted)) · \(short(peak))") }.font(detail).foregroundStyle(CompanionStyle.muted)
             }
         }.companionCard(height: dense ? 144 : nil, padding: cardPadding)
     }
+    private func localStreak(_ values: [Date: Int64], today: Date, calendar: Calendar) -> Int64 {
+        var count: Int64 = 0
+        var cursor = today
+        if (values[cursor] ?? 0) == 0, let yesterday = calendar.date(byAdding: .day, value: -1, to: today), (values[yesterday] ?? 0) > 0 {
+            cursor = yesterday
+        }
+        while (values[cursor] ?? 0) > 0 {
+            count += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = prev
+        }
+        return count
+    }
     private func modelName(_ model: String) -> String {
         if model == "Unknown model" { return "Model not recorded" }
+        if model == "gemini-antigravity" || model.hasPrefix("gemini-4-argon") { return "Gemini 4 Argon" }
+        if model.hasPrefix("gemini-3.8-flash") || model.hasPrefix("gemini-3-8-flash") { return "Gemini 3.8 Flash" }
+        if model.hasPrefix("claude-opus-5-5") || model.hasPrefix("claude-opus-5.5") { return "Claude Opus 5.5" }
+        if model.hasPrefix("claude-sonnet-5-5") || model.hasPrefix("claude-sonnet-5.5") { return "Claude Sonnet 5.5" }
+        if model.hasPrefix("gpt-oss-120b") { return "GPT-OSS 120B" }
         if model.hasPrefix("gpt-") { return "GPT-" + model.dropFirst(4).split(separator: "-").enumerated().map { $0.offset == 0 ? String($0.element) : $0.element.capitalized }.joined(separator: " ") }
+        if model.hasPrefix("gemini-") { return "Gemini " + model.dropFirst(7).split(separator: "-").map(\.capitalized).joined(separator: " ") }
         return model
     }
     private func short(_ value: Int64) -> String { value.formatted(.number.notation(.compactName)) }

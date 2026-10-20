@@ -1,12 +1,12 @@
 # Sieghart roadmap
 
-Updated October 12, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
+Updated October 19, 2026. This is the current execution plan; older Obsidian checkpoints remain historical. The user authorizes reference-level functional coverage with better usability and an integrated companion. Core Mac utilities take priority over additional integrations. Swift Student Challenge remains the first delivery; the complete Mac utility product continues afterward.
 
 October 13 follow-up: [native file-receiving correction](Sieghart/Design/sprint-5-file-drop-followup.md) adds collapsed drag admission, automatic opening, a smaller Toni following the file in both axes within the measured receiver, with her coral radial background, original top intake and explicit attachment actions. Physical drag/CPU acceptance remains pending. The [reference study index](Sieghart/Design/Research/reference-study-index-2026-10-13.md) records Coucou/Vorssaint source, further Taby REA, Clicky static limits, Muse ESP32 and the user-confirmed Minhas Finanças docs, plus focused additional references. This study does not connect devices, banks or accounts.
 
 October 13 role follow-up: Ada now represents AI activity in idle/active usage rows and the compact coding-work island. [Ada/Sig shared local intelligence and developer workspace proposal](Sieghart/Design/ada-sig-local-ai-direction-2026-10-13.md) records the requested coding integrations, agent room, local-model limits and Sig's intent/continuation purpose. An additional October 13 slice now delivers an initial Ada session room with Codex App Server and Claude Agent SDK adapters: explicit connection, stored history excerpts, new/resumed chats, streamed replies, provider state, interrupt and scoped decisions inside the widget and main window. [Reference architecture](Sieghart/Design/Research/coucou-chat-2026-10-13.md) · [Manual tests and limits](Sieghart/Design/ada-room-test-guide.md). Foundation Models and cross-worker orchestration remain planned.
 
-October 14 final chat direction: Ada’s conversations belong to Sieg and now target **macOS 27 Apple Foundation Models**. The complete app defaults to Apple Private Cloud Compute with **Deep thinking**; the offline option uses the actual AFM 3 on-device variant, without an older-model/cloud fallback. PCC still requires Apple’s managed approval/provisioning, and neither mode can run on the current macOS 26.6.2 host. Coucou’s explicit GitHub token/Keychain/service-tool pattern is ported for account/repository stars, PRs, reviews and CI; it does not grant repository editing or terminal execution. Room cards, direct chat, streaming, cancellation and local history remain. AI quota monitoring is separate. Third-party AI keys and further Ada tools are future work. [Requirements and acceptance](Sieghart/Design/ada-room-test-guide.md).
+October 14 final chat direction: Ada’s conversations belong to Sieg and now target **macOS 27 Apple Foundation Models**. The complete app defaults to Apple Private Cloud Compute with **Deep thinking**; the offline option uses the actual AFM 3 on-device variant, without an older-model/cloud fallback. PCC still requires Apple’s managed approval/provisioning. The host at that checkpoint was macOS 26.6.2. The recorded host on October 15 is macOS 27.0.1; model readiness and PCC signing still require their own acceptance. Coucou’s explicit GitHub token/Keychain/service-tool pattern is ported for account/repository stars, PRs, reviews and CI; it does not grant repository editing or terminal execution. Room cards, direct chat, streaming, cancellation and local history remain. AI quota monitoring is separate. Third-party AI keys and further Ada tools are future work. [Requirements and acceptance](Sieghart/Design/ada-room-test-guide.md).
 
 ## October 12 — Consolidated scope and offline delivery
 
@@ -22,6 +22,7 @@ October 14 final chat direction: Ada’s conversations belong to Sieg and now ta
 - **Sprint 3:** complete and accepted October 8, 2026; the user reported all manual tests passed. Six-avatar onboarding, local AI consent/monitoring, dashboard/charts, automatic prices/FX, installed-app voice launch, browser search, charge CSV/JSON import/export, broader archived history and automatic Claude desktop quota reading are delivered. Appearance is configurable; voice lives in Companion. See [closeout and acceptance](Sieghart/Design/sprint-3-closeout.md).
 - **Sprint 4:** complete and accepted October 8, 2026, on the user’s “tudo funcionando” report after `f77ac65`; utilities, voice/search/AirPods/motion follow-ups and Safari/app selection acceptance are closed on that report. [Closeout](Sieghart/Design/sprint-4-closeout.md).
 - **Sprint 5:** local implementation delivered on `sprint-5` — Calendar/reminders/Gantt, selected-folder downloads, bookmarked shelf, reviewed move/rename with optional Finder-only shortcuts, plain text paste, URL cleanup, DMG app copy, capture/annotation/local OCR/QR/color and real task cards/reactions. New pages share state across app/menu/island and fit configurable rails/tiles. The approved opening's rectangle is removed. All 16 isolated check groups, signed Debug bundle and nine local layout/PNG exports pass. Native permissions/interactions and whole-app CPU/Retina acceptance remain with the user. [Delivery](Sieghart/Design/sprint-5-closeout.md) · [Mac tests](Sieghart/Design/sprint-5-test-guide.md).
+- **Sprint 6:** local implementation on `sprint-6`, Parts 1–7 plus Antigravity usage/activity integration. Input tools, layouts, switcher and pointer focus are delivered for Mac acceptance. Dock hover/click integration and automatic last-window observation remain partial; keep auto-quit disabled until its unknown-window-count handling is fixed. Final-source validation: Fast 233 functions/935 invocations, Complete AI slice 26 functions, 7 infrastructure tests and Debug app build passed. [Execution and validation](Sieghart/Design/Workflow/sprint-6-execucao.md) · [Deferred review](Sieghart/Design/Workflow/revisao-pos-sprint-6/README.md) · [Mac tests](Sieghart/Design/Workflow/sprint-6-teste-manual.md).
 - **Mac acceptance:** Sprint 3 and Sprint 4 are accepted on the user’s reports, not assistant hardware runs. SG-001 through SG-008 and the Safari follow-up are closed; reopen a specific issue for a reported regression. Keep Sieghart/Xcode closed during assistant verification; CLI builds, isolated checks, offscreen rendering and read-only adapter checks remain allowed.
 - **Calendar:** reintroduced in the first S5 implementation slice. October 12 adds Gantt's brief hello to permission and agenda views, day-grouped appointments and a cleaner month layout. The team greeting's horizontal rectangle is removed while retaining the approved choreography. [Checkpoint and verification limits](Sieghart/Design/sprint-5-calendar-checkpoint.md).
 - **Costs:** recorded charges are actual user-entered expenses; token prices produce estimates. Official model price tables and dated USD/BRL FX adapters are implemented and verified against live public responses. They calculate API-equivalent estimates. Dated CSV/JSON charge imports with review, stable-reference deduplication and export are implemented; direct billing-account connection is outside this adapter.
@@ -198,7 +199,7 @@ The user reported all checks passed. The original checklist is retained below; t
 | S4 | Complete and accepted October 8 on the final user report after `f77ac65`. Extended hardware capabilities stay separate backlog. |
 | S5 | Local implementation delivered: calendar/reminders, downloads, shelf, file helpers/optional Finder shortcuts, capture and actual companion task events. Physical Mac acceptance pending. [Delivery and tests](Sieghart/Design/sprint-5-closeout.md). |
 | Before S6 | Swift Testing migration implemented, executed and independently approved on 2026-10-18; [results and scope](Sieghart/Design/Workflow/pre-sprint-6-execucao.md). Physical acceptance remains separate. |
-| S6 | Windows/Dock, keyboard and mouse modules, reversible preference changes and conflict handling; begins after the pre-S6 Swift Testing gate. |
+| S6 | In progress: parts 1–3 implement scroll inversion, modifier horizontal scrolling, app/window switcher, layouts, opt-in edge snapping and pointer focus; Mac acceptance pending. Fifteen modules remain planned. [Per-part execution](Sieghart/Design/Workflow/sprint-6-execucao.md). |
 | S7 | Maintenance, package/app updates, media/recording, advanced process/network/fan tools; module-specific verification. |
 
 ## Parallel Challenge experience track
@@ -226,7 +227,7 @@ This is a future product direction, not an active integration sprint. First deli
 | Calm reminders | Optional break/reminder nudges with quiet hours and a dismiss action; never starts focus automatically. | Reminder module and notification preferences. |
 | Optional GitHub | Selected-repository PR review requests and build results, with a direct link to the relevant item. Read-only first; opt-in and unavailable/offline states. | Core utilities complete, separate account consent and adapter. |
 
-GitHub makes sense as project context for people who develop software. It is optional and does not replace the primary Mac utilities or the offline companion journey. No GitHub connection is implemented or enabled in this round.
+GitHub makes sense as project context for people who develop software. It is optional and does not replace the primary Mac utilities or the offline companion journey. This October 7 proposal predates the read-only Ada GitHub adapter implemented in the October 14 update above; connected-account acceptance remains separate.
 
 ### Task continuity and avatar agents — User proposal, October 7, 2026
 
@@ -262,32 +263,32 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `switcher` | App/window switcher | Planned | S6 |
-| `dockPreview` | Dock previews | Planned | S6 |
-| `dockClick` | Dock click behavior | Planned | S6 |
-| `windowMaximizer` | Green-button maximize | Planned | S6 |
-| `windowLayout` | Window layouts and edge snapping | Planned | S6 |
-| `autoQuit` | Quit on last window close | Planned | S6 |
-| `spacesOrder` | Desktop order | Planned | S6 |
+| `switcher` | App/window switcher | Implemented — explicit app/window list, search and activation requests; Mac acceptance pending | S6 part 2 |
+| `dockPreview` | Dock previews | Partial — explicit per-app geometric window cards and raise/minimize controls; native Dock hover trigger pending | S6 part 7 |
+| `dockClick` | Dock click behavior | Partial — configurable action logic without production Dock-click trigger | S6 part 7 |
+| `windowMaximizer` | Green-button maximize | Implemented — opt-in AX zoom button click interception to fill usable desktop and restore previous frame; Mac acceptance pending | S6 part 7 |
+| `windowLayout` | Window layouts and edge snapping | Implemented — usable-screen layouts, guarded undo and opt-in edge snapping; Mac acceptance pending | S6 part 2 |
+| `autoQuit` | Quit on last window close | Partial — snapshot-driven scheduling; close observer and unknown AX count guard pending; keep disabled | S6 part 7 |
+| `spacesOrder` | Desktop order | Implemented — opt-in fixed numerical Spaces order with reversible `com.apple.dock` `mru-spaces` backup/restore; Mac acceptance pending | S6 part 7 |
 
 ### Mouse and keyboard (14)
 
 | Reference ID | Sieghart requirement | Status | Delivery |
 | --- | --- | --- | --- |
-| `scrollInverter` | Invert mouse scrolling | Planned | S6 |
-| `scrollHorizontal` | Modifier horizontal scroll | Planned | S6 |
-| `focusFollowsMouse` | Focus follows pointer | Planned | S6 |
-| `smoothScroll` | Smooth scrolling | Planned | S6 |
-| `linearScroll` | Linear scrolling | Planned | S6 |
-| `mouseAcceleration` | Mouse acceleration control | Planned | S6 |
-| `mouseNavigation` | Side-button navigation | Planned | S6 |
-| `mouseButtonShortcuts` | Extra mouse button bindings | Planned | S6 |
+| `scrollInverter` | Invert mouse scrolling | Implemented — opt-in, both axes, continuous events preserved by default; Mac acceptance pending | S6 part 1 |
+| `scrollHorizontal` | Modifier horizontal scroll | Implemented — configurable modifier, combination with inversion, dynamic shortcut conflicts; Mac acceptance pending | S6 part 1 |
+| `focusFollowsMouse` | Focus follows pointer | Implemented — opt-in, 300 ms dwell, mouse or trackpad, permission/lifecycle guards; Mac acceptance pending | S6 part 3 |
+| `smoothScroll` | Smooth scrolling | Implemented — opt-in sub-line pixel and 16.16 fixed-point wheel interpolation composing with inversion/horizontal; Mac acceptance pending | S6 part 5 |
+| `linearScroll` | Linear scrolling | Implemented — opt-in discrete wheel step normalization (`8...96 px`) preserving continuous trackpad by default; Mac acceptance pending | S6 part 5 |
+| `mouseAcceleration` | Mouse acceleration control | Implemented — opt-in speed (`0.25...3.0`) and flat curve (`-1.0`) with reversible `com.apple.mouse.scaling` backup/restore; Mac acceptance pending | S6 part 5 |
+| `mouseNavigation` | Side-button navigation | Implemented — opt-in Side 4/5 back/forward navigation with captured down/up pairing and target guard; Mac acceptance pending | S6 part 4 |
+| `mouseButtonShortcuts` | Extra mouse button bindings | Implemented — opt-in AX menu actions for raw buttons `3...7` with bounded queue; Mac acceptance pending | S6 part 4 |
 | `middleClick` | Three-finger middle click | Implemented optional tap; Accessibility and supported trackpad required; user accepted October 8 | S4 (Mac only) |
-| `mouseClickDebounce` | Mouse click debounce | Planned | S6 |
-| `keyboardDebounce` | Keyboard debounce | Planned | S6 |
-| `textSnippets` | Text expansion snippets | Planned | S6 |
-| `superKey` | Hyper key | Planned | S6 |
-| `quitWindowProtection` | Quit/close protection | Planned | S6 |
+| `mouseClickDebounce` | Mouse click debounce | Implemented — opt-in stationary switch-chatter suppression (`15...100 ms`) with paired release/drag handling; Mac acceptance pending | S6 part 6 |
+| `keyboardDebounce` | Keyboard debounce | Implemented — opt-in mechanical key-chatter suppression (`15...80 ms`) preserving OS autorepeat and modifiers; Mac acceptance pending | S6 part 6 |
+| `textSnippets` | Text expansion snippets | Implemented — opt-in validated trigger expansion with Backspace/reset buffer and Secure Input pause; Mac acceptance pending | S6 part 6 |
+| `superKey` | Hyper key | Implemented — opt-in F18/Right Option/Caps Lock `⌃⌥⌘⇧` modifier injection with shortcut conflict detection; Mac acceptance pending | S6 part 6 |
+| `quitWindowProtection` | Quit/close protection | Implemented — opt-in double-press `⌘Q` (and optional `⌘W`) confirmation window per frontmost PID; Mac acceptance pending | S6 part 6 |
 
 ### Clipboard and files (7)
 
@@ -351,15 +352,15 @@ Status: **Partial** = a related implemented slice with remaining acceptance/scop
 | `notch` | Island and control center | Partial — Compact companion/focus island and tools; broader control center pending | S3 + S5 |
 | `notchCalendar` | Week/month agenda and meeting links | Implemented — shared calendar/reminders, Gantt consent/agenda, next event/links/actions; physical permission/delivery pending | S5 |
 | `notchNotifications` | New notification cards | Core implemented — actual Sieghart task cards, quiet/module preferences and reminder dismiss/snooze; arbitrary other-app notifications require an adapter | S5 |
-| `notchGestures` | Island scroll/swipe gestures | Planned | S3–S5 |
-| `notchTimer` | Countdown, stopwatch and Pomodoro | Partial — Countdown, stopwatch and Pomodoro core implemented and user accepted; S5 extensions remain | S3 + S5 |
-| `notchAccessories` | Accessory status and battery alerts | Planned | S3–S5 |
-| `notchLyrics` | Lyrics | Planned | S3–S5 |
-| `notchQueue` | Playback queue | Planned | S3–S5 |
-| `notchLiveEqualizer` | Live audio bars | Planned | S3–S5 |
+| `notchGestures` | Island scroll/swipe gestures | Planned — outside the delivered core; explicit backlog | Replan after S6 |
+| `notchTimer` | Countdown, stopwatch and Pomodoro | Core implemented and user accepted; no additional S5 extension has a defined delivery contract | S3; extensions to replan |
+| `notchAccessories` | Accessory status and battery alerts | Planned — outside the delivered core; explicit backlog | Replan after S6 |
+| `notchLyrics` | Lyrics | Planned — outside the delivered core; explicit backlog | Replan after S6 |
+| `notchQueue` | Playback queue | Planned — outside the delivered core; explicit backlog | Replan after S6 |
+| `notchLiveEqualizer` | Live audio bars | Planned — outside the delivered core; explicit backlog | Replan after S6 |
 | `notchDownloads` | Selected-folder downloads | Implemented — selected roots/partial events, truthful completion, bounded history/actions and disable/sleep teardown; physical browser acceptance pending | S5 |
-| `notchAgents` | AI limits/tokens/cost/live work | Partial — S3 live work, quota/history/import adapters, charts and price/FX estimates delivered and user accepted; broader S5 scope remains | S3 + S5 |
-| `notchWatch` | Selected screen-area monitoring | Planned | S3–S5 |
+| `notchAgents` | AI limits/tokens/cost/live work | Partial — S3 monitoring accepted; S5 chat and read-only GitHub implemented with model/account acceptance pending; cross-worker orchestration planned | S3 + S5; orchestration to replan |
+| `notchWatch` | Selected screen-area monitoring | Planned — outside the delivered core; explicit backlog | Replan after S6 |
 | `notchMascot` | Companion interaction | Core implemented — six fixed identities, approved greeting, shared actual calendar/file/capture events, bounded reactions and motion preferences; further specialist integrations later | S3 + S5 |
 
 ### System monitor (8)

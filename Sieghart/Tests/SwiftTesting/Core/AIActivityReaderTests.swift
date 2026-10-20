@@ -283,5 +283,50 @@ extension MacContractsTests {
         "Claude graph counters preserve cache creation and terminal state")
     }
 
+    @Test("G08.07 Antigravity transcripts parse activity points, live work and provider detection")
+    func antigravityState() async throws {
+      let root = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "sieghart-antigravity-\(UUID())")
+      defer { try? FileManager.default.removeItem(at: root) }
+      let convLogs = root.appendingPathComponent(
+        ".gemini/antigravity/brain/conv-abcd-1234/.system_generated/logs")
+      try FileManager.default.createDirectory(at: convLogs, withIntermediateDirectories: true)
+      let detected = InstalledAIProviders.detect(home: root)
+      #expect(detected.contains(.antigravity))
+      let now = Date(timeIntervalSince1970: 1_800_000_000)
+      let formatter = ISO8601DateFormatter()
+      func stamp(_ seconds: Double) -> String {
+        formatter.string(from: now.addingTimeInterval(seconds))
+      }
+      let transcript = convLogs.appendingPathComponent("transcript.jsonl")
+      let step1: [String: Any] = [
+        "step_index": 1, "source": "USER_EXPLICIT", "type": "USER_INPUT", "status": "DONE",
+        "created_at": stamp(-25),
+      ]
+      let step2: [String: Any] = [
+        "step_index": 2, "source": "MODEL", "type": "PLANNER_RESPONSE", "status": "RUNNING",
+        "created_at": stamp(-5), "input_tokens": 500, "cache_read_tokens": 1500,
+        "output_tokens": 120,
+        "tool_calls": [
+          ["name": "run_command", "args": ["Cwd": "\"/Users/test/Projects/Sieghart\""]]
+        ],
+      ]
+      let payload = [step1, step2].compactMap {
+        try? JSONSerialization.data(withJSONObject: $0)
+      }.map { String(decoding: $0, as: UTF8.self) }.joined(separator: "\n") + "\n"
+      try payload.write(to: transcript, atomically: true, encoding: .utf8)
+      let reader = AIAnalyticsReader(home: root, codexHome: root.appendingPathComponent(".codex"))
+      let active = await reader.read(providers: [.antigravity], now: now)
+      try #require(active.points.count == 1)
+      #expect(
+        active.points[0].provider == .antigravity
+          && active.points[0].input == 2000
+          && active.points[0].cached == 1500
+          && active.points[0].output == 120
+          && active.points[0].project == "Sieghart"
+      )
+      #expect(active.work.count == 1 && active.work.first?.provider == .antigravity)
+    }
+
   }
 }

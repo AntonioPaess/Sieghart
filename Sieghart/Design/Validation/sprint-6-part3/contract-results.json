@@ -1,0 +1,83 @@
+{
+  "G19.12": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/trackpadHint()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 71,
+      "profile": "isolated"
+    }
+  ],
+  "G19.13": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/permissionRecovery()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 90,
+      "profile": "isolated"
+    }
+  ],
+  "G21.01": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/consent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 118,
+      "profile": "isolated"
+    }
+  ],
+  "G21.02": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/dwellAndSelection()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 136,
+      "profile": "isolated"
+    }
+  ],
+  "G21.03": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/cancelMovement()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 149,
+      "profile": "isolated"
+    }
+  ],
+  "G21.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/staleTarget()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 163,
+      "profile": "isolated"
+    }
+  ],
+  "G21.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/lifecycle()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 176,
+      "profile": "isolated"
+    }
+  ],
+  "G21.06": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/revoked()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 192,
+      "profile": "isolated"
+    }
+  ],
+  "G21.07": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/failedMonitor()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 204,
+      "profile": "isolated"
+    }
+  ]
+}

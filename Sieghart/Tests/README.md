@@ -1,6 +1,6 @@
 # Testes de comportamento
 
-Os 18 grupos antigos e os quatro casos de abertura de novo chat estão em `SwiftTesting/`. `Support/` contém fixtures; `TestPlans/` contém os planos compartilhados do scheme `Sieghart-Checks`.
+Os 18 grupos antigos, os quatro casos de abertura de novo chat e os grupos `input`/`desktop` da Sprint 6 estão em `SwiftTesting/`. `Support/` contém fixtures; `TestPlans/` contém os planos compartilhados do scheme `Sieghart-Checks`.
 
 Requisitos: macOS com sessão gráfica, Xcode completo selecionado, Python 3 e Node disponíveis no PATH. Os testes usam imagens, arquivos, bancos e processos próprios; nenhum fluxo requer conta, rede, microfone, clipboard real ou inicialização do app. Vision e as views nativas são exercitados localmente no plano Complete.
 
@@ -20,8 +20,16 @@ bash Sieghart/Tests/run-swift-tests.sh --only 'MacContractsTests/IslandPresentat
 
 `--output` recebe uma pasta nova. Sem essa opção, o runner cria uma pasta temporária e mostra seu caminho. Cada execução salva descoberta do Xcode, índice com fontes/tags/IDs de contrato, seletores, logs, `Results.xcresult`, resultados por contrato e cobertura. O cache indicado por `--derived-data` admite uma execução por vez e mantém um projeto sem estado pessoal do Xcode, ligado às fontes reais. Nenhuma cópia alternativa de produção é compilada.
 
-Complete descobre e executa todas as 235 funções. Fast contém as 171 funções com perfis `logic`/`isolated`; exclui as 45 integrações locais e as 19 funções de views nativas. Os totais de funções e de invocações parametrizadas são relatados separadamente. Seleção inexistente retorna erro; omissão, seleção inesperada e mudança das fontes durante a execução impedem aceite.
+Na baseline histórica da pré-Sprint 6, Complete executou 235 funções e Fast continha 171 funções com perfis `logic`/`isolated`; exclui as 45 integrações locais e as 19 funções de views nativas. Os totais de funções e de invocações parametrizadas são relatados separadamente. Seleção inexistente retorna erro; omissão, seleção inesperada e mudança das fontes durante a execução impedem aceite.
 
-A cobertura útil considera as 124 fontes fora de `App/`, compiladas no módulo `SieghartTests`. Ela não mede o binário do aplicativo. Assinatura/privacidade do bundle, recursos compilados, benchmark Metal e aceites físicos continuam nos procedimentos A02–A10 do [inventário](../Design/Workflow/pre-sprint-6-inventario.md). O catálogo de preços é recurso explícito do bundle de testes.
+A baseline histórica cobria 124 fontes fora de `App/`; o lote de scroll acrescenta uma (125), e a parte 2 acrescenta quatro (129). Essas fontes são compiladas no módulo `SieghartTests`. Ela não mede o binário do aplicativo. Assinatura/privacidade do bundle, recursos compilados, benchmark Metal e aceites físicos continuam nos procedimentos A02–A10 do [inventário](../Design/Workflow/pre-sprint-6-inventario.md). O catálogo de preços é recurso explícito do bundle de testes.
 
 `run-checks.sh` agora usa Swift Testing, após execução aprovada de Complete/Fast e rastreabilidade dos contratos. O runner anterior está preservado byte a byte em `run-legacy-checks.sh`; os programas legados continuam disponíveis para consulta e reprodução.
+
+Para o lote de entrada: `bash Sieghart/Tests/run-checks.sh --filter '^input$'`. Os grupos aceitos são derivados de `GROUP_TAGS` no índice, sem lista duplicada no runner. Contagens atuais são descobertas pelo Xcode em cada execução; os números pré-S6 acima são históricos.
+
+Na Parte 1 da Sprint 6, a descoberta inclui 246 funções no Complete e 182 elegíveis no Fast. A validação focada `input` executou 11 funções / 17 invocações; isso não representa uma nova execução completa desses planos.
+
+Na Parte 2 da Sprint 6, `--filter '^desktop$'` seleciona os contratos G20.01–G20.13. Complete descobre 259 funções e Fast contém 195. O Fast revisado passou 195 funções / 887 invocações; a validação usa geometria pura e backends injetados, sem AX, monitor global ou ativação de apps reais. O aceite físico continua separado.
+
+Na Parte 3, os mesmos grupos cobrem a recuperação de permissões, feedback de eventos contínuos e foco por ponteiro. Complete descobre 268 funções e Fast executou 204 funções / 896 invocações. `input|desktop` focado passou 33 funções / 46 invocações. O scheduler de foco e seus monitores são substituídos por fixtures determinísticas; o clique de permissão é testado com efeitos injetados, sem abrir Ajustes reais. [Roteiro manual S6](../Design/Workflow/sprint-6-teste-manual.md).

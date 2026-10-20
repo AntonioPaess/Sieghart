@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-19",
+  "scheme": "Sieghart",
+  "project": "Sieghart/Sieghart.xcodeproj",
+  "configuration": "Debug",
+  "result": "BUILD SUCCEEDED",
+  "codeSigningAllowed": false,
+  "architectures": [
+    "x86_64",
+    "arm64"
+  ],
+  "binarySHA256": "723e9cd5f7ff8dd8f8c9aede0c99418bd1c6b5ffc2fcf8d218f6e19b3e5a54ea",
+  "log": "/private/tmp/sieghart-s6-part2-app-build.log",
+  "appLaunched": false,
+  "note": "Initial attempt using the isolated test workspace lacked root Info.plist; final build used original project. Sources match the approved Fast manifest."
+}

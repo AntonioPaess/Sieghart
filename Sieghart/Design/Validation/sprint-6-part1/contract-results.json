@@ -1,0 +1,101 @@
+{
+  "G19.01": [
+    {
+      "identifier": "SieghartTests/LogicTests/ScrollTransformTests/inversion(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    }
+  ],
+  "G19.02": [
+    {
+      "identifier": "SieghartTests/LogicTests/ScrollTransformTests/continuous()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 16,
+      "profile": "logic"
+    }
+  ],
+  "G19.03": [
+    {
+      "identifier": "SieghartTests/LogicTests/ScrollTransformTests/combined(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 22,
+      "profile": "logic"
+    }
+  ],
+  "G19.04": [
+    {
+      "identifier": "SieghartTests/LogicTests/ScrollTransformTests/overflow()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 35,
+      "profile": "logic"
+    }
+  ],
+  "G19.05": [
+    {
+      "identifier": "SieghartTests/LogicTests/ScrollTransformTests/conflict(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 46,
+      "profile": "logic"
+    }
+  ],
+  "G19.06": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/consent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 94,
+      "profile": "isolated"
+    }
+  ],
+  "G19.07": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/suspension()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 109,
+      "profile": "isolated"
+    }
+  ],
+  "G19.08": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/stale()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 128,
+      "profile": "isolated"
+    }
+  ],
+  "G19.09": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/failedStart()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 143,
+      "profile": "isolated"
+    }
+  ],
+  "G19.10": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/lateConflict()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 156,
+      "profile": "isolated"
+    }
+  ],
+  "G19.11": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/ScrollLifecycleTests/nativeFields()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/ScrollInputTests.swift",
+      "sourceLine": 71,
+      "profile": "isolated"
+    }
+  ]
+}

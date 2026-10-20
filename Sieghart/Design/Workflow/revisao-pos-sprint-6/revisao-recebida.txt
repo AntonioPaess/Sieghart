@@ -1,0 +1,127 @@
+Viewed AudioEngine.swift:1-392
+Viewed VoiceCapture.swift:1-304
+Viewed AdaGitHubContext.swift:1-480
+Viewed AppleLocalChatEngine.swift:1-120
+Viewed MiddleClickController.swift:1-160
+Viewed ClipboardHistory.swift:1-161
+Viewed PlainTextPaste.swift:1-139
+Viewed FileOperations.swift:1-145
+Viewed FileAccess.swift:1-99
+Viewed NotchWidgetViewModel.swift:401-793
+Viewed CalendarContext.swift:1-171
+Viewed MacSystemSampler.swift:1-191
+Viewed MacDisplayPowerBackend.swift:1-85
+Viewed SensorEngine.swift:1-273
+Viewed AgentRoomViewModel.swift:1-329
+Viewed SieghartApp.swift:1-94
+Viewed ResidentAppDelegate.swift:1-64
+Viewed WorkspaceView.swift:1-200
+Viewed MouseButtonsSettingsView.swift:1-35
+Viewed MouseButtonTests.swift:1-265
+
+Já concluí a leitura e o diagnóstico! Aqui está a **revisão técnica aprofundada** do repositório **`MyDude`** (com foco no app nativo **`Sieghart`** para macOS em Swift 6 / SwiftUI, além dos utilitários de build/teste e artefatos colaterais do diretório).
+
+---
+
+## 1. Visão Geral e Pontos Fortes da Arquitetura
+
+O código de produção (`Sieghart/Sieghart/`, ~20.800 linhas distribuídas em 133 arquivos `.swift`) apresenta um nível de engenharia acima da média para utilitários macOS:
+
+- **Fronteiras de Injeção e Testabilidade Headless:** Praticamente todos os subsistemas nativos sensíveis (Core Audio Process Taps, EventKit, `CGEvent.tapCreate`, Accessibility `AXUIElement`, IOKit HID, Speech/AVAudioEngine, URLSession) possuem protocolos enxutos (`VoiceCapturing`, `AudioBackend`, `DesktopManaging`, `ScrollInputBackend`, `MouseButtonMonitoring`, `AdaGitHubTransport`) que permitem testar regras e máquinas de estado em Swift Testing sem abrir janelas ou acionar prompts de TCC.
+- **Segurança Defensiva e Concorrência:**
+  - `AdaGitHubContext` (actor) bloqueia redirecionamentos HTTP antes de encaminhar o token Bearer, limita payloads por stream (`maximumBytes`), sanitiza mensagens de erro para nunca vazar cabeçalhos e usa `SecItem` no Keychain.
+  - `LocalDiskImageInstaller` faz validação estrita contra symlink/traversal, monta `.dmg` em modo somente-leitura (`-readonly -nobrowse -noautoopen`), faz staging atômico e verifica `st_dev` via `stat()` antes de remover diretórios de mount.
+  - `AudioPCM` e `AudioGainState` processam áudio em tempo real usando `OSAllocatedUnfairLock` sem alocação de memória, I/O ou chamadas ObjC/SwiftUI na thread de áudio do HAL.
+- **Ciclo de Vida Residente (`LSUIElement` / `.accessory`):** Tratamento cuidadoso de `NSWorkspace.willSleepNotification`, `sessionDidResignActiveNotification` e `com.apple.screenIsLocked` para desarmar *event taps* e *monitors* durante bloqueio de tela ou suspensão.
+
+---
+
+## 2. Bugs Reais e Problemas Críticos / Médios Encontrados
+
+### 🔴 [P1] Deadlock / Starvation de Pipe no `NativeToolProcess` (`hdiutil` / processos externos)
+- **Onde:** [ToolProcess.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/ToolProcess.swift#L46-L47)
+- **Problema:** `NativeToolProcess.run` executa `process.waitUntilExit()` de forma síncrona dentro de `DispatchQueue.global(qos: .utility).async`. Embora `stdout` e `stderr` sejam redirecionados para arquivos temporários (o que evita o clássico buffer full de 64 KB de `Pipe`), há dois problemas importantes:
+  1. Se `hdiutil attach` encontrar uma imagem `.dmg` que peça senha/interação ou travar no subsistema de disco do kernel sem flag `-stdinpass` / sem fechar `standardInput`, o processo filho pode esperar indefinidamente por `stdin` (que herda o descritor padrão do processo pai), bloqueando uma thread do pool global para sempre caso a `Task` não seja cancelada.
+  2. Não há `process.standardInput = FileHandle.nullDevice` nem timeout próprio na execução do comando.
+- **Recomendação:** Definir `process.standardInput = FileHandle.nullDevice` em [ToolProcess.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Files/ToolProcess.swift#L45) e usar `terminationHandler` assíncrono em vez de bloquear uma thread do GCD com `waitUntilExit()`, além de adicionar um timeout defensivo.
+
+---
+
+### 🔴 [P1] Bloqueio da Main Thread com `pmset displaysleepnow`
+- **Onde:** [MacDisplayPowerBackend.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/Display/MacDisplayPowerBackend.swift#L69-L73)
+- **Problema:** `MacDisplayPowerBackend` é `@MainActor` e o método `sleepDisplays()` instancia um `Process` para `/usr/bin/pmset` e chama `process.waitUntilExit()` **diretamente na `@MainActor`**. Se o `pmset` demorar ou travar comunicando com o `powerd`, toda a UI do app e todos os `CGEventTap`s registrados no `CFRunLoopGetMain()` congelam (o que faz o macOS desabilitar os *event taps* do app por `.tapDisabledByTimeout`).
+- **Recomendação:** Executar o `Process` fora da `@MainActor` ou usar `terminationHandler`.
+
+---
+
+### 🟠 [P2] Incompatibilidade de Escala de Tempo no `ShortcutDeliveryGate` (Carbon vs. CGEventTap vs. NSEvent)
+- **Onde:** [ActivationController.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Activation/ActivationController.swift#L270-L271), [ActivationController.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Activation/ActivationController.swift#L713) e [KeyboardShortcuts.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Helpers/KeyboardShortcuts.swift#L19-L25)
+- **Problema:** O `ShortcutDeliveryGate` deduplica eventos vindos do Carbon (`GetEventTime(event)`) e do `ShortcutEventTap` (`Double(event.timestamp) / 1_000_000_000`) comparando `abs(time - last.time) < 0.15`.
+  - No macOS em **Apple Silicon**, `CGEvent.timestamp` em callbacks de event tap frequentemente retorna **Mach absolute time ticks** (onde 1 tick = $125/3 \approx 41{,}67\text{ ns}$, ou seja, `24_000_000` ticks por segundo), e **não** nanossegundos já convertidos por `mach_timebase_info`, enquanto `GetEventTime(event)` do Carbon e `NSEvent.timestamp` retornam segundos desde o boot (`systemUptime`).
+  - Dividir `event.timestamp` fixamente por `1_000_000_000` em Apple Silicon resulta em um valor ~41,67× menor que o `GetEventTime(event)` do Carbon! Consequentemente, `abs(time - last.time)` será enorme (centenas ou milhares de segundos de diferença) e **a deduplicação entre Carbon e `ShortcutEventTap` falhará no hardware real Apple Silicon**, fazendo um mesmo atalho disparar duas vezes (abrindo e fechando a ilha imediatamente).
+- **Recomendação:** Converter ou normalizar timestamps usando `NSEvent(cgEvent: event)?.timestamp` (que aplica `mach_timebase_info` internamente para coincidir com `GetEventTime`) ou usar `ProcessInfo.processInfo.systemUptime` no momento da captura no tap.
+
+---
+
+### 🟠 [P2] Condição de Corrida (Race Condition) na Escrita Assíncrona de `AgentRPCProcess`
+- **Onde:** [AgentRPCProcess.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AgentRPCProcess.swift#L56-L66) e [AgentRPCProcess.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Core/Services/AI/AgentRPCProcess.swift#L87-L99)
+- **Problema:** Em `send(_ packet:)`, `let input` (`FileHandle`) é capturado na `@MainActor` e despachado para `writer.async { try input.write(contentsOf: payload) }`. Porém, `stop()` fecha `try? input?.close()` **imediatamente na `@MainActor`**, sem sincronizar com a fila `writer`. Se `stop()` for chamado enquanto `writer` está prestes a escrever (ou escrevendo), ocorre escrita em descritor fechado ou condição de corrida no `FileHandle`. Além disso, se o processo filho morrer com o pipe quebrado, `input.write` pode gerar `SIGPIPE` se `F_SETNOSIGPIPE` não estiver configurado.
+- **Recomendação:** Fechar o `FileHandle` de escrita dentro de `writer.async` (ou serializar o ciclo de vida do handle de escrita exclusivamente na fila `writer`).
+
+---
+
+### 🟠 [P2] `NotchWidgetViewModel` é um "God Object" (~793 linhas) com Acoplamento Excessivo e Polling Contínuo
+- **Onde:** [NotchWidgetViewModel.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DynamicIsland/ViewModels/NotchWidgetViewModel.swift#L6-L233)
+- **Problemas:**
+  1. **Concentração de Responsabilidades:** Apesar do `ARCHITECTURE.md` prever separação por features, `NotchWidgetViewModel` instancia e gerencia diretamente 14 sub-controladores (`agentRoom`, `desktop`, `mouseButtons`, `scrollInput`, `middleClick`, `audio`, `monitor`, `keepAwake`, `displayPower`, `clipboard`, `calendar`, `events`, `files`, `fileReception`, `capture`), além de controlar `NSPanel`, animações, menus, drag-and-drop e geometria da câmera.
+  2. **Vazamento de `cameraClickMonitor`:** Em [`configureHoverZone()`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DynamicIsland/ViewModels/NotchWidgetViewModel.swift#L648-L653), `cameraClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown)` é registrado, mas **nunca é removido** em `stopUtilities()` nem se `configureHoverZone()` for chamado novamente.
+  3. **Custo de WindowServer em Toda Troca de App/Space:** A propriedade computada [`foregroundCoversNotchScreen`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/DynamicIsland/ViewModels/NotchWidgetViewModel.swift#L86-L101) chama `CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)` (que faz IPC síncrono com o WindowServer e aloca dicionários de todas as janelas da tela) até **2 vezes seguidas** dentro de `reveal()` e `refreshWorkspacePresence()` (`configureOverlay(panel)` e `configureOverlay(hoverPanel)` calculam `overlayLevel` separadamente).
+
+---
+
+### 🟠 [P2] Múltiplos Event Taps e Global Monitors Simultâneos + Polling de 1 Hz
+- **Onde:**
+  - `ShortcutEventTap` ([ActivationController.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Activation/ActivationController.swift#L696)) + `shortcutHealthTask` (loop de 2s)
+  - `NativeScrollInputBackend` ([ScrollInput.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Input/ScrollInput.swift#L71)) + `health` task (loop de 1s)
+  - `NativeMouseButtonMonitor` ([MouseButtonBackend.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Input/MouseButtonBackend.swift#L19)) + `health` task (loop de 1s)
+  - `NativePointerFocusMonitor` ([PointerFocus.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Desktop/PointerFocus.swift#L10)) — instala monitor global e local para `.mouseMoved`
+  - `NativeDesktopDragMonitor` ([DesktopBackend.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Desktop/DesktopBackend.swift#L170))
+- **Problema:** Quando o usuário ativa as ferramentas da Sprint 6 (Scroll, Mouse Buttons, Pointer Focus, Edge Snapping) junto com os atalhos globais, o processo mantém **3 `CGEventTap`s separados na sessão (`headInsertEventTap`) + 4 `NSEvent` monitors globais + 3 timers de polling de 1–2s na `@MainActor`**.
+  - Em particular, em [`PointerFocus.swift`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Desktop/PointerFocus.swift#L15-L21) e [`DesktopController.swift`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Desktop/DesktopController.swift#L181-L188), cada pixel de movimento do mouse (120–1000 Hz em mouses gamers) cancela uma `Task` anterior e **aloca uma nova `Task { @MainActor in try await Task.sleep(for: .milliseconds(300)) }`** em `NativePointerDwellScheduler.schedule`. Além disso, ao expirar os 300 ms, [`focus(at:)`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Desktop/DesktopController.swift#L193-L208) faz **duas chamadas seguidas a `backend.window(at:)`** (linhas 199 e 206), cada uma fazendo IPC via Accessibility (`AXUIElementCopyElementAtPosition`).
+- **Recomendação:**
+  1. Em `NativePointerDwellScheduler`, evitar recriar `Task` a cada evento `.mouseMoved` em 120+ Hz (ou usar um único loop/timer com atualização de deadline `ContinuousClock.Instant`).
+  2. Em `DesktopController.focus(at:)`, eliminar a chamada duplicada a `backend.window(at: finalPoint)` na linha 206 quando `location == finalPoint`.
+
+---
+
+### 🟡 [P3] `MouseButtons` (Lote em Andamento da Sprint 6) Ainda Não Conectado à UI de `DesktopToolsView`
+- **Onde:** [MouseButtonsSettingsView.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Workspace/Views/MouseButtonsSettingsView.swift#L3) e [WorkspaceView.swift](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Features/Workspace/Views/WorkspaceView.swift#L220-L310)
+- **Observação:** Os arquivos não rastreados (`??`) da Sprint 6 (`MouseButtonActions.swift`, `MouseButtonBackend.swift`, `MouseButtonController.swift`, `MouseButtonsSettingsView.swift` e `MouseButtonTests.swift`) já estão bem estruturados e integrados ao `WorkspaceView` e ao `NotchWidgetViewModel`, mas vale notar duas sutilezas antes de fechar o lote:
+  1. Em [`MouseButtonActions.swift`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Input/MouseButtonActions.swift#L80-L87), `frontWindow(of pid:)` inspeciona apenas `windows.prefix(256)`. Se houver muitos elementos de UI/janelas abertas na sessão, o `prefix(256)` pode cortar a janela frontal se houver overlays de camada 0 acima. Filtrar primeiro por `OwnerPID == pid && Layer == 0` é mais seguro e rápido.
+  2. Em [`MouseButtonActions.swift`](file:///Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart/Shared/Services/Input/MouseButtonActions.swift#L31-L36), `matchesMenu` compara `key.lowercased() == menuKey`. Para itens de menu localizados ou apps que usam `kAXMenuItemCmdVirtualKeyAttribute` em vez de `kAXMenuItemCmdCharAttribute` para `[` e `]`, o match por `CmdChar` pode retornar `nil` dependendo do layout de teclado ativo.
+
+---
+
+### 🟡 [P3] Higiene do Repositório e Artefatos Pesados na Worktree
+- **Onde:** Raiz do repositório `/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude`
+- **Problema:**
+  1. A pasta `atividade-06-ensemble/` (trabalho acadêmico em Python com um `.venv/` completo de **~30.000 arquivos**) está dentro da raiz do repositório Git do `MyDude` como não-rastreada (`??`), tornando buscas de arquivos e indexadores lentos.
+  2. Há arquivos `.zip` e `.json.gz` de pesquisa não-rastreados em `Sieghart/Design/Concepts/` e `Sieghart/Design/Research/`, além de uma pasta `Sieghart/Sieghart-macOS` duplicada/não-rastreada.
+  3. O arquivo `ROADMAP.md` apresenta aviso de conversão `LF will be replaced by CRLF`.
+
+---
+
+## 3. Resumo da Avaliação por Subsistema
+
+| Subsistema | Qualidade | Observações Principais |
+| :--- | :---: | :--- |
+| **Core / Audio (`AudioEngine.swift`)** | ⭐⭐⭐⭐⭐ | Excelente uso de Core Audio Process Taps (`CATapDescription`), lock-free/RT-safe callback e resolução de processos XPC do WebKit/Safari. |
+| **Core / AI (`AdaGitHub*`, `Codex*`, `Claude*`, `AppleLocalChat*`)** | ⭐⭐⭐⭐½ | Tratamento exemplar de segurança de rede/tokens no GitHub e paginação no Codex; corrigir apenas o fechamento concorrente do `FileHandle` em `AgentRPCProcess`. |
+| **Core / Files & Clipboard (`DiskImageInstaller`, `FileOperations`, `PlainTextPaste`)** | ⭐⭐⭐⭐ | Excelente proteção contra TOCTOU, symlinks e preservações de clipboard; corrigir `waitUntilExit()` e `stdin` em `ToolProcess`. |
+| **Shared / Activation (`ActivationController`, `KeyboardShortcuts`)** | ⭐⭐⭐½ | Robusto na recuperação de Spaces/Fullscreen, mas **precisa corrigir a conversão do timestamp do `CGEventTap` em Apple Silicon** para o `ShortcutDeliveryGate`. |
+| **Shared / Desktop & Input (`ScrollInput`, `Desktop*`, `MouseButton*`)** | ⭐⭐⭐⭐ | Arquitetura limpa e 100% testável com mocks; otimizar o agendamento de `Task` por evento em `PointerFocus` e a dupla consulta AX em `focus(at:)`. |
+| **Features / DynamicIsland (`NotchWidgetViewModel`)** | ⭐⭐⭐½ | Funcionalmente completo, porém acumulou responsabilidades demais (793 linhas), vaza `cameraClickMonitor` e consulta `CGWindowListCopyWindowInfo` repetidas vezes. |
+
+---
+
+Se quiser, posso aplicar as correções pontuais para qualquer um desses itens (ou começarmos pelos mais críticos: o timestamp do `ShortcutEventTap`, o `ToolProcess` / `pmset` fora da main thread e as otimizações da Sprint 6 em `PointerFocus` / `MouseButtonActions`). Como prefere seguir?

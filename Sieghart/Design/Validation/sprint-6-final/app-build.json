@@ -1,0 +1,23 @@
+{
+  "command": [
+    "xcodebuild",
+    "-project",
+    "Sieghart/Sieghart.xcodeproj",
+    "-scheme",
+    "Sieghart",
+    "-configuration",
+    "Debug",
+    "-destination",
+    "platform=macOS,arch=arm64",
+    "-derivedDataPath",
+    "/tmp/sieghart-s6-app-build",
+    "CODE_SIGNING_ALLOWED=NO",
+    "build"
+  ],
+  "exitCode": 0,
+  "status": "BUILD SUCCEEDED",
+  "binaryPath": "/tmp/sieghart-s6-app-build/Build/Products/Debug/Sieghart.app/Contents/MacOS/Sieghart",
+  "binarySha256": "e4dff51d8bcfa63c7e64da6e8be551698cb6c2aaa211c463388c5f2b779c5d57",
+  "logPath": "/tmp/sieghart-s6-app-build.log",
+  "launchedApplication": false
+}
