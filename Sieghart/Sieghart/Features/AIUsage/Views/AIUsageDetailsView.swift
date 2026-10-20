@@ -128,7 +128,8 @@ struct AIUsageDetailsView: View {
                                 .font(.caption2).foregroundStyle(CompanionStyle.muted)
                         }
                     } else {
-                        Text("Limits unavailable").font(.callout.weight(.medium))
+                        Text("Current limits unavailable").font(.callout.weight(.medium))
+                        Text("Local readings expire after 5 minutes or at their reset time.").font(.caption2).foregroundStyle(CompanionStyle.muted)
                         Text(usage.claudeHistoryStatus).font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -169,17 +170,15 @@ struct AIUsageDetailsView: View {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     if let report = usage.effectiveAntigravityReport {
                         VStack(alignment: .leading, spacing: 10) {
-                            if let window = report.primary { QuotaWindowView(window: window.window, now: context.date) }
-                            if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date) }
-                            ForEach(Array((report.scoped ?? []).enumerated()), id: \.offset) { _, window in
-                                Text(window.scope ?? "Model allowance").font(.caption.weight(.semibold))
-                                QuotaWindowView(window: window.window, now: context.date)
+                            ForEach(Array((report.scoped ?? [report.primary, report.secondary].compactMap { $0 }).enumerated()), id: \.offset) { _, window in
+                                AntigravityAllowanceView(window: window, now: context.date)
                             }
                             Text("Antigravity local server · " + report.capturedAt.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption2).foregroundStyle(CompanionStyle.muted)
                         }
                     } else {
-                        Text("Limits unavailable").font(.callout.weight(.medium))
+                        Text("Current limits unavailable").font(.callout.weight(.medium))
+                        Text("Local readings expire after 5 minutes or at their reset time.").font(.caption2).foregroundStyle(CompanionStyle.muted)
                         Text("Open Antigravity to refresh live model quota windows, or read local transcripts from ~/.gemini/antigravity.")
                             .font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
                     }
@@ -289,7 +288,11 @@ private struct UsageSettingsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Automatic model prices").font(.headline)
                     Text(usage.pricingDescription(provider)).font(.caption).foregroundStyle(CompanionStyle.muted)
-                    Link("Official price source", destination: PricingSource.page(provider)).font(.caption)
+                    if provider == .antigravity {
+                        Link("Gemini API price source", destination: PricingSource.page(.antigravity)).font(.caption)
+                        Link("Claude API price source", destination: PricingSource.page(.claude)).font(.caption)
+                        Text("API equivalent estimates are not Antigravity charges or quota. Unknown models and expired promotional rates stay unpriced.").font(.caption).foregroundStyle(CompanionStyle.muted)
+                    } else { Link("Official price source", destination: PricingSource.page(provider)).font(.caption) }
                     Button("Use automatic prices & exchange rate") { usage.useAutomaticPrices(provider) }.buttonStyle(CompanionButtonStyle())
                     Text("Optional custom average USD prices per 1M tokens").font(.headline)
                     rateField("Input", text: $input); rateField("Output", text: $output)

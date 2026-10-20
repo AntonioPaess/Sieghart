@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import Darwin
 
 enum AIProvider: String, Codable, CaseIterable, Identifiable, Sendable {
     case codex, claude, antigravity
@@ -198,12 +199,20 @@ struct ClaudeLimitsReport: Codable, Sendable {
     let secondary: ReportWindow?
     var scoped: [ReportWindow]? = nil
     var planType: String? = nil
+    var source: String? = nil
     struct ReportWindow: Codable, Sendable {
         let usedPercent: Double
         let windowDurationMins: Int
         let resetsAt: TimeInterval?
         var scope: String? = nil
+        var durationKnown: Bool? = nil
         var window: CodexQuotaWindow { CodexQuotaWindow(usedPercent: usedPercent, windowDurationMins: windowDurationMins, resetsAt: resetsAt) }
+    }
+    func isCurrentAntigravity(at now: Date = .now) -> Bool {
+        let age = now.timeIntervalSince(capturedAt)
+        let windows = (scoped ?? []) + [primary, secondary].compactMap { $0 }
+        return source == "antigravity-local-v2" && isValid(now: now) && age >= -30 && age <= 300 &&
+            windows.allSatisfy { $0.resetsAt.map { $0 > now.timeIntervalSince1970 } ?? true }
     }
     func isValid(now: Date = .now) -> Bool {
         let windows = [primary, secondary].compactMap { $0 } + (scoped ?? [])
@@ -214,116 +223,241 @@ struct ClaudeLimitsReport: Codable, Sendable {
 }
 
 enum AntigravityPlanHistory {
-    static func read(now: Date = .now) -> ClaudeLimitsReport? {
-        for (port, token) in discoverEndpoints() {
-            guard let url = URL(string: "http://127.0.0.1:\(port)/exa.language_server_pb.LanguageServerService/GetUserStatus") else { continue }
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.timeoutInterval = 2.0
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
-            request.setValue(token, forHTTPHeaderField: "x-codeium-csrf-token")
-            request.httpBody = Data("{}".utf8)
-            let box = LockedDataBox()
-            let semaphore = DispatchSemaphore(value: 0)
-            URLSession.shared.dataTask(with: request) { data, response, _ in
-                if let http = response as? HTTPURLResponse, http.statusCode == 200, let data {
-                    box.store(data)
+    static func read(now: Date = .now, discovery: any AntigravityEndpointDiscovering = NativeAntigravityEndpointDiscovery(),
+                     transport: any AntigravityStatusTransport = URLSessionAntigravityTransport()) async -> ClaudeLimitsReport? {
+        do {
+            return try await withThrowingTaskGroup(of: ClaudeLimitsReport?.self) { group in
+                group.addTask {
+                    for endpoint in try await discovery.discover().prefix(4) {
+                        try Task.checkCancellation()
+                        guard try await discovery.owns(endpoint) else { continue }
+                        do {
+                            let data = try await transport.send(endpoint)
+                            try Task.checkCancellation()
+                            guard try await discovery.owns(endpoint) else { continue }
+                            if let report = parseUserStatus(data, now: now) { return report }
+                        } catch is CancellationError { throw CancellationError() }
+                        catch { continue }
+                    }
+                    return nil
                 }
-                semaphore.signal()
-            }.resume()
-            _ = semaphore.wait(timeout: .now() + 2.2)
-            if let data = box.load(), let report = parseUserStatus(data, now: now) {
-                return report
+                group.addTask { try await Task.sleep(for: .seconds(8)); return nil }
+                defer { group.cancelAll() }
+                return try await group.next() ?? nil
             }
-        }
-        return nil
+        } catch { return nil }
     }
-
     static func parseUserStatus(_ data: Data, now: Date = .now) -> ClaudeLimitsReport? {
-        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        guard data.count <= 262_144, let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
         let status = (root["userStatus"] as? [String: Any]) ?? root
         let planInfo = (status["planStatus"] as? [String: Any])?["planInfo"] as? [String: Any]
-        let userTier = status["userTier"] as? [String: Any]
-        let planName = (planInfo?["planName"] as? String) ?? (userTier?["name"] as? String)
+        let plan = (planInfo?["planName"] as? String) ?? ((status["userTier"] as? [String: Any])?["name"] as? String)
         guard let cascade = status["cascadeModelConfigData"] as? [String: Any],
               let configs = cascade["clientModelConfigs"] as? [[String: Any]], !configs.isEmpty else { return nil }
-        let activeEnum = ((cascade["defaultOverrideModelConfig"] as? [String: Any])?["modelOrAlias"] as? [String: Any])?["model"] as? String
-
-        var shortWindows: [(enumID: String, label: String, modelId: String, window: ClaudeLimitsReport.ReportWindow)] = []
-        var weeklyWindows: [(enumID: String, label: String, modelId: String, window: ClaudeLimitsReport.ReportWindow)] = []
-
-        for config in configs {
-            guard let quota = config["quotaInfo"] as? [String: Any],
-                  let remaining = (quota["remainingFraction"] as? NSNumber)?.doubleValue,
-                  remaining.isFinite else { continue }
-            let used = max(0, min(100, ((1.0 - remaining) * 100.0).rounded()))
-            let resetDate = (quota["resetTime"] as? String).flatMap { AIActivityParser.parseDate($0) }
-            let resetsAt = resetDate?.timeIntervalSince1970
-            let isWeekly = resetDate.map { $0.timeIntervalSince(now) > 36 * 3600 } ?? false
-            let duration = isWeekly ? 10080 : 300
-            let label = (config["label"] as? String) ?? "Model allowance"
-            let modelId = (config["modelId"] as? String) ?? ""
-            let enumID = ((config["modelOrAlias"] as? [String: Any])?["model"] as? String) ?? ""
-            let family: String
-            if modelId.hasPrefix("gemini-4-argon") { family = "Gemini 4 Argon" }
-            else if modelId.hasPrefix("gemini-3.8-flash") || modelId.hasPrefix("gemini-3-8-flash") { family = "Gemini 3.8 Flash" }
-            else if modelId.hasPrefix("claude-") { family = "Claude 5.5" }
-            else { family = label }
-            let win = ClaudeLimitsReport.ReportWindow(usedPercent: used, windowDurationMins: duration, resetsAt: resetsAt, scope: family)
-            if isWeekly {
-                weeklyWindows.append((enumID, family, modelId, win))
-            } else {
-                shortWindows.append((enumID, family, modelId, win))
-            }
+        let active = ((cascade["defaultOverrideModelConfig"] as? [String: Any])?["modelOrAlias"] as? [String: Any])?["model"] as? String
+        var windows: [(String?, ClaudeLimitsReport.ReportWindow)] = []
+        for config in configs.prefix(100) {
+            guard let quota = config["quotaInfo"] as? [String: Any], let fraction = quota["remainingFraction"] as? NSNumber,
+                  CFGetTypeID(fraction) != CFBooleanGetTypeID(), fraction.doubleValue.isFinite,
+                  (0...1).contains(fraction.doubleValue) else { continue }
+            let reset = (quota["resetTime"] as? String).flatMap { AIActivityParser.parseDate($0) }
+            if quota["resetTime"] != nil && reset == nil { continue }
+            if let reset, reset <= now { continue }
+            let duration = (quota["windowDurationMins"] as? NSNumber)?.intValue
+            let known = duration.map { (1...525600).contains($0) } ?? false
+            let id = ((config["modelOrAlias"] as? [String: Any])?["model"] as? String)
+            let label = (config["label"] as? String) ?? (config["modelId"] as? String) ?? id ?? "Model allowance"
+            // One minute is an internal placeholder only. Unknown durations
+            // render as an allowance with a reset time, never as 5h/weekly.
+            windows.append((id, .init(usedPercent: (1 - fraction.doubleValue) * 100,
+                windowDurationMins: known ? duration! : 1, resetsAt: reset?.timeIntervalSince1970,
+                scope: String(label.prefix(100)), durationKnown: known)))
         }
-        let primary = shortWindows.first(where: { $0.enumID == activeEnum })?.window
-            ?? shortWindows.max(by: { $0.window.usedPercent < $1.window.usedPercent })?.window
-            ?? weeklyWindows.first?.window
-        let secondary = weeklyWindows.first(where: { $0.enumID == activeEnum })?.window
-            ?? weeklyWindows.first?.window
-        var seenScopes = Set<String>()
-        var scoped: [ClaudeLimitsReport.ReportWindow] = []
-        for item in (weeklyWindows + shortWindows) {
-            if seenScopes.insert(item.label).inserted {
-                scoped.append(item.window)
-            }
-        }
-        guard primary != nil || secondary != nil else { return nil }
-        return ClaudeLimitsReport(capturedAt: now, primary: primary, secondary: secondary, scoped: scoped.isEmpty ? nil : scoped, planType: planName)
-    }
-
-    private static func discoverEndpoints() -> [(Int, String)] {
-        var results: [(Int, String)] = []
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/ps")
-        process.arguments = ["-axo", "pid=,command="]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
-        guard (try? process.run()) != nil else { return [] }
-        let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        process.waitUntilExit()
-        for line in output.split(separator: "\n") {
-            let text = String(line)
-            guard text.contains("language_server"), text.contains("--csrf_token") else { continue }
-            let parts = text.split(whereSeparator: \.isWhitespace).map(String.init)
-            guard let csrfIdx = parts.firstIndex(of: "--csrf_token"), csrfIdx + 1 < parts.count else { continue }
-            let token = parts[csrfIdx + 1]
-            if let bridgeArg = parts.first(where: { $0.hasPrefix("--host_bridge_url=") }),
-               let portStr = bridgeArg.split(separator: ":").last,
-               let bridgePort = Int(portStr) {
-                results.append((bridgePort + 2, token))
-                results.append((bridgePort + 1, token))
-            }
-        }
-        return results
+        guard let primary = windows.first(where: { active != nil && $0.0 == active })?.1 ?? windows.first?.1 else { return nil }
+        return ClaudeLimitsReport(capturedAt: now, primary: primary, secondary: nil, scoped: windows.map(\.1),
+            planType: plan.map { String($0.prefix(100)) }, source: "antigravity-local-v2")
     }
 }
 
-private final class LockedDataBox: @unchecked Sendable {
+struct AntigravityProcessIdentity: Equatable, Sendable {
+    let pid: Int32
+    let executable: String
+    let startedSeconds: UInt64
+    let startedMicros: UInt64
+}
+struct AntigravityEndpoint: Sendable, CustomStringConvertible {
+    let identity: AntigravityProcessIdentity
+    let port: Int
+    let token: String
+    var description: String { "Antigravity local endpoint (pid \(identity.pid))" }
+    var url: URL { URL(string: "http://127.0.0.1:\(port)/exa.language_server_pb.LanguageServerService/GetUserStatus")! }
+}
+protocol AntigravityEndpointDiscovering: Sendable {
+    func discover() async throws -> [AntigravityEndpoint]
+    func owns(_ endpoint: AntigravityEndpoint) async throws -> Bool
+}
+struct NativeAntigravityEndpointDiscovery: AntigravityEndpointDiscovering {
+    var runner: any ToolProcessRunning = NativeToolProcess(timeout: 1)
+    var identity: @Sendable (Int32) -> AntigravityProcessIdentity? = Self.processIdentity
+    static func processIdentity(_ pid: Int32) -> AntigravityProcessIdentity? {
+        var info = proc_bsdinfo()
+        let size = Int32(MemoryLayout<proc_bsdinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &info, size) == size, info.pbi_uid == getuid() else { return nil }
+        var path = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
+        guard proc_pidpath(pid, &path, UInt32(path.count)) > 0 else { return nil }
+        let executable = String(decoding: path.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
+        guard executable.lowercased().contains("/antigravity.app/contents/"),
+              URL(fileURLWithPath: executable).lastPathComponent.hasPrefix("language_server") else { return nil }
+        return AntigravityProcessIdentity(pid: pid, executable: executable, startedSeconds: info.pbi_start_tvsec, startedMicros: info.pbi_start_tvusec)
+    }
+    static func token(in arguments: String) -> String? {
+        let parts = arguments.split(whereSeparator: \.isWhitespace).map(String.init)
+        let token: String?
+        if let flag = parts.first(where: { $0.hasPrefix("--csrf_token=") }) { token = String(flag.dropFirst("--csrf_token=".count)) }
+        else if let index = parts.firstIndex(of: "--csrf_token"), index + 1 < parts.count { token = parts[index + 1] }
+        else { return nil }
+        guard let token, !token.isEmpty, token.utf8.count <= 512,
+              token.utf8.allSatisfy({ (48...57).contains($0) || (65...90).contains($0) || (97...122).contains($0) || $0 == 45 || $0 == 95 }) else { return nil }
+        return token
+    }
+    static func ports(_ data: Data, pid: Int32) -> [Int] {
+        var current: Int32?, result = Set<Int>()
+        for line in String(decoding: data, as: UTF8.self).split(separator: "\n") {
+            if line.first == "p" { current = Int32(line.dropFirst()); continue }
+            guard current == pid, line.hasPrefix("n127.0.0.1:") || line.hasPrefix("n*:"),
+                  let port = line.split(separator: ":").last.flatMap({ Int($0) }), (1...65535).contains(port) else { continue }
+            result.insert(port)
+        }
+        return Array(result.sorted().prefix(4))
+    }
+    private func listeningPorts(_ pid: Int32) async throws -> [Int] {
+        let output = try await runner.run(URL(fileURLWithPath: "/usr/sbin/lsof"), arguments: ["-nP", "-a", "-p", String(pid), "-iTCP", "-sTCP:LISTEN", "-Fn"])
+        return output.status == 0 ? Self.ports(output.output, pid: pid) : []
+    }
+    func discover() async throws -> [AntigravityEndpoint] {
+        let output = try await runner.run(URL(fileURLWithPath: "/bin/ps"), arguments: ["-axo", "pid=,args="])
+        guard output.status == 0 else { return [] }
+        var endpoints: [AntigravityEndpoint] = []
+        for line in String(decoding: output.output, as: UTF8.self).split(separator: "\n") {
+            try Task.checkCancellation()
+            guard line.count < 16_384, line.contains("language_server"), line.contains("--csrf_token") else { continue }
+            let parts = line.split(maxSplits: 1, whereSeparator: \.isWhitespace)
+            guard parts.count == 2, let pid = Int32(parts[0]), let owner = identity(pid), let token = Self.token(in: String(parts[1])) else { continue }
+            // The kernel executable/launch identity and lsof's exact PID bind
+            // the token to a real listener. No adjacent ports are probed.
+            for port in try await listeningPorts(pid) {
+                guard identity(pid) == owner else { break }
+                endpoints.append(AntigravityEndpoint(identity: owner, port: port, token: token))
+                if endpoints.count == 4 { return endpoints }
+            }
+        }
+        return endpoints
+    }
+    func owns(_ endpoint: AntigravityEndpoint) async throws -> Bool {
+        guard identity(endpoint.identity.pid) == endpoint.identity else { return false }
+        let ports = try await listeningPorts(endpoint.identity.pid)
+        return ports.contains(endpoint.port) && identity(endpoint.identity.pid) == endpoint.identity
+    }
+}
+
+enum AntigravityTransportError: Error { case invalidEndpoint, invalidResponse, tooLarge, redirect, deadline }
+protocol AntigravityStatusTransport: Sendable {
+    func send(_ endpoint: AntigravityEndpoint) async throws -> Data
+}
+struct URLSessionAntigravityTransport: AntigravityStatusTransport {
+    var configuration: @Sendable () -> URLSessionConfiguration = { .ephemeral }
+    var deadline: TimeInterval = 2
+    var maximumBytes: Int = 262_144
+    func send(_ endpoint: AntigravityEndpoint) async throws -> Data {
+        guard (1...65535).contains(endpoint.port), !endpoint.token.isEmpty, endpoint.token.utf8.count <= 512,
+              !endpoint.token.contains(where: { $0.isWhitespace || $0.isNewline }),
+              maximumBytes > 0, maximumBytes <= 262_144 else { throw AntigravityTransportError.invalidEndpoint }
+        var request = URLRequest(url: endpoint.url)
+        request.httpMethod = "POST"; request.timeoutInterval = max(0.01, min(2, deadline))
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("1", forHTTPHeaderField: "Connect-Protocol-Version")
+        request.setValue(endpoint.token, forHTTPHeaderField: "x-codeium-csrf-token")
+        request.httpBody = Data("{}".utf8)
+        let operation = AntigravityStatusOperation(request: request, configuration: configuration(), limit: maximumBytes, deadline: max(0.01, min(2, deadline)))
+        return try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            return try await withCheckedThrowingContinuation { operation.begin($0) }
+        } onCancel: { operation.cancel() }
+    }
+}
+private final class AntigravityStatusOperation: NSObject, URLSessionDataDelegate, @unchecked Sendable {
     private let lock = NSLock()
-    private var data: Data?
-    func store(_ value: Data) { lock.lock(); data = value; lock.unlock() }
-    func load() -> Data? { lock.lock(); defer { lock.unlock() }; return data }
+    private let request: URLRequest
+    private let configuration: URLSessionConfiguration
+    private let limit: Int
+    private let deadline: TimeInterval
+    private var session: URLSession?
+    private var continuation: CheckedContinuation<Data, any Error>?
+    private var timer: DispatchWorkItem?
+    private var data = Data()
+    private var validResponse = false
+    private var finished = false
+    init(request: URLRequest, configuration: URLSessionConfiguration, limit: Int, deadline: TimeInterval) {
+        self.request = request; self.configuration = configuration; self.limit = limit; self.deadline = deadline
+    }
+    func begin(_ continuation: CheckedContinuation<Data, any Error>) {
+        lock.lock()
+        guard !finished else { lock.unlock(); continuation.resume(throwing: CancellationError()); return }
+        self.continuation = continuation
+        configuration.urlCache = nil; configuration.httpCookieStorage = nil; configuration.urlCredentialStorage = nil
+        configuration.httpShouldSetCookies = false; configuration.connectionProxyDictionary = [:]
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.timeoutIntervalForRequest = deadline; configuration.timeoutIntervalForResource = deadline
+        let queue = OperationQueue(); queue.maxConcurrentOperationCount = 1
+        let session = URLSession(configuration: configuration, delegate: self, delegateQueue: queue)
+        self.session = session
+        let task = session.dataTask(with: request)
+        let timeout = DispatchWorkItem { [weak self] in self?.finish(.failure(AntigravityTransportError.deadline)) }
+        timer = timeout
+        lock.unlock()
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + deadline, execute: timeout)
+        task.resume()
+    }
+    func cancel() { finish(.failure(CancellationError())) }
+    private func finish(_ result: Result<Data, any Error>) {
+        lock.lock()
+        guard !finished else { lock.unlock(); return }
+        finished = true; timer?.cancel(); timer = nil
+        let continuation = continuation, session = session
+        self.continuation = nil; self.session = nil
+        lock.unlock()
+        session?.invalidateAndCancel(); continuation?.resume(with: result)
+    }
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping @Sendable (URLSession.ResponseDisposition) -> Void) {
+        guard let http = response as? HTTPURLResponse, http.url == request.url, http.statusCode == 200 else {
+            completionHandler(.cancel); finish(.failure(AntigravityTransportError.invalidResponse)); return
+        }
+        guard response.expectedContentLength <= limit else {
+            completionHandler(.cancel); finish(.failure(AntigravityTransportError.tooLarge)); return
+        }
+        lock.lock(); validResponse = true; let active = !finished; lock.unlock()
+        completionHandler(active ? .allow : .cancel)
+    }
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive chunk: Data) {
+        lock.lock()
+        guard !finished else { lock.unlock(); return }
+        guard data.count + chunk.count <= limit else {
+            lock.unlock(); finish(.failure(AntigravityTransportError.tooLarge)); return
+        }
+        data.append(chunk); lock.unlock()
+    }
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
+        if error != nil { finish(.failure(AntigravityTransportError.invalidResponse)); return }
+        lock.lock(); let result = data, valid = validResponse; lock.unlock()
+        finish(valid ? .success(result) : .failure(AntigravityTransportError.invalidResponse))
+    }
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest, completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
+        completionHandler(nil); finish(.failure(AntigravityTransportError.redirect))
+    }
+    func urlSession(_ session: URLSession, didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        completionHandler(.cancelAuthenticationChallenge, nil)
+    }
 }

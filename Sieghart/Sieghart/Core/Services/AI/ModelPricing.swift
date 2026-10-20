@@ -16,6 +16,8 @@ struct ModelPrice: Codable, Sendable {
     var creationLong: String?
     var tier: String?
     var source: String
+    var validThrough: String? = nil
+    var longContextThreshold: Int64? = nil
     var checked: String
     var rates: TokenPrices { rates(long: false) }
     func rates(long: Bool) -> TokenPrices {
@@ -37,18 +39,20 @@ struct PriceCatalog: Codable, Sendable {
               let entries = try? JSONDecoder().decode([ModelPrice].self, from: data) else { return PriceCatalog() }
         return PriceCatalog(entries: entries.filter(\.valid))
     }
-    func price(model: String, provider: AIProvider, tier: String? = nil) -> ModelPrice? {
+    func price(model: String, provider: AIProvider, tier: String? = nil, now: Date = .now) -> ModelPrice? {
         // Only documented snapshot suffixes may inherit a base price. Internal
         // models (including auto-review) remain unpriced unless documented.
         let base = model.trimmingCharacters(in: .whitespacesAndNewlines).split(separator: "/").last.map(String.init)?.lowercased() ?? model.lowercased()
         let normalized = provider == .codex ? base : base.replacingOccurrences(of: ".", with: "-")
         let speed = tier?.lowercased()
         let requestedTier = speed == "priority" || speed == "fast" ? "fast" : ["flex", "batch", "ultrafast"].contains(speed ?? "") ? speed : nil
-        let candidates = entries.filter { $0.provider == provider && $0.tier == requestedTier }
+        let candidates = entries.filter {
+            $0.provider == provider && $0.tier == requestedTier &&
+                ($0.validThrough.flatMap { AIActivityParser.parseDate($0 + "T23:59:59Z") }.map { now <= $0 } ?? ($0.validThrough == nil))
+        }
         if let exact = candidates.first(where: { $0.id == normalized }) { return exact }
-        let suffixPattern = provider == .antigravity
-            ? "^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8}|trial|medium|high|low|n)$"
-            : "^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})$"
+        // Undocumented product/reasoning aliases never inherit an API price.
+        let suffixPattern = "^(?:[0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{8})$"
         return candidates.sorted { $0.id.count > $1.id.count }.first { entry in
             guard normalized.hasPrefix(entry.id + "-") else { return false }
             let suffix = String(normalized.dropFirst(entry.id.count + 1))

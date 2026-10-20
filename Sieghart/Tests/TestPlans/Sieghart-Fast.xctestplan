@@ -415,6 +415,23 @@
                 ]
               },
               {
+                "name": "AntigravityPricingTests",
+                "testFunctions": [
+                  "cacheMigration()",
+                  "verifiedRatesAndAliases()"
+                ]
+              },
+              {
+                "name": "AntigravitySecurityTests",
+                "testFunctions": [
+                  "boundedTransport()",
+                  "endpointOwnership()",
+                  "quotaProvenance()",
+                  "rejectedOwnerAndCancellation()",
+                  "transportCancellation()"
+                ]
+              },
+              {
                 "name": "AudioApplicationTests",
                 "testFunctions": [
                   "applications()"
