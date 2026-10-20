@@ -141,6 +141,7 @@
               {
                 "name": "DockSpacesLogicTests",
                 "testFunctions": [
+                  "pairedClick()",
                   "previewAspectAndProtectedBundles()"
                 ]
               },
@@ -533,11 +534,24 @@
                 ]
               },
               {
+                "name": "DockObservationTests",
+                "testFunctions": [
+                  "currentHover(_:)",
+                  "rejectedGesture(_:)",
+                  "shortClick()",
+                  "throttledExit()"
+                ]
+              },
+              {
                 "name": "DockSpacesContracts",
                 "testFunctions": [
                   "autoQuitLastWindow()",
+                  "beforeNativeDockIntent()",
                   "dockPreviewAndClick()",
+                  "externalSpacesChange()",
                   "greenButtonMaximizeAndRestore()",
+                  "nativeDockRouting()",
+                  "observedCloseAndUnknown()",
                   "spacesOrderRestore()"
                 ]
               },
@@ -668,6 +682,7 @@
                 "testFunctions": [
                   "accelerationRestore()",
                   "consent()",
+                  "externalAccelerationChange()",
                   "failedStart()",
                   "lateConflict()",
                   "nativeFields()",

@@ -238,6 +238,18 @@ extension MacContractsTests {
             #expect(model.status.contains("conflicts"))
             chords = []; model.configure(); #expect(backend.starts == 2); model.stop()
         }
+        @Test("G23.04 disable and shutdown preserve externally changed mouse acceleration")
+        func externalAccelerationChange() throws {
+            let store = try TestDefaults(); defer { store.cleanup() }
+            let accel = PointerAccelerationFixture(); accel.currentScaling = 0.875
+            let model = ScrollInputController(defaults: store.value, backend: ScrollBackendFixture(), accelerationBackend: accel, trusted: { true })
+            model.start(observeSystem: false)
+            model.pointerAcceleration = PointerAccelerationOptions(enabled: true, flatCurve: true)
+            accel.currentScaling = 2.25; let writes = accel.writes.count
+            model.restoreOriginalAcceleration()
+            #expect(accel.currentScaling == 2.25 && accel.writes.count == writes && model.savedOriginalScaling == nil)
+            model.stop(); #expect(accel.currentScaling == 2.25 && accel.writes.count == writes)
+        }
         @Test("G23.04 mouse acceleration backs up original value, refuses unverified write and restores on disable, sleep or stop")
         func accelerationRestore() throws {
             let store = try TestDefaults(); defer { store.cleanup() }
@@ -254,7 +266,7 @@ extension MacContractsTests {
             model.pointerAcceleration.flatCurve = true
             #expect(accel.writes.last == -1.0 && model.savedOriginalScaling == 0.875)
             model.setSleeping(true)
-            #expect(accel.writes.last == 0.875 && model.savedOriginalScaling == 0.875)
+            #expect(accel.writes.last == 0.875 && model.savedOriginalScaling == nil)
             model.setSleeping(false)
             #expect(accel.writes.last == -1.0)
             accel.allowWrite = false
