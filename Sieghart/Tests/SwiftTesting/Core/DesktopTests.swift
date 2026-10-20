@@ -373,3 +373,20 @@ extension MacContractsTests {
         }
     }
 }
+
+extension MacContractsTests {
+    @Suite(.tags(.desktop, .isolated)) @MainActor struct PointerDwellRegressionTests {
+        @Test("G21.01 motion burst reuses one worker, fires latest closure and cancels")
+        func coalescedMotion() async throws {
+            let dwell = NativePointerDwellScheduler(delay: .milliseconds(20))
+            var selected = -1
+            for index in 0..<1000 { dwell.schedule { selected = index } }
+            #expect(dwell.workersStarted == 1 && selected == -1)
+            try await Task.sleep(for: .milliseconds(60))
+            #expect(selected == 999)
+            dwell.schedule { selected = 1000 }; dwell.cancel()
+            try await Task.sleep(for: .milliseconds(40))
+            #expect(selected == 999)
+        }
+    }
+}

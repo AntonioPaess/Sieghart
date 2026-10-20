@@ -28,11 +28,27 @@ enum MouseButtonAction: String, CaseIterable, Codable, Sendable {
         case .inherit, .native: nil
         }
     }
-    func matchesMenu(key: String?, modifiers: UInt32?, enabled: Bool) -> Bool {
+    func matchesMenu(key: String?, virtualKey: UInt16? = nil, modifiers: UInt32?, enabled: Bool) -> Bool {
         // AX defaults to Command. Bit 0 adds Shift; exact masks prevent
         // confusing Back with Previous Tab, or Undo with Redo.
-        guard let menuKey, let key, let modifiers, enabled else { return false }
-        return key.lowercased() == menuKey && modifiers == (self == .redo ? 1 : 0)
+        guard let menuKey, let modifiers, enabled else { return false }
+        // A virtual key is used only when AX omits CmdChar. Never reinterpret
+        // a nonempty character from another keyboard layout as this command.
+        let matches: Bool
+        if let key, !key.isEmpty { matches = key.lowercased() == menuKey }
+        else { matches = virtualKey == self.virtualKey }
+        return matches && modifiers == (self == .redo ? 1 : 0)
+    }
+    private var virtualKey: UInt16? {
+        switch self {
+        case .back: UInt16(kVK_ANSI_LeftBracket)
+        case .forward: UInt16(kVK_ANSI_RightBracket)
+        case .copy: UInt16(kVK_ANSI_C)
+        case .paste: UInt16(kVK_ANSI_V)
+        case .undo, .redo: UInt16(kVK_ANSI_Z)
+        case .selectAll: UInt16(kVK_ANSI_A)
+        case .inherit, .native: nil
+        }
     }
     func supports(bundleID: String) -> Bool {
         guard self == .back || self == .forward else { return menuKey != nil }
@@ -80,7 +96,7 @@ enum MouseActionResult: Equatable, Sendable {
     private func frontWindow(of pid: Int32) -> UInt32? {
         // Window-server metadata only: no image, title or contents are read.
         guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return nil }
-        return windows.prefix(256).first(where: {
+        return windows.first(where: {
             ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid &&
             ($0[kCGWindowLayer as String] as? NSNumber)?.intValue == 0
         }).flatMap { ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value }
@@ -124,8 +140,8 @@ enum MouseActionResult: Equatable, Sendable {
                 let (node, depth) = queue[index]; index += 1
                 AXUIElementSetMessagingTimeout(node, 0.04)
                 let key = value(kAXMenuItemCmdCharAttribute, from: node) as? String
-                if key?.lowercased() == request.action.menuKey,
-                   request.action.matchesMenu(key: key,
+                if request.action.matchesMenu(key: key,
+                       virtualKey: (value(kAXMenuItemCmdVirtualKeyAttribute, from: node) as? NSNumber)?.uint16Value,
                        modifiers: (value(kAXMenuItemCmdModifiersAttribute, from: node) as? NSNumber)?.uint32Value,
                        enabled: (value(kAXEnabledAttribute, from: node) as? Bool) == true) {
                     guard !Task.isCancelled, await valid(), !Task.isCancelled else { return .cancelled }

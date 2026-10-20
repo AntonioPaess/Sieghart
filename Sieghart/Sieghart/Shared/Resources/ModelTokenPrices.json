@@ -1939,46 +1939,34 @@
     "checked": "2026-10-05"
   },
   {
-    "id": "gemini-antigravity",
-    "provider": "antigravity",
-    "input": "1.25",
-    "cached": "0.125",
-    "creation": null,
-    "output": "10.00",
-    "longInput": "2.50",
-    "longCached": "0.25",
-    "longCreation": null,
-    "longOutput": "15.00",
-    "source": "https://ai.google.dev/gemini-api/docs/pricing",
-    "checked": "2026-10-19"
-  },
-  {
     "id": "gemini-4-argon",
     "provider": "antigravity",
-    "input": "1.25",
-    "cached": "0.125",
+    "input": "2.00",
+    "cached": "0.10",
     "creation": null,
     "output": "10.00",
-    "longInput": "2.50",
-    "longCached": "0.25",
-    "longCreation": null,
-    "longOutput": "15.00",
-    "source": "https://ai.google.dev/gemini-api/docs/pricing",
-    "checked": "2026-10-19"
-  },
-  {
-    "id": "gemini-3-8-flash",
-    "provider": "antigravity",
-    "input": "0.30",
-    "cached": "0.03",
-    "creation": null,
-    "output": "2.50",
     "longInput": null,
     "longCached": null,
     "longCreation": null,
     "longOutput": null,
     "source": "https://ai.google.dev/gemini-api/docs/pricing",
-    "checked": "2026-10-19"
+    "checked": "2026-10-19",
+    "validThrough": "2026-11-30"
+  },
+  {
+    "id": "gemini-3-8-flash",
+    "provider": "antigravity",
+    "input": "0.75",
+    "cached": "0.075",
+    "creation": null,
+    "output": "3.75",
+    "longInput": null,
+    "longCached": null,
+    "longCreation": null,
+    "longOutput": null,
+    "source": "https://ai.google.dev/gemini-api/docs/pricing",
+    "checked": "2026-10-19",
+    "validThrough": "2026-12-31"
   },
   {
     "id": "gemini-2-5-pro",
@@ -1992,7 +1980,8 @@
     "longCreation": null,
     "longOutput": "15.00",
     "source": "https://ai.google.dev/gemini-api/docs/pricing",
-    "checked": "2026-10-19"
+    "checked": "2026-10-19",
+    "longContextThreshold": 200000
   },
   {
     "id": "gemini-2-5-flash",
@@ -2023,25 +2012,11 @@
     "id": "claude-sonnet-5-5",
     "provider": "antigravity",
     "input": "2.00",
-    "cached": "0.20",
+    "cached": "0.10",
     "creation": "2.50",
     "creationLong": "4.00",
     "output": "10.00",
     "source": "https://platform.claude.com/docs/en/about-claude/pricing",
-    "checked": "2026-10-19"
-  },
-  {
-    "id": "gpt-oss-120b",
-    "provider": "antigravity",
-    "input": "0.50",
-    "cached": "0.05",
-    "creation": null,
-    "output": "2.00",
-    "longInput": null,
-    "longCached": null,
-    "longCreation": null,
-    "longOutput": null,
-    "source": "https://ai.google.dev/gemini-api/docs/pricing",
     "checked": "2026-10-19"
   }
 ]

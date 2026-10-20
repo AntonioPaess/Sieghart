@@ -31,7 +31,7 @@ import Foundation
     @Published private(set) var historyIsReading = false
     @Published private(set) var historyStatus = "Recent sessions · Partial local history"
     private let readClaude: @Sendable () throws -> ClaudeLimitsReport?
-    private let readAntigravity: @Sendable () -> ClaudeLimitsReport?
+    private let readAntigravity: @Sendable () async -> ClaudeLimitsReport?
     var effectiveClaudeReport: ClaudeLimitsReport? {
         guard claudeEnabled else { return nil }
         if let automatic = automaticClaudeReport, Date().timeIntervalSince(automatic.capturedAt) < 1800,
@@ -40,8 +40,8 @@ import Foundation
     }
     var effectiveAntigravityReport: ClaudeLimitsReport? {
         guard antigravityEnabled else { return nil }
-        if let automatic = automaticAntigravityReport { return automatic }
-        return antigravityReport
+        if let automatic = automaticAntigravityReport, automatic.isCurrentAntigravity() { return automatic }
+        return antigravityReport.flatMap { $0.isCurrentAntigravity() ? $0 : nil }
     }
     var claudeSource: String { effectiveClaudeReport?.capturedAt == automaticClaudeReport?.capturedAt && effectiveClaudeReport != nil ? "Claude desktop · Local history · Renewal time unavailable" : "Imported dated report" }
     private var historyTask: Task<Void, Never>?
@@ -50,7 +50,7 @@ import Foundation
     private let analyticsReader = AIAnalyticsReader()
     private let defaults: UserDefaults
     private let read: @Sendable (AIProvider) -> LocalTokenUsage?
-    init(defaults: UserDefaults = .standard, readClaude: @escaping @Sendable () throws -> ClaudeLimitsReport? = { try ClaudePlanHistory.read() }, readAntigravity: @escaping @Sendable () -> ClaudeLimitsReport? = { AntigravityPlanHistory.read() }, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
+    init(defaults: UserDefaults = .standard, readClaude: @escaping @Sendable () throws -> ClaudeLimitsReport? = { try ClaudePlanHistory.read() }, readAntigravity: @escaping @Sendable () async -> ClaudeLimitsReport? = { await AntigravityPlanHistory.read() }, initialAnalytics: AIAnalytics = AIAnalytics(), initialAccountActivity: CodexAccountActivity? = nil, initialPrices: PriceCatalog? = nil, read: @escaping @Sendable (AIProvider) -> LocalTokenUsage? = { provider in
         let configured = ProcessInfo.processInfo.environment["CODEX_HOME"].map { URL(fileURLWithPath: $0, isDirectory: true) }
         return LocalTokenReader.read(provider, codexHome: configured)
     }) {
@@ -59,6 +59,8 @@ import Foundation
         if let initialPrices {
             priceCatalog = initialPrices
         } else if var cache = defaults.data(forKey: "integrations.modelPrices").flatMap({ try? JSONDecoder().decode(PriceCatalog.self, from: $0) }) {
+            // Replace the old unverified Antigravity aliases/rates on upgrade.
+            cache.entries.removeAll { $0.provider == .antigravity }
             for entry in bundled.entries where !cache.entries.contains(where: { $0.provider == entry.provider && $0.id == entry.id && $0.tier == entry.tier }) {
                 cache.entries.append(entry)
             }
@@ -93,15 +95,16 @@ import Foundation
         let revision = readRevision
         let reader = read, claudeReader = readClaude, agyReader = readAntigravity, readsClaude = claudeEnabled, readsAgy = antigravityEnabled
         let providers = AIProvider.allCases.filter { isEnabled($0, codexEnabled: codexEnabled) }
-        let result = await Task.detached(priority: .utility) {
+        let worker = Task.detached(priority: .utility) {
             var result: [AIProvider: LocalTokenUsage] = [:]
             for provider in providers { result[provider] = reader(provider) }
             let quota: ClaudeLimitsReport?, failure: String?
             do { quota = readsClaude ? try claudeReader() : nil; failure = nil }
             catch { quota = nil; failure = error.localizedDescription }
-            let agyQuota = readsAgy ? agyReader() : nil
+            let agyQuota = readsAgy ? await agyReader() : nil
             return (result, quota, failure, agyQuota)
-        }.value
+        }
+        let result = await withTaskCancellationHandler { await worker.value } onCancel: { worker.cancel() }
         guard !Task.isCancelled, revision == readRevision else { return }
         automaticClaudeReport = claudeEnabled ? result.1 : nil
         claudeHistoryStatus = result.2 ?? (result.1 == nil ? "No recent Claude desktop reading. Open Claude and enable its usage menu to refresh the local history." : "Claude desktop local history")
@@ -211,7 +214,7 @@ import Foundation
             let usage = LocalTokenUsage(input: point.input, cachedInput: point.cached, cacheCreation: point.cacheCreation, output: point.output, sessions: 0)
             let custom = usesCustomPrices(provider) ? ledger.prices[provider] : nil
             let price = priceCatalog.price(model: point.model, provider: provider, tier: point.serviceTier)
-            let rates = custom ?? price?.rates(long: point.perRequest && point.input > 272000)
+            let rates = custom ?? price?.rates(long: point.perRequest && point.input > (price?.longContextThreshold ?? 272000))
             if var usd = rates?.estimate(usage) {
                 if custom == nil, let price, point.cacheCreationLong > 0,
                    let hourly = price.creationLong.flatMap({ Decimal(string: $0) }), let short = rates?.cacheCreationUSD ?? rates?.inputUSD {
@@ -248,7 +251,7 @@ import Foundation
     func pricingDescription(_ provider: AIProvider) -> String {
         if usesCustomPrices(provider) { return "Custom average prices · API equivalent" }
         let date = priceCatalog.entries.filter { $0.provider == provider }.map(\.checked).max()
-        return "Automatic model prices" + (date.map { " · \($0)" } ?? " · unavailable")
+        return (provider == .antigravity ? "Public API equivalent · Not Antigravity billing" : "Automatic model prices") + (date.map { " · \($0)" } ?? " · unavailable")
     }
 
     @discardableResult func importCharges(_ charges: [RecordedCharge]) throws -> Int {

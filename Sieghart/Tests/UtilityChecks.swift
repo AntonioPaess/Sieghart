@@ -88,7 +88,7 @@ import Foundation
         display.willSleep(); display.didWake(); precondition(adapter.disconnected.isEmpty && adapter.reconnected.isEmpty, "Bluetooth sleep is opt-in")
         display.disconnectBluetoothOnSleep = true; display.willSleep(); display.didWake(); display.didWake()
         precondition(adapter.disconnected == ["A"] && adapter.reconnected == ["A"], "Restore only successfully disconnected devices, once")
-        display.sleepDisplays(); display.restoreBrightness(); precondition(adapter.sleeps == 1 && adapter.restoreCount > 0)
+        display.sleepDisplays(); await display.waitForDisplaySleep(); display.restoreBrightness(); precondition(adapter.sleeps == 1 && adapter.restoreCount > 0)
         precondition(DisplayPowerViewModel.shouldBlockMusic(enabled: true, launch: 12, lastPlayKey: 11))
         precondition(!DisplayPowerViewModel.shouldBlockMusic(enabled: true, launch: 15, lastPlayKey: 11))
         precondition(!DisplayPowerViewModel.shouldBlockMusic(enabled: false, launch: 12, lastPlayKey: 11))

@@ -1,8 +1,8 @@
-# Revisão pós-Sprint 6 — fila reservada
+# Revisão pós-Sprint 6 — execução autorizada
 
-19 de outubro de 2026. A pedido do usuário, registrar agora e executar as correções depois, em branch separada. **Não iniciar correções nem acionar agentes automaticamente.**
+19 de outubro de 2026. O usuário autorizou agora resolver a revisão e as pendências da Sprint 6, testar e commitar antes do merge e da Sprint 7. A instrução anterior de adiar está superada por esse pedido. [Execução atual](../sprint-6-revisao-execucao.md).
 
-Destino: **Sieg — Revisão**, chat `01a1434b-ee07-7e70-92e1-d6fbc21138dc`. Branch futura sugerida: `revisao/pos-sprint-6`, criada a partir da entrega publicada de `sprint-6`. Não foi criada nesta etapa. Usar somente `gpt-6.1-sol`, um agente ativo por vez; nenhum Astra. Preservar alterações de outros chats e manter commits por parte, sem coassinatura.
+Destino: **Sieg — Revisão**, chat `01a1434b-ee07-7e70-92e1-d6fbc21138dc`. Branch ativa: `revisao/pos-sprint-6`, criada a partir de `e229194`, entrega publicada de `sprint-6`. Usar somente `gpt-6.1-sol`, um agente ativo por vez; nenhum Astra. Preservar alterações de outros chats e manter commits por parte, sem coassinatura.
 
 A [revisão recebida](revisao-recebida.txt) foi preservada integralmente como material de referência. Suas afirmações e números não constituem validação independente. Reproduzir cada problema antes de alterar comportamento.
 
@@ -31,8 +31,14 @@ A [revisão recebida](revisao-recebida.txt) foi preservada integralmente como ma
 | S6-R6 | P2 | Botão verde consome apenas down; revisar pareamento de up/drag e recuperação de tap desabilitado. Preferências globais de Spaces/aceleração precisam de teste de restauração quando outro app/usuário altera o valor durante o uso. |
 | S6-R7 | P2 | Conferir nomes, aliases, fonte e data dos preços adicionados. Não apresentar inferência de modelo/preço nem API equivalente como cobrança/quota oficial. A revisão rápida não verificou preços externos. |
 
+## Resultado das correções
+
+R1/R2/R4: processos e concorrência corrigidos. R3: alegação não confirmada pelo SDK, conversão preservada. R5/R6: teardown, cache de overlay e dwell corrigidos, mantendo revalidação AX. R7: UI existente confirmada; busca e fallback de menu corrigidos. R8: materiais alheios preservados. S6-R1–R7: correções implementadas e validadas nos contratos disponíveis, com reavaliação dos dois casos do Dock identificados pela coordenação. [Conferência final](../sprint-6-conferencia-final.md).
+
+Fast final: 254/968; Complete IA: 75/77; build universal aprovado. O reteste físico dos caminhos novos continua pendente, conforme o roteiro atualizado.
+
 ## Limites da validação recebida
 
-O Fast registrado aprovou 233 funções/935 invocações; o recorte Complete de IA aprovou 26/26. O manifesto recebido não cobre o estado final de oito arquivos de IA alterados depois: `AIActivity.swift`, `AIUsage.swift`, `ModelPricing.swift`, `AIUsageViewModel.swift`, `AIUsageDetailsView.swift`, `AIUsageView.swift`, `AIActivityReaderTests.swift` e `LocalTokenReaderTests.swift`. Os resultados permanecem como histórico e não devem ser atribuídos automaticamente às fontes finais. A lacuna foi resolvida nesta publicação: nova execução Fast 233/935, Complete IA 26/26 e build aprovados, com manifestos atuais sem divergências. [Evidências novas](../../Validation/sprint-6-publicacao/verification.json). Os achados de código acima continuam pendentes.
+O Fast registrado aprovou 233 funções/935 invocações; o recorte Complete de IA aprovou 26/26. O manifesto recebido não cobre o estado final de oito arquivos de IA alterados depois: `AIActivity.swift`, `AIUsage.swift`, `ModelPricing.swift`, `AIUsageViewModel.swift`, `AIUsageDetailsView.swift`, `AIUsageView.swift`, `AIActivityReaderTests.swift` e `LocalTokenReaderTests.swift`. Os resultados permanecem como histórico e não devem ser atribuídos automaticamente às fontes finais. A lacuna foi resolvida nesta publicação: nova execução Fast 233/935, Complete IA 26/26 e build aprovados, com manifestos atuais sem divergências. [Evidências novas](../../Validation/sprint-6-publicacao/verification.json). As correções posteriores e sua validação estão registradas acima e na conferência final.
 
-Aceite físico segue pendente: [roteiro do Mac](../sprint-6-teste-manual.md). Nenhum app foi iniciado ou permissão modificada nesta revisão. As correções acima estão adiadas por instrução do usuário.
+O usuário aceitou o roteiro manual anterior: [escopo do aceite](../sprint-6-aceite-manual.md). Esse aceite não encerra os achados de código acima nem valida recursos novos destas correções. Não iniciar app ou alterar permissões durante verificações automatizadas.

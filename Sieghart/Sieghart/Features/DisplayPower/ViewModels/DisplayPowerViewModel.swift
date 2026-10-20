@@ -20,6 +20,7 @@ import Darwin
     private var disconnected: Set<String> = []
     private var lifecycle: [NSObjectProtocol] = []
     private var displayObserver: NSObjectProtocol?
+    private var displaySleepTask: Task<Void, Never>?
     private var mediaMonitor: Any?
     private var musicLaunchObserver: NSObjectProtocol?
     private var appActiveObserver: NSObjectProtocol?
@@ -54,7 +55,19 @@ import Darwin
     func setBrightness(_ value: Double, display: DisplayInfo) { perform { try backend.brightness(min(1, max(0, value)), display: display.id) }; refresh() }
     func setDimming(_ value: Double, display: DisplayInfo) { perform { try backend.dim(min(1, max(0.2, value)), display: display.id) }; refresh() }
     func restoreBrightness() { backend.restore(); refresh(); onReaction?(true) }
-    func sleepDisplays() { perform { try backend.sleepDisplays() } }
+    func sleepDisplays() {
+        guard displaySleepTask == nil else { return }
+        displaySleepTask = Task { [weak self] in
+            guard let self else { return }
+            defer { displaySleepTask = nil }
+            do {
+                try await backend.sleepDisplays()
+                try Task.checkCancellation()
+                error = nil; onReaction?(true)
+            } catch is CancellationError {} catch { self.error = error.localizedDescription; onReaction?(false) }
+        }
+    }
+    func waitForDisplaySleep() async { await displaySleepTask?.value }
     func willSleep() {
         backend.restore()
         guard disconnectBluetoothOnSleep else { return }
@@ -102,6 +115,7 @@ import Darwin
         }
     }
     func shutdown() {
+        displaySleepTask?.cancel()
         backend.restore(); didWake()
         lifecycle.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }; lifecycle = []
         if let displayObserver { NotificationCenter.default.removeObserver(displayObserver) }; displayObserver = nil

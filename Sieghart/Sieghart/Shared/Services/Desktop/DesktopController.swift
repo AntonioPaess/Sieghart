@@ -184,9 +184,11 @@ import Combine
         let current = generation
         let installed = pointer.start { [weak self] event in
             guard let self, self.generation == current, self.focusMonitoring, self.available, self.focusFollowsPointer else { return }
-            self.cancelFocusWait()
             guard self.trusted() else { self.configureMonitor(); return }
-            guard case .moved(let point) = event, point.x.isFinite, point.y.isFinite, !self.pointer.buttonsPressed else { return }
+            guard case .moved(let point) = event, point.x.isFinite, point.y.isFinite, !self.pointer.buttonsPressed else {
+                self.cancelFocusWait(); return
+            }
+            self.focusTicket += 1
             let ticket = self.focusTicket
             self.dwell.schedule { [weak self] in self?.focus(at: point, generation: current, ticket: ticket) }
         }

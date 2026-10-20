@@ -1,6 +1,6 @@
 # Sprint 6 — roteiro manual completo (partes 1–7)
 
-Projeto: `/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart.xcodeproj`, branch `sprint-6`. Use o scheme **Sieghart**, destino **My Mac** e ⌘R. Encerre a instância anterior antes de executar o build atualizado. `Sieghart-Checks` é o scheme dos testes automáticos.
+Projeto: `/Users/antoniopaesdeandrade/Documents/ChatGPT/MyDude/Sieghart/Sieghart.xcodeproj`, branch `revisao/pos-sprint-6`. Use o scheme **Sieghart**, destino **My Mac** e ⌘R. Encerre a instância anterior antes de executar o build atualizado. `Sieghart-Checks` é o scheme dos testes automáticos.
 
 ## Primeiro: permissão e trackpad
 
@@ -70,19 +70,23 @@ Se a lista continuar vazia e pedir acesso, volte ao primeiro bloco. Não é poss
 3. Ligue **Quit & close confirmation (⌘Q / ⌘W)** (e opcionalmente **Also require confirmation for ⌘W (Close Window)**): no Safari ou Notes, o primeiro `⌘Q` é interceptado e mostra o lembrete no Sieg; pressionar `⌘Q` novamente em até 1,5 s confirma o encerramento.
 4. Em **Text Snippets**, adicione um gatilho (ex.: `;sig` → `Sieghart Companion`), ligue **Expand text snippets while typing** e digite `;sig` no Notes: o gatilho deve ser apagado e substituído pelo texto. Em campos de senha (Secure Input), o estado informa pausa automática.
 
-## Parte 7: Dock preview, clique no Dock, botão verde, auto-quit e ordem dos Spaces
+## Parte 7: Dock, botão verde, auto-quit e preferências (correções pós-Sprint 6)
 
-1. Em **Windows** → **Dock, Green Button & Spaces**, ligue **Inspect Dock app windows** e clique em **Preview Dock** ao lado de um app na seção **Apps — bring an app forward**: os cartões mostram a proporção de cada janela e permitem **Show** ou **Minimize/Restore**.
-2. Em **Active Dock click action**, escolha **Minimize or restore windows** e use **Dock action** em um app ativo para alternar minimização/restauração de suas janelas.
-3. Ligue **Green button fills usable desktop (instead of full-screen)**: clicar no botão verde de uma janela externa deve preencher a área útil (sem criar Space de tela cheia) e um segundo clique no botão verde deve restaurar o tamanho anterior.
-4. Ligue **Quit app when its last window closes**: abra uma janela em um app comum (ex.: Notes ou TextEdit) e feche sua última janela; após o tempo configurado (`1–15 s`), o app deve encerrar. O Finder, Ajustes do Sistema e o próprio Sieghart nunca são encerrados.
-5. Ligue **Keep Spaces in fixed numerical order (disable MRU)** e depois clique **Restore original** (ou desligue a opção): `mru-spaces` deve retornar ao valor original salvo.
+1. Em **Windows** → **Dock, Maximize & Desktop Order**, ligue **Dock window previews**. Passe o ponteiro sobre o ícone de um app aberto no Dock e pare por cerca de 0,3 s. O painel junto ao ícone deve mostrar cartões de geometria e títulos de suas janelas (sem captura de imagem). Clique no título para trazer aquela janela à frente; **Minimize/Restore** deve atualizar o estado sem desativar os demais botões do painel. Sair do ícone/painel fecha a prévia. Passe pelo ícone e saia rapidamente, parando fora dele antes de 0,3 s: nenhuma prévia tardia pode abrir no ícone antigo. Os botões com nomes de apps dentro do Sieg continuam disponíveis após **Refresh list**.
+2. Em **Dock click behavior**, escolha **Minimize or restore windows**. Com o app já ativo, clique no ícone real dele no Dock para minimizar/restaurar. Teste também **Hide active app** e **Bring all app windows forward**. Clique em um app inativo ou com modificadores: mantém o comportamento nativo. A ação personalizada só ocorre ao soltar um clique curto, sem arrasto e sem modificadores. Arraste/reordene o ícone do app ativo: o Dock deve conservar esse gesto, sem minimizar/esconder o app. Segure para abrir o menu nativo e teste também clique direito: nenhuma ação personalizada deve ocorrer. Com todas as janelas minimizadas, um clique deve restaurar sem minimizar novamente a janela que o próprio Dock restaurou. **Keep macOS default** desliga a observação de cliques personalizados.
+3. Ligue **Green button maximizes to usable desktop**. Clique no botão verde de uma janela externa: deve preencher a área útil sem criar Space de tela cheia; clique novamente para restaurar. Faça down/arrasto/up e confirme uma única ação, sem tela cheia posterior ao release. Teste retomar após lock/sono: nenhum clique pode ser repetido por recuperação do tap. Desligue a opção e confira o comportamento nativo.
+4. Ligue **Quit app when last window closes**, com **Auto-quit delay: 3s**. Em TextEdit/Notes, abra duas janelas. Fechar a primeira não encerra o app; fechar a última agenda encerramento sem clicar **Refresh list**. Reabrir antes de 3 s cancela; fechar novamente inicia outro prazo. Janela minimizada continua contando como aberta. Finder, Ajustes do Sistema e Sieg são protegidos. Sem acesso AX ou com app sem resposta, nenhum encerramento é permitido. Sono/lock/desligar a opção cancelam o prazo pendente. Este roteiro exige autorização física do usuário e ainda não foi executado para o código novo.
+5. Ligue **Lock Desktop / Spaces order (disable auto-rearrange)** e clique **Restore original Spaces setting**: o valor anterior deve voltar. Repita alterando a opção correspondente de Mission Control nos Ajustes do Sistema enquanto o recurso está ligado; desligar, pausar ou encerrar Sieg deve preservar essa mudança externa. Se não conseguir ler/restaurar, o estado deve pedir nova tentativa e manter o backup.
+6. Em **Activation** → **Scrolling & Pointer**, teste **Mouse acceleration** e **Restore original Mac acceleration**. Primeiro confirme restauração normal. Depois altere a velocidade nos Ajustes do Sistema enquanto o Sieg está controlando a aceleração; restaurar/desligar/encerrar deve preservar o valor externo. Ao retomar de sono/lock, o backup passa a representar a configuração atual, sem reusar um backup já restaurado.
 
 ## Extensão de IA: Monitoramento local do Antigravity
 
 1. Na barra lateral do Sieg, clique em **AI limits** (ou abra **Tokens, charges & connections**).
 2. Caso o Antigravity ainda não esteja conectado, clique em **Connect local Antigravity usage** no cartão **Antigravity activity**.
-3. Verifique que o seletor de provedores no topo da tela **AI agents** passa a exibir **Antigravity** ao lado de **Codex** e **Claude**, lendo automaticamente as sessões locais em `~/.gemini/antigravity/brain` (contagem de sessões, tokens de entrada, saída, leitura de cache, estimativa de custo equivalente de API, gráfico de barras por hora, ranking de modelos/projetos e mapa de 13 semanas).
+3. Verifique que o seletor de provedores da tela **AI agents** exibe **Antigravity**, com sessões em `~/.gemini/antigravity/brain`. As quotas locais devem mostrar os rótulos observados e resets recebidos. Quando não houver duração explícita, deve aparecer **Window duration not supplied by local server**, sem inventar 5 horas ou uma semana.
+4. Feche o Antigravity: ao expirar 5 minutos da leitura ou chegar ao reset, deve aparecer **Current limits unavailable**. Um cache antigo sem proveniência não deve voltar a ser tratado como leitura atual. Reabrir só é necessário se o usuário autorizar testar o serviço real; esta revisão não o abriu nem leu tokens reais.
+5. Em **Prices & sources** / **Prices & recorded charges**, verifique **Gemini API price source** e **Claude API price source**. O texto identifica equivalente de API, não cobrança ou quota oficial do Antigravity. `gemini-antigravity`, `gpt-oss-120b` e aliases de raciocínio sem mapeamento verificado ficam sem preço. Os tokens continuam contabilizados e estimativas parciais são limites inferiores. Preços promocionais deixam de ser usados ao expirar; a auditoria documenta as datas.
+6. Testes automatizados cobrem redirecionamento recusado, corpo declarado/em stream excedido, timeout/cancelamento e troca do dono do endpoint, com URLProtocol/processos injetados. O caminho real depende de o language server expor listener IPv4 local identificável por PID; se isso faltar, quotas permanecem indisponíveis em vez de sondar portas adjacentes.
 
 ## Retomada e registro
 
@@ -92,6 +96,13 @@ Para relatar uma falha, registre: **bloco/passo, app, mouse ou trackpad, texto d
 
 
 
-## Limites encontrados na revisão rápida
+## Regressões corrigidas e limites de evidência
 
-Os cartões de janelas ficam na UI do Sieg; hover/clique diretamente nos ícones do Dock ainda não têm integração completa. Não considerar esses testes aprovados por contratos injetados. **Deixe auto-quit desligado** até corrigir a leitura AX desconhecida e a observação do fechamento. As correções estão reservadas para [Sieg — Revisão](revisao-pos-sprint-6/README.md).
+O checklist anterior continua histórico do aceite do usuário; ele não aprova automaticamente os gatilhos nativos novos. Os lotes e evidências estão em [sprint-6-revisao-execucao.md](sprint-6-revisao-execucao.md). Os testes desta revisão usam fixtures/processos descartáveis; não abriram Sieg/Xcode, contas, modelos de chat, permissões ou hardware real.
+
+- **Arquivos/captura:** cancelar uma operação deve encerrar o filho possuído; stdin indisponível não pode deixar uma caixa de senha pendurada. O runner tem limite padrão de 60 s, com escalada de término após 1 s. Imagens criptografadas continuam fora do fluxo suportado.
+- **Display:** a ação de apagar displays aguarda pmset sem travar a interface e falha em até cerca de 5 s mais término. A execução física apaga a tela; não foi disparada pelo assistente.
+- **RPC:** testes com stdin fechado/cheio e stop/restart não acionam modelos reais. Qualidade/conexão dos runtimes reais exigem tarefa de aceite própria.
+- **Foco/entrada:** rajadas de movimento não criam Task a cada pixel; clique/scroll cancela dwell. A janela sob o ponto é revalidada antes da ativação. Botão lateral down → interrupção → drag/up não pode disparar outra ação nem passar um release órfão após recuperação. As verificações físicas continuam pendentes.
+- **Ilha:** ao trocar app/Space, comparar presença no topo e manter a coreografia aprovada. A consulta de metadados do WindowServer é compartilhada pelos dois overlays na mesma atualização; o monitor de câmera é removido no encerramento/reconfiguração. CPU/RAM reais não foram medidos.
+- **Atalhos:** a alegação de ticks Mach foi rejeitada na triagem porque o SDK documenta CGEventTimestamp em nanossegundos. Confirmar uma ativação por gesto entre Carbon/tap/NSEvent no Mac, sem conversão Mach extra.

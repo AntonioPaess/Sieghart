@@ -82,7 +82,11 @@ final class NotchWidgetViewModel: ObservableObject {
     private var trackingIslandMenu = false
     private var sessionIsActive = true
     private var sessionObservation: AnyCancellable?
-    private var overlayLevel: NSWindow.Level { NotchOverlayPolicy.level(fullScreen: foregroundCoversNotchScreen) }
+    private var overlayLevel: NSWindow.Level = NotchOverlayPolicy.level(fullScreen: false)
+    private func refreshOverlayLevel() {
+        guard managesWindows else { return }
+        overlayLevel = NotchOverlayPolicy.level(fullScreen: foregroundCoversNotchScreen)
+    }
 
     private var foregroundCoversNotchScreen: Bool {
         guard let screen = notchScreen,
@@ -374,7 +378,17 @@ final class NotchWidgetViewModel: ObservableObject {
         }
     }
     func startUtilities() { if managesWindows { mouseButtons.start(); inputGuards.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; inputGuards.start(); desktop.start(); scrollInput.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; scrollInput.start() }; sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
-    func stopUtilities() { mouseButtons.stop(); inputGuards.stop(); desktop.stop(); scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
+    private func removeCameraMonitor() {
+        if let cameraClickMonitor { NSEvent.removeMonitor(cameraClickMonitor) }
+        cameraClickMonitor = nil
+    }
+    func stopUtilities() {
+        removeCameraMonitor(); pointerPresenceTask?.cancel(); pointerPresenceTask = nil
+        hideTask?.cancel(); hideTask = nil
+        workspaceObservation?.cancel(); sessionObservation?.cancel(); screenChangeObserver?.cancel()
+        preferencesObservation?.cancel(); menuObservation?.cancel()
+        panel?.orderOut(nil); hoverPanel?.orderOut(nil)
+        mouseButtons.stop(); inputGuards.stop(); desktop.stop(); scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
     private func beginCaptureSelection() {
         finishWelcome()
         captureWasVisible = isVisible; capturePreviousPage = presentation; captureHidesOverlay = true; capturePendingReveal = false
@@ -529,6 +543,7 @@ final class NotchWidgetViewModel: ObservableObject {
             scheduleHide(delay: keyboardRevealDelay)
         }
         guard managesWindows else { return }
+        refreshOverlayLevel()
         makePanelIfNeeded()
 
         guard let panel else { return }
@@ -614,6 +629,8 @@ final class NotchWidgetViewModel: ObservableObject {
     }
 
     private func configureHoverZone() {
+        removeCameraMonitor(); hoverPanel?.orderOut(nil)
+        refreshOverlayLevel()
         let hover = HoverZonePanel(
             contentRect: NSRect(x: 0, y: 0, width: geometry.cutoutWidth + 12, height: max(geometry.cutoutHeight, 30)),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -649,7 +666,7 @@ final class NotchWidgetViewModel: ObservableObject {
         // Global monitors exclude our own events, so native clicks fire once.
         cameraClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, self.hoverPanel?.frame.contains(NSEvent.mouseLocation) == true else { return }
+                guard let self, self.sessionIsActive, self.hoverPanel?.frame.contains(NSEvent.mouseLocation) == true else { return }
                 self.clickIsland()
             }
         }
@@ -699,6 +716,7 @@ final class NotchWidgetViewModel: ObservableObject {
         // A Space transition doesn't change the timer or reopen a dismissed
         // companion. Restore ordering only for surfaces that should be visible.
         screenDidChange()
+        refreshOverlayLevel()
         if let panel { configureOverlay(panel) }
         if let hoverPanel { configureOverlay(hoverPanel) }
         if isVisible { panel?.orderFrontRegardless() }

@@ -209,6 +209,7 @@ struct PointerAccelerationOptions: Equatable, Sendable {
     private let accelerationBackend: any PointerAccelerationBackend
     private let trusted: () -> Bool
     private let requestAccess: () -> Void
+    private var lastAppliedScaling: Double?
     private var started = false
     private var asleep = false
     private var locked = false
@@ -220,6 +221,7 @@ struct PointerAccelerationOptions: Equatable, Sendable {
          accelerationBackend: (any PointerAccelerationBackend)? = nil,
          trusted: @escaping () -> Bool = AXIsProcessTrusted,
          requestAccess: @escaping () -> Void = { AccessibilityAccess.request() }) {
+        lastAppliedScaling = defaults.object(forKey: "input.pointer.acceleration.lastApplied") as? Double
         self.defaults = defaults; self.backend = backend ?? NativeScrollInputBackend()
         self.accelerationBackend = accelerationBackend ?? NativePointerAccelerationBackend()
         self.trusted = trusted; self.requestAccess = requestAccess
@@ -294,52 +296,51 @@ struct PointerAccelerationOptions: Equatable, Sendable {
     func setSessionActive(_ value: Bool) { sessionActive = value; if started { configure(); configureAcceleration() } }
     func allowAccess() { requestAccess(); if started { configure() } }
     var hasConflict: Bool { options.horizontal && options.modifier.conflicts(with: shortcutChords()) }
+    private func setLastAppliedScaling(_ value: Double?) {
+        lastAppliedScaling = value
+        if let value { defaults.set(value, forKey: "input.pointer.acceleration.lastApplied") }
+        else { defaults.removeObject(forKey: "input.pointer.acceleration.lastApplied") }
+    }
+    @discardableResult private func restoreOwnedAcceleration() -> Bool {
+        guard let original = savedOriginalScaling else { return true }
+        guard let current = accelerationBackend.readScaling(), current.isFinite else {
+            accelerationStatus = "Could not read mouse acceleration; no setting was overwritten. Retry restore."; return false
+        }
+        guard let applied = lastAppliedScaling, abs(current - applied) < 0.000001 else {
+            saveOriginalScaling(nil); setLastAppliedScaling(nil)
+            accelerationStatus = "Preserved the mouse acceleration changed outside Sieghart."; return true
+        }
+        guard accelerationBackend.writeScaling(original) else {
+            accelerationStatus = "Could not restore previous mouse acceleration. Click Restore original Mac acceleration to retry."; return false
+        }
+        saveOriginalScaling(nil); setLastAppliedScaling(nil)
+        accelerationStatus = "Mouse acceleration control is off (restored previous Mac setting)."; return true
+    }
     func configureAcceleration() {
         let active = started && !asleep && !locked && sessionActive
-        guard active else {
-            if let original = savedOriginalScaling { _ = accelerationBackend.writeScaling(original) }
-            accelerationStatus = pointerAcceleration.enabled ? "Mouse acceleration paused while the Mac sleeps or is locked" : "Mouse acceleration control is off"
+        guard active, pointerAcceleration.enabled else {
+            if savedOriginalScaling != nil { _ = restoreOwnedAcceleration() }
+            else { accelerationStatus = pointerAcceleration.enabled ? "Mouse acceleration paused while the Mac sleeps or is locked" : "Mouse acceleration control is off" }
             return
         }
-        guard pointerAcceleration.enabled else {
-            if let original = savedOriginalScaling {
-                if accelerationBackend.writeScaling(original) {
-                    saveOriginalScaling(nil)
-                    accelerationStatus = "Mouse acceleration control is off (restored previous Mac setting)."
-                } else {
-                    accelerationStatus = "Could not restore previous mouse acceleration. Click Restore original to retry."
-                }
-            } else {
-                accelerationStatus = "Mouse acceleration control is off"
-            }
-            return
+        guard let current = accelerationBackend.readScaling(), current.isFinite else {
+            accelerationStatus = "Could not read current macOS mouse acceleration; nothing was changed."; return
         }
-        if savedOriginalScaling == nil {
-            guard let current = accelerationBackend.readScaling(), current.isFinite else {
-                accelerationStatus = "Could not read current macOS mouse acceleration; nothing was changed."
-                return
-            }
-            saveOriginalScaling(current)
+        if savedOriginalScaling != nil, let applied = lastAppliedScaling, abs(current - applied) >= 0.000001 {
+            saveOriginalScaling(nil); setLastAppliedScaling(nil); pointerAcceleration.enabled = false
+            accelerationStatus = "Preserved mouse acceleration changed outside Sieghart. Re-enable to apply again."; return
         }
+        if savedOriginalScaling == nil || lastAppliedScaling == nil { saveOriginalScaling(current) }
         if accelerationBackend.writeScaling(pointerAcceleration.targetScaling) {
+            setLastAppliedScaling(pointerAcceleration.targetScaling)
             accelerationStatus = pointerAcceleration.flatCurve ?
                 "Linear pointer curve active (acceleration off). Original setting saved for restore." :
                 String(format: "Mouse acceleration set to %.2fx. Original setting saved for restore.", pointerAcceleration.clampedSpeed)
-        } else {
-            accelerationStatus = "Could not update mouse acceleration. Retry or restore original."
-        }
+        } else { accelerationStatus = "Could not update mouse acceleration. Retry or restore original." }
     }
     func restoreOriginalAcceleration() {
-        if pointerAcceleration.enabled {
-            pointerAcceleration.enabled = false
-        } else if let original = savedOriginalScaling {
-            if accelerationBackend.writeScaling(original) {
-                saveOriginalScaling(nil)
-                accelerationStatus = "Mouse acceleration control is off (restored previous Mac setting)."
-            } else {
-                accelerationStatus = "Could not restore previous mouse acceleration. Click Restore original to retry."
-            }
-        }
+        if pointerAcceleration.enabled { pointerAcceleration.enabled = false }
+        else { _ = restoreOwnedAcceleration() }
     }
     func configure() {
         generation += 1; backend.stop(); health?.cancel(); health = nil; inputHint = nil
@@ -378,9 +379,7 @@ struct PointerAccelerationOptions: Equatable, Sendable {
     }
     func stop() {
         started = false; generation += 1; health?.cancel(); health = nil; backend.stop()
-        if let original = savedOriginalScaling, accelerationBackend.writeScaling(original) {
-            if !pointerAcceleration.enabled { saveOriginalScaling(nil) }
-        }
+        _ = restoreOwnedAcceleration()
         for (center, token) in observers { center.removeObserver(token) }; observers = []
         status = "Scroll utilities are off"; accelerationStatus = "Mouse acceleration control is off"; inputHint = nil
     }

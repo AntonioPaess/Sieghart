@@ -61,7 +61,7 @@ import Combine
                 return self.receive(sample)
             }, interrupted: { [weak self] in
                 guard let self, self.generation == current, self.installed else { return }
-                self.stopBackend(); self.configure()
+                self.stopBackend(preserveHeld: true); self.configure()
             })
             installed = true; status = "Mouse button actions are ready."
             health = Task { @MainActor [weak self] in
@@ -121,8 +121,11 @@ import Combine
         }
     }
     private func cancelActions() { actionGeneration += 1; worker?.cancel(); worker = nil; queue = [] }
-    private func stopBackend() {
-        generation += 1; installed = false; backend.stop(); captured = []
+    private func stopBackend(preserveHeld: Bool = false) {
+        // A recovered tap still owes the release of every swallowed down.
+        // Reconcile lost releases against physical state before replacing it.
+        captured = preserveHeld ? captured.filter { backend.isPressed($0) } : []
+        generation += 1; installed = false; backend.stop()
         health?.cancel(); health = nil; cancelActions()
     }
     func checkHealth() {

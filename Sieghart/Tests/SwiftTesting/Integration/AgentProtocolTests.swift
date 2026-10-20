@@ -65,6 +65,24 @@ extension MacContractsTests {
             #expect(latest["codex:child-0"]?.state == .working && latest["codex:child-1"]?.state == .interrupted)
             #expect(latest["codex:child-4"]?.task == "Review the parser")
         }
+        @Test("G17.06 — RPC broken/full stdin survives stop and restart")
+        func stdinLifecycle() async throws {
+            let directory = try IntegrationDirectory("rpc-stdin"); defer { directory.cleanup() }
+            let rpc = AgentRPCProcess(); defer { rpc.stop(notify: false) }
+            let closed = try directory.python("import os,time\nos.close(0)\nprint('{}', flush=True)\ntime.sleep(2)\n")
+            try rpc.start(closed, arguments: [])
+            try await Task.sleep(for: .milliseconds(150))
+            try rpc.send(.object(["data": .string(String(repeating: "x", count: 200_000))]))
+            try await IntegrationWait.until { !rpc.running }
+            let stalled = try directory.python("import time\ntime.sleep(20)\n")
+            for _ in 0..<4 {
+                try rpc.start(stalled, arguments: [])
+                try rpc.send(.object(["data": .string(String(repeating: "x", count: 200_000))]))
+                rpc.stop(notify: false)
+            }
+            try await Task.sleep(for: .milliseconds(100))
+            #expect(!rpc.running)
+        }
         @Test("G17.06 — RPC timeout e cancelamento são bounded; disconnect encerra processo")
         func boundedRPC() async throws {
             let fixture = try IntegrationCodexFixture(); defer { fixture.cleanup() }

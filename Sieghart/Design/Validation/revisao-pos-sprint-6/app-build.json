@@ -1,0 +1,23 @@
+{
+  "result": "BUILD SUCCEEDED",
+  "configuration": "Debug",
+  "scheme": "Sieghart",
+  "architectures": [
+    "arm64",
+    "x86_64"
+  ],
+  "codeSigningAllowed": false,
+  "binary": "/private/tmp/sieg-pos-s6/AppBuild/Build/Products/Debug/Sieghart.app/Contents/MacOS/Sieghart",
+  "binarySHA256": "f36883005dba176edf7e7c62bd4e75bc5902077c12fa4000b989346260b5a93e",
+  "log": "/private/tmp/sieg-pos-s6/dock-followup/final-app-build.log",
+  "appLaunched": false,
+  "sourceMode": "Temporary project copy with original source symlinks; byte-identical Info.plist added for app target",
+  "projectMatchesOriginal": true,
+  "packagedPriceCatalogMatchesOriginal": true,
+  "sourceManifestMismatches": [],
+  "independentReviewFollowup": [
+    "Passive Dock click observation preserving native drags and pre-native intent",
+    "Current hover location and identity revalidation"
+  ],
+  "previousBuildInfrastructureRecovery": "Failed solely because Info.plist was absent from the test runner temporary project; app-build-missing-input.log retained"
+}

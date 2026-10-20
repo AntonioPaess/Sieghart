@@ -141,6 +141,7 @@
               {
                 "name": "DockSpacesLogicTests",
                 "testFunctions": [
+                  "pairedClick()",
                   "previewAspectAndProtectedBundles()"
                 ]
               },
@@ -222,7 +223,8 @@
                 "testFunctions": [
                   "menuMatch(_:)",
                   "navigationScope()",
-                  "options()"
+                  "options()",
+                  "virtualMenu()"
                 ]
               },
               {
@@ -413,6 +415,23 @@
                 ]
               },
               {
+                "name": "AntigravityPricingTests",
+                "testFunctions": [
+                  "cacheMigration()",
+                  "verifiedRatesAndAliases()"
+                ]
+              },
+              {
+                "name": "AntigravitySecurityTests",
+                "testFunctions": [
+                  "boundedTransport()",
+                  "endpointOwnership()",
+                  "quotaProvenance()",
+                  "rejectedOwnerAndCancellation()",
+                  "transportCancellation()"
+                ]
+              },
+              {
                 "name": "AudioApplicationTests",
                 "testFunctions": [
                   "applications()"
@@ -527,15 +546,29 @@
               {
                 "name": "DisplayPowerTests",
                 "testFunctions": [
-                  "displayOwnership()"
+                  "displayOwnership()",
+                  "displaySleepCancellation()"
+                ]
+              },
+              {
+                "name": "DockObservationTests",
+                "testFunctions": [
+                  "currentHover(_:)",
+                  "rejectedGesture(_:)",
+                  "shortClick()",
+                  "throttledExit()"
                 ]
               },
               {
                 "name": "DockSpacesContracts",
                 "testFunctions": [
                   "autoQuitLastWindow()",
+                  "beforeNativeDockIntent()",
                   "dockPreviewAndClick()",
+                  "externalSpacesChange()",
                   "greenButtonMaximizeAndRestore()",
+                  "nativeDockRouting()",
+                  "observedCloseAndUnknown()",
                   "spacesOrderRestore()"
                 ]
               },
@@ -619,6 +652,7 @@
                   "consent()",
                   "disableWhileHeld()",
                   "eventBridge()",
+                  "heldRecovery()",
                   "lifecycle()",
                   "missedRelease()",
                   "queue()",
@@ -632,6 +666,12 @@
                 "name": "OnboardingPreferenceTests",
                 "testFunctions": [
                   "onboarding()"
+                ]
+              },
+              {
+                "name": "PointerDwellRegressionTests",
+                "testFunctions": [
+                  "coalescedMotion()"
                 ]
               },
               {
@@ -659,6 +699,7 @@
                 "testFunctions": [
                   "accelerationRestore()",
                   "consent()",
+                  "externalAccelerationChange()",
                   "failedStart()",
                   "lateConflict()",
                   "nativeFields()",

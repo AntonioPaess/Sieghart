@@ -1,0 +1,104 @@
+{
+  "baseline": "e22919403134600e339459f665915c4c0b3f30f1",
+  "branch": "revisao/pos-sprint-6",
+  "fast": {
+    "plan": "Sieghart-Fast",
+    "selectedFunctions": 254,
+    "functionResults": {
+      "Passed": 254
+    },
+    "invocationResults": {
+      "Passed": 968
+    },
+    "sourceChangedDuringRun": [],
+    "missingTests": [],
+    "unexpectedTests": [],
+    "productionCoverageFiles": 139,
+    "expectedProductionCoverageFiles": 139,
+    "xcodeExitCode": 0
+  },
+  "completeAI": {
+    "plan": "Sieghart-Complete",
+    "selectedFunctions": 75,
+    "functionResults": {
+      "Passed": 75
+    },
+    "invocationResults": {
+      "Passed": 77
+    },
+    "sourceChangedDuringRun": [],
+    "missingTests": [],
+    "unexpectedTests": [],
+    "productionCoverageFiles": 139,
+    "expectedProductionCoverageFiles": 139,
+    "xcodeExitCode": 0
+  },
+  "focused": {
+    "lote1": {
+      "functions": 71,
+      "invocations": 88
+    },
+    "lote2": {
+      "functions": 92,
+      "invocations": 428
+    },
+    "lote3": {
+      "functions": 54,
+      "invocations": 69
+    },
+    "lote4": {
+      "functions": 19,
+      "invocations": 19
+    }
+  },
+  "swiftInputs": 221,
+  "additionalInputs": 7,
+  "currentSourceMismatches": [],
+  "sourceMode": "Original workspace source bytes; no runtime source mirror or alternate implementation",
+  "appBuild": "app-build.json",
+  "snapshots": "/private/tmp/s6-review-lotes",
+  "noCommitPushMerge": true,
+  "manualGates": [
+    "Native Dock/AX observer and event taps",
+    "Real permissions and screen lock/sleep",
+    "Whole-process CPU/RAM",
+    "Antigravity real listener/service compatibility",
+    "Live coding runtimes/accounts and credential stores"
+  ],
+  "historicalAcceptancePreserved": true,
+  "focusedDockAfterIndependentReview": {
+    "plan": "Sieghart-Fast",
+    "selectedFunctions": 35,
+    "functionResults": {
+      "Passed": 35
+    },
+    "invocationResults": {
+      "Passed": 54
+    },
+    "sourceChangedDuringRun": [],
+    "missingTests": [],
+    "unexpectedTests": [],
+    "productionCoverageFiles": 139,
+    "expectedProductionCoverageFiles": 139,
+    "xcodeExitCode": 0
+  },
+  "followupSwiftDelta": [
+    "Sieghart/Shared/Services/Desktop/DockSpacesController.swift",
+    "Tests/SwiftTesting/Core/DockSpacesTests.swift"
+  ],
+  "finalLogs": "/private/tmp/sieg-pos-s6/dock-followup",
+  "versionedFastSelection": {
+    "functions": 1,
+    "matchesValidatedRunner": true,
+    "SHA256": "5e2058dc6668b034b7062b185a047f0847c5480b844c750a5f3fe83e6ca8fbd6"
+  },
+  "infrastructureChecks": {
+    "selection": {
+      "passed": 4,
+      "initialTransientFailure": "Invalid-filter subprocess returned 0 once; direct rejection and complete rerun passed without source changes"
+    },
+    "projectSources": {
+      "passed": 3
+    }
+  }
+}

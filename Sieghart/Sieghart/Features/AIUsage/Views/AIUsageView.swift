@@ -114,8 +114,13 @@ struct AIUsageView: View {
             if let report {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     VStack(alignment: .leading, spacing: dense ? 6 : 10) {
-                        if let window = report.primary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
-                        if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
+                        if provider == .antigravity {
+                            if report.isCurrentAntigravity(at: context.date), let window = report.primary { AntigravityAllowanceView(window: window, now: context.date) }
+                            else { Text("Current limits unavailable").font(.caption) }
+                        } else {
+                            if let window = report.primary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
+                            if let window = report.secondary { QuotaWindowView(window: window.window, now: context.date, compact: true, dense: dense) }
+                        }
                     }
                 }
                 if !dense && provider == .claude { Text(usage.claudeSource).font(.caption2).foregroundStyle(CompanionStyle.muted) }
@@ -303,8 +308,8 @@ struct AIUsageView: View {
         return count
     }
     private func modelName(_ model: String) -> String {
-        if model == "Unknown model" { return "Model not recorded" }
-        if model == "gemini-antigravity" || model.hasPrefix("gemini-4-argon") { return "Gemini 4 Argon" }
+        if model == "Unknown model" || model == "gemini-antigravity" { return "Model not recorded" }
+        if model.hasPrefix("gemini-4-argon") { return "Gemini 4 Argon" }
         if model.hasPrefix("gemini-3.8-flash") || model.hasPrefix("gemini-3-8-flash") { return "Gemini 3.8 Flash" }
         if model.hasPrefix("claude-opus-5-5") || model.hasPrefix("claude-opus-5.5") { return "Claude Opus 5.5" }
         if model.hasPrefix("claude-sonnet-5-5") || model.hasPrefix("claude-sonnet-5.5") { return "Claude Sonnet 5.5" }
@@ -314,4 +319,20 @@ struct AIUsageView: View {
         return model
     }
     private func short(_ value: Int64) -> String { value.formatted(.number.notation(.compactName)) }
+}
+
+struct AntigravityAllowanceView: View {
+    var window: ClaudeLimitsReport.ReportWindow
+    var now: Date
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(window.scope ?? "Model allowance").font(.caption.weight(.semibold))
+            Text("\(Int(window.usedPercent.rounded()))% used").font(.caption).monospacedDigit()
+            ProgressView(value: window.usedPercent, total: 100).accessibilityLabel("Allowance used")
+            if let reset = window.resetsAt {
+                Text("Resets " + Date(timeIntervalSince1970: reset).formatted(date: .abbreviated, time: .shortened)).font(.caption2)
+            } else { Text("Reset time unavailable").font(.caption2) }
+            if window.durationKnown != true { Text("Window duration not supplied by local server").font(.caption2).foregroundStyle(.secondary) }
+        }
+    }
 }

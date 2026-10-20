@@ -1,0 +1,297 @@
+{
+  "G20.01": [
+    {
+      "identifier": "SieghartTests/LogicTests/WindowGeometryTests/layouts(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 6,
+      "profile": "logic"
+    }
+  ],
+  "G20.02": [
+    {
+      "identifier": "SieghartTests/LogicTests/WindowGeometryTests/displays()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 22,
+      "profile": "logic"
+    }
+  ],
+  "G20.03": [
+    {
+      "identifier": "SieghartTests/LogicTests/WindowGeometryTests/edges()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 34,
+      "profile": "logic"
+    }
+  ],
+  "G20.04": [
+    {
+      "identifier": "SieghartTests/LogicTests/WindowGeometryTests/movement()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 46,
+      "profile": "logic"
+    }
+  ],
+  "G20.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/consent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 226,
+      "profile": "isolated"
+    }
+  ],
+  "G20.06": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/selectedWindow()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 242,
+      "profile": "isolated"
+    }
+  ],
+  "G20.07": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/staleUndo()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 260,
+      "profile": "isolated"
+    }
+  ],
+  "G20.08": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/history()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 273,
+      "profile": "isolated"
+    }
+  ],
+  "G20.09": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/drag()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 287,
+      "profile": "isolated"
+    }
+  ],
+  "G20.10": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/lifecycle()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 306,
+      "profile": "isolated"
+    }
+  ],
+  "G20.11": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/retry()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 326,
+      "profile": "isolated"
+    }
+  ],
+  "G20.12": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/activation()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 339,
+      "profile": "isolated"
+    }
+  ],
+  "G20.13": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DesktopContracts/transaction()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 353,
+      "profile": "isolated"
+    }
+  ],
+  "G21.01": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerDwellRegressionTests/coalescedMotion()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 379,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/consent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 118,
+      "profile": "isolated"
+    }
+  ],
+  "G21.02": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/dwellAndSelection()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 136,
+      "profile": "isolated"
+    }
+  ],
+  "G21.03": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/cancelMovement()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 149,
+      "profile": "isolated"
+    }
+  ],
+  "G21.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/staleTarget()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 163,
+      "profile": "isolated"
+    }
+  ],
+  "G21.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/lifecycle()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 176,
+      "profile": "isolated"
+    }
+  ],
+  "G21.06": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/revoked()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 192,
+      "profile": "isolated"
+    }
+  ],
+  "G21.07": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/PointerFocusContracts/failedMonitor()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DesktopTests.swift",
+      "sourceLine": 204,
+      "profile": "isolated"
+    }
+  ],
+  "G25.01": [
+    {
+      "identifier": "SieghartTests/LogicTests/DockSpacesLogicTests/previewAspectAndProtectedBundles()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 21,
+      "profile": "logic"
+    }
+  ],
+  "G25.02": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockObservationTests/currentHover(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 413,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockObservationTests/rejectedGesture(_:)",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 387,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockObservationTests/shortClick()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 377,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockObservationTests/throttledExit()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 403,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/beforeNativeDockIntent()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 268,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/dockPreviewAndClick()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 106,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/nativeDockRouting()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 245,
+      "profile": "isolated"
+    }
+  ],
+  "G25.03": [
+    {
+      "identifier": "SieghartTests/LogicTests/DockSpacesLogicTests/pairedClick()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 7,
+      "profile": "logic"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/greenButtonMaximizeAndRestore()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 145,
+      "profile": "isolated"
+    }
+  ],
+  "G25.04": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/autoQuitLastWindow()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 174,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/observedCloseAndUnknown()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 222,
+      "profile": "isolated"
+    }
+  ],
+  "G25.05": [
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/externalSpacesChange()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 296,
+      "profile": "isolated"
+    },
+    {
+      "identifier": "SieghartTests/MacContractsTests/DockSpacesContracts/spacesOrderRestore()",
+      "result": "Passed",
+      "sourceFile": "Tests/SwiftTesting/Core/DockSpacesTests.swift",
+      "sourceLine": 314,
+      "profile": "isolated"
+    }
+  ]
+}

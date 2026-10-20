@@ -1,0 +1,9 @@
+{
+  "Sieghart/Shared/Resources/ModelTokenPrices.json": "5236131a24e80a955165bafe23974f048038395e5e9435cba26a2df8bbbb3e4c",
+  "Sieghart.xcodeproj/project.pbxproj": "72345820520c57b889cb3b7eb2ccbc99343f4866b370577914b960b6bed93cf9",
+  "Tools/run-swift-tests.py": "e22532bf2d11b8d29f5d6b8aa4f672b4fdc34fe8d7651427a91dea23b49341d5",
+  "Tools/swift-test-index.py": "35b56f1302868e8ea5acf69c54a3cccd2d268b8f7d37e4de614260f1f078b976",
+  "Tests/TestPlans/Sieghart-Complete.xctestplan": "8c348c87451295ae127c3d6639cc6731f2a013504be4faaf4c2b4533a35c7d6b",
+  "Info.plist": "3e47bc57e816efce4cd14c65f638e1074e7a103e4f21b16f266a9a9fbec0d769",
+  "Tests/TestPlans/Sieghart-Fast.xctestplan": "5e2058dc6668b034b7062b185a047f0847c5480b844c750a5f3fe83e6ca8fbd6"
+}
