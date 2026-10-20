@@ -17,12 +17,17 @@ struct DisplayInfo: Identifiable, Equatable {
     func brightness(_ value: Double, display: CGDirectDisplayID) throws
     func dim(_ value: Double, display: CGDirectDisplayID) throws
     func restore()
-    func sleepDisplays() throws
+    func sleepDisplays() async throws
     func connectedBluetooth() -> [String]
     func disconnectBluetooth(_ id: String) throws
     func reconnectBluetooth(_ id: String) throws
 }
 @MainActor final class MacDisplayPowerBackend: NSObject, DisplayPowerBackend {
+    private let processRunner: any ToolProcessRunning
+    init(processRunner: any ToolProcessRunning = NativeToolProcess(timeout: 5)) {
+        self.processRunner = processRunner
+        super.init()
+    }
     var connectionResult: ((Bool) -> Void)?
     private typealias BrightnessGetter = @convention(c) (UInt32, UnsafeMutablePointer<Float>) -> Int32
     private typealias BrightnessSetter = @convention(c) (UInt32, Float) -> Int32
@@ -66,10 +71,9 @@ struct DisplayInfo: Identifiable, Equatable {
         for (id, baseline) in originalGamma { _ = CGSetDisplayTransferByTable(id, UInt32(baseline.0.count), baseline.0, baseline.1, baseline.2) }
         originalGamma = [:]; dimming = [:]
     }
-    func sleepDisplays() throws {
-        let process = Process(); process.executableURL = URL(fileURLWithPath: "/usr/bin/pmset"); process.arguments = ["displaysleepnow"]
-        try process.run(); process.waitUntilExit()
-        guard process.terminationStatus == 0 else { throw UtilityFailure(message: "macOS couldn't put the displays to sleep") }
+    func sleepDisplays() async throws {
+        let result = try await processRunner.run(URL(fileURLWithPath: "/usr/bin/pmset"), arguments: ["displaysleepnow"])
+        guard result.status == 0 else { throw UtilityFailure(message: "macOS couldn't put the displays to sleep") }
     }
     func connectedBluetooth() -> [String] { (IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] ?? []).filter { $0.isConnected() }.compactMap(\.addressString) }
     func disconnectBluetooth(_ id: String) throws {

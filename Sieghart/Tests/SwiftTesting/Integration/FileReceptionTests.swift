@@ -110,6 +110,18 @@ extension MacContractsTests {
             await files.shutdownAndFlush()
             }
         }
+        @Test("G16.10 — stdin recebe EOF e deadline mata filho que ignora SIGTERM", .tags(.localIntegration))
+        func processEOFAndDeadline() async throws {
+            let directory = try IntegrationDirectory("process-deadline"); defer { directory.cleanup() }
+            let eof = try directory.python("import sys\nprint(len(sys.stdin.read()))\n")
+            let result = try await NativeToolProcess(timeout: 2).run(eof, arguments: [])
+            #expect(String(data: result.output, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) == "0")
+            let stalled = try directory.python("import signal,time\nsignal.signal(signal.SIGTERM, signal.SIG_IGN)\ntime.sleep(20)\n")
+            let start = ContinuousClock.now
+            do { _ = try await NativeToolProcess(timeout: 0.3).run(stalled, arguments: []); Issue.record("Missing process deadline") }
+            catch ToolProcessError.timedOut {}
+            #expect(start.duration(to: .now) < .seconds(4))
+        }
         @Test("G16.10 — argumentos literais sem shell e cancelamento após filho iniciar", .tags(.localIntegration))
         func processArgumentsAndCancellation() async throws {
             let runner = NativeToolProcess()

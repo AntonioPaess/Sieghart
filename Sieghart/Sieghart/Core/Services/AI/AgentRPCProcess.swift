@@ -5,7 +5,7 @@ import Darwin
     var onMessage: ((AgentJSON) -> Void)?
     var onDisconnect: (() -> Void)?
     private var process: Process?
-    private var input: FileHandle?
+    private var input: RPCInputWriter?
     private var output: FileHandle?
     private var errors: FileHandle?
     private var buffer = Data()
@@ -13,7 +13,6 @@ import Darwin
     private var counter = 0
     private var pending: [String: CheckedContinuation<AgentJSON, any Error>] = [:]
     private var deadlines: [String: Task<Void, Never>] = [:]
-    private let writer = DispatchQueue(label: "sieg.agent-rpc.write", qos: .utility)
     var running: Bool { process?.isRunning == true }
 
     func start(_ executable: URL, arguments: [String], environment: [String: String]? = nil) throws {
@@ -22,7 +21,7 @@ import Darwin
         child.executableURL = executable; child.arguments = arguments; child.environment = environment
         child.currentDirectoryURL = FileManager.default.temporaryDirectory
         child.standardInput = stdin; child.standardOutput = stdout; child.standardError = stderr
-        input = stdin.fileHandleForWriting; output = stdout.fileHandleForReading; errors = stderr.fileHandleForReading
+        input = try RPCInputWriter(stdin.fileHandleForWriting); output = stdout.fileHandleForReading; errors = stderr.fileHandleForReading
         stdout.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
             Task { @MainActor [weak self] in self?.consume(data, generation: version) }
@@ -59,9 +58,8 @@ import Darwin
         guard data.count <= 262_144 else { throw CodingAgentError.invalidResponse }
         data.append(10)
         let payload = data, version = generation
-        writer.async { [weak self] in
-            do { try input.write(contentsOf: payload) }
-            catch { Task { @MainActor [weak self] in guard self?.generation == version else { return }; self?.stop() } }
+        input.send(payload) { [weak self] in
+            Task { @MainActor [weak self] in guard self?.generation == version else { return }; self?.stop() }
         }
     }
     private func consume(_ data: Data, generation version: Int) {
@@ -92,9 +90,53 @@ import Darwin
             child?.terminate()
             DispatchQueue.global().asyncAfter(deadline: .now() + 1) { if let child, child.isRunning { kill(child.processIdentifier, SIGKILL) } }
         }
-        try? input?.close(); try? output?.close(); try? errors?.close()
+        input?.close(); try? output?.close(); try? errors?.close()
         input = nil; output = nil; errors = nil; buffer.removeAll(keepingCapacity: false)
         for id in Array(pending.keys) { finish(id, result: .failure(CodingAgentError.disconnected)) }
         if notify { onDisconnect?() }
+    }
+}
+
+// One queue owns all writes AND the final close. Nonblocking writes allow stop
+// to interrupt a full pipe without blocking the main actor or leaking a worker.
+private final class RPCInputWriter: @unchecked Sendable {
+    private let handle: FileHandle
+    private let queue = DispatchQueue(label: "sieg.agent-rpc.write", qos: .utility)
+    private let lock = NSLock()
+    private var stopped = false
+    init(_ handle: FileHandle) throws {
+        self.handle = handle
+        let fd = handle.fileDescriptor
+        guard fcntl(fd, F_SETNOSIGPIPE, 1) != -1,
+              fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) != -1 else {
+            try? handle.close(); throw CodingAgentError.disconnected
+        }
+    }
+    private var isStopped: Bool { lock.withLock { stopped } }
+    func send(_ payload: Data, failed: @escaping @Sendable () -> Void) {
+        queue.async { [self] in
+            guard !isStopped else { return }
+            let deadline = DispatchTime.now().uptimeNanoseconds + 2_000_000_000
+            let success = payload.withUnsafeBytes { bytes -> Bool in
+                guard let base = bytes.baseAddress else { return true }
+                var offset = 0
+                while offset < bytes.count {
+                    guard !isStopped, DispatchTime.now().uptimeNanoseconds < deadline else { return false }
+                    let count = Darwin.write(handle.fileDescriptor, base.advanced(by: offset), bytes.count - offset)
+                    if count > 0 { offset += count; continue }
+                    if count < 0 && errno == EINTR { continue }
+                    guard count < 0 && (errno == EAGAIN || errno == EWOULDBLOCK) else { return false }
+                    var descriptor = pollfd(fd: handle.fileDescriptor, events: Int16(POLLOUT), revents: 0)
+                    _ = poll(&descriptor, 1, 50)
+                }
+                return true
+            }
+            if !success && !isStopped { failed() }
+        }
+    }
+    func close() {
+        let first = lock.withLock { let first = !stopped; stopped = true; return first }
+        guard first else { return }
+        queue.async { [self] in try? handle.close() }
     }
 }
