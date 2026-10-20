@@ -26,6 +26,14 @@ extension LogicTests {
             #expect(!action.matchesMenu(key: nil, modifiers: modifiers, enabled: true))
             #expect(!action.matchesMenu(key: action.menuKey, modifiers: nil, enabled: true))
         }
+        @Test("G22.02 localized menus can expose only virtual keys without relaxing modifiers")
+        func virtualMenu() {
+            #expect(MouseButtonAction.back.matchesMenu(key: nil, virtualKey: 33, modifiers: 0, enabled: true))
+            #expect(MouseButtonAction.forward.matchesMenu(key: "", virtualKey: 30, modifiers: 0, enabled: true))
+            #expect(!MouseButtonAction.back.matchesMenu(key: "x", virtualKey: 33, modifiers: 0, enabled: true))
+            #expect(!MouseButtonAction.back.matchesMenu(key: nil, virtualKey: nil, modifiers: 0, enabled: true))
+            #expect(!MouseButtonAction.back.matchesMenu(key: nil, virtualKey: 33, modifiers: 1, enabled: true))
+        }
         @Test("G22.03 navigation cannot invoke indentation commands in an unrelated editor")
         func navigationScope() {
             for bundle in ["com.apple.finder", "com.apple.Safari", "com.google.Chrome"] {
@@ -169,6 +177,19 @@ extension MacContractsTests {
             monitor.fail = false; model.configure(); recovery(); #expect(monitor.starts == 2)
             let newer = try #require(monitor.interrupted); newer(); newer(); #expect(monitor.starts == 3)
             model.stop(); #expect(!old(.init(button: 3, phase: .down)) && dispatcher.prepared.isEmpty)
+        }
+        @Test("G22.08 held side-button pair survives interrupted tap without a second action")
+        func heldRecovery() async throws {
+            let store = try TestDefaults(); defer { store.cleanup() }
+            let monitor = MouseMonitorFixture(), dispatcher = MouseDispatcherFixture()
+            let model = MouseButtonController(defaults: store.value, backend: monitor, dispatcher: dispatcher, trusted: { true })
+            model.options.navigation = true; model.start(observeSystem: false)
+            #expect(monitor.send(3, .down))
+            let recovery = try #require(monitor.interrupted); recovery()
+            #expect(monitor.send(3, .down) && monitor.send(3, .dragged) && monitor.send(3, .up))
+            #expect(!monitor.send(3, .up))
+            #expect(dispatcher.prepared.count == 1)
+            model.stop()
         }
         @Test("G22.09 screen lock, sleep and session are independent; disabled wake remains off")
         func lifecycle() throws {

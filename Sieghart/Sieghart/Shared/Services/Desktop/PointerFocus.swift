@@ -46,13 +46,27 @@ enum PointerFocusEvent { case moved(CGPoint), cancel }
 }
 @MainActor final class NativePointerDwellScheduler: PointerDwellScheduling {
     private var task: Task<Void, Never>?
+    private var deadline: ContinuousClock.Instant?
+    private var perform: (@MainActor () -> Void)?
+    private let delay: Duration
+    private(set) var workersStarted = 0
+    init(delay: Duration = .milliseconds(300)) { self.delay = delay }
     func schedule(_ perform: @escaping @MainActor () -> Void) {
-        cancel()
-        task = Task { @MainActor in
-            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
-            guard !Task.isCancelled else { return }
-            perform()
+        deadline = .now + delay; self.perform = perform
+        guard task == nil else { return }
+        workersStarted += 1
+        task = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let next = self?.deadline else { return }
+                do { try await Task.sleep(until: next, clock: .continuous) } catch { return }
+                guard !Task.isCancelled, let self else { return }
+                // Motion only updates the deadline/closure; one worker sleeps.
+                guard let latest = deadline, ContinuousClock.now >= latest else { continue }
+                let action = self.perform
+                task = nil; deadline = nil; self.perform = nil
+                action?(); return
+            }
         }
     }
-    func cancel() { task?.cancel(); task = nil }
+    func cancel() { task?.cancel(); task = nil; deadline = nil; perform = nil }
 }

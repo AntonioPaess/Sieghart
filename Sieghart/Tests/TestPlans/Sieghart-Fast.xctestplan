@@ -222,7 +222,8 @@
                 "testFunctions": [
                   "menuMatch(_:)",
                   "navigationScope()",
-                  "options()"
+                  "options()",
+                  "virtualMenu()"
                 ]
               },
               {
@@ -620,6 +621,7 @@
                   "consent()",
                   "disableWhileHeld()",
                   "eventBridge()",
+                  "heldRecovery()",
                   "lifecycle()",
                   "missedRelease()",
                   "queue()",
@@ -633,6 +635,12 @@
                 "name": "OnboardingPreferenceTests",
                 "testFunctions": [
                   "onboarding()"
+                ]
+              },
+              {
+                "name": "PointerDwellRegressionTests",
+                "testFunctions": [
+                  "coalescedMotion()"
                 ]
               },
               {
