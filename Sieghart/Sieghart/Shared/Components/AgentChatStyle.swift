@@ -1,53 +1,93 @@
 import SwiftUI
 
 // Adapted from Coucou's MIT CardBackground, ChatBubble, TypingDotsView and
-// SendButtonStyle (71b773f08101237e1ec950efdaee17a626c830e6).
+// SendButtonStyle (71b773f08101237e1ec950efdaee17a626c830e6), upgraded with
+// Sieghart's Apple-like glassmorphic Ada Room design system.
 // Copyright (c) 2026 Louis Raillé. See THIRD_PARTY_NOTICES.md.
 enum AgentChatColor {
     static func hex(_ value: UInt32) -> Color {
         Color(red: Double((value >> 16) & 255) / 255, green: Double((value >> 8) & 255) / 255, blue: Double(value & 255) / 255)
     }
 }
+
 struct AgentChatBackground: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.islandPreview) private var preview
+
     var body: some View {
-        RoundedRectangle(cornerRadius: 20).fill(AgentChatColor.hex(0x141518))
-            .overlay {
-                RadialGradient(stops: [.init(color: AgentChatColor.hex(0x6366F1).opacity(0.5), location: 0), .init(color: .clear, location: 0.7)], center: UnitPoint(x: 0.5, y: 1.3), startRadius: 0, endRadius: 280)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-            }.overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.035), lineWidth: 1))
+        RoundedRectangle(cornerRadius: WorkspaceMetrics.cardRadius, style: .continuous)
+            .fill(CompanionStyle.surface)
+            .overlay(RoundedRectangle(cornerRadius: WorkspaceMetrics.cardRadius).stroke(CompanionStyle.edge.opacity(0.075)))
     }
 }
+
 struct AgentChatBubble: View {
     let message: CodingMessage
     var isStreaming = false
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.islandPreview) private var preview
+    @Environment(\.islandReduceMotion) private var reduceMotion
+
     var body: some View {
         if !message.text.isEmpty {
-            HStack(alignment: .top) {
+            let disclosure = AdaThoughtDisclosure.parse(message.text)
+            HStack(alignment: .bottom, spacing: 8) {
                 if message.role == .user {
-                    Spacer(minLength: 32)
-                    Text(verbatim: message.text).font(.system(size: 12.5)).foregroundStyle(AgentChatColor.hex(0xF1F2F4))
-                        .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(Color.white.opacity(0.13), in: RoundedRectangle(cornerRadius: 12))
+                    Spacer(minLength: 42)
+                    Text(verbatim: message.text)
+                        .font(AdaRoomTheme.bodyFont(size: 13))
+                        .foregroundStyle(AdaRoomTheme.userTextColor(for: scheme))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .textSelection(.enabled)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
+                        .background {
+                            let bubbleShape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            bubbleShape.fill(scheme == .dark ? CompanionStyle.accent.opacity(0.18) : CompanionStyle.accentInk)
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.10), lineWidth: 0.7)
+                        }
+                        
                 } else {
-                    Group {
-                        if isStreaming {
-                            // Streaming events are already batched at 15 Hz. Avoid
-                            // a second per-frame render loop just for a caret.
-                            Text(verbatim: message.text + " ▌").font(.system(size: 12.5))
-                                .foregroundStyle(AgentChatColor.hex(0xB0B5BE)).fixedSize(horizontal: false, vertical: true)
-                        } else if message.role == .tool {
-                            Text(verbatim: message.text).font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(AgentChatColor.hex(0xB0B5BE)).textSelection(.enabled)
-                        } else { AgentMarkdownView(markdown: message.text) }
-                    }.padding(.horizontal, 8).padding(.vertical, 6)
-                        .background(Color.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
-                    Spacer(minLength: 8)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Group {
+                            if isStreaming {
+                                Text(verbatim: disclosure.visibleReply + " ▌")
+                                    .font(AdaRoomTheme.bodyFont(size: 13))
+                                    .foregroundStyle(AdaRoomTheme.assistantTextColor(for: scheme))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            } else if message.role == .tool {
+                                Text(verbatim: disclosure.visibleReply)
+                                    .font(.system(size: 11.5, design: .monospaced))
+                                    .foregroundStyle(AdaRoomTheme.assistantTextColor(for: scheme).opacity(0.88))
+                                    .textSelection(.enabled)
+                            } else {
+                                AgentMarkdownView(markdown: disclosure.visibleReply)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background {
+                            let bubbleShape = RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            bubbleShape.fill(scheme == .dark ? Color.white.opacity(0.035) : Color.black.opacity(0.025))
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .strokeBorder(scheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.05), lineWidth: 0.7)
+                        }
+                        .shadow(color: .black.opacity(scheme == .dark ? 0.18 : 0.05), radius: 6, y: 2)
+                    }
+                    Spacer(minLength: 16)
                 }
             }
+            .transition(.opacity.combined(with: .scale(scale: 0.97)))
+
         }
     }
 }
+
 struct AgentTypingDots: View {
     @Environment(\.islandPreview) private var preview
     @Environment(\.islandReduceMotion) private var reduced
@@ -55,16 +95,39 @@ struct AgentTypingDots: View {
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<3, id: \.self) { index in
-                Circle().fill(AgentChatColor.hex(0x6B7079)).frame(width: 5, height: 5)
-                    .scaleEffect(phase ? 1.2 : 0.6)
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [AdaRoomTheme.auroraCyan, AdaRoomTheme.auroraViolet],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 5.5, height: 5.5)
+                    .scaleEffect(phase ? 1.25 : 0.65)
                     .animation(preview || reduced ? nil : .easeInOut(duration: 0.45).repeatForever().delay(Double(index) * 0.14), value: phase)
             }
         }.padding(.horizontal, 2).padding(.vertical, 4).onAppear { if !preview && !reduced { phase = true } }
     }
 }
+
 struct AgentChatSendStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.frame(width: 28, height: 28).background(AgentChatColor.hex(0xF5F6F8), in: Circle())
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+        configuration.label
+            .frame(width: 30, height: 30)
+            .background(
+                LinearGradient(
+                    colors: [AdaRoomTheme.auroraIndigo, AdaRoomTheme.auroraViolet],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: Circle()
+            )
+            .overlay {
+                Circle().strokeBorder(Color.white.opacity(0.35), lineWidth: 0.8)
+            }
+            .shadow(color: AdaRoomTheme.auroraIndigo.opacity(0.35), radius: 6, y: 2)
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .animation(AdaRoomTheme.springAnimation, value: configuration.isPressed)
     }
 }

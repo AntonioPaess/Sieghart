@@ -1,0 +1,38 @@
+{
+  "captureTime": "2026-10-22 11:37:34.3167 -0300",
+  "procPath": "/Applications/Sieghart.app/Contents/MacOS/Sieghart",
+  "bundleInfo": {
+    "CFBundleShortVersionString": "0.1.0",
+    "CFBundleVersion": "78",
+    "CFBundleIdentifier": "com.sieghart.app"
+  },
+  "procLaunch": "2026-10-22 11:32:34.8242 -0300",
+  "pid": 53386,
+  "parentProc": "codex",
+  "parentPid": 2846,
+  "responsibleProc": "ChatGPT",
+  "responsiblePid": 2797,
+  "termination": {
+    "flags": 518,
+    "code": 0,
+    "namespace": "TCC",
+    "details": [
+      "This app has crashed because it attempted to access privacy-sensitive data without a usage description. The app's Info.plist must contain an NSSpeechRecognitionUsageDescription key with a string value explaining to the user how the app uses this data."
+    ]
+  },
+  "installedPurposes": {
+    "NSSpeechRecognitionUsageDescription": "Sieghart transcribes your spoken focus commands after you start listening.",
+    "NSMicrophoneUsageDescription": "Sieghart listens only when you press the voice button."
+  },
+  "correctedLaunch": {
+    "pid": 54840,
+    "parentPid": 1,
+    "observedTCCSubject": "com.sieghart.app",
+    "voiceOrMicrophoneStartedByAgent": false
+  },
+  "keepAwakeBefore": {
+    "active": true,
+    "end": 814374877.258202,
+    "restoreOnLaunch": false
+  }
+}

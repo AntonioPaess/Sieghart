@@ -1,0 +1,185 @@
+{
+  "date": "2026-10-11",
+  "study": "HeyClicky 1.0.53 and Taby 1.0.13",
+  "rea_version": "6.4.0",
+  "skill_version": "39",
+  "target_execution": false,
+  "microphone_activation": false,
+  "app_installation": false,
+  "evidence": [
+    {
+      "file": "taby-artifact-evidence.json.gz",
+      "evidence_id": "ev_9544818a3a6fbe9dcc8668496c98ef8127cd7cd7735c0a5ac9a5655a3eeb4240",
+      "operation": "inspect_artifact",
+      "uncompressed_sha256": "9c6731e0071bb0d40dda40164211a89c5b68ce4b35d6766906f494b3d69d504b",
+      "uncompressed_bytes": 35682550,
+      "compressed_bytes": 8137344,
+      "subject": {
+        "name": "Taby-mac-arm64.dmg",
+        "digest": {
+          "sha256": "6aad13c73ae7ba117a743ec6ef48eb9883874937fa2fdd1857174cd766c98104"
+        },
+        "format": "dmg",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-app-study/Taby-mac-arm64.dmg"
+      },
+      "limitations": [
+        "15 integrity contradiction(s) were recorded; mismatched content is observed-untrusted.",
+        "Inspection derives bounded static hypotheses and next probes; it does not execute the artifact or claim format-specific semantics."
+      ]
+    },
+    {
+      "file": "clicky-artifact-evidence.json.gz",
+      "evidence_id": "ev_3a333548f4f20bce20085ec08e6005a0a2920fe63305a456630c1e83eccdd9df",
+      "operation": "inspect_artifact",
+      "uncompressed_sha256": "f841b7e11a8b1becba3391659a99bbdab12395b41308f182db82024913ff9b34",
+      "uncompressed_bytes": 364130,
+      "compressed_bytes": 86269,
+      "subject": {
+        "name": "HeyClicky.dmg",
+        "digest": {
+          "sha256": "a83c69ee8ec486d2cf9e257aaa39b612539f6b5544d52a4ef2caa652284bd31c"
+        },
+        "format": "dmg",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-app-study/HeyClicky.dmg"
+      },
+      "limitations": [
+        "Inspection derives bounded static hypotheses and next probes; it does not execute the artifact or claim format-specific semantics."
+      ]
+    },
+    {
+      "file": "clicky-macho-evidence.json.gz",
+      "evidence_id": "ev_4c6685854a0f21ae57deb850f8166d59ba58dd79f0e2271d3f3b46a3fd43ff9d",
+      "operation": "inspect_macho",
+      "uncompressed_sha256": "c6582b504b24f96c0ed4cc40f2f9e80f968a2075aa740495ee53d76187cca4ce",
+      "uncompressed_bytes": 568400,
+      "compressed_bytes": 56191,
+      "subject": {
+        "name": "HeyClicky",
+        "digest": {
+          "sha256": "970569210a71cf1f39790f7d0fc02af2a1d64bacf0259d4741f0fa63e53dbb31"
+        },
+        "format": "mach-o",
+        "architecture": "arm64",
+        "local_path": "/private/tmp/sieg-app-study/selected-clicky/Contents/MacOS/HeyClicky"
+      },
+      "limitations": [
+        "Imports and exports combine dyld_info and nm; stripped or toolchain-hidden symbols may be absent.",
+        "vtool output is retained as provenance but only otool build metadata is normalized."
+      ]
+    },
+    {
+      "file": "taby-animation-main-evidence.json.gz",
+      "evidence_id": "ev_f88e63307459f92b915c6ae3b9e46acd0cd16a6f05b0750085c2fb0d0f216250",
+      "operation": "analyze_javascript_application",
+      "uncompressed_sha256": "008c5f57326848a93bf6be390d6d442a99c59319e168071362ce45e2797a0482",
+      "uncompressed_bytes": 5642893,
+      "compressed_bytes": 901899,
+      "subject": {
+        "name": "main",
+        "digest": {
+          "sha256": "ed45d032ee739d8f8b360178a32795e9f00bfdec8a9fbfddaf3bf9279dc2c241"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-app-study/taby-selected-js/dist/main"
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    }
+  ],
+  "taby_static_scope": {
+    "parsed_files": 10,
+    "text_bytes_read": 45411,
+    "application_graph_coverage": {
+      "status": "complete",
+      "truncated": false,
+      "omitted_count": 0,
+      "limits": []
+    },
+    "semantic_coverage": {
+      "status": "unknown",
+      "families": [
+        {
+          "family": "boundary",
+          "status": "partial",
+          "retained_relations": 14,
+          "unknown_count": 9
+        },
+        {
+          "family": "call-flow",
+          "status": "partial",
+          "retained_relations": 122,
+          "unknown_count": 272
+        },
+        {
+          "family": "child-process",
+          "status": "partial",
+          "retained_relations": 0,
+          "unknown_count": 0
+        },
+        {
+          "family": "closure",
+          "status": "partial",
+          "retained_relations": 197,
+          "unknown_count": 0
+        },
+        {
+          "family": "configuration",
+          "status": "partial",
+          "retained_relations": 2,
+          "unknown_count": 0
+        },
+        {
+          "family": "data-flow",
+          "status": "partial",
+          "retained_relations": 1668,
+          "unknown_count": 253
+        },
+        {
+          "family": "event",
+          "status": "partial",
+          "retained_relations": 0,
+          "unknown_count": 0
+        },
+        {
+          "family": "object-flow",
+          "status": "partial",
+          "retained_relations": 263,
+          "unknown_count": 598
+        },
+        {
+          "family": "promise-ownership",
+          "status": "partial",
+          "retained_relations": 52,
+          "unknown_count": 28
+        },
+        {
+          "family": "request",
+          "status": "partial",
+          "retained_relations": 0,
+          "unknown_count": 0
+        },
+        {
+          "family": "resource-lifecycle",
+          "status": "partial",
+          "retained_relations": 0,
+          "unknown_count": 0
+        },
+        {
+          "family": "timer",
+          "status": "partial",
+          "retained_relations": 3,
+          "unknown_count": 4
+        }
+      ]
+    },
+    "scope_limitation": "Selected modules only; dependencies, renderer execution, integrations and full application semantics remain unverified."
+  }
+}

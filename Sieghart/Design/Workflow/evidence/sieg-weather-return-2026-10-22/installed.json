@@ -1,0 +1,7 @@
+{
+  "build": "80",
+  "path": "/Applications/Sieghart.app",
+  "sha256": "31dd968fa00e40fc880a6072da125fcca8aa9ed56c9b2f97b20f653743de7cf8",
+  "launch": "LaunchServices",
+  "audioTested": false
+}

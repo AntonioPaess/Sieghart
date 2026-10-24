@@ -22,7 +22,7 @@ struct TimerToolsView: View {
             HStack(spacing: compact ? 12 : 22) {
                 ForEach(TimerToolMode.allCases, id: \.self) { option in
                     Button { assistant.selectTimerMode(option) } label: {
-                        Text(option.title).font(.system(size: compact ? 11 : 13, weight: .semibold))
+                        Text(LocalizedStringKey(option.title)).font(.system(size: compact ? 11 : 13, weight: .semibold))
                             .foregroundStyle(mode == option ? CompanionStyle.ink : CompanionStyle.muted)
                             .padding(.vertical, 9)
                             .overlay(alignment: .bottom) { if mode == option { Capsule().fill(CompanionStyle.accent).frame(height: 2) } }
@@ -114,7 +114,7 @@ struct TimerToolsView: View {
     private func digits(_ value: String) -> some View { Text(value).font(.system(size: compact ? 28 : preferences.compactTimer ? 32 : 40, weight: .light, design: .rounded)).monospacedDigit().foregroundStyle(CompanionStyle.accentInk).lineLimit(1).minimumScaleFactor(0.7) }
     private func choice(_ title: String, selection: Binding<Int>, values: [Int], suffix: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.caption2).foregroundStyle(CompanionStyle.muted)
+            Text(LocalizedStringKey(title)).font(.caption2).foregroundStyle(CompanionStyle.muted)
             if preview { Text("\(selection.wrappedValue)\(suffix) ⌄").font(.callout.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk) }
             else {
                 Menu { ForEach(values, id: \.self) { value in Button("\(value)\(suffix)") { selection.wrappedValue = value } } } label: {

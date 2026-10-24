@@ -1,0 +1,419 @@
+{
+  "date": "2026-10-23",
+  "scope": "Project research documentation and existing static evidence only; no app binaries, downloaded installers or unrelated academic aegis-tcc folder",
+  "files": [
+    {
+      "source": "Sieghart-Research/README.md",
+      "destination": "Sieghart/Sieghart-Research/README.md",
+      "sha256": "2ff5323823592fb040df2a0ae4f5aed3df9f8f3436ddd2c6b25631a2b473b8bf",
+      "bytes": 5102,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/comparisons/ui-comparison.md",
+      "destination": "Sieghart/Sieghart-Research/comparisons/ui-comparison.md",
+      "sha256": "ceded19d7b42e93dbe3a6beef026770e6acc6a90bd425faad46f0bfe733f6751",
+      "bytes": 2999,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/comparisons/integration-opportunities.md",
+      "destination": "Sieghart/Sieghart-Research/comparisons/integration-opportunities.md",
+      "sha256": "181e890eef29c29a5ef5c1a904596c18318c2629cb7eb7f409b595030f59e2ef",
+      "bytes": 8526,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/comparisons/openjarvis-vs-sieghart-architecture.md",
+      "destination": "Sieghart/Sieghart-Research/comparisons/openjarvis-vs-sieghart-architecture.md",
+      "sha256": "8d19c965ce4457e389341d8eb1ded204c4a273114a47f8e9cfe62e960a103357",
+      "bytes": 12646,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/comparisons/automation-comparison.md",
+      "destination": "Sieghart/Sieghart-Research/comparisons/automation-comparison.md",
+      "sha256": "d80272bbb6199759b967895108ae3c4e975902b96d0993597a6a462765070acd",
+      "bytes": 3893,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/comparisons/ai-comparison.md",
+      "destination": "Sieghart/Sieghart-Research/comparisons/ai-comparison.md",
+      "sha256": "ffb9569eb4aeb12f667b7e615f04770266de7fb7f4fb0e5be83ab2a5b2261ad6",
+      "bytes": 3040,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/comparisons/voice-comparison.md",
+      "destination": "Sieghart/Sieghart-Research/comparisons/voice-comparison.md",
+      "sha256": "450a706bce9b6a5ecfe8a2f7c31b988a609636d73769430537650e625abce99e",
+      "bytes": 7443,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/roadmap/implementation-roadmap.md",
+      "destination": "Sieghart/Sieghart-Research/roadmap/implementation-roadmap.md",
+      "sha256": "3d45507ff62f8501388e65a82c94f09e764d451eac4c4f768b433618b6c7733d",
+      "bytes": 10009,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/integrations/openjarvis-integration-feasibility.md",
+      "destination": "Sieghart/Sieghart-Research/integrations/openjarvis-integration-feasibility.md",
+      "sha256": "0ae2e5ac4bda784b2a1bbb2c3424fbf77d38a6038569cc60550f1898ac18b5a8",
+      "bytes": 18670,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/integrations/brazilian-open-finance.md",
+      "destination": "Sieghart/Sieghart-Research/integrations/brazilian-open-finance.md",
+      "sha256": "2a9554ec6b0470fb1fb1f3e63fb262bc9de4d2a9540adf08b9f392600af8aad6",
+      "bytes": 11494,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/integrations/finance-mcp-integration.md",
+      "destination": "Sieghart/Sieghart-Research/integrations/finance-mcp-integration.md",
+      "sha256": "ee3e73715051c81ad044877de397c65566af0bc0f7beba06803e8cac186cb973",
+      "bytes": 8906,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/sieghart-ui-architecture.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/sieghart-ui-architecture.md",
+      "sha256": "8f8bbd42ee1e1ac3527e20ccb969442e7a20f39527826d73420ef3f2a0b0f6a7",
+      "bytes": 6285,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/financial-data-security.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/financial-data-security.md",
+      "sha256": "7938f21e82dfd948940514cd71734d7ba92f8458dc8f61a27b14d6f5f6a2cf6e",
+      "bytes": 10398,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/sieghart-voice-architecture.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/sieghart-voice-architecture.md",
+      "sha256": "6928c590f1b1cecd84d889dde65099608301467d6a97a33875cff43fef6de213",
+      "bytes": 9593,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/financial-agent-architecture.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/financial-agent-architecture.md",
+      "sha256": "22b7e2228b79768807decbcb367e868b09be3473efbfa76f7cb698bd51e60c19",
+      "bytes": 9357,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/agent-runtime-comparison.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/agent-runtime-comparison.md",
+      "sha256": "5bf1213e6a9811983be539c13d277af7a9d24fbceb4a4ae796c9b3e7d4006ebc",
+      "bytes": 9109,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/sieghart-automation-architecture.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/sieghart-automation-architecture.md",
+      "sha256": "a6bd3a84264e5fb6a7ad06a248688978f98a5b0e529edda47b3da4143d12540d",
+      "bytes": 10477,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/sieghart-agent-architecture.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/sieghart-agent-architecture.md",
+      "sha256": "abc8c9563f00cbf66c5a1c65e2fd3ca49848acef6e8832a5798747ce0be55d79",
+      "bytes": 7158,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/architecture/openjarvis-agent-runtime-analysis.md",
+      "destination": "Sieghart/Sieghart-Research/architecture/openjarvis-agent-runtime-analysis.md",
+      "sha256": "8dd16699cc0ec35675434ceba28fec130e1566ce95eca2affe4dc85bd24970bc",
+      "bytes": 16470,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/open-finance-openfinance-app.md",
+      "destination": "Sieghart/Sieghart-Research/applications/open-finance-openfinance-app.md",
+      "sha256": "503dd8c26d0b8d4fc234b3098262bd42d2b29fc16318f48930986fd68c1e2cd0",
+      "bytes": 16508,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/voiceink.md",
+      "destination": "Sieghart/Sieghart-Research/applications/voiceink.md",
+      "sha256": "1a15907514afb8f373933a0b8144dfc8f150d3db4fabdcce963507fae61c0d04",
+      "bytes": 11772,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/heyclicky.md",
+      "destination": "Sieghart/Sieghart-Research/applications/heyclicky.md",
+      "sha256": "3ec0db00cc98429bb92873ac1cf062f2ed21f689f1e95eb12bfbb14c4a1dfcb8",
+      "bytes": 22483,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/open-finance-comparison.md",
+      "destination": "Sieghart/Sieghart-Research/applications/open-finance-comparison.md",
+      "sha256": "f63cc8cd9beb69ec7c7917d5313c00d82ef2c67a814bb17d4a284f5965fb2b85",
+      "bytes": 9217,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/inventory.md",
+      "destination": "Sieghart/Sieghart-Research/applications/inventory.md",
+      "sha256": "80ea30ea05291d876951a6d9c80636398c0a529d564e5c8ce33210a7cf47bdde",
+      "bytes": 5093,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/boring-notch.md",
+      "destination": "Sieghart/Sieghart-Research/applications/boring-notch.md",
+      "sha256": "ef73455c4c9b0d12ae5bb22634958092923f97a2daed4e2c8aab671f8bcc7f9d",
+      "bytes": 26428,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/raycast.md",
+      "destination": "Sieghart/Sieghart-Research/applications/raycast.md",
+      "sha256": "b47750bb59f32ea3ca0bd71e65560eb8f1452191fffb7b3b8caff6c2e8584827",
+      "bytes": 18240,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/openjarvis.md",
+      "destination": "Sieghart/Sieghart-Research/applications/openjarvis.md",
+      "sha256": "75a497c0ae8fdfd5a0e07202ab379faaf98ddfded20bc31fab55dc106a3f9f34",
+      "bytes": 18634,
+      "status": "copied"
+    },
+    {
+      "source": "Sieghart-Research/applications/open-finance-deseretsaint.md",
+      "destination": "Sieghart/Sieghart-Research/applications/open-finance-deseretsaint.md",
+      "sha256": "e4318318863c0cbc37e79eddc18932611133815523ba27b778e0f7716485c25e",
+      "bytes": 23136,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/evidence-index.json",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/evidence-index.json",
+      "sha256": "b2af2e5a61296c753ad17e03087724ea468fb6fe429a63efeb40d5b8c01afd75",
+      "bytes": 6527,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/taby-animation-main-evidence.json.gz",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/taby-animation-main-evidence.json.gz",
+      "sha256": "ae62b193c1f41017ffb1dce39026413e131e2a8c45daa3a101ad8908a12b3a43",
+      "bytes": 901899,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/clicky-artifact-evidence.json.gz",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/clicky-artifact-evidence.json.gz",
+      "sha256": "b007fc9de7e3463f366f3795937c16c5ed7de129fd123a50ce8a9b5a12bebbed",
+      "bytes": 86269,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/README.md",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/README.md",
+      "sha256": "76abdb9760752a9fc887ff35d7438bab8e8c84d9f9293374a290e522827cd8aa",
+      "bytes": 11425,
+      "status": "already-present"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/taby-download-manifest.json",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/taby-download-manifest.json",
+      "sha256": "c9c9ee9d1906b9b3d81313742a4593cc86ce40c2b5aab8a19877681c449cfcc0",
+      "bytes": 356,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/clicky-download-manifest.json",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/clicky-download-manifest.json",
+      "sha256": "4c14b8221359047d6ff1f2cf11ce1e9a8f5ab17914f94bdf86f538e84fc3529d",
+      "bytes": 367,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/clicky-macho-evidence.json.gz",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/clicky-macho-evidence.json.gz",
+      "sha256": "99c6f4d8025a239699f32b2a69f31e0ad230de805105f8bb683acc5618ee1801",
+      "bytes": 56191,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/taby-renderer-observation-ranges.json",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/taby-renderer-observation-ranges.json",
+      "sha256": "a33c40d8a5c1382e9c089b923f0b38e0ece34c422605403e14a25b01bd7c5ca4",
+      "bytes": 1273,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/taby-selected-js-provenance.json",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/taby-selected-js-provenance.json",
+      "sha256": "d4557dd7cfd02efba1d746c77f8b1eeb1621f7f070e6e8836480878677678ac8",
+      "bytes": 2445,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/hey-assistants-2026-10-11/taby-artifact-evidence.json.gz",
+      "destination": "Sieghart/Design/Research/hey-assistants-2026-10-11/taby-artifact-evidence.json.gz",
+      "sha256": "11112717aa3344855429599c74f16297da1fd4531bd4daf26747f1b4bba29ad9",
+      "bytes": 8137344,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-modules.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-modules.json.gz",
+      "sha256": "eea97b944eabfc0b225c170b180e68bb310778a79496c8d28f1321ae8751a7f3",
+      "bytes": 3568,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-evidence.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-evidence.json.gz",
+      "sha256": "85de1d20d253eb9ffe84ab4f42c2fd9d2da94a71f63acd2fc628dbe1520d8deb",
+      "bytes": 43407,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/evidence-index.json",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/evidence-index.json",
+      "sha256": "43b106b66453b80c53b269edcc2fe3d337822c10ee62f99629e3d89a3525d9ac",
+      "bytes": 33048,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-summary.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-summary.json.gz",
+      "sha256": "fc1c358812ab9395254a1b095cf30fc10cb3e42750af11f7f8445932747d281c",
+      "bytes": 2490,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-item-connections.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-item-connections.json.gz",
+      "sha256": "d987b14412ee793d922f7b57946ded486b328f429493a81a7d8a42d02e3ad882",
+      "bytes": 2503,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-item-local-attachment-extractor.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-item-local-attachment-extractor.json.gz",
+      "sha256": "47babc5c73054e043505bf060097f5574377b5107d3d1fd6352124fd7d70a6df",
+      "bytes": 2502,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-evidence-complete.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-evidence-complete.json.gz",
+      "sha256": "658c7cebacfc31d1abfe3d15fdea94227768b7317e15987b88a2d8123fbfa617",
+      "bytes": 1714573,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-evidence-retry.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-evidence-retry.json.gz",
+      "sha256": "6883c3f8511fd31408c50e9f8d9ae4301b2e6995338a537108df15fe840b5d2d",
+      "bytes": 43400,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-item-local-brain-endpoint.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-item-local-brain-endpoint.json.gz",
+      "sha256": "7da3918443835dbb04f47acfa500ce5dbbc6ee9c77533c68e45182040ed2fb60",
+      "bytes": 2504,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-item-desktop-attachment-service.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-item-desktop-attachment-service.json.gz",
+      "sha256": "642f85d3b6d0dda37997dcc56eff2ddab37eb864fdb61f39419ac5fadd2cbbbb",
+      "bytes": 2510,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/rea-doctor-supported-node.json",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/rea-doctor-supported-node.json",
+      "sha256": "3716e2cdfa40e95ba46be9f1f6e44b88d61463a3d990459c6a3f78ecd93cea19",
+      "bytes": 64746,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-modules-more.json.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-modules-more.json.gz",
+      "sha256": "80c5d709c53f85cca08930645f08fca503cf4c821f68f79597199a05e599b107",
+      "bytes": 8442,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/taby-context-provenance.json",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/taby-context-provenance.json",
+      "sha256": "1d838b20b87cfd5e66077c4f495bddbae9a07bd5154a6c131f9ffe0601aa06ba",
+      "bytes": 3508,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/source-manifest.json",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/source-manifest.json",
+      "sha256": "c08be8385c787a07e8fd2943dcc1ce0f85232b89775f641ccf5441474e84f83d",
+      "bytes": 2716,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/agentes-ia-mcp.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/agentes-ia-mcp.html.gz",
+      "sha256": "97fe6cce45d3b5cfded05edae78c893f1f253f3e5324877fe3ffd5f5e3072cb2",
+      "bytes": 10609,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/conciliacao-duplicidades.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/conciliacao-duplicidades.html.gz",
+      "sha256": "11de4d6a422a6a73ee74cfdccee7f654d2d6c4df497b728c4e7f99533e6c4d30",
+      "bytes": 5611,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/organizar-perfis.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/organizar-perfis.html.gz",
+      "sha256": "5ab0bdcb5e393318f9a4bb79187026873bd67351ae3a5a489341f5ddc784420d",
+      "bytes": 6074,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/importar-csv-xlsx.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/importar-csv-xlsx.html.gz",
+      "sha256": "33c45f97ceed40d6149e6a37bd7f5c91348dae73401895dada0f9c856bfcd238",
+      "bytes": 7926,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/desktop.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/desktop.html.gz",
+      "sha256": "02723e7a030acb6a166ed7ce474add777db6f8bf0c6595a6fedbeb6062db0652",
+      "bytes": 5412,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/usar-mia.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/usar-mia.html.gz",
+      "sha256": "f8b7ad5e6a2b6177e493c9c5373e42b88bf44cc7dcb599356d9c7d6b7c61b685",
+      "bytes": 5785,
+      "status": "copied"
+    },
+    {
+      "source": "Design/Research/rea-apps-2026-10-13/finance-public-sources/permissoes-seguranca-agentes-ia.html.gz",
+      "destination": "Sieghart/Design/Research/rea-apps-2026-10-13/finance-public-sources/permissoes-seguranca-agentes-ia.html.gz",
+      "sha256": "d0b7226639cf3dcb280d32726f251b60493ab7d687c1d54608a571b699a077c5",
+      "bytes": 7769,
+      "status": "copied"
+    }
+  ]
+}

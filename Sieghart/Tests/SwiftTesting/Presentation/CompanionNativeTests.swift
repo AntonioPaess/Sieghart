@@ -171,6 +171,42 @@ extension MacContractsTests {
     }
 
     @MainActor @Suite(.tags(.companions, .nativeView)) struct CompanionRasterLifecycleTests {
+        @Test("G05.08 · Lifecycle timer survives window changes and releases detached or stopped views")
+        func renderViewWindowLifecycle() async throws {
+            let first = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 80, height: 80), styleMask: [.borderless], backing: .buffered, defer: false)
+            let second = NSWindow(contentRect: first.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+            first.isReleasedWhenClosed = false; second.isReleasedWhenClosed = false
+            defer { first.close(); second.close() }
+            var view: CompanionRenderView? = CompanionRenderView(frame: first.frame)
+            weak var releasedView = view
+            first.contentView = view
+            view?.animationEnabled = true
+            // Fire the real 2 Hz timer, then queue an old-window notification
+            // before reparenting. That callback must not stop the new lifecycle.
+            try await Task.sleep(for: .milliseconds(650))
+            NotificationCenter.default.post(name: NSWindow.willCloseNotification, object: first)
+            first.contentView = NSView(frame: first.frame)
+            second.contentView?.addSubview(try #require(view))
+            try await Task.sleep(for: .milliseconds(650))
+            #expect(view?.window === second && view?.animationEnabled == true)
+            view?.stopRendering()
+            #expect(view?.isPlaying == false && view?.rendersContinuously == false && view?.scene == nil)
+            view?.removeFromSuperview()
+            view = nil
+            try await Task.sleep(for: .milliseconds(650))
+            #expect(releasedView == nil)
+
+            // Teardown also works without an explicit stopRendering() call.
+            autoreleasepool {
+                let transient = CompanionRenderView(frame: first.frame)
+                releasedView = transient
+                first.contentView?.addSubview(transient)
+                transient.removeFromSuperview()
+            }
+            try await Task.sleep(for: .milliseconds(650))
+            #expect(releasedView == nil)
+        }
+
         @Test("G05.08 · Accessory is one mesh and detached views stop rendering/input") func detachedViews() {
             let circle = rigStroke(Path(ellipseIn: CGRect(x: 20, y: 20, width: 40, height: 40)), color: .white)
             #expect(circle.childNodes.isEmpty && circle.geometry != nil)

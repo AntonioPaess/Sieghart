@@ -9,25 +9,33 @@ final class CompanionRenderView: SCNView {
     var animationEnabled = false { didSet { refreshPlayback() } }
     private var visibilityObservers: [NSObjectProtocol] = []
     private var lifecycleTimer: Timer?
+    private var lifecycleID = UUID()
     override var isOpaque: Bool { false }
     override var acceptsFirstResponder: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override var focusRingMaskBounds: NSRect { .zero }
     override func drawFocusRingMask() {}
+    override func layout() { super.layout(); refreshTransparency() }
     override var isHidden: Bool { didSet { refreshPlayback() } }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        visibilityObservers.forEach { NotificationCenter.default.removeObserver($0) }
-        visibilityObservers.removeAll()
+        wantsLayer = true
+        layer?.isOpaque = false
+        layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.allowsGroupOpacity = false
+        refreshTransparency()
+        stopObservingLifecycle()
+        let lifecycleID = self.lifecycleID
         if let window {
             for name in [NSWindow.didChangeOcclusionStateNotification, NSWindow.didMiniaturizeNotification,
                          NSWindow.didDeminiaturizeNotification, NSWindow.willCloseNotification] {
                 visibilityObservers.append(NotificationCenter.default.addObserver(forName: name, object: window, queue: .main) { [weak self] note in
                     let closing = note.name == NSWindow.willCloseNotification
                     Task { @MainActor [weak self] in
-                        if closing { self?.animationEnabled = false }
-                        else { self?.refreshPlayback() }
+                        guard let self, self.lifecycleID == lifecycleID else { return }
+                        if closing { self.animationEnabled = false }
+                        else { self.refreshPlayback() }
                     }
                 })
             }
@@ -35,26 +43,46 @@ final class CompanionRenderView: SCNView {
         // AppKit does not notify descendants when an ancestor is hidden.
         // A cheap 2Hz visibility check prevents an attached but parked scene
         // from continuing to render after its panel leaves the screen.
-        lifecycleTimer?.invalidate(); lifecycleTimer = nil
         if window != nil {
             lifecycleTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.refreshPlayback() }
+                Task { @MainActor [weak self] in
+                    guard let self, self.lifecycleID == lifecycleID else { return }
+                    self.refreshPlayback()
+                }
             }
         }
         refreshPlayback()
     }
     func refreshPlayback() {
+        refreshTransparency()
         let visible = window.map { $0.isVisible && !$0.isMiniaturized && $0.occlusionState.contains(.visible) } ?? false
         let playing = animationEnabled && visible && !isHiddenOrHasHiddenAncestor
         if isPlaying != playing { isPlaying = playing }
         if rendersContinuously != playing { rendersContinuously = playing }
     }
+    private func refreshTransparency() {
+        // SceneKit can add a Metal backing layer after the host view attaches.
+        // Its own opaque flag must also allow the weather surface through.
+        func configure(_ target: CALayer) {
+            target.isOpaque = false
+            target.backgroundColor = NSColor.clear.cgColor
+            for child in target.sublayers ?? [] { configure(child) }
+        }
+        if let layer { configure(layer) }
+    }
     func stopRendering() {
         animationEnabled = false
+        stopObservingLifecycle()
+        delegate = nil; scene = nil
+    }
+    private func stopObservingLifecycle() {
+        // Ignore callbacks already queued for a detached window or stopped view.
+        lifecycleID = UUID()
         lifecycleTimer?.invalidate(); lifecycleTimer = nil
         visibilityObservers.forEach { NotificationCenter.default.removeObserver($0) }
-        visibilityObservers.removeAll(); delegate = nil; scene = nil
+        visibilityObservers.removeAll()
     }
+    isolated deinit { stopObservingLifecycle() }
 }
 
 @MainActor enum CompanionSceneLighting {
@@ -77,6 +105,7 @@ final class CompanionRenderView: SCNView {
         return camera
     }
     static func configure(_ view: SCNView, scene: SCNScene, camera: SCNNode) {
+        view.wantsLayer = true
         view.scene = scene; view.pointOfView = camera; view.backgroundColor = .clear
         view.autoenablesDefaultLighting = false; view.allowsCameraControl = false
         view.antialiasingMode = .multisampling2X; view.preferredFramesPerSecond = 60
@@ -84,6 +113,7 @@ final class CompanionRenderView: SCNView {
         view.focusRingType = .none
         view.layer?.isOpaque = false
         view.layer?.backgroundColor = NSColor.clear.cgColor
+        view.layer?.allowsGroupOpacity = false
     }
 }
 

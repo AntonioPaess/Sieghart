@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import SwiftUI
 import Testing
 
 extension MacContractsTests {
@@ -7,7 +8,7 @@ extension MacContractsTests {
         @Test("G04.12 · Injected browser acknowledges and collapsed result updates never reopen") func searchResult() async throws {
             let f = try PresentationFixture(); defer { f.cleanup() }
             let activation = try f.activation()
-            activation.executeVoiceCommand("search for café & Swift")
+            activation.executeVoiceCommand("search on Google for café & Swift")
             try await PresentationWait.until { activation.commandAcknowledged }
             #expect(activation.voiceStatus == "Search opened · Fixture café & Swift" && f.notch.presentation == .home)
             #expect(f.queries == ["café & Swift"])
@@ -117,6 +118,51 @@ extension MacContractsTests {
     }
 
     @MainActor @Suite(.tags(.isolated, .interactions)) struct IslandRevealTests {
+        @Test("G04.14 · Repeated layout deliveries preserve a morph and reopening cancels the old close")
+        func interruptibleOpening() async throws {
+            let canvas = IslandWindowCanvas(rootView: Text("Fixture · silent"))
+            let compact = IslandCanvasGeometry(size: CGSize(width: 220, height: 36), cutoutWidth: 180, cutoutHeight: 32, compact: true)
+            let expanded = IslandCanvasGeometry(size: CGSize(width: 620, height: 350), cutoutWidth: 180, cutoutHeight: 32, compact: false)
+            let reserved = CGSize(width: 764, height: 414)
+            var completions: [String] = []
+            canvas.prepare(target: compact, reserved: reserved, animated: false, closing: false, settled: {})
+            canvas.prepare(target: expanded, reserved: reserved, animated: true, closing: false) { completions.append("old opening") }
+            let generation = canvas.transitionGeneration
+            canvas.prepare(target: expanded, reserved: reserved, animated: true, closing: false) { completions.append("duplicate") }
+            #expect(canvas.transitionGeneration == generation && canvas.isAnimating)
+            canvas.prepare(target: compact, reserved: reserved, animated: true, closing: true) { completions.append("stale close") }
+            #expect(!canvas.backdropIsCompact) // Keep the light surface while shrinking; no black flash.
+            canvas.prepare(target: expanded, reserved: reserved, animated: true, closing: false) { completions.append("reopened") }
+            try await PresentationWait.until { completions == ["reopened"] }
+            #expect(canvas.targetGeometry == expanded && !canvas.isDeparting && !canvas.isAnimating)
+            try await PresentationWait.stays({ completions == ["reopened"] }, for: .milliseconds(300))
+        }
+        @Test("G04.14 · Reduced motion settles synchronously and contour easing never overshoots")
+        func motionAlternatives() {
+            let canvas = IslandWindowCanvas(rootView: Text("Fixture · silent"))
+            let geometry = IslandCanvasGeometry(size: CGSize(width: 620, height: 350), cutoutWidth: 180, cutoutHeight: 32, compact: false)
+            var settled = false
+            canvas.prepare(target: geometry, reserved: CGSize(width: 764, height: 414), animated: false, closing: false) { settled = true }
+            #expect(settled && !canvas.isAnimating && canvas.currentSurface == geometry.size)
+            for closing in [false, true] {
+                let timing = IslandTransitionTiming(from: CGSize(width: 220, height: 36), to: geometry.size, closing: closing)
+                let values = (-10...110).map { timing.progress(at: Double($0) / 100) }
+                #expect(values.allSatisfy { (0...1).contains($0) })
+                #expect(zip(values, values.dropFirst()).allSatisfy { $0 <= $1 })
+                #expect(timing.contentDelay + timing.contentDuration <= timing.duration)
+            }
+        }
+        @Test("G04.14 · Disabling decorative motion opens usable Home without a static introduction wait")
+        func optionalIntroduction() throws {
+            let f = try PresentationFixture(); defer { f.cleanup() }
+            f.preferences.reduceMotion = true
+            f.notch.showWelcome()
+            #expect(f.notch.isVisible && f.notch.presentation == .home && f.notch.welcomeStartedAt == nil)
+            f.preferences.reduceMotion = false; f.preferences.characterMotion = false
+            f.notch.showWelcome()
+            #expect(f.notch.isVisible && f.notch.welcomeStartedAt == nil)
+        }
+
         @Test("G04.14 · Modifier-only shortcuts suppress ordinary keys and backend duplicates") func shortcutDelivery() throws {
             let f = try PresentationFixture(); defer { f.cleanup() }
             let activation = try f.activation()

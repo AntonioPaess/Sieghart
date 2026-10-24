@@ -1,0 +1,12 @@
+{
+  "path": "/Applications/Sieghart.app",
+  "build": "78",
+  "bundleIdentifier": "com.sieghart.app",
+  "sha256": "2797259932307cb972c086189a31b3ac17f826c2340475ffe903598c8192db8e",
+  "architectures": "x86_64 arm64",
+  "testSuite": "360 tests / 1115 invocations passed; 195 production files covered",
+  "audioPlaybackTested": false,
+  "microphoneTested": false,
+  "keepAwakeDeadlinePreserved": true,
+  "weatherStudio": "/tmp/sieg-weather-studio/SiegWeatherStudio.app"
+}

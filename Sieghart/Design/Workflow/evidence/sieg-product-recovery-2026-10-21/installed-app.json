@@ -1,0 +1,19 @@
+{
+  "installedPath": "/Applications/Sieghart.app",
+  "build": "57",
+  "architectures": [
+    "x86_64",
+    "arm64"
+  ],
+  "signatureVerified": true,
+  "installedMatchesBuild": true,
+  "executableSHA256": "f44a633f1f524585732bfd1e9563daa5230c5c63ce584cde3cf570deeee98423",
+  "runningProcessCount": 1,
+  "runningPID": [
+    "34276"
+  ],
+  "microphoneStartedByAgent": false,
+  "audioPlayedByAgent": false,
+  "keepAwakeOptionsPreserved": true,
+  "keepAwakeActive": false
+}

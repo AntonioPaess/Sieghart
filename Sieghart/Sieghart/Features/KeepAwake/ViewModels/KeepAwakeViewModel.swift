@@ -3,7 +3,9 @@ import Combine
 import IOKit.pwr_mgt
 
 @MainActor final class KeepAwakeViewModel: ObservableObject {
-    @Published var request: AwakeRequest
+    @Published var request: AwakeRequest {
+        didSet { if request != oldValue { saveOptions() } }
+    }
     @Published private(set) var enabled = false
     @Published private(set) var holding = false
     @Published private(set) var status = "Your Mac follows its normal sleep settings"
@@ -24,7 +26,7 @@ import IOKit.pwr_mgt
         request = defaults.data(forKey: "awake.request").flatMap { try? JSONDecoder().decode(AwakeRequest.self, from: $0) } ?? AwakeRequest()
     }
     // Called only by the resident app, never by construction or preview tests.
-    func startLifecycle(center: NotificationCenter = NSWorkspace.shared.notificationCenter) {
+    func startLifecycle(center: NotificationCenter = NSWorkspace.shared.notificationCenter, resumeForUpdate: Bool = false) {
         guard notifications.isEmpty else { return }
         notificationCenter = center
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.didWakeNotification] {
@@ -33,7 +35,9 @@ import IOKit.pwr_mgt
                 MainActor.assumeIsolated { self?.setSleeping(sleeps) }
             })
         }
-        if request.restoreOnLaunch && defaults.bool(forKey: "awake.active") && (request.end == nil || request.end! > now()) {
+        // Updating an already-running app may carry over its active assertion
+        // once. The original deadline and restore preference remain intact.
+        if (request.restoreOnLaunch || resumeForUpdate) && defaults.bool(forKey: "awake.active") && (request.end == nil || request.end! > now()) {
             enabled = true; tick(); startTimer()
         } else { defaults.set(false, forKey: "awake.active") }
     }

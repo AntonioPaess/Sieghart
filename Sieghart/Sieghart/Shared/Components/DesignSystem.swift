@@ -4,12 +4,13 @@ import SwiftUI
 // Shared palette from the approved local prototype.
 enum CompanionStyle {
     static let notchBlack = Color(.sRGB, red: 0, green: 0, blue: 0, opacity: 1)
-    static let background = adaptive(dark: (23, 23, 28), light: (244, 244, 247))
-    static let surface = adaptive(dark: (38, 38, 45), light: (255, 255, 255))
-    static let separator = adaptive(dark: (60, 60, 69), light: (223, 223, 230))
-    static let accent = Color(red: 198 / 255, green: 185 / 255, blue: 1)
-    static let accentInk = adaptive(dark: (198, 185, 255), light: (100, 73, 164))
-    static let muted = adaptive(dark: (170, 170, 181), light: (102, 102, 116))
+    static let background = adaptive(dark: (18, 20, 26), light: (246, 247, 250))
+    static let surface = adaptive(dark: (28, 31, 39), light: (255, 255, 255))
+    static let separator = adaptive(dark: (51, 56, 69), light: (224, 228, 236))
+    static let accent = Color(red: 183 / 255, green: 173 / 255, blue: 239 / 255)
+    static let accentInk = adaptive(dark: (194, 185, 244), light: (103, 80, 169))
+    static let muted = adaptive(dark: (154, 161, 178), light: (101, 109, 126))
+    static let sidebar = adaptive(dark: (22, 25, 32), light: (240, 242, 246))
     static let ink = Color.primary
     static let edge = adaptive(dark: (255, 255, 255), light: (0, 0, 0))
     private static func adaptive(dark: (Double, Double, Double), light: (Double, Double, Double)) -> Color {
@@ -17,6 +18,78 @@ enum CompanionStyle {
             let rgb = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light
             return NSColor(srgbRed: rgb.0 / 255, green: rgb.1 / 255, blue: rgb.2 / 255, alpha: 1)
         })
+    }
+}
+
+enum WorkspaceMetrics {
+    static let pageInset: CGFloat = 30
+    static let sectionGap: CGFloat = 24
+    static let contentWidth: CGFloat = 1080
+    static let cardInset: CGFloat = 20
+    static let cardRadius: CGFloat = 18
+}
+
+enum WorkspaceTypography {
+    static let title = Font.system(size: 27, weight: .semibold, design: .rounded)
+    static let section = Font.system(size: 14, weight: .semibold)
+    static let body = Font.system(size: 13)
+    static let caption = Font.system(size: 11)
+}
+
+// One restrained cadence for navigation, control feedback and first appearance.
+// Repeated interactions never wait for decorative character choreography.
+enum InterfaceMotion {
+    static let feedbackDuration = 0.14
+    static let pageDuration = 0.22
+    static let arrivalDuration = 0.30
+    static let feedback = Animation.easeOut(duration: feedbackDuration)
+    static let page = Animation.easeOut(duration: pageDuration)
+    static let arrival = Animation.timingCurve(0.2, 0.8, 0.2, 1, duration: arrivalDuration)
+}
+
+struct WorkspacePageArrival: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var systemReducedMotion
+    @Environment(\.islandReduceMotion) private var reducedMotion
+    @Environment(\.islandPreview) private var preview
+    @State private var arrived = false
+    private var visible: Bool { arrived || preview || reducedMotion || systemReducedMotion }
+    func body(content: Content) -> some View {
+        content.opacity(visible ? 1 : 0)
+            .offset(y: visible ? 0 : 6)
+            .task {
+                guard !arrived else { return }
+                if reducedMotion || systemReducedMotion || preview { arrived = true }
+                else { withAnimation(InterfaceMotion.arrival) { arrived = true } }
+            }
+    }
+}
+
+struct WorkspacePageHeading: View {
+    let title: String
+    let subtitle: String
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title).font(WorkspaceTypography.title).tracking(-0.45)
+                .foregroundStyle(CompanionStyle.ink)
+            Text(subtitle).font(WorkspaceTypography.body).foregroundStyle(CompanionStyle.muted)
+                .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 2)
+    }
+}
+
+struct WorkspaceEmptyState: View {
+    let title: String
+    let detail: String
+    let symbol: String
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: symbol).font(.system(size: 21, weight: .light))
+                .foregroundStyle(CompanionStyle.accentInk).frame(width: 48, height: 48)
+                .background(CompanionStyle.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+            Text(title).font(WorkspaceTypography.section)
+            Text(detail).font(WorkspaceTypography.caption).foregroundStyle(CompanionStyle.muted)
+                .multilineTextAlignment(.center).frame(maxWidth: 340)
+        }.padding(26).frame(maxWidth: .infinity).modifier(WorkspaceSurface())
     }
 }
 
@@ -46,7 +119,7 @@ struct WorkspaceBackdrop: View {
 
 struct WorkspaceSurface: ViewModifier {
     var selected = false
-    var radius: CGFloat = 22
+    var radius: CGFloat = WorkspaceMetrics.cardRadius
     @Environment(\.accessibilityReduceTransparency) private var opaque
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.islandPreview) private var preview
@@ -58,8 +131,8 @@ struct WorkspaceSurface: ViewModifier {
             else if #available(macOS 26, *) { Color.clear.glassEffect(.regular.tint(CompanionStyle.surface.opacity(0.35)), in: shape) }
             else { shape.fill(.ultraThinMaterial) }
         }
-        .background(selected ? CompanionStyle.accent.opacity(0.12) : .clear, in: shape)
-        .overlay { shape.strokeBorder(selected ? CompanionStyle.accent.opacity(0.65) : CompanionStyle.edge.opacity(contrast == .increased ? 0.45 : 0.10), lineWidth: selected ? 1.1 : 0.75).allowsHitTesting(false) }
+        .background(selected ? CompanionStyle.accent.opacity(0.07) : .clear, in: shape)
+        .overlay { shape.strokeBorder(selected ? CompanionStyle.accent.opacity(0.40) : CompanionStyle.edge.opacity(contrast == .increased ? 0.48 : 0.075), lineWidth: selected ? 1 : 0.7).allowsHitTesting(false) }
         .shadow(color: .black.opacity(!glass || opaque ? 0 : 0.09), radius: 14, y: 6)
     }
 }
@@ -67,16 +140,31 @@ struct WorkspaceSurface: ViewModifier {
 struct CompanionButtonStyle: ButtonStyle {
     var primary = false
     var compact = false
-    @Environment(\.workspaceGlass) private var workspace
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: compact ? 11 : 13, weight: .semibold))
-            .padding(.horizontal, compact ? 11 : 15)
-            .padding(.vertical, compact ? 7 : 10)
-            .foregroundStyle(primary ? Color.black : CompanionStyle.ink)
-            .background(primary ? CompanionStyle.accent : workspace ? CompanionStyle.edge.opacity(0.09) : CompanionStyle.separator, in: RoundedRectangle(cornerRadius: 12))
-            .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(CompanionStyle.edge.opacity(primary ? 0.14 : workspace ? 0.11 : 0), lineWidth: 0.7).allowsHitTesting(false) }
-            .opacity(configuration.isPressed ? 0.72 : 1)
+        CompanionButtonBody(label: configuration.label, pressed: configuration.isPressed, primary: primary, compact: compact)
+    }
+}
+private struct CompanionButtonBody<Label: View>: View {
+    let label: Label
+    let pressed: Bool
+    let primary: Bool
+    let compact: Bool
+    @Environment(\.isEnabled) private var enabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.islandReduceMotion) private var preferenceReduceMotion
+    @State private var hovered = false
+    var body: some View {
+        label.font(.system(size: compact ? 11.5 : 12.5, weight: .medium))
+            .padding(.horizontal, compact ? 11 : 15).padding(.vertical, compact ? 6 : 9)
+            .frame(minHeight: compact ? 28 : 34)
+            .foregroundStyle(primary ? Color(red: 0.12, green: 0.10, blue: 0.20) : CompanionStyle.ink)
+            .background(primary ? CompanionStyle.accent : CompanionStyle.edge.opacity(hovered ? 0.085 : 0.045), in: RoundedRectangle(cornerRadius: 10))
+            .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(CompanionStyle.edge.opacity(primary ? 0.12 : hovered ? 0.16 : 0.09), lineWidth: 0.7).allowsHitTesting(false) }
+            .opacity(enabled ? (pressed ? 0.72 : 1) : 0.42)
+            .scaleEffect(pressed && !reduceMotion && !preferenceReduceMotion ? 0.985 : 1)
+            .animation(InterfaceMotion.feedback, value: hovered)
+            .animation(reduceMotion || preferenceReduceMotion ? nil : InterfaceMotion.feedback, value: pressed)
+            .onHover { hovered = $0 }
     }
 }
 
@@ -135,11 +223,11 @@ private struct CompanionCardModifier: ViewModifier {
     @Environment(\.islandGlass) private var glass
     @Environment(\.workspaceGlass) private var workspace
     func body(content: Content) -> some View {
-        let padding: CGFloat = inset ?? (workspace || !glass ? 24 : 16)
+        let padding: CGFloat = inset ?? (workspace ? WorkspaceMetrics.cardInset : !glass ? 22 : 16)
         let sized = content.frame(maxWidth: .infinity, alignment: .topLeading)
             .frame(height: height.map { max(0, $0 - padding * 2) }, alignment: .topLeading).padding(padding)
         if workspace { sized.modifier(WorkspaceSurface()) }
         else if glass { sized.modifier(IslandControlSurface()) }
-        else { sized.background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: 17)) }
+        else { sized.background(CompanionStyle.surface, in: RoundedRectangle(cornerRadius: WorkspaceMetrics.cardRadius)) }
     }
 }

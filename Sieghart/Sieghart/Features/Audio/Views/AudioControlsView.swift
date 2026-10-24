@@ -47,12 +47,7 @@ struct AudioControlsView: View {
             .onDisappear { if !preview { audio.stopObserving() } }
     }
     private var audioTabs: some View {
-        HStack(spacing: 14) {
-            ForEach(AudioPage.allCases, id: \.self) { choice in
-                Button(choice.rawValue) { page = choice }.buttonStyle(.plain).font(.caption.weight(.semibold)).foregroundStyle(page == choice ? CompanionStyle.ink : CompanionStyle.muted)
-                    .padding(.vertical, 7).overlay(alignment: .bottom) { if page == choice { Capsule().fill(CompanionStyle.accent).frame(height: 2) } }
-            }
-        }
+        UtilityTabs(choices: AudioPage.allCases, selection: $page, title: { $0.rawValue })
     }
     private var mixer: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -132,7 +127,7 @@ struct AudioControlsView: View {
             Image(systemName: symbol).font(.system(size: 23)).frame(height: 25)
             VerticalAudioSlider(value: value ?? 0, height: height, enabled: value != nil, onChange: action).accessibilityLabel("\(title) volume")
             Text(value.map { "\(Int($0 * 100))%" } ?? "Fixed").font(.caption.weight(.medium)).monospacedDigit().foregroundStyle(CompanionStyle.muted)
-            Text(title).font(.caption2)
+            Text(LocalizedStringKey(title)).font(.caption2)
         }.frame(width: compact ? 48 : 65)
     }
     private func deviceMenu(input: Bool) -> some View {

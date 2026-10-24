@@ -1,0 +1,10 @@
+Input: disposable observed class TripPreviewCoordinator; no capture or audio.
+Title: Classe de Coordenação de CarPlay Summary: A classe coordena a exibição e o início da navegação de um roteiro. Os métodos mostram como o início da navegação depende da seleção do roteiro e da notificação de início.
+Node: TripPreviewCoordinator 
+Node: showPreview Define o roteiro selecionado para exibição.
+Node: startNavigation Verifica a presença do roteiro e invoca o callback onStart com o roteiro.
+Node: cancelPreview Limpa a seleção do roteiro e redefine o estado para nulo.
+Link: class -> m0 
+Link: class -> m1 
+Link: class -> m2 
+PASS: all three observed methods retained and diagram rendered.

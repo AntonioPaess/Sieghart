@@ -7,6 +7,8 @@ import SwiftUI
 
 struct AgentMarkdownView: View {
     let markdown: String
+    @Environment(\.colorScheme) private var scheme
+    private var textColor: Color { AdaRoomTheme.assistantTextColor(for: scheme) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -28,14 +30,14 @@ struct AgentMarkdownView: View {
         case .heading(let level, let text):
             Text(inlineAttributed(text))
                 .font(.system(size: level <= 2 ? 14 : 13, weight: level <= 2 ? .bold : .semibold))
-                .foregroundColor(AgentChatColor.hex(0xF1F2F4))
+                .foregroundStyle(textColor)
                 .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
 
         case .paragraph(let text):
             Text(inlineAttributed(text))
                 .font(.system(size: 12.5))
-                .foregroundColor(AgentChatColor.hex(0xB0B5BE))
+                .foregroundStyle(textColor.opacity(0.88))
                 .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
 
@@ -43,16 +45,16 @@ struct AgentMarkdownView: View {
             HStack(alignment: .top) {
                 Text(code)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(AgentChatColor.hex(0xC8CDD4))
+                    .foregroundStyle(textColor.opacity(0.93))
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 AgentCodeCopyButton(text: code)
             }
             .padding(10)
-            .background(AgentChatColor.hex(0x0D0E12))
+            .background(scheme == .dark ? AgentChatColor.hex(0x0D0E12) : Color.black.opacity(0.035))
             .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08), lineWidth: 1))
 
         case .listItem(let prefix, let text, let indent):
             HStack(alignment: .top, spacing: 6) {
@@ -62,7 +64,7 @@ struct AgentMarkdownView: View {
                     .frame(minWidth: prefix.count > 2 ? 20 : 10, alignment: .leading)
                 Text(inlineAttributed(text))
                     .font(.system(size: 12.5))
-                    .foregroundColor(AgentChatColor.hex(0xB0B5BE))
+                    .foregroundStyle(textColor.opacity(0.88))
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
             }
@@ -76,7 +78,7 @@ struct AgentMarkdownView: View {
                     .clipShape(Capsule())
                 Text(inlineAttributed(text))
                     .font(.system(size: 12.5))
-                    .foregroundColor(AgentChatColor.hex(0x8A8F98))
+                    .foregroundStyle(textColor.opacity(0.72))
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
             }

@@ -48,6 +48,9 @@ final class CompanionPreferences: ObservableObject {
     @Published var introductionLanguage: CompanionIntroductionLanguage { didSet { defaults.set(introductionLanguage.rawValue, forKey: "appearance.introductionLanguage") } }
     @Published var characterMotion: Bool { didSet { save(characterMotion, "characterMotion") } }
     @Published var reduceMotion: Bool { didSet { save(reduceMotion, "reduceMotion") } }
+    @Published var speechConfiguration: SigVoiceConfiguration {
+        didSet { defaults.set(try? JSONEncoder().encode(speechConfiguration.normalized), forKey: "voice.output.configuration.v1") }
+    }
     @Published var widgetSize: WidgetSize { didSet { defaults.set(widgetSize.rawValue, forKey: "appearance.widgetSize") } }
     var avatar: CompanionAvatar { .sig }
     @Published var onboardingComplete: Bool { didSet { defaults.set(onboardingComplete, forKey: "onboarding.completed.v1") } }
@@ -56,6 +59,17 @@ final class CompanionPreferences: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        var savedSpeech = defaults.data(forKey: "voice.output.configuration.v1")
+            .flatMap { try? JSONDecoder().decode(SigVoiceConfiguration.self, from: $0) }?.normalized ?? .init()
+        // Sieg has one voice identity; older experiments keep volume/on-off only.
+        if savedSpeech.voiceIdentifier != SigVoiceConfiguration.sieg.voiceIdentifier {
+            let savedVolume = savedSpeech.volume, savedEnabled = savedSpeech.enabled
+            savedSpeech = .sieg
+            savedSpeech.volume = savedVolume
+            savedSpeech.enabled = savedEnabled
+        }
+        speechConfiguration = savedSpeech
+        defaults.set(try? JSONEncoder().encode(savedSpeech.normalized), forKey: "voice.output.configuration.v1")
         let savedRails = defaults.stringArray(forKey: "island.rails")?.compactMap { IslandRailAction(rawValue: $0 == "Avatars" ? "Team" : $0) }
         railActions = savedRails?.count == 6 ? savedRails!.map { $0 == .avatars ? .companion : $0 } : IslandRailPreset.essentials.actions
         let savedTools = defaults.stringArray(forKey: "island.tools")?.compactMap { IslandToolAction(rawValue: $0 == "Avatars" ? "Team" : $0) }

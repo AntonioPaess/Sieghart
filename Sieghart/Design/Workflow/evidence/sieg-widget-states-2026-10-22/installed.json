@@ -1,0 +1,10 @@
+{
+  "build": "86",
+  "path": "/Applications/Sieghart.app",
+  "sha256": "bf545ed74bee18c35c3f046ac593eefaf1d65871979e85543902085f65652b59",
+  "launch": "LaunchServices",
+  "microphoneUsed": false,
+  "audioPlaybackUsed": false,
+  "renderedExamples": 26,
+  "lastVisualCleanup": "Hide duplicate preparing status line; compiled after source freeze."
+}

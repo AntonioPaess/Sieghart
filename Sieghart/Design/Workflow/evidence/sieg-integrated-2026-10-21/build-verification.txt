@@ -1,0 +1,6 @@
+Build 23: BUILD SUCCEEDED
+Log: /tmp/sieghart-integrated-experience-build-23.log
+Architectures: x86_64 arm64
+Tests/verify-built-app.sh: PASS: actual built privacy descriptions, menu-bar agent metadata and signature. App not launched.
+App: /private/tmp/sieghart-spatial-dd/Build/Products/Debug/Sieghart.app
+No microphone or audio playback used.

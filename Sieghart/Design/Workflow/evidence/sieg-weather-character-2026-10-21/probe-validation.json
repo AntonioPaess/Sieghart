@@ -1,0 +1,258 @@
+{
+  "date": "2026-10-21",
+  "scope": "isolated native component probe; not a running-app or whole-process performance test",
+  "source": "Sieghart/Shared/Components/Companion/CompanionWeatherCharacter.swift",
+  "source_sha256": "60d410dadf2faf3145cf61bd7f3c557eea04ec8148301a2e066f32706095ef8e",
+  "swift": "Apple Swift 6.4, Swift language mode 6, Debug/Onone",
+  "probe_source_matches_component": true,
+  "probe_support": "Exact existing enum/environment/SCNView/lighting/shape slices plus a weather-observation data stub; full CompanionRigGeometry.swift; no live services",
+  "checks": [
+    "seven moods render with native rig",
+    "ImageRenderer deterministic snapshot branch at 308x312",
+    "snapshot cache reuses identity",
+    "cold shiver and body contraction",
+    "heat fan hand displacement",
+    "rain shielding hand",
+    "snow upward glance",
+    "detached SCNView paused",
+    "dismantle releases scene/delegate"
+  ],
+  "live_hidden_occlusion_reduce_motion_tested": false,
+  "whole_app_cpu_memory_measured": false,
+  "native_snapshot_alpha": true,
+  "video": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "width": 2464,
+        "height": 736,
+        "r_frame_rate": "24/1",
+        "nb_frames": "168"
+      }
+    ],
+    "format": {
+      "duration": "7.000000"
+    }
+  },
+  "files": {
+    "frozen.png": {
+      "bytes": 165243,
+      "sha256": "4f1ce5397f32bbf5462fa9e31cb5393da660b48c0a507ec5933b8fc54a20f85b"
+    },
+    "cold.png": {
+      "bytes": 175574,
+      "sha256": "7d814c0f19b9b3d38d821aa48f82e58f979552ec12b4f3a3c1ca4681dc424092"
+    },
+    "comfortable.png": {
+      "bytes": 168941,
+      "sha256": "c896405f2ca1ac56151f5f38beba048469915bd91e0475188e28bf583200d8b3"
+    },
+    "hot.png": {
+      "bytes": 161220,
+      "sha256": "a3864c8eb7fd234ca822b016689afc686e364ae05805d9b14d5ac7fa17a73c11"
+    },
+    "rain.png": {
+      "bytes": 165364,
+      "sha256": "9b5f3adaab1bf41101dd76b7ee30d73d492c40576743b1375695315df3a22233"
+    },
+    "snow.png": {
+      "bytes": 165243,
+      "sha256": "4f1ce5397f32bbf5462fa9e31cb5393da660b48c0a507ec5933b8fc54a20f85b"
+    },
+    "storm.png": {
+      "bytes": 141828,
+      "sha256": "aaa44c14529e9ace5febe9cc96b21b39db5fd63737152ce3d862bf014539f101"
+    },
+    "image-renderer-cold.png": {
+      "bytes": 51035,
+      "sha256": "848dcb4291c0786cc9226b17dcc253ac425fb8b9c54b36e1b3d908c0d3d762ef"
+    },
+    "weather-character-board.png": {
+      "bytes": 3355732,
+      "sha256": "8c0d90f82e4cee4784c14b0d064cbb250ecf23bc72d5b38ca7cef3cfd9579e62"
+    },
+    "weather-character-motion.mp4": {
+      "bytes": 607605,
+      "sha256": "0cd40915eb2f24c2b2284df41c079f70e1fd0fbdf4eebcfdf1a2201e3b5a224b"
+    },
+    "compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "render.log": {
+      "bytes": 270,
+      "sha256": "32d1f5d77a5aa7dca2e08643aad09b8d3d4b190064fecf60dec0d6777565bc39"
+    }
+  },
+  "images": {
+    "frozen.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        78,
+        89,
+        550,
+        542
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "cold.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        64,
+        141,
+        556,
+        548
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "comfortable.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        55,
+        102,
+        562,
+        430
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "hot.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        48,
+        142,
+        567,
+        437
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "rain.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        57,
+        118,
+        558,
+        430
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "snow.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        78,
+        89,
+        550,
+        542
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "storm.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        67,
+        147,
+        548,
+        425
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "image-renderer-cold.png": {
+      "pixels": [
+        308,
+        312
+      ],
+      "alpha_bounds": [
+        32,
+        70,
+        278,
+        274
+      ],
+      "corner_alpha": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "weather-character-board.png": {
+      "pixels": [
+        2464,
+        1472
+      ],
+      "alpha_bounds": [
+        0,
+        0,
+        2464,
+        1472
+      ],
+      "corner_alpha": [
+        255,
+        255,
+        255,
+        255
+      ]
+    }
+  },
+  "native_motion_frame_difference_bounds": [
+    57,
+    115,
+    2367,
+    589
+  ]
+}

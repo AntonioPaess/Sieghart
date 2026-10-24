@@ -7,15 +7,18 @@ struct IslandLayoutEditor: View {
     @ObservedObject var preferences: CompanionPreferences
     var onPreview: () -> Void
     @Environment(\.islandPreview) private var staticPreview
+    @Environment(\.workspaceGlass) private var workspace
     @State private var editingTool: Int?
     @State private var dropTool: Int?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
+            if !workspace {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Dynamic Island").font(.system(size: 29, weight: .semibold, design: .rounded))
                 Text("Your companion, controls and everyday tools, together at the top of your screen.")
                     .foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
+            }
             }
             HStack(spacing: 10) {
                 if staticPreview { layoutLabel }

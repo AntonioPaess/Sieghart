@@ -1,0 +1,16 @@
+{
+  "plan": "Sieghart-Fast",
+  "selectedFunctions": 348,
+  "functionResults": {
+    "Passed": 348
+  },
+  "invocationResults": {
+    "Passed": 1103
+  },
+  "sourceChangedDuringRun": [],
+  "missingTests": [],
+  "unexpectedTests": [],
+  "productionCoverageFiles": 193,
+  "expectedProductionCoverageFiles": 193,
+  "xcodeExitCode": 0
+}

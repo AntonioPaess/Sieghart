@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CompanionOnboardingView: View {
+    @State private var tutorial = false
     @StateObject private var viewModel: OnboardingViewModel
     @EnvironmentObject private var preferences: CompanionPreferences
     @EnvironmentObject private var codex: CodexUsageViewModel
@@ -50,6 +51,7 @@ struct CompanionOnboardingView: View {
             .environment(\.workspaceGlass, true).environment(\.surfaceGlassEnabled, preferences.windowGlass)
             .environment(\.islandReduceMotion, preferences.usesReducedMotion)
             .animation(moves ? .spring(response: 0.55, dampingFraction: 0.86) : nil, value: viewModel.step)
+            .sheet(isPresented: $tutorial) { CompanionVoiceTutorial(language: preferences.introductionLanguage == .english ? "en" : "pt") }
             .onAppear { viewModel.loadTools(usage: usage, clipboard: clipboard) }
     }
     private var page: some View {
@@ -63,6 +65,7 @@ struct CompanionOnboardingView: View {
                     Text("Sig is your main companion. Meet Rita, Ada, Gantt, Elinor and Toni.").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }.frame(maxWidth: .infinity).padding(.vertical, 22).modifier(WorkspaceSurface(radius: 24))
             } else if viewModel.step == 1 {
+                Button(preferences.introductionLanguage == .english ? "Rehearse voice and selection" : "Ensaiar voz e seleção") { tutorial = true }.buttonStyle(CompanionButtonStyle(primary: true))
                 CompanionTeamGallery(animates: moves)
                 Text(chosen.detail).font(.callout).foregroundStyle(CompanionStyle.muted)
                 Text("Tap any companion to explore their movements. Sig stays with you in the island, voice and focus sessions.")

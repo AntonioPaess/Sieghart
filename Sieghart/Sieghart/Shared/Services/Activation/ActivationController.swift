@@ -2,6 +2,7 @@ import AppKit
 import AVFoundation
 import Carbon
 import Speech
+import Combine
 
 @MainActor
 final class ActivationController: ObservableObject {
@@ -31,18 +32,25 @@ final class ActivationController: ObservableObject {
     @Published private(set) var isPresentingVoiceProcessing = false
     var isVoiceBusy: Bool { isListening || isPreparing || isFinalizing || isExecutingVoiceCommand || isPresentingVoiceProcessing }
     var companionVoicePhase: CompanionVoicePhase {
+        if conversation.isPreparing { return .preparing }
         if isPreparing { return .preparing }
         if isListening { return .listening }
-        if isFinalizing { return .thinking }
+        if isFinalizing || notch.spatialAssistant.overlay.voiceSynthesizer.isPreparingAudio { return .thinking }
+        if notch.spatialAssistant.screenInteraction.phase == .speaking { return .success }
         if isExecutingVoiceCommand || isPresentingVoiceProcessing { return .working }
+        if conversation.isActive { return .listening }
         if commandAcknowledged { return .success }
         return voicePresented ? .failure : .inactive
     }
     @Published private(set) var commandAcknowledged = false
     @Published private(set) var voicePresented = false
     @Published var voiceLanguage: String {
-        didSet { defaults.set(voiceLanguage, forKey: "activation.voiceLanguage"); cancelVoiceCommand() }
+        didSet { defaults.set(voiceLanguage, forKey: "activation.voiceLanguage"); cancelVoiceCommand(); notch.spatialAssistant.responseLanguage = voiceLanguage.replacingOccurrences(of: "_", with: "-") }
     }
+    private var voiceGesture = VoiceShortcutGesture()
+    private var voiceShortcutHeld: Bool { voiceGesture.isHeld }
+    private var heldShortcutWatchTask: Task<Void, Never>?
+    private var heldVoiceCapture = false
     private var voiceRequestGeneration = 0
     private var voiceCaptureGeneration = 0
     private var voiceInputRecovery = VoiceInputRecovery()
@@ -74,6 +82,9 @@ final class ActivationController: ObservableObject {
     private var modifierTracker = ModifierShortcutTracker()
     private var deliveryGate = ShortcutDeliveryGate()
     private let voiceCapture: any VoiceCapturing
+    let conversation = VoiceConversationController()
+    private var conversationObservation: AnyCancellable?
+    var isConversing: Bool { conversation.isActive || conversation.isPreparing }
     private let voiceNow: @MainActor () -> TimeInterval
     private var stopTask: Task<Void, Never>?
     private var voiceSession = VoiceCommandSession()
@@ -107,6 +118,7 @@ final class ActivationController: ObservableObject {
         voiceShortcut = saved(.voice, fallback: .voice)
         clipboardShortcut = saved(.clipboard, fallback: .clipboard)
         voiceLanguage = defaults.string(forKey: "activation.voiceLanguage") ?? "en_US"
+        notch.spatialAssistant.responseLanguage = voiceLanguage.replacingOccurrences(of: "_", with: "-")
         for action in [ShortcutAction.nextOutput, .muteMicrophone] {
             if let data = defaults.data(forKey: "activation.\(action.rawValue).chord"), !defaults.bool(forKey: "activation.\(action.rawValue).disabled"), let chord = try? JSONDecoder().decode(ShortcutChord.self, from: data) { audioShortcuts[action] = chord }
         }
@@ -116,6 +128,18 @@ final class ActivationController: ObservableObject {
         clipboardShortcutStatus = clipboardShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
         shortcutStatus = companionShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
         voiceShortcutStatus = voiceShortcut.map { "\($0.label) · Starting global shortcut…" } ?? "Shortcut off"
+        conversationObservation = conversation.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }
+        conversation.assistantState = { [weak self] in
+            guard let self else { return (false, "") }
+            let coordinator = self.notch.spatialAssistant
+            return (coordinator.overlay.voiceSynthesizer.isSpeaking || coordinator.screenInteraction.phase == .thinking,
+                    coordinator.overlay.voiceSynthesizer.lastSpokenText ?? "")
+        }
+        conversation.onInterruption = { [weak self] in
+            self?.notch.spatialAssistant.cancelVoiceResponse(preserveGuidance: true)
+        }
+        conversation.onUtterance = { [weak self] text in self?.executeVoiceCommand(text) }
+        notch.spatialAssistant.onTypedRequest = { [weak self] in self?.conversation.stop() }
         if registersShortcuts || lifecycleNotifications != nil { observeShortcutLifecycle(workspace: lifecycleNotifications) }
     }
 
@@ -152,6 +176,11 @@ final class ActivationController: ObservableObject {
         }
         let workspace = suppliedWorkspace ?? NSWorkspace.shared.notificationCenter
         observedWorkspaceCenter = workspace
+        for name in [NSWorkspace.willSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
+            workspaceObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.conversation.stop() }
+            })
+        }
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification,
                      NSWorkspace.sessionDidBecomeActiveNotification, NSWorkspace.activeSpaceDidChangeNotification,
                      NSWorkspace.didActivateApplicationNotification] {
@@ -209,6 +238,8 @@ final class ActivationController: ObservableObject {
         guard shortcutsStarted, recordingShortcut == nil else { return }
         let trusted = AXIsProcessTrusted()
         let secureInput = IsSecureEventInputEnabled()
+        if secureInput, isConversing { conversation.stop() }
+        if voiceShortcutHeld && secureInput { cancelVoiceCommand() }
         // A release can be lost while the system protects keyboard input.
         if NSEvent.modifierFlags.intersection(ShortcutChord.allowedModifiers).isEmpty { modifierTracker.reset() }
         eventTap?.ensureEnabled()
@@ -259,7 +290,8 @@ final class ActivationController: ObservableObject {
         registrationNeedsRetry = false
         guard recordingShortcut == nil else { return }
         Self.activeHotkeyOwner = self
-        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        var eventTypes = [EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+                          EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased))]
         let target = GetEventDispatcherTarget()
         let installed = InstallEventHandler(target, { _, event, _ in
             guard let event else { return OSStatus(eventNotHandledErr) }
@@ -268,11 +300,12 @@ final class ActivationController: ObservableObject {
             let id = identifier.id
             if status == noErr, identifier.signature == 0x53494748, (1...UInt32(ShortcutAction.allCases.count)).contains(id) {
                 let timestamp = GetEventTime(event)
-                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(ShortcutAction.allCases[Int(id) - 1], eventTime: timestamp) }
+                let released = GetEventKind(event) == UInt32(kEventHotKeyReleased)
+                Task { @MainActor in ActivationController.activeHotkeyOwner?.receiveHotkey(ShortcutAction.allCases[Int(id) - 1], released: released, eventTime: timestamp) }
                 return noErr
             }
             return OSStatus(eventNotHandledErr)
-        }, 1, &eventType, nil, &handler)
+        }, 2, &eventTypes, nil, &handler)
         let trusted = AXIsProcessTrusted()
         lastInputTrust = CGPreflightListenEventAccess()
         lastShortcutTrust = trusted
@@ -295,7 +328,7 @@ final class ActivationController: ObservableObject {
                         statusText = "Shortcut unavailable; record another combination"
                     }
                 } else {
-                    statusText = !trusted && !lastInputTrust ? "\(chord.label) · Allow keyboard access to use in other apps" : lastSecureInput ? "\(chord.label) · Secure keyboard input is active" : "\(chord.label) · Press and release to activate"
+                    statusText = !trusted && !lastInputTrust ? "\(chord.label) · Allow keyboard access to use in other apps" : lastSecureInput ? "\(chord.label) · Secure keyboard input is active" : (action == .voice ? "\(chord.label) · Hold to speak; release to send" : "\(chord.label) · Press and release to activate")
                 }
             }
             setStatus(statusText, for: action)
@@ -303,8 +336,8 @@ final class ActivationController: ObservableObject {
         guard ShortcutAction.allCases.contains(where: { shortcut(for: $0) != nil }) else { return }
         guard lastInputTrust || trusted || ShortcutAction.allCases.contains(where: { shortcut(for: $0)?.isModifierOnly == true }) || !fallbackActions.isEmpty else { return }
         if lastInputTrust || trusted {
-            let tap = ShortcutEventTap { [weak self] key, flags, repeated, timestamp in
-                self?.receiveShortcutEvent(keyCode: key, flags: flags, isRepeat: repeated, eventTime: timestamp)
+            let tap = ShortcutEventTap { [weak self] key, flags, repeated, released, timestamp in
+                self?.receiveShortcutEvent(keyCode: key, flags: flags, isRepeat: repeated, isKeyUp: released, eventTime: timestamp)
             }
             if tap.start() {
                 eventTap = tap
@@ -316,12 +349,12 @@ final class ActivationController: ObservableObject {
                 return
             }
         }
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown, .keyUp]) { [weak self] event in
             MainActor.assumeIsolated { self?.observeModifiers(event) }
             return event
         }
         if trusted {
-            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
+            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown, .keyUp]) { [weak self] event in
                 MainActor.assumeIsolated { self?.observeModifiers(event) }
             }
         }
@@ -342,13 +375,25 @@ final class ActivationController: ObservableObject {
     }
 
     private func observeModifiers(_ event: NSEvent) {
-        receiveShortcutEvent(keyCode: event.type == .keyDown ? UInt32(event.keyCode) : nil, flags: event.modifierFlags, isRepeat: event.type == .keyDown && event.isARepeat, eventTime: event.timestamp)
+        receiveShortcutEvent(keyCode: event.type == .keyDown || event.type == .keyUp ? UInt32(event.keyCode) : nil, flags: event.modifierFlags, isRepeat: event.type == .keyDown && event.isARepeat, isKeyUp: event.type == .keyUp, eventTime: event.timestamp)
     }
 
     // The same routing handles foreground, background and headless fixtures.
     // It consumes key codes/modifiers only, never typed text.
-    func receiveShortcutEvent(keyCode: UInt32?, flags: NSEvent.ModifierFlags, isRepeat: Bool = false, eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+    func receiveShortcutEvent(keyCode: UInt32?, flags: NSEvent.ModifierFlags, isRepeat: Bool = false, isKeyUp: Bool = false, eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
         guard recordingShortcut == nil else { modifierTracker.reset(); return }
+        if keyCode == 53, !isKeyUp, isVoiceBusy || isConversing { cancelVoiceCommand(); return }
+        if let chord = voiceShortcut {
+            let released = (keyCode == nil && !flags.intersection(ShortcutChord.allowedModifiers).isSuperset(of: chord.flags))
+                || (isKeyUp && keyCode == chord.keyCode)
+            if released { releaseVoiceShortcut(at: eventTime) }
+            else if voiceShortcutHeld, chord.isModifierOnly, keyCode != nil, !isKeyUp { cancelVoiceCommand() }
+        }
+        if isKeyUp { return }
+        if keyCode == nil, let chord = voiceShortcut, chord.isModifierOnly,
+           flags.intersection(ShortcutChord.allowedModifiers) == chord.flags {
+            pressVoiceShortcut(at: eventTime)
+        }
         if let keyCode {
             modifierTracker.keyPressed()
             guard !isRepeat else { return }
@@ -360,20 +405,21 @@ final class ActivationController: ObservableObject {
             }
         } else if let modifiers = modifierTracker.update(flags) {
             for action in ShortcutAction.allCases {
-                if let chord = shortcut(for: action), chord.isModifierOnly, chord.modifiers == modifiers { deliverShortcut(action, source: .monitor, eventTime: eventTime) }
+                if action != .voice, let chord = shortcut(for: action), chord.isModifierOnly, chord.modifiers == modifiers { deliverShortcut(action, source: .monitor, eventTime: eventTime) }
             }
         }
     }
 
-    func receiveHotkey(_ action: ShortcutAction, eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+    func receiveHotkey(_ action: ShortcutAction, released: Bool = false, eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
         guard shortcut(for: action)?.keyCode != nil else { return }
+        if released { if action == .voice { releaseVoiceShortcut(at: eventTime) }; return }
         deliverShortcut(action, source: .carbon, eventTime: eventTime)
     }
 
     private func deliverShortcut(_ action: ShortcutAction, source: ShortcutDeliverySource, eventTime: TimeInterval) {
         guard recordingShortcut == nil, deliveryGate.accept(action, source: source, at: eventTime) else { return }
         lastShortcutSource = source == .carbon ? "System hotkey" : "Keyboard monitor"
-        performShortcut(action)
+        if action == .voice { pressVoiceShortcut(at: eventTime) } else { performShortcut(action) }
     }
 
     func performShortcut(_ action: ShortcutAction) {
@@ -398,8 +444,53 @@ final class ActivationController: ObservableObject {
         catch { return error.localizedDescription }
     }
 
+    /// Keyboard activation is push-to-talk; on-screen controls remain explicit.
+    func pressVoiceShortcut(at eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        if isConversing { conversation.stop() }
+        guard !voiceShortcutHeld, recordingShortcut == nil else { return }
+        if isVoiceBusy { cancelVoiceCommand() }
+        guard voiceGesture.press(at: eventTime) else { return }
+        heldVoiceCapture = true
+        startHeldShortcutWatch(pressedAt: eventTime)
+        toggleListening()
+    }
+
+    func releaseVoiceShortcut(at eventTime: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        guard voiceGesture.release(at: eventTime) else { return }
+        heldShortcutWatchTask?.cancel(); heldShortcutWatchTask = nil
+        if isPreparing { cancelVoiceCommand(); return }
+        if isListening { finishListening() }
+        heldVoiceCapture = false
+    }
+
+    private func startHeldShortcutWatch(pressedAt eventTime: TimeInterval) {
+        heldShortcutWatchTask?.cancel()
+        guard shortcutsStarted, let chord = voiceShortcut else { return }
+        var watch = VoiceShortcutReleaseWatch()
+        _ = watch.observe(physicalShortcutHeld(chord))
+        heldShortcutWatchTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .milliseconds(100)) } catch { return }
+                guard let self, self.voiceShortcutHeld, self.voiceGesture.pressTime == eventTime else { return }
+                if watch.observe(self.physicalShortcutHeld(chord)) {
+                    self.releaseVoiceShortcut()
+                    return
+                }
+            }
+        }
+    }
+
+    private func physicalShortcutHeld(_ chord: ShortcutChord) -> Bool? {
+        guard CGPreflightListenEventAccess() || AXIsProcessTrusted() else { return nil }
+        let flags = NSEvent.ModifierFlags(rawValue: UInt(CGEventSource.flagsState(.hidSystemState).rawValue))
+        guard flags.intersection(ShortcutChord.allowedModifiers).isSuperset(of: chord.flags) else { return false }
+        return chord.keyCode.map { CGEventSource.keyState(.hidSystemState, key: CGKeyCode($0)) } ?? true
+    }
+
     func toggleListening() {
+        if isConversing { conversation.stop() }
         if isVoiceBusy { cancelVoiceCommand(); return }
+        notch.spatialAssistant.cancelVoiceResponse(preserveGuidance: true)
         feedbackTask?.cancel()
         voiceRequestGeneration += 1
         let generation = voiceRequestGeneration
@@ -434,7 +525,7 @@ final class ActivationController: ObservableObject {
         let captureGeneration = voiceCaptureGeneration
         voiceSession.start(at: voiceNow())
         isListening = true
-        voiceStatus = "Listening — your command runs when you finish speaking"
+        voiceStatus = heldVoiceCapture ? "Listening — release your shortcut to send" : "Listening — your command runs when you finish speaking"
         notch.showVoice()
         do {
             try voiceCapture.start(language: voiceLanguage) { [weak self] event in
@@ -450,12 +541,15 @@ final class ActivationController: ObservableObject {
                     self.voiceSession.recognize(text, final: final, at: self.voiceNow())
                     // isFinal completes the request, even if capture has not
                     // already seen quiet. Don't wait for silence after a final.
-                    if final && self.isListening { self.finishListening() }
+                    if final && self.isListening && !self.heldVoiceCapture { self.finishListening() }
                     else if self.isFinalizing { self.dispatchFinalVoiceCommand() }
                 case .inputChanged:
                     guard self.isListening else { return }
                     self.recoverVoiceInput(generation: generation)
                 case .failure(let message):
+                    // A recognizer can close after its final while the shortcut
+                    // remains held. Keep that final until the actual release.
+                    if self.heldVoiceCapture && self.voiceSession.hasFinalRecognition { return }
                     if self.isFinalizing, case .search = FocusVoiceParser.parse(self.transcript) {
                         // Keep draining the settled search text. Local app/timer
                         // actions still require an authoritative final result.
@@ -473,6 +567,8 @@ final class ActivationController: ObservableObject {
             return
         }
         guard captureGeneration == voiceCaptureGeneration else { return }
+        notch.spatialAssistant.screenInteraction.onCancel = { [weak self] in self?.cancelVoiceCommand() }
+        notch.spatialAssistant.screenInteraction.beginListening(language: voiceLanguage)
         stopTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .milliseconds(100))
@@ -484,7 +580,7 @@ final class ActivationController: ObservableObject {
     }
 
     private func checkVoiceEndpoint() {
-        let decision = voiceSession.decision(at: voiceNow())
+        let decision = voiceSession.decision(at: voiceNow(), holding: heldVoiceCapture && isListening)
         if decision == .endAudio { finishListening() }
         else if decision != .wait {
             if decision == .finalResultTimedOut,
@@ -524,6 +620,8 @@ final class ActivationController: ObservableObject {
 
     func finishListening() {
         guard isListening else { return }
+        notch.spatialAssistant.screenInteraction.finishListening()
+        heldVoiceCapture = false
         voiceSession.endAudio(at: voiceNow())
         isListening = false; isFinalizing = true
         voiceStatus = "Finishing your command…"
@@ -539,7 +637,13 @@ final class ActivationController: ObservableObject {
     }
 
     func cancelVoiceCommand(keepCompanionVisible: Bool = false) {
+        conversation.stop()
+        voiceGesture.cancel()
+        heldShortcutWatchTask?.cancel(); heldShortcutWatchTask = nil
+        heldVoiceCapture = false
         voiceRequestGeneration += 1
+        notch.spatialAssistant.cancelVoiceResponse()
+        notch.spatialAssistant.screenInteraction.cancel()
         voiceRetryPending = false
         isPreparing = false
         commandAcknowledged = false
@@ -552,6 +656,7 @@ final class ActivationController: ObservableObject {
     }
 
     func stopListening() {
+        notch.spatialAssistant.screenInteraction.finishResponse()
         voiceCaptureGeneration += 1
         stopTask?.cancel(); stopTask = nil
         processingFeedbackTask?.cancel(); processingFeedbackTask = nil
@@ -560,6 +665,14 @@ final class ActivationController: ObservableObject {
         voiceSession.cancel()
         voiceCapture.cancel()
         notch.voiceActivityDidChange()
+    }
+
+    func toggleConversation() {
+        if isConversing { cancelVoiceCommand(keepCompanionVisible: true); return }
+        cancelVoiceCommand(keepCompanionVisible: true)
+        voicePresented = true
+        notch.showVoice(resetCollapse: true)
+        conversation.start(language: voiceLanguage)
     }
 
     // Only local, reversible commands are executed by this intent parser.
@@ -572,15 +685,67 @@ final class ActivationController: ObservableObject {
         isExecutingVoiceCommand = false
         voicePresented = true
         transcript = text
+        let text = VoiceAddressNormalization.request(text)
+        notch.spatialAssistant.responseLanguage = voiceLanguage.replacingOccurrences(of: "_", with: "-")
         commandAcknowledged = false
+        notch.spatialAssistant.cancelVoiceResponse(preserveGuidance: true)
+        let generation = voiceRequestGeneration
+        let spatialOutcome = notch.spatialAssistant.tryHandleVoiceCommand(text) { [weak self] asyncStatus, succeeded in
+            guard let self, generation == self.voiceRequestGeneration else { return }
+            self.voiceStatus = asyncStatus
+            self.isExecutingVoiceCommand = false
+            self.presentVoiceResult(succeeded: succeeded, closeWidget: false)
+        }
+        switch spatialOutcome {
+        case .handledImmediate(let status, let closeWidget):
+            processingStartedAt = ContinuousClock.now
+            voiceStatus = status
+            presentVoiceResult(succeeded: true, closeWidget: closeWidget)
+            notch.showVoice()
+            return
+        case .handledAsync:
+            processingStartedAt = ContinuousClock.now
+            isExecutingVoiceCommand = true
+            voiceStatus = notch.spatialAssistant.lastStatus
+            notch.showVoice()
+            return
+        case .notSpatialIntent:
+            break
+        }
         guard let command = FocusVoiceParser.parse(text) else {
-            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "That action is not available. Say a search topic, or use an app or timer command."
+            voiceStatus = text.isEmpty ? "No speech heard. Try again." : "That action is not available. Ask a question, or use an app or timer command."
             notch.showVoice()
             return
         }
         processingStartedAt = ContinuousClock.now
         var succeeded = true
         switch command {
+        case .appAction(let action):
+            let result = VoiceAppTools.execute(action, in: notch, language: notch.spatialAssistant.responseLanguage)
+            voiceStatus = result.reply
+            notch.spatialAssistant.overlay.voiceSynthesizer.speak(result.reply, language: voiceLanguage.replacingOccurrences(of: "_", with: "-"))
+            presentVoiceResult(succeeded: result.succeeded, closeWidget: false)
+            if case .show = action { return }
+            notch.showVoice()
+            return
+        case .ask(let question):
+            if let reply = VoiceAppTools.informationReply(to: question, in: notch, language: notch.spatialAssistant.responseLanguage) {
+                voiceStatus = reply
+                notch.spatialAssistant.overlay.voiceSynthesizer.speak(reply, language: voiceLanguage.replacingOccurrences(of: "_", with: "-"))
+                presentVoiceResult(succeeded: true, closeWidget: false)
+                notch.showVoice()
+                return
+            }
+            isExecutingVoiceCommand = true
+            voiceStatus = voiceLanguage.hasPrefix("en") ? "Thinking about your question…" : "Pensando na sua pergunta…"
+            notch.showVoice()
+            notch.spatialAssistant.answerVoiceQuestion(question) { [weak self] reply, succeeded in
+                guard let self, generation == self.voiceRequestGeneration else { return }
+                self.voiceStatus = reply
+                self.isExecutingVoiceCommand = false
+                self.presentVoiceResult(succeeded: succeeded, closeWidget: false)
+            }
+            return
         case .start(let minutes):
             if let minutes { assistant.startFocusSession(minutes: minutes) }
             else if assistant.interval != .focus { assistant.startFocusSession() }
@@ -658,6 +823,10 @@ final class ActivationController: ObservableObject {
     // enough to show the processing cue; idle/background polling never enters
     // this state. The separate flag keeps completed work distinct from display.
     private func presentVoiceResult(succeeded: Bool, closeWidget: Bool) {
+        if notch.spatialAssistant.response == nil, notch.spatialAssistant.weatherObservation == nil {
+            notch.spatialAssistant.publishResponse(voiceStatus, kind: .action, succeeded: succeeded)
+            notch.spatialAssistant.remember(prompt: transcript, reply: voiceStatus)
+        }
         processingFeedbackTask?.cancel()
         let remaining = minimumVoiceProcessingDuration - processingStartedAt.duration(to: ContinuousClock.now)
         guard remaining > .zero else { completeVoiceResult(succeeded: succeeded, closeWidget: closeWidget); return }
@@ -696,24 +865,25 @@ final class ActivationController: ObservableObject {
 @MainActor private final class ShortcutEventTap {
     private var port: CFMachPort?
     private var source: CFRunLoopSource?
-    private let receive: (UInt32?, NSEvent.ModifierFlags, Bool, TimeInterval) -> Void
-    init(receive: @escaping (UInt32?, NSEvent.ModifierFlags, Bool, TimeInterval) -> Void) { self.receive = receive }
+    private let receive: (UInt32?, NSEvent.ModifierFlags, Bool, Bool, TimeInterval) -> Void
+    init(receive: @escaping (UInt32?, NSEvent.ModifierFlags, Bool, Bool, TimeInterval) -> Void) { self.receive = receive }
     func start() -> Bool {
         guard CGPreflightListenEventAccess() || AXIsProcessTrusted() else { return false }
-        let mask = (CGEventMask(1) << CGEventType.flagsChanged.rawValue) | (CGEventMask(1) << CGEventType.keyDown.rawValue)
+        let mask = (CGEventMask(1) << CGEventType.flagsChanged.rawValue) | (CGEventMask(1) << CGEventType.keyDown.rawValue) | (CGEventMask(1) << CGEventType.keyUp.rawValue)
         port = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .listenOnly, eventsOfInterest: mask, callback: { _, type, event, pointer in
             guard let pointer else { return Unmanaged.passUnretained(event) }
             MainActor.assumeIsolated {
                 let monitor = Unmanaged<ShortcutEventTap>.fromOpaque(pointer).takeUnretainedValue()
                 if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput { monitor.ensureEnabled() }
                 else {
-                    let key = type == .keyDown ? UInt32(event.getIntegerValueField(.keyboardEventKeycode)) : nil
+                    let key = type == .keyDown || type == .keyUp ? UInt32(event.getIntegerValueField(.keyboardEventKeycode)) : nil
                     let flags = NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue))
+                    let released = type == .keyUp
                     let repeated = type == .keyDown && event.getIntegerValueField(.keyboardEventAutorepeat) != 0
                     let timestamp = Double(event.timestamp) / 1_000_000_000
                     // Keep the tap callback short; AppKit layout and speech
                     // preparation must not block the keyboard event stream.
-                    DispatchQueue.main.async { [weak monitor] in monitor?.receive(key, flags, repeated, timestamp) }
+                    DispatchQueue.main.async { [weak monitor] in monitor?.receive(key, flags, repeated, released, timestamp) }
                 }
             }
             return Unmanaged.passUnretained(event)

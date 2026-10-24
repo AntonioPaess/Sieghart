@@ -47,12 +47,40 @@ extension LogicTests {
             #expect(FocusVoiceParser.parse("Can you pause my focus timer") == .pause)
             #expect(FocusVoiceParser.parse("Take a break") == .startBreak)
         }
+
+        @Test("G04.01 · Keep Awake durations reach the app rather than focus or conversation", arguments: [
+            ("Ativa o keep awake por 2 hrs", 120), ("Sig, ative o Keep Awake por duas horas", 120),
+            ("Enable keep awake for 30 minutes", 30), ("Liga o keep awake por meia hora", 30),
+            ("Você consegue ativar o Keep Awake por duas horas?", 120),
+            ("Será que você pode ativar o modo Keep Awake por 2 hrs pra mim?", 120),
+            ("Pode ativar o keep a wake por duas horas por favor?", 120),
+            ("Tu consegue ativar o Keep Awake por duas horas?", 120)
+        ])
+        func awakeDurations(_ phrase: String, _ minutes: Int) {
+            #expect(FocusVoiceParser.parse(phrase) == .appAction(.keepAwake(minutes: minutes)))
+        }
+
+        @Test("G04.01 · Invalid, negated and compound Keep Awake requests never activate", arguments: [
+            "Não ativa o keep awake por 2 horas", "Ativa o keep awake por 0 horas", "Ativa o keep awake por 25 horas",
+            "Ativa o keep awake por -2 horas", "Ativa o keep awake por 2 horas e abre Safari"
+        ])
+        func rejectedAwake(_ phrase: String) {
+            guard case .appAction(.keepAwake) = FocusVoiceParser.parse(phrase) else { return }
+            Issue.record("Invalid request activated Keep Awake")
+        }
+
+        @Test("G04.01 · Tool questions and explicit searches do not execute app controls") func awakeQuestionsAndTools() {
+            #expect(FocusVoiceParser.parse("Desativa o Keep Awake") == .appAction(.stopKeepAwake))
+            #expect(FocusVoiceParser.parse("Abra o monitor do sistema") == .appAction(.show(.system)))
+            #expect(FocusVoiceParser.parse("Como ativar o keep awake por 2 horas?") == .ask(question: "Como ativar o keep awake por 2 horas?"))
+            #expect(FocusVoiceParser.parse("Pesquise como ativar o keep awake") == .search(query: "como ativar o keep awake"))
+        }
     }
 
     @Suite(.tags(.logic, .interactions)) struct VoiceIntentTests {
-        struct SearchExample: Sendable { let spoken: String; let query: String }
+        struct SearchExample: Sendable { let spoken: String; let query: String; var browser = true }
         static let searches: [SearchExample] = [
-            .init(spoken: "Como iniciar o pomodoro?", query: "Como iniciar o pomodoro?"),
+            .init(spoken: "Como iniciar o pomodoro?", query: "Como iniciar o pomodoro?", browser: false),
             .init(spoken: "pesquise como inicia o foco", query: "como inicia o foco"),
             .init(spoken: "search for Open Safari and start focus", query: "Open Safari and start focus"),
             .init(spoken: "Pesquise receitas de pão & café", query: "receitas de pão & café"),
@@ -61,22 +89,23 @@ extension LogicTests {
             .init(spoken: "procure arquitetura de processadores ARM", query: "arquitetura de processadores ARM"),
             .init(spoken: "Você pode pesquisar sobre astrofísica?", query: "astrofísica?"),
             .init(spoken: "Por favor, pesquisa no Google sobre música brasileira", query: "música brasileira"),
-            .init(spoken: "Sig, pesquise por C++", query: "C++"), .init(spoken: "GitHub", query: "GitHub"),
-            .init(spoken: "Como funcionam os tokens do Claude?", query: "Como funcionam os tokens do Claude?"),
-            .init(spoken: "arquiteturas de Mac", query: "arquiteturas de Mac"), .init(spoken: "meu Mac não liga", query: "meu Mac não liga"),
-            .init(spoken: "Quanto custa um Mac?", query: "Quanto custa um Mac?"),
-            .init(spoken: "arquiteturas que pausam processos", query: "arquiteturas que pausam processos"),
+            .init(spoken: "Sig, pesquise por C++", query: "C++"), .init(spoken: "GitHub", query: "GitHub", browser: false),
+            .init(spoken: "Como funcionam os tokens do Claude?", query: "Como funcionam os tokens do Claude?", browser: false),
+            .init(spoken: "arquiteturas de Mac", query: "arquiteturas de Mac", browser: false), .init(spoken: "meu Mac não liga", query: "meu Mac não liga", browser: false),
+            .init(spoken: "Quanto custa um Mac?", query: "Quanto custa um Mac?", browser: false),
+            .init(spoken: "arquiteturas que pausam processos", query: "arquiteturas que pausam processos", browser: false),
             .init(spoken: "Quero que você pesquise sobre saúde e agenda", query: "saúde e agenda"),
             .init(spoken: "Can you search for como não parar o timer", query: "como não parar o timer"),
             .init(spoken: "look up notícias de Recife", query: "notícias de Recife"),
-            .init(spoken: "Como pausar o timer no Mac?", query: "Como pausar o timer no Mac?"),
-            .init(spoken: "Como não perder o foco?", query: "Como não perder o foco?"),
-            .init(spoken: "Quem criou o Swift?", query: "Quem criou o Swift?"),
-            .init(spoken: "What is new in Swift?", query: "What is new in Swift?")
+            .init(spoken: "Como pausar o timer no Mac?", query: "Como pausar o timer no Mac?", browser: false),
+            .init(spoken: "Como não perder o foco?", query: "Como não perder o foco?", browser: false),
+            .init(spoken: "Quem criou o Swift?", query: "Quem criou o Swift?", browser: false),
+            .init(spoken: "What is new in Swift?", query: "What is new in Swift?", browser: false)
         ]
-        @Test("G04.02 · Search text remains literal", arguments: searches)
+        @Test("G04.02 · Questions stay local and only explicit searches open a browser", arguments: searches)
         func searchTopics(_ example: SearchExample) {
-            #expect(FocusVoiceParser.parse(example.spoken) == .search(query: example.query))
+            let expected: FocusVoiceCommand = example.browser ? .search(query: example.query) : .ask(question: example.query)
+            #expect(FocusVoiceParser.parse(example.spoken) == expected)
         }
         @Test("G04.02 · Portuguese search verbs", arguments: ["pesquisa", "pesquise", "pesquisar", "procura", "procure", "buscar", "busca", "busque", "faça uma pesquisa"])
         func searchVerbs(_ verb: String) {

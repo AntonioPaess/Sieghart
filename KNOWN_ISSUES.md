@@ -1,0 +1,30 @@
+# Bugs conhecidos e aceite pendente
+
+Atualizado em 23/10/2026. “Corrigido em contrato” não equivale a teste completo com microfone, permissões e modelo real. Os pedidos e decisões principais estão em `HANDOFF.md`; a atividade corrente, em `CURRENT_WORK.md`.
+
+| ID | Prioridade / estado | Reprodução e evidência | Próximo aceite |
+| --- | --- | --- | --- |
+| K01 | Alta — correção instalada 106, voz física pendente | “Ativa o Keep Awake com 2hrs” caía em estado desativado; a resposta posterior imprimia ferramenta sem executar. Parser/controlador/ponte corrigidos, com duração e preferência de tela. | Pedir por texto e voz; conferir contador, tela ligada e proteção real. Não reiniciar uma sessão ativa para teste. |
+| K02 | Alta — handoff de atualização verificado | Atualização anterior deixou 33 s sem proteção de tela e o Mac bloqueou. Guard independente mantém proteção até a nova instância confirmar; prazo preservado nas atualizações 105/106. | Sessão longa, término natural, condições de alimentação e retomada. Bloqueio explícito/lid não são promessa de impedir repouso. |
+| K03 | Alta — corrigido em contrato 106 | Clima → “Você consegue desenhar um círculo na minha tela e me explicar sobre circunferência?” podia reinterpretar “explicar…” como cidade. Continuação contextual e explicação separadas. | Mesmo ciclo real em PT/EN, outras figuras e referências ambíguas. “E Lisboa?” precisa continuar funcionando. |
+| K04 | Alta — OCR sintético aprovado, tela real pendente | Modelo preciso do Vision falhou/carregou em cerca de 49 s neste Mac. Modo rápido local reconheceu a imagem de teste em 0,185 s, com alternativa precisa. | Permissão da cópia canônica, texto pequeno, código, tradução, idiomas, recorte e monitores. Captura/OCR não provam compreensão de toda interface. |
+| K05 | Alta — qualidade de diagramas ainda não aceita | Usuário relatou retângulo/riscos, pedidos de classe CarPlay/MVVM sem resultado e tarefas “precisa de atenção”. Há canvas gerado, layout e testes; isso não comprova qualidade do modelo em todos os pedidos. | Abrir fonte de classe conhecida, pedir explicação + diagrama, conferir fatos, relações, espaçamento, setas e ancoragem. |
+| K06 | Alta — voz física pendente | Já houve crash de voz, demora, loading travado, atalho terminando sozinho e reconhecimento de Sieg como Siri. Regras de lançamento/TCC e contratos de turno foram corrigidos. | Medir início/fim/primeira fala, eco, interrupção, segurar/soltar, AirPods e troca de dispositivo. Nenhum teste físico nesta etapa. |
+| K07 | Alta — geração sem modelo corrigida 106 | Fallback continha explicação fixa de pi e relato de inspeção sem confirmação. Removidos; geração retorna indisponibilidade, controles nativos reais continuam possíveis. | Desligamento/indisponibilidade controlada do modelo, sem confundir com falta de rede do clima. Não reintroduzir respostas de demonstração. |
+| K08 | Média — cidades e seguimento parcialmente verificados | Recife/Bragança falhavam; Toulouse/França virou Franca/SP. Identidade geográfica, grafia e contexto foram ajustados, mas fixtures não cobrem qualquer local mundial. | Cidades arbitrárias com/sem país, regiões, ambiguidade, grafia/transcrição e “E Lisboa?”. Nunca adivinhar temperatura ou substituir cidade. |
+| K09 | Média — design integrado, acabamento pendente | 16 abas têm componentes compartilhados e renderizações claro/escuro. Há mensagens dinâmicas em inglês e estados longos/erros sem revisão completa. | Revisar cada aba preenchida/vazia/erro, fontes, contraste, teclado, VoiceOver e Reduzir Movimento. Não declarar auditoria HIG concluída. |
+| K10 | Média — navegação parcialmente conferida | Entrada das páginas/scroll reset têm código e testes; Tab e contorno de foco observados no build 106. Conferência adicional de rolagem interrompida por limite de uso da revisão automática da ferramenta. | Conferir fisicamente troca de aba após rolagem, teclado e restauração de foco. Não contornar o limite da ferramenta. |
+| K11 | Média — clima visual implementado, validação real pendente | Nove estados 2.5D e precipitação/ambiente no painel todo; retorno automático após fala tem contratos. Usuário relatou cartão preso antes das correções. | Cartão some após fala, Home retorna, recibo no cursor reabre detalhes; hover, interrupção, noite/dia, congelamento e temperatura mudando. |
+| K12 | Média — hipótese por inspeção, não validada | `executeFromChatIfApplicable` confirma forma vetorial e retorna antes de gerar uma explicação composta. O caminho de voz tem tratamento próprio. | Verificar pedido digitado “desenhe e explique”. Se confirmado, preservar ambos os efeitos e responder apenas no chat, sem áudio. |
+| K13 | Produto — capacidades incompletas | Documentos longos/fora da tela, edição contextual de partes do desenho, anexos/arraste/exportação, tarefas grandes e especialistas ainda exigem aceite e extensão. | Entregar um fluxo completo verificável por vez. Não prometer execução de código pelo overlay ou integrações de contas ausentes. |
+| K14 | Ambiente — risco de continuidade | Muitos arquivos deste checkout eram placeholders do iCloud. Leituras convencionais/Git podem demorar; leitura que retorna vazio não comprova arquivo vazio. | Materializar e conferir tamanho/hash antes de edição ou publicação. A cópia de build em `/tmp` não é a fonte permanente. |
+
+## Ordem de validação sugerida
+
+1. Keep Awake real e linguagem de controle; depois clima → desenho/explicação.
+2. Tela selecionada/inteira com texto conhecido, tradução e classe CarPlay/MVVM.
+3. Diagrama factual e legível, com resultado preservável, cancelamento e edição parcial.
+4. Voz física e cursor/seleção no mesmo turno, quando autorizado.
+5. Design de todas as abas e estados; arquivos/resultados e tarefas maiores.
+
+Para cada ensaio registrar: build, idioma, canal (texto/voz), frase, resultado esperado, resultado real, permissão/dispositivo, evidência e se o resultado foi obtido por fixture ou app/modelo real. Não escrever “resolvido” só porque compilou.

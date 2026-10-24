@@ -1,0 +1,14 @@
+{
+  "active": true,
+  "request": {
+    "keepDisplay": true,
+    "restoreOnLaunch": false,
+    "externalDisplayOnly": false,
+    "applications": [],
+    "until": 813369279.145309,
+    "mode": "Duration",
+    "onlyOnAC": false,
+    "end": 814374877.258202,
+    "minutes": 120
+  }
+}

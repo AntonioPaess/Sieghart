@@ -1,0 +1,18 @@
+Native gradual freeze, held invisible interval, 2.6s thaw, distinct thermal cache, detached pause/teardown: passed
+Exact WMO mappings, precipitation below zero and independent thermal state: 16 passed
+hot-day: 1128×648
+comfortable-day: 1128×648
+cold-clear: 1128×648
+frozen-start: 1128×648
+frozen-growing: 1128×648
+frozen-full: 1128×648
+hail: 1128×648
+heavy-hail: 1128×648
+cloudy: 1128×648
+cloudy-later: 1128×648
+snow: 1128×648
+rain: 1128×648
+cold-night: 1128×648
+hot-night: 1128×648
+cloudy-night: 1128×648
+Silent production-view stills completed

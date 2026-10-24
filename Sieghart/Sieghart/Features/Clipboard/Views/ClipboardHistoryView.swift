@@ -70,7 +70,7 @@ struct ClipboardHistoryView: View {
                     }
                 }
                 HStack {
-                    Text(clipboard.status).lineLimit(2)
+                    Text(LocalizedStringKey(clipboard.status)).lineLimit(2)
                     Spacer()
                     if clipboard.isEnabled { Button(clipboard.isPaused ? "Resume" : "Pause") { clipboard.isPaused.toggle() }.buttonStyle(.plain) }
                     Text("\(clipboard.entries.count)/\(clipboard.historyLimit)").monospacedDigit()
@@ -89,7 +89,7 @@ struct ClipboardHistoryView: View {
             } message: { Text("This removes saved copies and pins from Sieghart. Your current system clipboard is unchanged.") }
     }
     private func filter(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button(title, action: action).font(.system(size: compact ? 10 : 11, weight: .medium)).buttonStyle(.plain)
+        Button(LocalizedStringKey(title), action: action).font(.system(size: compact ? 10 : 11, weight: .medium)).buttonStyle(.plain)
             .padding(.horizontal, compact ? 7 : 10).padding(.vertical, 6)
             .foregroundStyle(selected ? CompanionStyle.accentInk : CompanionStyle.muted)
             .background(selected ? CompanionStyle.accent.opacity(0.12) : CompanionStyle.edge.opacity(0.035), in: Capsule())
@@ -118,7 +118,7 @@ struct ClipboardHistoryView: View {
     }
     private func preview(_ item: ClipboardEntry) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack { Text("PREVIEW").tracking(1.2); Spacer(); Text(item.payload.kind.rawValue.capitalized) }.font(.system(size: 9, weight: .semibold)).foregroundStyle(CompanionStyle.muted)
+            HStack { Text("PREVIEW").tracking(1.2); Spacer(); Text(LocalizedStringKey(item.payload.kind.rawValue.capitalized)) }.font(.system(size: 9, weight: .semibold)).foregroundStyle(CompanionStyle.muted)
             switch item.payload.kind {
             case .text:
                 if staticPreview { Text(item.payload.text).font(.callout).frame(maxWidth: .infinity, alignment: .leading) }
@@ -143,7 +143,7 @@ struct ClipboardHistoryView: View {
                 Text("Maximum saved copies"); Spacer()
                 ForEach([5, 10, 20], id: \.self) { value in filter("\(value)", selected: clipboard.historyLimit == value) { clipboard.historyLimit = value } }
             }
-            Picker("Clean history", selection: $clipboard.cleanup) { ForEach(ClipboardCleanup.allCases) { Text($0.rawValue).tag($0) } }
+            Picker("Clean history", selection: $clipboard.cleanup) { ForEach(ClipboardCleanup.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) } }
             if clipboard.cleanup == .afterDays {
                 Stepper("After \(clipboard.retentionDays) days", value: $clipboard.retentionDays, in: 1...365)
             }
@@ -163,8 +163,8 @@ struct ClipboardHistoryView: View {
     private func empty(_ title: String, detail: String, symbol: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: symbol).font(.system(size: 28)).foregroundStyle(CompanionStyle.accentInk)
-            Text(title).font(.headline)
-            Text(detail).font(.callout).foregroundStyle(CompanionStyle.muted).multilineTextAlignment(.center).frame(maxWidth: 350)
+            Text(LocalizedStringKey(title)).font(.headline)
+            Text(LocalizedStringKey(detail)).font(.callout).foregroundStyle(CompanionStyle.muted).multilineTextAlignment(.center).frame(maxWidth: 350)
         }.frame(maxWidth: .infinity).frame(height: compact ? 172 : 220)
     }
 }

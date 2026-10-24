@@ -1,0 +1,65 @@
+[
+  {
+    "url": "https://minhasfinancas.app.br/desktop",
+    "filename": "desktop.html",
+    "bytes": 26394,
+    "sha256": "b2529fe9da016769d454c57fd0f1472c97b68a340825e5cce3b6682cc93657e9",
+    "accessed_utc": "2026-10-13T13:49:45.251471+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  },
+  {
+    "url": "https://minhasfinancas.app.br/ajuda/agentes-ia-mcp",
+    "filename": "agentes-ia-mcp.html",
+    "bytes": 57677,
+    "sha256": "d75d1b4bf779f5b5e2ad2eef7c9096f20197bebdb2185f11fd5e9a4ac37ae60c",
+    "accessed_utc": "2026-10-13T13:49:45.681489+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  },
+  {
+    "url": "https://minhasfinancas.app.br/ajuda/permissoes-seguranca-agentes-ia",
+    "filename": "permissoes-seguranca-agentes-ia.html",
+    "bytes": 42944,
+    "sha256": "648aed186d824078403d20bfe13e39df02c289ba60a871850e02aac1f7c30409",
+    "accessed_utc": "2026-10-13T13:49:45.779069+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  },
+  {
+    "url": "https://minhasfinancas.app.br/ajuda/importar-csv-xlsx",
+    "filename": "importar-csv-xlsx.html",
+    "bytes": 42649,
+    "sha256": "81c707edbfc3bff49fb6473fc3c7465db0418d01fb4f6424ed16213bd712321a",
+    "accessed_utc": "2026-10-13T13:49:45.676234+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  },
+  {
+    "url": "https://minhasfinancas.app.br/ajuda/conciliacao-duplicidades",
+    "filename": "conciliacao-duplicidades.html",
+    "bytes": 25924,
+    "sha256": "d06b2745991009fd0c7004393f670aaeb8eca4795ee17a8b362feacf90b495aa",
+    "accessed_utc": "2026-10-13T13:49:45.949806+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  },
+  {
+    "url": "https://minhasfinancas.app.br/ajuda/organizar-perfis",
+    "filename": "organizar-perfis.html",
+    "bytes": 29007,
+    "sha256": "439174c61522282b7ea29cfcbabfa89442cccdc1e0938d03a38870c3b1b97ccf",
+    "accessed_utc": "2026-10-13T13:49:46.251951+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  },
+  {
+    "url": "https://minhasfinancas.app.br/ajuda/usar-mia",
+    "filename": "usar-mia.html",
+    "bytes": 26336,
+    "sha256": "aa3e6fd0ad8456b7193bf483d104a4fe67805f3e702b7818c38afbc314162243",
+    "accessed_utc": "2026-10-13T13:49:46.309003+00:00",
+    "kind": "public website HTML, not application binary",
+    "method": "curl, certificate validation enabled"
+  }
+]

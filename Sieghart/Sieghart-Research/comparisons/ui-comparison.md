@@ -1,0 +1,14 @@
+# Comparação de UI — lote 1
+
+Esta matriz é deliberadamente limitada: Boring Notch foi estudado no código público e na configuração da versão instalada 2.7.3 (271); Sieghart foi lido no checkout local. Alcove, Droppy e os demais alvos de UI ainda não foram investigados em detalhe. A versão instalada confirma opções de hover em 0,3 s, display preferido, prateleira e atalhos. O usuário relatou abertura do painel por hover e clique, mas a ferramenta não conseguiu capturá-lo para medir ou validar detalhes. Veja a [observação direta](../applications/boring-notch.md#observação-direta-da-versão-aberta).
+
+| Aplicação | Mecanismo | Evidência | Complexidade para Sieghart | Relevância |
+| --- | --- | --- | --- | --- |
+| Boring Notch | Janela AppKit com `NSHostingView` SwiftUI | [`boringNotchApp.swift`](https://github.com/TheBoredTeam/boring.notch/blob/64b545929cf31681e09b5c375859c1eceeb733eb/boringNotch/boringNotchApp.swift) | Média; Sieghart já tem essa base | Alta |
+| Boring Notch | Estado de notch, hover e spring em SwiftUI | [`ContentView.swift`](https://github.com/TheBoredTeam/boring.notch/blob/64b545929cf31681e09b5c375859c1eceeb733eb/boringNotch/ContentView.swift) | Média; interação de Sieghart é intencionalmente diferente | Alta |
+| Boring Notch | Espaço CGS e SkyLight privados | [CGSSpace](https://github.com/TheBoredTeam/boring.notch/blob/64b545929cf31681e09b5c375859c1eceeb733eb/boringNotch/private/CGSSpace.swift), [janela](https://github.com/TheBoredTeam/boring.notch/blob/64b545929cf31681e09b5c375859c1eceeb733eb/boringNotch/components/Notch/BoringNotchSkyLightWindow.swift) | Alta; não transportar para Sieghart | Baixa como implementação |
+| Boring Notch | Prateleira via NSItemProvider, bookmarks e JSON | [drop](https://github.com/TheBoredTeam/boring.notch/blob/64b545929cf31681e09b5c375859c1eceeb733eb/boringNotch/components/Shelf/Services/ShelfDropService.swift), [persistência](https://github.com/TheBoredTeam/boring.notch/blob/64b545929cf31681e09b5c375859c1eceeb733eb/boringNotch/components/Shelf/Services/ShelfPersistenceService.swift) | Média; comparar com receptor atual de Sieghart | Média |
+| Sieghart atual | `NSPanel` e área de tracking AppKit | [`IslandPanels.swift`](../../Sieghart/Core/Services/Windowing/IslandPanels.swift) | Já existe; testar integração | Alta |
+| Sieghart atual | Geometria por áreas auxiliares de `NSScreen` | [`NotchGeometry.swift`](../../Sieghart/Core/Helpers/NotchGeometry.swift) | Já existe; validar displays | Alta |
+
+**Adotar como princípio:** janela e conteúdo com responsabilidades distintas. **Adaptar:** política de seleção de monitor e tarefas canceláveis, sem copiar código GPL. **Preservar:** hover de Sieghart apenas destaca; clique expande. **Evitar:** comportamento dependente de CGS/SkyLight ou a alegação de ocultação de captura por sharingType.none. Fluidez, desempenho e acessibilidade comparados permanecem desconhecidos até testes equivalentes em execução.

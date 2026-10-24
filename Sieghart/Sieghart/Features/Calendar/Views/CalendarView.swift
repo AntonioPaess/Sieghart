@@ -82,14 +82,14 @@ struct CalendarView: View {
             if preview {
                 HStack(spacing: 0) {
                     ForEach(CalendarViewModel.Span.allCases, id: \.self) { item in
-                        Text(item.rawValue).font(.caption.weight(item == model.span ? .semibold : .regular))
+                        Text(LocalizedStringKey(item.rawValue)).font(.caption.weight(item == model.span ? .semibold : .regular))
                             .padding(.horizontal, 12).padding(.vertical, 7)
                             .background(item == model.span ? CompanionStyle.edge.opacity(0.12) : .clear, in: RoundedRectangle(cornerRadius: 7))
                     }
                 }.padding(3).background(CompanionStyle.edge.opacity(0.04), in: RoundedRectangle(cornerRadius: 9))
             } else {
                 Picker("Period", selection: $model.span) {
-                    ForEach(CalendarViewModel.Span.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    ForEach(CalendarViewModel.Span.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }.pickerStyle(.segmented).frame(maxWidth: 230)
             }
             Spacer(minLength: 0)

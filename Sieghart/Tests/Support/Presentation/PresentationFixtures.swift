@@ -70,6 +70,48 @@ import Testing
     }
 }
 
+/// Keeps shortcut/language tests on their injected generator when a coding or
+/// mathematics request is now delegated to Ada instead of Sieg's generic model.
+@MainActor final class PresentationSpecialistContent: SpatialContentGenerating {
+    let engine: any LocalChatGenerating
+    init(_ engine: any LocalChatGenerating) { self.engine = engine }
+    func canvas(for request: CanvasRequest, language: String) async throws -> GeneratedCanvas { throw SpatialContentError.unavailable }
+    func describeScreen(_ image: CapturedScreenImage, text: String, question: String, language: String) async throws -> String { throw SpatialContentError.noVision }
+    func askSpecialist(_ persona: LocalChatPersona, question: String, context: String, language: String) async throws -> String {
+        try await engine.generateVoice(history: [.init(role: .user, text: question)], language: language) { _ in }
+    }
+}
+
+@MainActor final class PresentationVoiceGenerator: LocalChatGenerating {
+    var readiness: LocalChatReadiness { .available }
+    var reply = "Pi é a razão entre o comprimento da circunferência e seu diâmetro, aproximadamente 3,14159."
+    var holdsReplies = false
+    private(set) var languages: [String] = []
+    func generateVoice(history: [LocalChatMessage], language: String, onSnapshot: @escaping @MainActor (String) -> Void) async throws -> String {
+        languages.append(language)
+        return try await generate(history: history, persona: .sig, onSnapshot: onSnapshot)
+    }
+    private(set) var requests: [[LocalChatMessage]] = []
+    private var pending: [Int: CheckedContinuation<String, any Error>] = [:]
+    func generate(history: [LocalChatMessage], persona: LocalChatPersona,
+                  onSnapshot: @escaping @MainActor (String) -> Void) async throws -> String {
+        let index = requests.count
+        requests.append(history)
+        if holdsReplies {
+            // Ignore cancellation until released to exercise stale delivery guards.
+            return try await withCheckedThrowingContinuation { pending[index] = $0 }
+        }
+        onSnapshot(reply)
+        return reply
+    }
+    func finish(_ index: Int, reply: String) { pending.removeValue(forKey: index)?.resume(returning: reply) }
+    func finishAll() {
+        let continuations = Array(pending.values)
+        pending = [:]
+        continuations.forEach { $0.resume(throwing: CancellationError()) }
+    }
+}
+
 @MainActor private final class PresentationAudioBackend: AudioBackend {
     func snapshot() -> AudioSnapshot { AudioSnapshot() }
     func prepareApplicationAudio() async throws { Issue.record("Presentation fixture must not request audio access") }
@@ -128,21 +170,23 @@ private actor PresentationClipboardStorage: ClipboardStorage {
          observesShortcutLifecycle: Bool = false, defaultsFixture: TestDefaults? = nil,
          events: CompanionEventCenter? = nil, files: FilesViewModel? = nil, capture: CaptureViewModel? = nil,
          fileReception: FileReceptionViewModel? = nil, agentRoom: AgentRoomViewModel? = nil,
-         createActivation: Bool = true) throws {
+         voiceGenerator: (any LocalChatGenerating)? = nil, voiceWeather: any VoiceWeatherProviding = VoiceWeatherService(),
+         awakeBackend: (any AwakeBackend)? = nil, sampler: (any SystemSampling)? = nil, createActivation: Bool = true) throws {
         store = try defaultsFixture ?? TestDefaults()
         ownsStore = defaultsFixture == nil
         let defaults = store.value, clock = self.clock
+        if defaults.string(forKey: "activation.voiceLanguage") == nil { defaults.set("pt_BR", forKey: "activation.voiceLanguage") }
         assistant = AssistantViewModel(defaults: defaults, now: { clock.date }, schedulesTimer: false)
         preferences = CompanionPreferences(defaults: defaults)
         notch = NotchWidgetViewModel(assistant: assistant, preferences: preferences,
             audio: AudioViewModel(backend: PresentationAudioBackend(), defaults: defaults),
-            monitor: SystemMonitorViewModel(backend: PresentationSampler()),
-            keepAwake: KeepAwakeViewModel(backend: PresentationAwakeBackend(), defaults: defaults, now: { clock.date }),
+            monitor: SystemMonitorViewModel(backend: sampler ?? PresentationSampler()),
+            keepAwake: KeepAwakeViewModel(backend: awakeBackend ?? PresentationAwakeBackend(), defaults: defaults, now: { clock.date }),
             displayPower: DisplayPowerViewModel(backend: PresentationDisplayBackend(), defaults: defaults),
             clipboard: ClipboardViewModel(defaults: defaults, access: PresentationClipboard(), storage: PresentationClipboardStorage(),
                 monitorsSystem: false, now: { clock.date }, bootTime: { 100 }),
             calendar: IsolatedCalendarFixture.make(defaults: defaults), events: events, files: files, capture: capture,
-            fileReception: fileReception, agentRoom: agentRoom, managesWindows: false,
+            fileReception: fileReception, agentRoom: agentRoom, voiceGenerator: voiceGenerator, voiceWeather: voiceWeather, spatialContent: voiceGenerator.map { PresentationSpecialistContent($0) }, managesWindows: false,
             announcementDelay: announcementDelay, pointerExitDelay: pointerExitDelay, keyboardRevealDelay: keyboardRevealDelay)
         guard createActivation else { return }
         controller = ActivationController(assistant: assistant, notch: notch, defaults: defaults, registersShortcuts: false,

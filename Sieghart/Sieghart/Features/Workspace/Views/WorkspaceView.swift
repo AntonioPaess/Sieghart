@@ -1,7 +1,10 @@
 import SwiftUI
+import AVFoundation
 
 struct ContentView: View {
     @StateObject private var viewModel: WorkspaceViewModel
+    @Environment(\.accessibilityReduceMotion) private var systemReducedMotion
+    @FocusState private var focusedSection: AppSection?
     @Environment(\.islandPreview) private var preview
     @EnvironmentObject private var sensor: SensorViewModel
     @EnvironmentObject private var assistant: AssistantViewModel
@@ -26,6 +29,7 @@ struct ContentView: View {
         .environment(\.workspaceGlass, true)
         .environment(\.islandReduceMotion, preferences.usesReducedMotion)
         .environment(\.companionMotionEnabled, preferences.characterMotion)
+        .environment(\.locale, Locale(identifier: activation.voiceLanguage))
         .background { WorkspaceBackdrop() }
         .environment(\.surfaceGlassEnabled, preferences.windowGlass)
     }
@@ -37,10 +41,13 @@ struct ContentView: View {
                 if scrollable { ScrollView { page }.scrollIndicators(.hidden) }
                 else { page }
             }
+            .id(viewModel.section) // Each destination starts at its own top, not the previous page’s offset.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .frame(minWidth: 840, minHeight: 580)
         .tint(CompanionStyle.accent)
+        .font(WorkspaceTypography.body)
+        .buttonStyle(CompanionButtonStyle())
         .focusEffectDisabled()
         .onChange(of: preferences.impactsEnabled) { _, enabled in
             if enabled { sensor.startIfNeeded() }
@@ -48,28 +55,28 @@ struct ContentView: View {
         }
     }
 
+    private var en: Bool { activation.voiceLanguage.hasPrefix("en") }
+
     private var page: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            HStack {
-                Label(viewModel.section.rawValue, systemImage: viewModel.section.symbol)
-                    .font(.caption.weight(.semibold)).foregroundStyle(CompanionStyle.muted)
-                Spacer()
-                Text("SIEGHART").font(.system(size: 10, weight: .semibold)).tracking(2)
-                    .foregroundStyle(CompanionStyle.muted.opacity(0.65))
-            }
+        VStack(alignment: .leading, spacing: WorkspaceMetrics.sectionGap) {
+            WorkspacePageHeading(title: viewModel.section.title(english: en), subtitle: viewModel.section.subtitle(english: en))
             switch viewModel.section {
             case .desktop:
-                heading("A place for every window.", subtitle: "Choose an app, arrange a window or enable edge snapping.")
+
                 DesktopToolsView(model: notch.desktop).companionCard()
-            case .overview: overview
+            case .overview:
+                CompanionWorkspaceHome(room: notch.agentRoom, chat: notch.agentRoom.localChat, coordinator: notch.spatialAssistant,
+                    language: activation.voiceLanguage, animates: preferences.characterMotion && !preferences.usesReducedMotion,
+                    openChat: { viewModel.section = .agentRoom }, speak: { activation.toggleListening() }, settings: { viewModel.section = .activation })
             case .calendar:
-                heading("Your day, at a glance.", subtitle: "Events and reminders from the calendars you choose.")
+
                 CalendarView(model: notch.calendar, events: notch.events).companionCard()
             case .files:
-                heading("A place for the things you need.", subtitle: "Files, selected-folder downloads and useful file actions.")
+
+                CompanionArtifactShelf(library: notch.spatialAssistant.artifacts, language: activation.voiceLanguage)
                 FilesView(model: notch.files).companionCard()
             case .capture:
-                heading("Keep one useful piece.", subtitle: "Capture, annotate and read text or QR locally.")
+
                 CaptureToolsView(model: notch.capture).companionCard()
             case .focus: focusSettings
             case .activation: activationSettings
@@ -77,19 +84,19 @@ struct ContentView: View {
             case .dynamicIsland:
                 IslandLayoutEditor(preferences: preferences, onPreview: { notch.show() })
             case .system:
-                heading("Your Mac, understood.", subtitle: "Live readings, with clear units and real hardware capabilities.")
+
                 SystemMonitorView(monitor: notch.monitor).companionCard()
             case .keepAwake:
-                heading("Stay awake, on your terms.", subtitle: "Choose a schedule and the conditions that keep it active.")
+
                 KeepAwakeView(controller: notch.keepAwake).companionCard()
             case .displayPower:
-                heading("A comfortable screen.", subtitle: "Compatible brightness, display sleep and device restoration.")
+
                 DisplayPowerView(controller: notch.displayPower).companionCard()
             case .clipboard:
-                heading("Copies, kept nearby.", subtitle: "Find, pin and reuse what you copied on this Mac.")
+
                 ClipboardHistoryView(clipboard: notch.clipboard, dismiss: { notch.hide() }).companionCard()
             case .audio:
-                heading("Sound, your way.", subtitle: "Your devices and audio apps in one quiet space.")
+
                 AudioControlsView().companionCard()
                 VStack(alignment: .leading, spacing: 16) {
                     PreferenceRow("Switch output shortcut", detail: "Cycle through connected outputs from any app.") { ShortcutRecorder(action: .nextOutput) }
@@ -98,14 +105,16 @@ struct ContentView: View {
                     Text(activation.audioShortcutStatuses[.muteMicrophone] ?? "Shortcut off").font(.caption).foregroundStyle(CompanionStyle.muted)
                 }.companionCard()
             case .agentRoom:
-                AgentRoomView(model: notch.agentRoom).companionCard()
+                AgentRoomView(model: notch.agentRoom)
             case .aiLimits:
-                heading("Your AI, in view.", subtitle: "Limits, tokens and activity from the tools you use.")
+
                 AIUsageView(onOpenRoom: { viewModel.section = .agentRoom })
             }
         }
-        .padding(30)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: WorkspaceMetrics.contentWidth, alignment: .leading)
+        .modifier(WorkspacePageArrival())
+        .padding(WorkspaceMetrics.pageInset)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 
     private var sidebar: some View {
@@ -114,59 +123,69 @@ struct ContentView: View {
                 CompanionCharacter(size: 36, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Sieghart").font(.headline)
-                    Text("Your quiet companion").font(.system(size: 10)).foregroundStyle(CompanionStyle.muted)
+                    Text(activation.voiceLanguage.hasPrefix("en") ? "Your quiet companion" : "Seu companheiro de todos os dias").font(.system(size: 10)).foregroundStyle(CompanionStyle.muted)
                 }
-            }.padding(.horizontal, 8).padding(.top, 12).padding(.bottom, 25)
-            Text("YOUR SPACE").font(.system(size: 9, weight: .semibold)).tracking(1.6)
+            }.padding(.horizontal, 8).padding(.top, 12).padding(.bottom, 18)
+            Text(activation.voiceLanguage.hasPrefix("en") ? "YOUR SPACE" : "SEU ESPAÇO").font(.system(size: 9, weight: .semibold)).tracking(1.6)
                 .foregroundStyle(CompanionStyle.muted.opacity(0.7)).padding(.horizontal, 12).padding(.bottom, 4)
             Group {
                 if preview { sidebarNavigation }
                 else { ScrollView { sidebarNavigation }.scrollIndicators(.hidden) }
             }.frame(maxHeight: .infinity, alignment: .top)
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Ready when you are", systemImage: "sparkle").font(.caption.weight(.medium))
-                Text("A little space for your time, your tools and your companion.")
-                    .font(.caption).foregroundStyle(CompanionStyle.muted)
-                Button("Review introduction") { preferences.onboardingComplete = false }
-                    .buttonStyle(.plain).font(.caption).foregroundStyle(CompanionStyle.accentInk)
-            }.padding(15).modifier(WorkspaceSurface(radius: 17))
+            Button(en ? "Review introduction" : "Rever apresentação") { preferences.onboardingComplete = false }
+                .buttonStyle(.plain).font(WorkspaceTypography.caption).foregroundStyle(CompanionStyle.muted)
+                .padding(.horizontal, 12).padding(.vertical, 12)
         }
-        .padding(14)
-        .frame(width: 212)
+        .padding(12)
+        .frame(width: 220)
         .frame(maxHeight: .infinity)
-        .background(CompanionStyle.edge.opacity(0.025))
+        .background(CompanionStyle.sidebar)
         .overlay(alignment: .trailing) { Rectangle().fill(CompanionStyle.edge.opacity(0.07)).frame(width: 0.7).allowsHitTesting(false) }
     }
 
     private var sidebarNavigation: some View {
-        VStack(spacing: 8) {
-            ForEach(AppSection.allCases) { item in
-                sidebarButton(item.rawValue, symbol: item.symbol, selected: viewModel.section == item) { viewModel.section = item }
+        VStack(alignment: .leading, spacing: 3) {
+            ForEach(AppSection.workspaceSections) { item in
+                sidebarButton(item.title(english: en), section: item, symbol: item.symbol, selected: viewModel.section == item) { viewModel.section = item }
+            }
+            Text(en ? "PREFERENCES" : "PREFERÊNCIAS").font(.system(size: 9, weight: .semibold)).tracking(1.2)
+                .foregroundStyle(CompanionStyle.muted.opacity(0.7)).padding(.horizontal, 12).padding(.top, 22).padding(.bottom, 8)
+            ForEach(AppSection.preferenceSections) { item in
+                sidebarButton(item.title(english: en), section: item, symbol: item.symbol, selected: viewModel.section == item) { viewModel.section = item }
             }
         }
     }
 
-    private func sidebarButton(_ title: String, symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        CompanionInteraction(action: action) {
+    private func sidebarButton(_ title: String, section: AppSection, symbol: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
             HStack(spacing: 11) {
-                Image(systemName: symbol).font(.system(size: 15)).frame(width: 18)
+                Image(systemName: symbol).font(.system(size: 13, weight: selected ? .medium : .regular)).frame(width: 18)
                     .foregroundStyle(selected ? CompanionStyle.accentInk : CompanionStyle.muted)
                 Text(title)
                 Spacer()
                 if selected { Circle().fill(CompanionStyle.accent).frame(width: 4, height: 4) }
             }
-                .font(.callout.weight(selected ? .semibold : .regular))
+                .font(.system(size: 12, weight: selected ? .medium : .regular))
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
+                .padding(.horizontal, 11).padding(.vertical, 9)
                 .foregroundStyle(selected ? CompanionStyle.ink : CompanionStyle.muted)
-                .background(selected ? CompanionStyle.edge.opacity(0.08) : .clear, in: RoundedRectangle(cornerRadius: 12))
+                .background(selected ? CompanionStyle.accent.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 10))
+                .animation(systemReducedMotion || preferences.usesReducedMotion ? nil : InterfaceMotion.feedback, value: selected)
+        }
+        .buttonStyle(WorkspaceNavigationStyle())
+        .focused($focusedSection, equals: section)
+        .focusEffectDisabled()
+        .overlay {
+            RoundedRectangle(cornerRadius: 10).strokeBorder(focusedSection == section ? CompanionStyle.accentInk.opacity(0.85) : .clear, lineWidth: 1.5)
+                .allowsHitTesting(false)
         }
         .accessibilityLabel(title)
-        .accessibilityValue(selected ? "Selected" : "")
+        .accessibilityValue(selected ? (en ? "Selected" : "Selecionado") : "")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     @ViewBuilder private var overview: some View {
-        heading("A little room for your day.", subtitle: "Your companion, your time, and your AI work — together.")
+
         HStack(spacing: 22) {
             CompanionCharacter(size: 100, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion, focusing: assistant.hasTimerActivity)
                 .frame(width: 120, height: 130)
@@ -191,6 +210,18 @@ struct ContentView: View {
             quickCard("Appearance", symbol: "face.smiling", value: preferences.avatar.name, detail: "Choose a personality and its rhythm.") { viewModel.section = .appearance }
         }
         AIUsageSummary(onOpen: { viewModel.section = .aiLimits })
+        CompanionTaskShelf(journal: notch.spatialAssistant.taskJournal, language: notch.spatialAssistant.responseLanguage,
+            resume: { notch.spatialAssistant.resumeTask($0) }, pause: { notch.spatialAssistant.pauseTask($0) }).companionCard()
+        if let review = notch.spatialAssistant.screenControls.pendingReview {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Review screen action", systemImage: "cursorarrow.click").font(.headline)
+                Text(review.summary).textSelection(.enabled)
+                HStack {
+                    Button("Confirm action") { notch.spatialAssistant.confirmScreenReview() }.buttonStyle(CompanionButtonStyle(primary: true))
+                    Button("Cancel") { notch.spatialAssistant.screenControls.cancelReview() }
+                }
+            }.companionCard()
+        }
         HStack {
             Label("A little progress adds up", systemImage: "leaf")
             Spacer()
@@ -199,13 +230,14 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var focusSettings: some View {
-        heading("Make time your own.", subtitle: "Count down, focus in rounds, or keep track of elapsed time.")
+
         TimerToolsView(onStart: { notch.showIsland() }).companionCard()
         Text("Selecting a mode leaves your clock alone. Start, pause or reset when you choose.").font(.caption).foregroundStyle(CompanionStyle.muted)
     }
 
     @ViewBuilder private var activationSettings: some View {
-        heading("Bring Sieghart into view.", subtitle: "Choose the inputs that fit your day.")
+
+        CompanionVoiceSettings().companionCard()
         ScrollInputSettings(controller: notch.scrollInput).companionCard()
         MouseButtonsSettingsView(controller: notch.mouseButtons).companionCard()
         InputGuardsSettingsView(controller: notch.inputGuards).companionCard()
@@ -215,7 +247,7 @@ struct ContentView: View {
             PreferenceRow("Companion shortcut", detail: "Record any key combination to reveal Sieghart.") { ShortcutRecorder(action: .companion) }
             Text(activation.shortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
             Divider()
-            PreferenceRow("Voice shortcut", detail: "Record keys, or press and release only modifiers such as Option + Command.") { ShortcutRecorder(action: .voice) }
+            PreferenceRow("Voice shortcut", detail: "Hold your shortcut to speak. Release it to send your request.") { ShortcutRecorder(action: .voice) }
             Text(activation.voiceShortcutStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
             Divider()
             PreferenceRow("Clipboard shortcut", detail: "Find a saved copy from any app, even after closing this window.") { ShortcutRecorder(action: .clipboard) }
@@ -258,18 +290,27 @@ struct ContentView: View {
         }.companionCard()
         VStack(alignment: .leading, spacing: 18) {
             Label("Voice", systemImage: "waveform").font(.headline)
-            PreferenceRow("Voice", detail: "Say “open Safari”, “search for Swift tutorials” or “pesquise receitas”. Commands run when you finish.") {
+            PreferenceRow("Voice", detail: "Say “open Safari”, “search for Swift tutorials” or “pesquise receitas”. Hold the voice shortcut to speak, then release to send.") {
                 Button(activation.isVoiceBusy ? "Cancel" : "Speak") {
                     if activation.isVoiceBusy { activation.cancelVoiceCommand() }
                     else { activation.toggleListening() }
                 }.buttonStyle(CompanionButtonStyle()).focusEffectDisabled()
             }
-            PreferenceRow("Speech language", detail: "Choose the language you use for commands.") {
+            PreferenceRow("Speech language", detail: "Choose the language for your commands and Sieg’s replies.") {
                 if preview { Text(activation.voiceLanguage == "pt_BR" ? "Português" : "English").font(.callout).padding(9).background(CompanionStyle.edge.opacity(0.08), in: RoundedRectangle(cornerRadius: 9)) }
                 else { Picker("Speech language", selection: $activation.voiceLanguage) {
                     Text("English").tag("en_US")
                     Text("Português").tag("pt_BR")
                 }.labelsHidden().frame(width: 140) }
+            }
+            PreferenceRow("Conversation", detail: "Keep the microphone on for a conversation. You can interrupt Sieg; Stop ends listening. Hold-to-talk remains available separately.") {
+                Button(activation.isConversing ? "Stop conversation" : "Start conversation") { activation.toggleConversation() }
+                    .buttonStyle(CompanionButtonStyle(primary: activation.isConversing))
+            }
+            if activation.isConversing {
+                Label(activation.conversation.status, systemImage: "mic.fill").font(.caption).foregroundStyle(.green)
+            } else if !activation.conversation.status.isEmpty {
+                Text(activation.conversation.status).font(.caption).foregroundStyle(CompanionStyle.muted)
             }
             Text(activation.voiceStatus).font(.caption).foregroundStyle(CompanionStyle.muted).frame(maxWidth: .infinity, alignment: .leading)
             if !activation.transcript.isEmpty {
@@ -293,7 +334,7 @@ struct ContentView: View {
     }
 
     @ViewBuilder private var appearanceSettings: some View {
-        heading("A little more you.", subtitle: "Six personalities. Choose the companion that feels at home on your Mac.")
+
         VStack(alignment: .leading, spacing: 18) {
             Text("Appearance").font(.headline)
             HStack(spacing: 14) {
@@ -302,7 +343,7 @@ struct ContentView: View {
                         VStack(spacing: 9) {
                             AppearanceThumbnail(appearance: choice)
                                 .overlay { RoundedRectangle(cornerRadius: 11).strokeBorder(preferences.appearance == choice ? CompanionStyle.accent : CompanionStyle.edge.opacity(0.1), lineWidth: preferences.appearance == choice ? 2 : 0.7) }
-                            Text(choice.rawValue).font(.callout.weight(.medium)).foregroundStyle(CompanionStyle.ink)
+                            Text(LocalizedStringKey(choice.rawValue)).font(.callout.weight(.medium)).foregroundStyle(CompanionStyle.ink)
                         }.padding(10).frame(maxWidth: .infinity)
                             .background(preferences.appearance == choice ? CompanionStyle.accent.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 15))
                     }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel("\(choice.rawValue) appearance")
@@ -333,7 +374,7 @@ struct ContentView: View {
             CompanionCharacter(size: 86, avatar: preferences.avatar, animates: preferences.characterMotion && !preferences.usesReducedMotion)
             VStack(alignment: .leading, spacing: 4) {
                 Text(preferences.avatar.name).font(.headline)
-                Text(preferences.avatar.detail).font(.caption).foregroundStyle(CompanionStyle.muted)
+                Text(LocalizedStringKey(preferences.avatar.detail)).font(.caption).foregroundStyle(CompanionStyle.muted)
             }
             Spacer()
             Button("Preview") { notch.show() }.buttonStyle(CompanionButtonStyle())
@@ -365,20 +406,70 @@ struct ContentView: View {
         }.companionCard()
     }
 
-    private func heading(_ title: String, subtitle: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 29, weight: .semibold, design: .rounded))
-            Text(subtitle).foregroundStyle(CompanionStyle.muted)
-        }.padding(.bottom, 5)
-    }
-
     private func quickCard(_ title: String, symbol: String, value: String, detail: String, action: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(title, systemImage: symbol).font(.callout.weight(.semibold))
             Text(value).font(.callout.weight(.medium)).foregroundStyle(CompanionStyle.accentInk)
-            Text(detail).font(.caption).foregroundStyle(CompanionStyle.muted)
+            Text(LocalizedStringKey(detail)).font(.caption).foregroundStyle(CompanionStyle.muted)
             Button("Customize", action: action).buttonStyle(CompanionButtonStyle())
         }.frame(maxWidth: .infinity, alignment: .leading).companionCard()
+    }
+}
+
+private struct CompanionVoiceSettings: View {
+    @EnvironmentObject private var preferences: CompanionPreferences
+    @EnvironmentObject private var activation: ActivationController
+    @Environment(\.islandPreview) private var isPreview
+    @StateObject private var previewVoice = SigVoiceSynthesizer(playsHardwareAudio: true)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            Label("Voz do Sieg", systemImage: "speaker.wave.2").font(.headline)
+            PreferenceRow("Respostas em áudio", detail: "Ouça as respostas do seu companheiro.") {
+                Toggle("Respostas em áudio", isOn: $preferences.speechConfiguration.enabled)
+                    .labelsHidden().toggleStyle(WorkspaceSwitchStyle())
+            }
+            voiceSlider("Velocidade", value: $preferences.speechConfiguration.rate, range: 0.30...0.65,
+                        detail: "\(Int(preferences.speechConfiguration.rate / AVSpeechUtteranceDefaultSpeechRate * 100))%")
+            voiceSlider("Volume da voz", value: $preferences.speechConfiguration.volume, range: 0...1,
+                        detail: "\(Int(preferences.speechConfiguration.volume * 100))%")
+            HStack(spacing: 12) {
+                Button(previewVoice.isSpeaking ? "Parar prévia" : "Ouvir prévia") {
+                    if previewVoice.isSpeaking { previewVoice.stop() }
+                    else if !isPreview {
+                        previewVoice.configuration = preferences.speechConfiguration.normalized
+                        previewVoice.speak(activation.voiceLanguage.hasPrefix("en")
+                            ? "Leave it with me. I'll explain things calmly and help with your tasks. We can leave the panicking to the bugs."
+                            : "Pode deixar comigo. Vou explicar com calma e cuidar das tarefas do app. A parte de entrar em pânico, a gente deixa para os bugs.", language: activation.voiceLanguage.hasPrefix("en") ? "en-US" : "pt-BR")
+                    }
+                }.buttonStyle(CompanionButtonStyle()).disabled(!preferences.speechConfiguration.enabled)
+                Button("Restaurar padrão") {
+                    previewVoice.stop()
+                    preferences.speechConfiguration = .sieg
+                }.buttonStyle(CompanionButtonStyle(compact: true))
+            }
+            if preferences.speechConfiguration.voiceIdentifier == SigVoiceCatalog.antonio {
+                Text("A voz do Sieg acompanha o idioma selecionado. Requer conexão; sem ela, uma voz local assume a resposta.")
+                    .font(.caption).foregroundStyle(CompanionStyle.muted)
+            }
+            if let issue = previewVoice.lastPlaybackIssue {
+                Text(issue).font(.caption).foregroundStyle(CompanionStyle.muted)
+            }
+            Text("A voz faz parte da identidade do Sieg. Velocidade e volume são salvos automaticamente.")
+                .font(.caption).foregroundStyle(CompanionStyle.muted)
+        }
+        .onChange(of: preferences.speechConfiguration.enabled) { _, enabled in
+            if !enabled { previewVoice.stop() }
+        }
+        .onDisappear { previewVoice.stop() }
+    }
+
+    private func voiceSlider(_ title: String, value: Binding<Float>, range: ClosedRange<Float>, detail: String) -> some View {
+        HStack(spacing: 16) {
+            Text(LocalizedStringKey(title)).font(.callout.weight(.semibold)).frame(width: 115, alignment: .leading)
+            Slider(value: value, in: range).accessibilityLabel(title)
+            Text(LocalizedStringKey(detail)).font(.caption).monospacedDigit().foregroundStyle(CompanionStyle.muted)
+                .frame(width: 82, alignment: .trailing)
+        }
     }
 }
 
@@ -422,15 +513,26 @@ private struct PreferenceRow<Control: View>: View {
         self.title = title; self.detail = detail; self.control = control()
     }
     var body: some View {
-        HStack(spacing: 20) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(title).font(.callout.weight(.semibold))
-                Text(detail).font(.caption).foregroundStyle(CompanionStyle.muted)
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: 24) {
+                copy.frame(minWidth: 220, maxWidth: .infinity, alignment: .leading)
+                control.fixedSize(horizontal: true, vertical: false)
             }
-            Spacer()
-            control
+            VStack(alignment: .leading, spacing: 14) {
+                copy
+                control.frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }.frame(minHeight: 40)
+
+    }
+    private var copy: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(LocalizedStringKey(title)).font(.system(size: 13, weight: .medium))
+            Text(LocalizedStringKey(detail)).font(WorkspaceTypography.caption).foregroundStyle(CompanionStyle.muted)
+                .lineSpacing(3).fixedSize(horizontal: false, vertical: true)
         }
     }
+
 }
 
 private struct ImpactActionPicker: View {
@@ -529,3 +631,16 @@ private struct ScrollInputSettings: View {
     }
 }
 
+
+private struct WorkspaceNavigationStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
+    @State private var hovered = false
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .contentShape(RoundedRectangle(cornerRadius: 10))
+            .background(CompanionStyle.edge.opacity(hovered && enabled ? 0.035 : 0), in: RoundedRectangle(cornerRadius: 10))
+            .opacity(configuration.isPressed ? 0.70 : 1)
+            .animation(InterfaceMotion.feedback, value: hovered)
+            .onHover { hovered = $0 }
+    }
+}

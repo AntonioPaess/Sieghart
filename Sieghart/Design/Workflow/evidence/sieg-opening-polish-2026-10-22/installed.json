@@ -1,0 +1,9 @@
+{
+  "build": "95",
+  "bundleIdentifier": "com.sieghart.app",
+  "installedPath": "/Applications/Sieghart.app",
+  "sha256": "298cbf94f184abd0d2dfb6691970008f54d25ffd12c6c39b627d05b531887566",
+  "keepAwakeDeadlinePreserved": true,
+  "audioOrMicrophoneStarted": false,
+  "visualVerification": "Main window and navigation observed on build 94; final build 95 installed, verified and launched. Final visual inspection blocked because CUA reports the Mac is locked."
+}

@@ -1,5 +1,10 @@
 # Sieghart
 
+## Retomar o desenvolvimento
+
+Comece por [HANDOFF.md](HANDOFF.md). O [checkpoint vivo](CURRENT_WORK.md), os [bugs e validações pendentes](KNOWN_ISSUES.md) e o [índice de pesquisa/REA](RESEARCH_INDEX.md) permitem continuar sem o histórico do chat ou o Obsidian. Os relatórios antigos abaixo são históricos; consulte o checkpoint para o estado atual.
+
+
 ### Your Mac companion, right at the notch.
 
 [![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](Sieghart/Sieghart.xcodeproj)

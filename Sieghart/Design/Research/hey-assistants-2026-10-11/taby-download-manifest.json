@@ -1,0 +1,10 @@
+{
+  "app": "taby",
+  "source_url": "https://updates.heytaby.com/releases/taby-v4-app/Taby-mac-arm64.dmg",
+  "path": "/private/tmp/sieg-app-study/Taby-mac-arm64.dmg",
+  "bytes": 291273379,
+  "sha256": "6aad13c73ae7ba117a743ec6ef48eb9883874937fa2fdd1857174cd766c98104",
+  "downloaded_at_utc": "2026-10-12T02:07:34Z",
+  "seconds": 13.2,
+  "executed": false
+}

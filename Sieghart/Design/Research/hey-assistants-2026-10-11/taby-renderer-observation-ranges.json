@@ -1,0 +1,41 @@
+{
+  "member": "dist/renderer/notch.js",
+  "sha256": "b807468749d9c91b9e834b327280552a5e795b16b92803a2ada30a59921c262c",
+  "ranges": [
+    {
+      "anchor": "function Eo(",
+      "utf8_start": 3555166,
+      "context_utf8_start": 3554966,
+      "context_utf8_end": 3556966,
+      "observation_method": "inert bundle text inspection; no execution"
+    },
+    {
+      "anchor": "dataset.riveReady",
+      "utf8_start": 6308895,
+      "context_utf8_start": 6308695,
+      "context_utf8_end": 6310695,
+      "observation_method": "inert bundle text inspection; no execution"
+    },
+    {
+      "anchor": "requestVideoFrameCallback",
+      "utf8_start": 6306583,
+      "context_utf8_start": 6306383,
+      "context_utf8_end": 6308383,
+      "observation_method": "inert bundle text inspection; no execution"
+    },
+    {
+      "anchor": "minSpeechDb:-50",
+      "utf8_start": 6429376,
+      "context_utf8_start": 6429174,
+      "context_utf8_end": 6431176,
+      "observation_method": "inert bundle text inspection; no execution"
+    },
+    {
+      "anchor": "microphoneDeviceId()?{deviceId",
+      "utf8_start": 6433679,
+      "context_utf8_start": 6433479,
+      "context_utf8_end": 6435479,
+      "observation_method": "inert bundle text inspection; no execution"
+    }
+  ]
+}

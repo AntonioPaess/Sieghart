@@ -1,0 +1,71 @@
+{
+  "archive_sha256": "84f15b4b15675695f6ee3875178306a84bd98fed000f080dea7a651edea45c49",
+  "records": [
+    {
+      "member": "package.json",
+      "bytes": 2418,
+      "sha256": "c2bb871be8c4bf4655fab9938e3c2bacd4a025cede5db1783594a2988e9b99fc"
+    },
+    {
+      "member": "dist/preload/voice-capture-bridge.js",
+      "bytes": 3024,
+      "sha256": "202989c33e78a8007f9db36564402ee8808619801c7db51e90e52ff42e9531cb"
+    },
+    {
+      "member": "dist/main/desktop-voice-composition.js",
+      "bytes": 7016,
+      "sha256": "e2f20730bb65cebc27d0de0ebb316be871f3e8d3a9cee059b1c09cccec403aa6"
+    },
+    {
+      "member": "dist/main/companion-animations/index.js",
+      "bytes": 3048,
+      "sha256": "e56bff750a0b092670dd81e30a2f98ab17848cac013d3c5ad77b6a76e8673d82"
+    },
+    {
+      "member": "dist/main/companion-animations/dispatcher.js",
+      "bytes": 4603,
+      "sha256": "4d7a64086ca46d36a6fff49349d8c0d63ed33ebb706bef964caa51ea8c0332d5"
+    },
+    {
+      "member": "dist/main/companion-animations/desktop-port.js",
+      "bytes": 2725,
+      "sha256": "b5daf15810a2a164f99e5aeb6e08d16ef60b7c356eecffe6d2c546e5cfc3ba3e"
+    },
+    {
+      "member": "dist/main/companion-animations/spoken-reply-gate.js",
+      "bytes": 3428,
+      "sha256": "ddb91ecbdf8af0d73ec7111e38c83dda860e3c0974672f32d159805d5b12cfbd"
+    },
+    {
+      "member": "dist/main/local-brain-turn-residency.js",
+      "bytes": 956,
+      "sha256": "72601333aa184787b837f6cc40fea45a6f6f47963b419c61bfc03129baeb6e1b"
+    },
+    {
+      "member": "dist/renderer/notch.js",
+      "bytes": 6460373,
+      "sha256": "b807468749d9c91b9e834b327280552a5e795b16b92803a2ada30a59921c262c"
+    },
+    {
+      "member": "dist/main/transcription/desktop-transcription.js",
+      "bytes": 2461,
+      "sha256": "0ba3dcc62ec64a0af5413c30b01a9ee2d6a67eca49314e5ee7ff50440481a0bb"
+    },
+    {
+      "member": "dist/main/transcription/parakeet-transcription-provider.js",
+      "bytes": 8429,
+      "sha256": "2aa4ea8c5dce47c0e9a24546db9798e421f377aabf1fb6376a056642d57ae7f8"
+    },
+    {
+      "member": "dist/main/transcription/parakeet-worker-service.js",
+      "bytes": 3696,
+      "sha256": "37736124db22d2aabccc48b4bca6d0d149cad76ef5377a1523a5023753b26b67"
+    },
+    {
+      "member": "dist/main/transcription/transcription-service.js",
+      "bytes": 9049,
+      "sha256": "5e98fdbc34837addd816341afe85fabc978ca6f37b58957a6cc5cd03e59473a7"
+    }
+  ],
+  "executed": false
+}

@@ -14,18 +14,22 @@ struct UtilityTabs<Choice: Hashable>: View {
     @Binding var selection: Choice
     var title: (Choice) -> String
     var body: some View {
-        HStack(spacing: 18) {
-            ForEach(choices, id: \.self) { choice in
-                Button { selection = choice } label: {
-                    Text(title(choice)).font(.callout.weight(.semibold))
-                        .foregroundStyle(selection == choice ? CompanionStyle.ink : CompanionStyle.muted)
-                        .padding(.vertical, 8)
-                        .overlay(alignment: .bottom) { if selection == choice { Capsule().fill(CompanionStyle.accent).frame(height: 2) } }
-                }.buttonStyle(.plain).accessibilityAddTraits(selection == choice ? .isSelected : [])
-            }
+        HStack {
+            HStack(spacing: 3) {
+                ForEach(choices, id: \.self) { choice in
+                    Button { selection = choice } label: {
+                        Text(LocalizedStringKey(title(choice))).font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(selection == choice ? CompanionStyle.ink : CompanionStyle.muted)
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(selection == choice ? CompanionStyle.edge.opacity(0.09) : .clear, in: RoundedRectangle(cornerRadius: 8))
+                    }.buttonStyle(.plain).accessibilityAddTraits(selection == choice ? .isSelected : [])
+                }
+            }.padding(3).background(CompanionStyle.edge.opacity(0.035), in: RoundedRectangle(cornerRadius: 11))
+                .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(CompanionStyle.edge.opacity(0.05), lineWidth: 0.7))
             Spacer(minLength: 0)
         }
     }
+
 }
 
 struct UtilityToggle: View {
@@ -33,7 +37,7 @@ struct UtilityToggle: View {
     @Binding var isOn: Bool
     var body: some View {
         HStack {
-            Text(title).font(.callout).fixedSize(horizontal: false, vertical: true)
+            Text(LocalizedStringKey(title)).font(.callout).fixedSize(horizontal: false, vertical: true)
             Spacer()
             Toggle(title, isOn: $isOn).labelsHidden().toggleStyle(WorkspaceSwitchStyle())
         }

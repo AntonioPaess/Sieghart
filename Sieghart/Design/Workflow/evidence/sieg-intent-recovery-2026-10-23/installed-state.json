@@ -1,0 +1,13 @@
+{
+  "build": "106",
+  "bundleID": "com.sieghart.app",
+  "path": "/Applications/Sieghart.app",
+  "sha256": "ce33c1cb340d35fda81fed732b7fad93925dc6aabde113adc38efbdb1fef522a",
+  "architectures": "x86_64 arm64",
+  "pid": 18807,
+  "parentPID": "1",
+  "keepAwakeActive": true,
+  "heldDisplayAssertion": true,
+  "endRecife": "2026-10-23T17:23:45.982331-03:00",
+  "temporaryGuardReleased": true
+}

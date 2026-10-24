@@ -1,0 +1,1387 @@
+{
+  "matchingSources": 197,
+  "lineEndingOnlyDifferences": [
+    "Sieghart/Shared/Components/DesignSystem.swift"
+  ],
+  "files": [
+    {
+      "file": "Sieghart/App/SieghartApp.swift",
+      "sourceSHA256": "3acb50234b10d6da85644abb0da1717d1732552f619ae8554add32e444bd1d43",
+      "compiledSHA256": "3acb50234b10d6da85644abb0da1717d1732552f619ae8554add32e444bd1d43",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/App/ResidentAppDelegate.swift",
+      "sourceSHA256": "9c24cbbaa6df0c63604722b27db631a45990cf11c11bb52e67e525cc11a2fe39",
+      "compiledSHA256": "9c24cbbaa6df0c63604722b27db631a45990cf11c11bb52e67e525cc11a2fe39",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Helpers/KeyboardShortcuts.swift",
+      "sourceSHA256": "8feb6549a1d8d3c07c8b3fd2a61743246652baaa84772d519f098ef303ec317e",
+      "compiledSHA256": "8feb6549a1d8d3c07c8b3fd2a61743246652baaa84772d519f098ef303ec317e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Helpers/TimerModels.swift",
+      "sourceSHA256": "f5702b82e98879540d2e9ab292d6c3e5cdaff7dcfcb060219d109d196d0f41fa",
+      "compiledSHA256": "f5702b82e98879540d2e9ab292d6c3e5cdaff7dcfcb060219d109d196d0f41fa",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Helpers/NotchGeometry.swift",
+      "sourceSHA256": "2fd47f820cf2b28d9c91b47ef2a38dfcfc9168238a8f8da9a87fa89c11926ab4",
+      "compiledSHA256": "2fd47f820cf2b28d9c91b47ef2a38dfcfc9168238a8f8da9a87fa89c11926ab4",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Helpers/VoiceCommands.swift",
+      "sourceSHA256": "acd554e4039ea06db90250ca864920b8136e76c960d59eba4fc0286b431d99b4",
+      "compiledSHA256": "acd554e4039ea06db90250ca864920b8136e76c960d59eba4fc0286b431d99b4",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Power/MacAwakeBackend.swift",
+      "sourceSHA256": "4a014be458a8e83822505a48015ce07b9c07190feea1420e6588e6718a1c5277",
+      "compiledSHA256": "4a014be458a8e83822505a48015ce07b9c07190feea1420e6588e6718a1c5277",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/ScreenInteractionController.swift",
+      "sourceSHA256": "32ee5f5e5a665bb77531df032ea5fd3cc13e1fccc02ddb407b21e5efb37b03ad",
+      "compiledSHA256": "32ee5f5e5a665bb77531df032ea5fd3cc13e1fccc02ddb407b21e5efb37b03ad",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/CaptureAnnotationRenderer.swift",
+      "sourceSHA256": "5cf58a4bcc5bf48f739950403a1e24be53c4f514be9262318e9d0147cd1d2d6e",
+      "compiledSHA256": "5cf58a4bcc5bf48f739950403a1e24be53c4f514be9262318e9d0147cd1d2d6e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/ScreenSemanticInspector.swift",
+      "sourceSHA256": "0386f71974f9283a2c1f91f140305665fc5b1a57b37bc1ca46cf7bd8cf35ede0",
+      "compiledSHA256": "0386f71974f9283a2c1f91f140305665fc5b1a57b37bc1ca46cf7bd8cf35ede0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/MacCaptureBackend.swift",
+      "sourceSHA256": "2c737d83b3df5f673a5705d20735cb1b87e6eed8ae37099278d66b372ee73f14",
+      "compiledSHA256": "2c737d83b3df5f673a5705d20735cb1b87e6eed8ae37099278d66b372ee73f14",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/ScreenAccessRecovery.swift",
+      "sourceSHA256": "b8d84308c2421df4c262b42b0527891d57f53bb0a74116ca7fc457d8b39db533",
+      "compiledSHA256": "b8d84308c2421df4c262b42b0527891d57f53bb0a74116ca7fc457d8b39db533",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/ScreenWalkthrough.swift",
+      "sourceSHA256": "bc8c0720af8eaaaf57e08ea9e4d0a2023ab21c54420034768ae621110717061e",
+      "compiledSHA256": "bc8c0720af8eaaaf57e08ea9e4d0a2023ab21c54420034768ae621110717061e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/ScreenControlService.swift",
+      "sourceSHA256": "f8e978c8735d98f9a3ee4c1996c80c1a6fe37be965894aac06c256067460f47c",
+      "compiledSHA256": "f8e978c8735d98f9a3ee4c1996c80c1a6fe37be965894aac06c256067460f47c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Capture/OfflineCaptureBackend.swift",
+      "sourceSHA256": "3f8e85eadcca079a4323d170b0b53199069bf6d59ee0da0692b5f7d471a92935",
+      "compiledSHA256": "3f8e85eadcca079a4323d170b0b53199069bf6d59ee0da0692b5f7d471a92935",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Calendar/CalendarContext.swift",
+      "sourceSHA256": "9c06550f572b42c66f44cdaaba18466175fc818a01182617ad0219e825ea3a9f",
+      "compiledSHA256": "9c06550f572b42c66f44cdaaba18466175fc818a01182617ad0219e825ea3a9f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Input/SensorEngine.swift",
+      "sourceSHA256": "37c687937d78b92131549ac8004fd118b9835b9d14b165b418f365dfa5c4f45b",
+      "compiledSHA256": "37c687937d78b92131549ac8004fd118b9835b9d14b165b418f365dfa5c4f45b",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Speech/SpeechAnalyzerPipeline.swift",
+      "sourceSHA256": "d4081fb292bfff1151450df63f034b80e39fe078d82398809eb743f38df988c6",
+      "compiledSHA256": "d4081fb292bfff1151450df63f034b80e39fe078d82398809eb743f38df988c6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Speech/SigVoiceSynthesizer.swift",
+      "sourceSHA256": "75f9000eccf4dc8ade82284b4a9916428e4c41cd738f79f8c861d73d2320410c",
+      "compiledSHA256": "75f9000eccf4dc8ade82284b4a9916428e4c41cd738f79f8c861d73d2320410c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Speech/EdgeNeuralSpeechService.swift",
+      "sourceSHA256": "4f414d1cf257706aa993256b512dedeac3036b5e6a5be986bab428179378d6c3",
+      "compiledSHA256": "4f414d1cf257706aa993256b512dedeac3036b5e6a5be986bab428179378d6c3",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Speech/EdgeSpeechToken.swift",
+      "sourceSHA256": "e7c57785df926e3e943021a3d69347f7c7ea97b1ec00859cc2e394bc59c7be2f",
+      "compiledSHA256": "e7c57785df926e3e943021a3d69347f7c7ea97b1ec00859cc2e394bc59c7be2f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Speech/SigSpeechStream.swift",
+      "sourceSHA256": "fa492584b8b44378883a89197ed10dbeb318d89d3aef84d1ae242195493f41cb",
+      "compiledSHA256": "fa492584b8b44378883a89197ed10dbeb318d89d3aef84d1ae242195493f41cb",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/System/SystemCommandExecutor.swift",
+      "sourceSHA256": "bc8bfe07ea02a907728e560270aee759d1b1c925c3ab19baab787ddfd2837c34",
+      "compiledSHA256": "bc8bfe07ea02a907728e560270aee759d1b1c925c3ab19baab787ddfd2837c34",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/System/MacSystemSampler.swift",
+      "sourceSHA256": "09bda824a70a63ab3d439c45832b44a15039bf28052225ae2684c697a71fd646",
+      "compiledSHA256": "09bda824a70a63ab3d439c45832b44a15039bf28052225ae2684c697a71fd646",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Audio/AudioEngine.swift",
+      "sourceSHA256": "4b1ba2426dcfe31d8f01ec7f7218fc8416aa2fe47952936578fbdcba4daf8dd6",
+      "compiledSHA256": "4b1ba2426dcfe31d8f01ec7f7218fc8416aa2fe47952936578fbdcba4daf8dd6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/VoiceAppTools.swift",
+      "sourceSHA256": "d4b05cb5555f717e5d3523a5d066f47c3c97e890771edd9f96c3107d43a7cf36",
+      "compiledSHA256": "d4b05cb5555f717e5d3523a5d066f47c3c97e890771edd9f96c3107d43a7cf36",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/VoiceShortcutGesture.swift",
+      "sourceSHA256": "4872c421b59617be8586a1d73590802c2621b0de74b611280ff878b327c0fa72",
+      "compiledSHA256": "4872c421b59617be8586a1d73590802c2621b0de74b611280ff878b327c0fa72",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/VoiceAddressNormalization.swift",
+      "sourceSHA256": "02ddd8a1b5c5cc5f0bc37433dfe79e02ecbf92d032152d3cbfe43eeee1d773fc",
+      "compiledSHA256": "02ddd8a1b5c5cc5f0bc37433dfe79e02ecbf92d032152d3cbfe43eeee1d773fc",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/VoiceWeatherService.swift",
+      "sourceSHA256": "d6225158961bf6980ffa197c1f7d1ee36787ddbe23c6a0e2578ca6633e1e1393",
+      "compiledSHA256": "d6225158961bf6980ffa197c1f7d1ee36787ddbe23c6a0e2578ca6633e1e1393",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/WeatherLocationResolver.swift",
+      "sourceSHA256": "5cbeac61e820d906d37953094eb01063f05635af9cae5a284df9e91f94ce2a0f",
+      "compiledSHA256": "5cbeac61e820d906d37953094eb01063f05635af9cae5a284df9e91f94ce2a0f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/VoiceConversationController.swift",
+      "sourceSHA256": "cfef625a8aa110de5e01b9da9d71461563fc9e0bcdaa332ca5c4fb2a982679c3",
+      "compiledSHA256": "cfef625a8aa110de5e01b9da9d71461563fc9e0bcdaa332ca5c4fb2a982679c3",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Voice/VoiceCapture.swift",
+      "sourceSHA256": "ab7d221dbb907c0c8ed1a1b1b20f6d12a750233dfb69de3216d25071029bb171",
+      "compiledSHA256": "ab7d221dbb907c0c8ed1a1b1b20f6d12a750233dfb69de3216d25071029bb171",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/ResearchSynthesis.swift",
+      "sourceSHA256": "ab39e3363e9e38b86d1213baedbd478d1f180c3bce63b9d40646116e565fabbf",
+      "compiledSHA256": "ab39e3363e9e38b86d1213baedbd478d1f180c3bce63b9d40646116e565fabbf",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AdaGitHubTool.swift",
+      "sourceSHA256": "31299bb7c8a11d6ad76c20fb5073b45e4e489d7006de32c049bde76f2c275ab9",
+      "compiledSHA256": "31299bb7c8a11d6ad76c20fb5073b45e4e489d7006de32c049bde76f2c275ab9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CompanionSpecialists.swift",
+      "sourceSHA256": "a695d5708997c5b37f4e9b17243e5a065ae6e6e3aabcfd56af8d967648583994",
+      "compiledSHA256": "a695d5708997c5b37f4e9b17243e5a065ae6e6e3aabcfd56af8d967648583994",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/UsageImports.swift",
+      "sourceSHA256": "c2630ca8006f2a02809d17c3db6225a4c641da15e3d893bfe8fe8a85b93445b0",
+      "compiledSHA256": "c2630ca8006f2a02809d17c3db6225a4c641da15e3d893bfe8fe8a85b93445b0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/ClaudeCodingAgent.swift",
+      "sourceSHA256": "839089d6809a79bb2531cbe9417865cbb627aad794ec1695c284140fcc1d3d90",
+      "compiledSHA256": "839089d6809a79bb2531cbe9417865cbb627aad794ec1695c284140fcc1d3d90",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/BackgroundResearchAgent.swift",
+      "sourceSHA256": "d6991245809aea34bd1440d5ec502852a685ec719f140365f6bda7799bcefd87",
+      "compiledSHA256": "d6991245809aea34bd1440d5ec502852a685ec719f140365f6bda7799bcefd87",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AdaGitHubContext.swift",
+      "sourceSHA256": "1a13d201d7c862913fb3fad2a70252b2828d91ec8c83802a92098e41116a6214",
+      "compiledSHA256": "1a13d201d7c862913fb3fad2a70252b2828d91ec8c83802a92098e41116a6214",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CodexRoomObservation.swift",
+      "sourceSHA256": "fec3c224cf628d4d28c0025835de730e5f16cb07c206ef4d9b367d5032558259",
+      "compiledSHA256": "fec3c224cf628d4d28c0025835de730e5f16cb07c206ef4d9b367d5032558259",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CodexUsage.swift",
+      "sourceSHA256": "39135aebcfda1b1d6116e95cbbd293848ec1c2ec107b5391f451bc5944e33292",
+      "compiledSHA256": "39135aebcfda1b1d6116e95cbbd293848ec1c2ec107b5391f451bc5944e33292",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CompanionArtifactLibrary.swift",
+      "sourceSHA256": "9e9efc9d82bc30a1f4b63a0cc3a907f3f972437da4aa743a6809ef88cfc69f84",
+      "compiledSHA256": "9e9efc9d82bc30a1f4b63a0cc3a907f3f972437da4aa743a6809ef88cfc69f84",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AppleLocalChatEngine.swift",
+      "sourceSHA256": "e0a594f4527e12c912659eba3a0218e95be1bb455d3053f973a1278b3bbc3ab8",
+      "compiledSHA256": "e0a594f4527e12c912659eba3a0218e95be1bb455d3053f973a1278b3bbc3ab8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AdaGitHubCredentials.swift",
+      "sourceSHA256": "b507d1a47a34a690ba6111bafbd97ad75d2e446c41e28bd7561eecba1633670e",
+      "compiledSHA256": "b507d1a47a34a690ba6111bafbd97ad75d2e446c41e28bd7561eecba1633670e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CodexCodingAgent.swift",
+      "sourceSHA256": "0e0eada8ed60d9af7ce645d3e7dc4d496ef8dac5e2679bb8e47f51a4f29e504a",
+      "compiledSHA256": "0e0eada8ed60d9af7ce645d3e7dc4d496ef8dac5e2679bb8e47f51a4f29e504a",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CodexDesktopStore.swift",
+      "sourceSHA256": "28827e00c7bd7258dbe3b7b4a7ed53ac230b1e1d3cc8fd796b9ec5297ebbe006",
+      "compiledSHA256": "28827e00c7bd7258dbe3b7b4a7ed53ac230b1e1d3cc8fd796b9ec5297ebbe006",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AIActivity.swift",
+      "sourceSHA256": "a99c7fd99f73c757d04d0a5930dc1184ea38c2f749a6c6c39a2a3558f0cffde9",
+      "compiledSHA256": "a99c7fd99f73c757d04d0a5930dc1184ea38c2f749a6c6c39a2a3558f0cffde9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AgentRPCProcess.swift",
+      "sourceSHA256": "be92d1b1f6e94a68ba0416b06248d26f229fd3df3923f20ca4587dbacfecfd23",
+      "compiledSHA256": "be92d1b1f6e94a68ba0416b06248d26f229fd3df3923f20ca4587dbacfecfd23",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/ModelPricing.swift",
+      "sourceSHA256": "81ec6d3c3cc029fe0cabd1443b19aa4ca189807ccdef6f16c4a239ad9b355b6f",
+      "compiledSHA256": "81ec6d3c3cc029fe0cabd1443b19aa4ca189807ccdef6f16c4a239ad9b355b6f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CompanionRoutines.swift",
+      "sourceSHA256": "f9c3090313f0882f5f5509bb3725c5f3040d953a76f1b98e12d687471880321d",
+      "compiledSHA256": "f9c3090313f0882f5f5509bb3725c5f3040d953a76f1b98e12d687471880321d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AdaAgentInstructions.swift",
+      "sourceSHA256": "0dd00c8f8ce5e597844a8f13e818610f1c53a4c331310b0a9321b1961d530504",
+      "compiledSHA256": "0dd00c8f8ce5e597844a8f13e818610f1c53a4c331310b0a9321b1961d530504",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AppleDocumentAnswerService.swift",
+      "sourceSHA256": "9aea89421f021bf59b2d11cbc0400ee0c082b2c63e6d98700e6da7db22ab5238",
+      "compiledSHA256": "9aea89421f021bf59b2d11cbc0400ee0c082b2c63e6d98700e6da7db22ab5238",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CompanionTaskJournal.swift",
+      "sourceSHA256": "3c714ce65537f31fd7aa03ef95a265db5e4ff9c1fa2449a7dc5c7ed2fa11a844",
+      "compiledSHA256": "3c714ce65537f31fd7aa03ef95a265db5e4ff9c1fa2449a7dc5c7ed2fa11a844",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AppleChatEligibility.swift",
+      "sourceSHA256": "99ab36e5708899b50cb904225051de0a0af964a005284ee20bac68304360ae23",
+      "compiledSHA256": "99ab36e5708899b50cb904225051de0a0af964a005284ee20bac68304360ae23",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/LocalChatStore.swift",
+      "sourceSHA256": "267a93a0f35e92a7d2eec18044863ad380742e7cb8ccea4259703458585552d8",
+      "compiledSHA256": "267a93a0f35e92a7d2eec18044863ad380742e7cb8ccea4259703458585552d8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/SiegDesktopTool.swift",
+      "sourceSHA256": "c2453f18ca923066ef6c0f4f60142c6e68a04e74033a7629ba3840e3eae40f04",
+      "compiledSHA256": "c2453f18ca923066ef6c0f4f60142c6e68a04e74033a7629ba3840e3eae40f04",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CompanionWorkflowRunner.swift",
+      "sourceSHA256": "4309d25a1a4b75696aed3af9a55c84a023e02da4a32bfb79f66cf437b0e2b7b0",
+      "compiledSHA256": "4309d25a1a4b75696aed3af9a55c84a023e02da4a32bfb79f66cf437b0e2b7b0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AppleSpatialContentService.swift",
+      "sourceSHA256": "8f713368133bae49c6bc61640cb045dec6545a685f5e61cf474ad413b517d63b",
+      "compiledSHA256": "8f713368133bae49c6bc61640cb045dec6545a685f5e61cf474ad413b517d63b",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/CompanionSpecialistTools.swift",
+      "sourceSHA256": "f94dc2e5516f32d66b2f5c04bbdb6dc906367a73b3e2f9874a742cecb30f1786",
+      "compiledSHA256": "f94dc2e5516f32d66b2f5c04bbdb6dc906367a73b3e2f9874a742cecb30f1786",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/AIUsage.swift",
+      "sourceSHA256": "a63e42ff25118f7ae4606e76b0cc2fdc9d728026fef8707e30cf8d33995eba58",
+      "compiledSHA256": "a63e42ff25118f7ae4606e76b0cc2fdc9d728026fef8707e30cf8d33995eba58",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/AI/PublicWebResearchService.swift",
+      "sourceSHA256": "efadafb3d151d1811de94ea31779c4b694bd8186282e11fb32b307607d807bb7",
+      "compiledSHA256": "efadafb3d151d1811de94ea31779c4b694bd8186282e11fb32b307607d807bb7",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/FileAccess.swift",
+      "sourceSHA256": "fa05d852d32e86198cdd6fb27bf18fcb9a37da7c460c917a8dd99d8beb5ff9d9",
+      "compiledSHA256": "fa05d852d32e86198cdd6fb27bf18fcb9a37da7c460c917a8dd99d8beb5ff9d9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/FileDropReceiver.swift",
+      "sourceSHA256": "8abf78f8f268f21f533009666b1ecabcae4c4a40f72060906949662f739451d6",
+      "compiledSHA256": "8abf78f8f268f21f533009666b1ecabcae4c4a40f72060906949662f739451d6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/DiskImageInstaller.swift",
+      "sourceSHA256": "7280925dd6b7d3695940d50c2241442582cf970640c028c757c6601854d8f968",
+      "compiledSHA256": "7280925dd6b7d3695940d50c2241442582cf970640c028c757c6601854d8f968",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/MemoryFilesStore.swift",
+      "sourceSHA256": "fad8abeeaa1719aebc3ce6afa5e5c2693bc8ef6bb921a33ac00f95c8e888ada2",
+      "compiledSHA256": "fad8abeeaa1719aebc3ce6afa5e5c2693bc8ef6bb921a33ac00f95c8e888ada2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/FolderObservation.swift",
+      "sourceSHA256": "3b7a1b2580d01281477b62d9a2da7536aa65b7c3767c34e50e4e2bc2eac3358e",
+      "compiledSHA256": "3b7a1b2580d01281477b62d9a2da7536aa65b7c3767c34e50e4e2bc2eac3358e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/FileOperations.swift",
+      "sourceSHA256": "d8b6ab1304828bfcf4133ddbc92d5cb6eb179bdf419540cc6d7ec316ad295de6",
+      "compiledSHA256": "d8b6ab1304828bfcf4133ddbc92d5cb6eb179bdf419540cc6d7ec316ad295de6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Files/ToolProcess.swift",
+      "sourceSHA256": "ba6ba87f6fac38d581c65fac3745b34b43cbea225bccd1b86056c3e45364e915",
+      "compiledSHA256": "ba6ba87f6fac38d581c65fac3745b34b43cbea225bccd1b86056c3e45364e915",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Display/MacDisplayPowerBackend.swift",
+      "sourceSHA256": "7feeb59c9e55f077f5c8cfbc5502c6d291672d0da2f451200775c94abc9ab36d",
+      "compiledSHA256": "7feeb59c9e55f077f5c8cfbc5502c6d291672d0da2f451200775c94abc9ab36d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Windowing/IslandPanels.swift",
+      "sourceSHA256": "e9e079aa254199350199bc9258cf1b26f096e4340b3dd10ceee3fca76fcf7830",
+      "compiledSHA256": "e9e079aa254199350199bc9258cf1b26f096e4340b3dd10ceee3fca76fcf7830",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Clipboard/PlainTextPaste.swift",
+      "sourceSHA256": "449aa1b9b6384a24c817b9eaf0e65460a6a95531e1375fed48a604120dea6ca2",
+      "compiledSHA256": "449aa1b9b6384a24c817b9eaf0e65460a6a95531e1375fed48a604120dea6ca2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Core/Services/Clipboard/ClipboardHistory.swift",
+      "sourceSHA256": "294085d55bfaa8dec65e1e3c057c16c5d4a80a26688b4f6bb4952b334ed6ce16",
+      "compiledSHA256": "294085d55bfaa8dec65e1e3c057c16c5d4a80a26688b4f6bb4952b334ed6ce16",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Capture/ViewModels/CaptureViewModel.swift",
+      "sourceSHA256": "9be0e8b3546122e51ecd5bea5830fecb557d00864d0577238f2bf6ba34795c2f",
+      "compiledSHA256": "9be0e8b3546122e51ecd5bea5830fecb557d00864d0577238f2bf6ba34795c2f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Capture/Views/CaptureToolsView.swift",
+      "sourceSHA256": "706a4670c5d7b290b66ee4bbffd618280aafb191efece34167275efa2c5ee421",
+      "compiledSHA256": "706a4670c5d7b290b66ee4bbffd618280aafb191efece34167275efa2c5ee421",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/KeepAwake/ViewModels/KeepAwakeViewModel.swift",
+      "sourceSHA256": "fba77c76ec8832cffe2ebfdf0f1339af367ee3ab1b34f8bde9de824579cc07d0",
+      "compiledSHA256": "fba77c76ec8832cffe2ebfdf0f1339af367ee3ab1b34f8bde9de824579cc07d0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/KeepAwake/Views/KeepAwakeView.swift",
+      "sourceSHA256": "4648170a378a689d62a3d12fb27d83a3b21437bc23d13af502a2dc73b447e2a9",
+      "compiledSHA256": "4648170a378a689d62a3d12fb27d83a3b21437bc23d13af502a2dc73b447e2a9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Calendar/ViewModels/CalendarViewModel.swift",
+      "sourceSHA256": "9ceadd3823e0c3d45f49da93c15f5b2b2ead6808a64ce0b3d22ecc5249e78194",
+      "compiledSHA256": "9ceadd3823e0c3d45f49da93c15f5b2b2ead6808a64ce0b3d22ecc5249e78194",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Calendar/Views/CalendarView.swift",
+      "sourceSHA256": "0ead78a63fb1ec20d67dca1ebcbac47bbbf3b0a8b07b281f4119f1429dd891e9",
+      "compiledSHA256": "0ead78a63fb1ec20d67dca1ebcbac47bbbf3b0a8b07b281f4119f1429dd891e9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/IslandLayout/ViewModels/IslandLayoutEditorViewModel.swift",
+      "sourceSHA256": "baab2594f9a36ff22967327e43a74bce0a29245b4b13461e97ee536ea6df5a96",
+      "compiledSHA256": "baab2594f9a36ff22967327e43a74bce0a29245b4b13461e97ee536ea6df5a96",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/IslandLayout/Views/IslandLayoutEditor.swift",
+      "sourceSHA256": "b132f27b54bcbe104e5ad5b0f7cfc954a2271018fb8a1184a5d526d6c50fe481",
+      "compiledSHA256": "b132f27b54bcbe104e5ad5b0f7cfc954a2271018fb8a1184a5d526d6c50fe481",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/MenuBar/ViewModels/MenuBarViewModel.swift",
+      "sourceSHA256": "f355354a40661cf137d68d2412b5b5f75402726282ba58a6b782d16d7501f82c",
+      "compiledSHA256": "f355354a40661cf137d68d2412b5b5f75402726282ba58a6b782d16d7501f82c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/MenuBar/Views/MenuBarView.swift",
+      "sourceSHA256": "7821004d1299ada42cf3ed73bb565d8f9553f578d45d6824dccf174db3cb49d7",
+      "compiledSHA256": "7821004d1299ada42cf3ed73bb565d8f9553f578d45d6824dccf174db3cb49d7",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Timers/ViewModels/AssistantViewModel.swift",
+      "sourceSHA256": "381bc4bbabe7b73e4911b37fd39f3920ab93799ac56903ff8d1ca67dddfccd13",
+      "compiledSHA256": "381bc4bbabe7b73e4911b37fd39f3920ab93799ac56903ff8d1ca67dddfccd13",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Timers/Views/TimerToolsView.swift",
+      "sourceSHA256": "59bcb56d7d49f5b99fd1c7da049007b65509d80716e39e2976bebf298f2e3f4b",
+      "compiledSHA256": "59bcb56d7d49f5b99fd1c7da049007b65509d80716e39e2976bebf298f2e3f4b",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AdaRoom/Views/AdaRoomDesignSystem.swift",
+      "sourceSHA256": "74e40b1d0a2db6a1baeaf0f305c117f96a79d069209768fce7ff2cf7d99dedf5",
+      "compiledSHA256": "74e40b1d0a2db6a1baeaf0f305c117f96a79d069209768fce7ff2cf7d99dedf5",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/ViewModels/WorkspaceViewModel.swift",
+      "sourceSHA256": "2ba7ed5af92c3050f992a87a7a7152ad5d224cb3937b22a995d95338dc814f18",
+      "compiledSHA256": "2ba7ed5af92c3050f992a87a7a7152ad5d224cb3937b22a995d95338dc814f18",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/CompanionWorkflowComposer.swift",
+      "sourceSHA256": "9e6159fe9b6866cb14358a3c2d9c0e36dec59142a3671a0202f2c57d093ebe28",
+      "compiledSHA256": "9e6159fe9b6866cb14358a3c2d9c0e36dec59142a3671a0202f2c57d093ebe28",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/CompanionArtifactShelf.swift",
+      "sourceSHA256": "c716ae50f600215f75e6256723ce267492ced00a666e8b1d62afdf2140f926d0",
+      "compiledSHA256": "c716ae50f600215f75e6256723ce267492ced00a666e8b1d62afdf2140f926d0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/CompanionPDFPreview.swift",
+      "sourceSHA256": "44b1ec0c5b3ca86fcde5b19d6be4cc2dfba8b5a68da037f019104cf8c6fd79fe",
+      "compiledSHA256": "44b1ec0c5b3ca86fcde5b19d6be4cc2dfba8b5a68da037f019104cf8c6fd79fe",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/CompanionRoutineShelf.swift",
+      "sourceSHA256": "0f271fa2696bf67bbd3e3c1e2e2126b6bd98447057d517cafdb36bde5205be14",
+      "compiledSHA256": "0f271fa2696bf67bbd3e3c1e2e2126b6bd98447057d517cafdb36bde5205be14",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/WorkspaceView.swift",
+      "sourceSHA256": "da92c50fd9f91707507090ed1e36036bbd08e84af95cd3c24e2aa55105b82da2",
+      "compiledSHA256": "da92c50fd9f91707507090ed1e36036bbd08e84af95cd3c24e2aa55105b82da2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/DesktopToolsView.swift",
+      "sourceSHA256": "15e079698c7935c41a54e6f3d445c8137de8b9a150a04d91cec871f503856e4c",
+      "compiledSHA256": "15e079698c7935c41a54e6f3d445c8137de8b9a150a04d91cec871f503856e4c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/InputGuardsSettingsView.swift",
+      "sourceSHA256": "a9d00e21d6ba38a606af69310b0d5c5f85e73ce8480343f9435e93482d48d2c9",
+      "compiledSHA256": "a9d00e21d6ba38a606af69310b0d5c5f85e73ce8480343f9435e93482d48d2c9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/MouseButtonsSettingsView.swift",
+      "sourceSHA256": "89ffec8c46250e0e2c07b4cb2a2fb11e82bb9ef5a8869eca3bd811e976472f5e",
+      "compiledSHA256": "89ffec8c46250e0e2c07b4cb2a2fb11e82bb9ef5a8869eca3bd811e976472f5e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Workspace/Views/CompanionWorkspaceHome.swift",
+      "sourceSHA256": "72560beb25d544d86d7a6829ce4d0ba42973faa7b2bcce02393f5693c3a5dd24",
+      "compiledSHA256": "72560beb25d544d86d7a6829ce4d0ba42973faa7b2bcce02393f5693c3a5dd24",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/ViewModels/LocalChatViewModel.swift",
+      "sourceSHA256": "e994e59bdbac3a7ed3bcce4cda5cca120f9941778ba9602ffeb8b5bcf012b74c",
+      "compiledSHA256": "e994e59bdbac3a7ed3bcce4cda5cca120f9941778ba9602ffeb8b5bcf012b74c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/ViewModels/AdaGitHubViewModel.swift",
+      "sourceSHA256": "3bd803f7265f7fe0cc54924b9c70da51a2e47d2c42f600557fc81beca68c3839",
+      "compiledSHA256": "3bd803f7265f7fe0cc54924b9c70da51a2e47d2c42f600557fc81beca68c3839",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/ViewModels/AgentRoomViewModel.swift",
+      "sourceSHA256": "d3faebbd50fd162df7495116e83b3946bb7b1e7da9c8caf1bd0645e38dcab2a4",
+      "compiledSHA256": "d3faebbd50fd162df7495116e83b3946bb7b1e7da9c8caf1bd0645e38dcab2a4",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/AdaChatSettingsView.swift",
+      "sourceSHA256": "f8e1f7848efab7e7ad0fbbcfaa6da4622df5475f2318c6a4afc0433b3d116419",
+      "compiledSHA256": "f8e1f7848efab7e7ad0fbbcfaa6da4622df5475f2318c6a4afc0433b3d116419",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/AdaGitHubConnectionView.swift",
+      "sourceSHA256": "09adf83be68f7843269766005500fecd2ceba184d7549b9cb29c5dc9c5920f80",
+      "compiledSHA256": "09adf83be68f7843269766005500fecd2ceba184d7549b9cb29c5dc9c5920f80",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/LocalChatPrompt.swift",
+      "sourceSHA256": "04bca77db8278fb6dc09540c731a0fd098730fc07d6e1eeaffe3b6c5e0906ee8",
+      "compiledSHA256": "04bca77db8278fb6dc09540c731a0fd098730fc07d6e1eeaffe3b6c5e0906ee8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/AgentRoomView.swift",
+      "sourceSHA256": "aa594bf7d6f03e2fbacd759e2ea46ba52d3af82ba82286d710ca8e8d62eb5ffd",
+      "compiledSHA256": "aa594bf7d6f03e2fbacd759e2ea46ba52d3af82ba82286d710ca8e8d62eb5ffd",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/AgentChatCompanion.swift",
+      "sourceSHA256": "0aea7b39925d77e3a4f105135427a3b62139bbaff9b3438fd67e6c7b3891131e",
+      "compiledSHA256": "0aea7b39925d77e3a4f105135427a3b62139bbaff9b3438fd67e6c7b3891131e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/KeepAwakeInlineCard.swift",
+      "sourceSHA256": "3dfe7cf8ffa4ca79185099ef8541879f51bb9e2917e090fbec47174ad8131ee8",
+      "compiledSHA256": "3dfe7cf8ffa4ca79185099ef8541879f51bb9e2917e090fbec47174ad8131ee8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AgentRoom/Views/AgentWorkroomView.swift",
+      "sourceSHA256": "d72d4e801892cbd32db2a1eb1da31b4f435c0898f74a3ad5d3c07dc0b8bcae4e",
+      "compiledSHA256": "d72d4e801892cbd32db2a1eb1da31b4f435c0898f74a3ad5d3c07dc0b8bcae4e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DisplayPower/ViewModels/DisplayPowerViewModel.swift",
+      "sourceSHA256": "fa9caae27198d66c9c516b56b0362e24e185acf01e4d14a8dfaea9ea7c9200e0",
+      "compiledSHA256": "fa9caae27198d66c9c516b56b0362e24e185acf01e4d14a8dfaea9ea7c9200e0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DisplayPower/Views/DisplayPowerView.swift",
+      "sourceSHA256": "f5313acf8e832210870dc6668b54fd48be0e8ca1ec6078298d1e9d850eff3789",
+      "compiledSHA256": "f5313acf8e832210870dc6668b54fd48be0e8ca1ec6078298d1e9d850eff3789",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Audio/ViewModels/AudioViewModel.swift",
+      "sourceSHA256": "ed4ab265635b4ab9dedac67e4335b27845f40e27a51f05ac9ec006c6c5144be6",
+      "compiledSHA256": "ed4ab265635b4ab9dedac67e4335b27845f40e27a51f05ac9ec006c6c5144be6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Audio/Views/AudioControlsView.swift",
+      "sourceSHA256": "c1f7f66318b2e330adbeda5b58b80c512625a07579fd8f90b22914649f4f1230",
+      "compiledSHA256": "c1f7f66318b2e330adbeda5b58b80c512625a07579fd8f90b22914649f4f1230",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SystemMonitor/ViewModels/SystemMonitorViewModel.swift",
+      "sourceSHA256": "5529ce15b924c5f4ac78d13d7bb52ff91966c5aea7845a90e5f0e20c8600e80f",
+      "compiledSHA256": "5529ce15b924c5f4ac78d13d7bb52ff91966c5aea7845a90e5f0e20c8600e80f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SystemMonitor/Views/SystemMonitorView.swift",
+      "sourceSHA256": "42ef9821d86701f80454c19004244f98852879d5277fdf699bed9ff5cd77950d",
+      "compiledSHA256": "42ef9821d86701f80454c19004244f98852879d5277fdf699bed9ff5cd77950d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AIUsage/ViewModels/CodexUsageViewModel.swift",
+      "sourceSHA256": "c2af9bbbd8f47124ae362ce6d595f25cf9d3b27c05b27c63915b681e60801439",
+      "compiledSHA256": "c2af9bbbd8f47124ae362ce6d595f25cf9d3b27c05b27c63915b681e60801439",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AIUsage/ViewModels/AIUsageViewModel.swift",
+      "sourceSHA256": "88ad7dfa0d4370be181c311e524558759ffe495e2367732e85133dfcc4a276ca",
+      "compiledSHA256": "88ad7dfa0d4370be181c311e524558759ffe495e2367732e85133dfcc4a276ca",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AIUsage/Views/AIUsageView.swift",
+      "sourceSHA256": "cedcc4e8d3516873a02461b84b41331d32098382ac0e00158fd233f0bc81bb27",
+      "compiledSHA256": "cedcc4e8d3516873a02461b84b41331d32098382ac0e00158fd233f0bc81bb27",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AIUsage/Views/AIUsageDetailsView.swift",
+      "sourceSHA256": "4a2b66e35aaf7c1223dbfba4f52b5817b665bae668735b38c424e2bda65d8098",
+      "compiledSHA256": "4a2b66e35aaf7c1223dbfba4f52b5817b665bae668735b38c424e2bda65d8098",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/AIUsage/Views/CodexUsageView.swift",
+      "sourceSHA256": "68bbabb3cc8c57c6db4903b139b0e054d284df039905c85c3cada2ed3c535fb4",
+      "compiledSHA256": "68bbabb3cc8c57c6db4903b139b0e054d284df039905c85c3cada2ed3c535fb4",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Files/ViewModels/FilesViewModel.swift",
+      "sourceSHA256": "00909176adf653fc230c15f204848785637c08205639c1402b32be5ac229cdd9",
+      "compiledSHA256": "00909176adf653fc230c15f204848785637c08205639c1402b32be5ac229cdd9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Files/ViewModels/FileReceptionViewModel.swift",
+      "sourceSHA256": "98b6851288480505991830c54a00b93ec1b43ac133c751cac396e91cf7b5ac5b",
+      "compiledSHA256": "98b6851288480505991830c54a00b93ec1b43ac133c751cac396e91cf7b5ac5b",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Files/Views/FilesView.swift",
+      "sourceSHA256": "59aee54c7a9395f772b5772fb28c1911b91784718fb9ed4595ddd99163e6006c",
+      "compiledSHA256": "59aee54c7a9395f772b5772fb28c1911b91784718fb9ed4595ddd99163e6006c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/ImpactGestures/ViewModels/SensorViewModel.swift",
+      "sourceSHA256": "96d1ce5e97ed587253f4d9b12c2d1875d6fcbed46ff3916fa04618adf0c70592",
+      "compiledSHA256": "96d1ce5e97ed587253f4d9b12c2d1875d6fcbed46ff3916fa04618adf0c70592",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DynamicIsland/ViewModels/NotchWidgetViewModel.swift",
+      "sourceSHA256": "7ac7035d128ca8bc5fce1d9ada84cf52ce10759eb499bf4a1cd6ec95d101a3fd",
+      "compiledSHA256": "7ac7035d128ca8bc5fce1d9ada84cf52ce10759eb499bf4a1cd6ec95d101a3fd",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DynamicIsland/Views/CompanionWeatherScene.swift",
+      "sourceSHA256": "7d47a5cee5485cbf658f0b05eed87253ca29e7de23460f4fc65001acc56c49f0",
+      "compiledSHA256": "7d47a5cee5485cbf658f0b05eed87253ca29e7de23460f4fc65001acc56c49f0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DynamicIsland/Views/NotchWidgetView.swift",
+      "sourceSHA256": "6fa05de774412de73ea9f2a8984cff70dae020452d5a912de3f8a887bd9b772e",
+      "compiledSHA256": "6fa05de774412de73ea9f2a8984cff70dae020452d5a912de3f8a887bd9b772e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DynamicIsland/Views/CompanionResponseCard.swift",
+      "sourceSHA256": "44b134549265c1577a941904fb52e7167e06244a105366ca516ca4703270f688",
+      "compiledSHA256": "44b134549265c1577a941904fb52e7167e06244a105366ca516ca4703270f688",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/DynamicIsland/Views/CompanionWeatherCard.swift",
+      "sourceSHA256": "2d7f27700c06643de9a9fd11b96a1eee2eea3e2acbdfef99809764e1ec82be04",
+      "compiledSHA256": "2d7f27700c06643de9a9fd11b96a1eee2eea3e2acbdfef99809764e1ec82be04",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/ViewModels/SpatialAssistantCoordinator.swift",
+      "sourceSHA256": "d5b1af6da1b274a8df8e7ea9b5176ada5cca48b2ea116a76652cdd31374b0012",
+      "compiledSHA256": "d5b1af6da1b274a8df8e7ea9b5176ada5cca48b2ea116a76652cdd31374b0012",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/ViewModels/SpatialOverlayViewModel.swift",
+      "sourceSHA256": "4f3603a9962c39be2d0c68423fa8f4b2486bdd5cec5924cad0f3cdd2e3803f81",
+      "compiledSHA256": "4f3603a9962c39be2d0c68423fa8f4b2486bdd5cec5924cad0f3cdd2e3803f81",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/AnnotationHighlightView.swift",
+      "sourceSHA256": "eb5ce1e012ef4a3e432ad9d168e5c24be4dc4a2fdd134ed054264a5739c41a7a",
+      "compiledSHA256": "eb5ce1e012ef4a3e432ad9d168e5c24be4dc4a2fdd134ed054264a5739c41a7a",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/CanvasDiagramView.swift",
+      "sourceSHA256": "5506e83ad2cacc8d2a434f3b65da9e014b6237b997ab6aa459b14496eb69aa88",
+      "compiledSHA256": "5506e83ad2cacc8d2a434f3b65da9e014b6237b997ab6aa459b14496eb69aa88",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/CompanionTaskShelf.swift",
+      "sourceSHA256": "c58dcc6b945b26dbba71f441a4912fe586b8b91153b6c4376dc57ab39723258e",
+      "compiledSHA256": "c58dcc6b945b26dbba71f441a4912fe586b8b91153b6c4376dc57ab39723258e",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/CircularResearchWidgetView.swift",
+      "sourceSHA256": "8befeef3f62a71266041e7a1058cade22c2c4c5996b665e9806850c387360ae9",
+      "compiledSHA256": "8befeef3f62a71266041e7a1058cade22c2c4c5996b665e9806850c387360ae9",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/GeneratedCanvasView.swift",
+      "sourceSHA256": "19973840d9052666bb20835e61703ce13c7c09c9aade91db89b21a57caed0e23",
+      "compiledSHA256": "19973840d9052666bb20835e61703ce13c7c09c9aade91db89b21a57caed0e23",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/VectorDrawingInterpreter.swift",
+      "sourceSHA256": "abd39375e2ad812eb865631487fea67fa3a242f1aa5970659a5ed422e59051c0",
+      "compiledSHA256": "abd39375e2ad812eb865631487fea67fa3a242f1aa5970659a5ed422e59051c0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/SpatialOverlay/Views/SpatialCanvasOverlay.swift",
+      "sourceSHA256": "aa8cb4abbfcefe27fcec95c62cf22ef2ae8da720556c4bcadb15205a620179f3",
+      "compiledSHA256": "aa8cb4abbfcefe27fcec95c62cf22ef2ae8da720556c4bcadb15205a620179f3",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/CompanionTeam/ViewModels/CompanionMotionStudioViewModel.swift",
+      "sourceSHA256": "25a8dacbc3ffab1e2f6fb2cc887d77e894b2bae8067b3574d4bc8a740c5add5c",
+      "compiledSHA256": "25a8dacbc3ffab1e2f6fb2cc887d77e894b2bae8067b3574d4bc8a740c5add5c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/CompanionTeam/Views/CompanionMotionStudio.swift",
+      "sourceSHA256": "e05014a3556fcfb209dec1447a7e471e48918f4df1ba92b46e7430a50c2bc9f1",
+      "compiledSHA256": "e05014a3556fcfb209dec1447a7e471e48918f4df1ba92b46e7430a50c2bc9f1",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Onboarding/ViewModels/OnboardingViewModel.swift",
+      "sourceSHA256": "1cea78f209a2e18e6e601ebae90569fb338a2b6de6d11691e08e9cfe64686ac8",
+      "compiledSHA256": "1cea78f209a2e18e6e601ebae90569fb338a2b6de6d11691e08e9cfe64686ac8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Onboarding/Views/CompanionOnboardingView.swift",
+      "sourceSHA256": "5d9e8f9787449743246cb6bcaf738408f394b3f58271ca9d82d735c70843a7f0",
+      "compiledSHA256": "5d9e8f9787449743246cb6bcaf738408f394b3f58271ca9d82d735c70843a7f0",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Onboarding/Views/CompanionVoiceTutorial.swift",
+      "sourceSHA256": "01085bbab037b7c6c1733e3d2cc721e82f275761549b2e77bbc222ba2393ac63",
+      "compiledSHA256": "01085bbab037b7c6c1733e3d2cc721e82f275761549b2e77bbc222ba2393ac63",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Clipboard/ViewModels/ClipboardViewModel.swift",
+      "sourceSHA256": "bf2c3528ac9d6fd715f3fdb44d0837171fd224a855f7fed50b37d6d403afb722",
+      "compiledSHA256": "bf2c3528ac9d6fd715f3fdb44d0837171fd224a855f7fed50b37d6d403afb722",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Features/Clipboard/Views/ClipboardHistoryView.swift",
+      "sourceSHA256": "123a9351e92d04f0ae7bfe9a70094e48f9061618e443ab4dbf00cdd6ec8ab0f8",
+      "compiledSHA256": "123a9351e92d04f0ae7bfe9a70094e48f9061618e443ab4dbf00cdd6ec8ab0f8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/LocalChatItems.swift",
+      "sourceSHA256": "8f4b1ab9096d5887d43df3bed0539c6bf4d5d4609d1aee368e62027acfa8ca36",
+      "compiledSHA256": "8f4b1ab9096d5887d43df3bed0539c6bf4d5d4609d1aee368e62027acfa8ca36",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/FileItems.swift",
+      "sourceSHA256": "97e9c669c1aaabdba47782ef45c70548a7b0beb256f545e3ed06c9d564a399e7",
+      "compiledSHA256": "97e9c669c1aaabdba47782ef45c70548a7b0beb256f545e3ed06c9d564a399e7",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CanvasRevision.swift",
+      "sourceSHA256": "82dc39d0876b912fbd5bd76533d6f40708b21425ced9baec0310bfe512ea55e2",
+      "compiledSHA256": "82dc39d0876b912fbd5bd76533d6f40708b21425ced9baec0310bfe512ea55e2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CompanionConversationRouting.swift",
+      "sourceSHA256": "46f8fcccc0430e30b6d6a10f762344eb3e54ed22db4b1489e938d2ed30babb5f",
+      "compiledSHA256": "46f8fcccc0430e30b6d6a10f762344eb3e54ed22db4b1489e938d2ed30babb5f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/GeneratedCanvas.swift",
+      "sourceSHA256": "493828f47ab7b5a3da3c26ceebca12301585e48a734e15ffe014b1e1ff582e73",
+      "compiledSHA256": "493828f47ab7b5a3da3c26ceebca12301585e48a734e15ffe014b1e1ff582e73",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CaptureItems.swift",
+      "sourceSHA256": "799222c1b0310d3d29754aeaeb60c05bb09590f69f4708ea97e254d0d6f4e688",
+      "compiledSHA256": "799222c1b0310d3d29754aeaeb60c05bb09590f69f4708ea97e254d0d6f4e688",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CodingAgentItems.swift",
+      "sourceSHA256": "abe0ead95ae8a16b7c3cff6fd55e8df0a4f39ba67e8056c98f588442265edc5d",
+      "compiledSHA256": "abe0ead95ae8a16b7c3cff6fd55e8df0a4f39ba67e8056c98f588442265edc5d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CanvasProgramParser.swift",
+      "sourceSHA256": "4d27d3c3c262b3131a61862f81f3c5ff714f7d5e9e6a1e3a78071cfcb1e3d5d6",
+      "compiledSHA256": "4d27d3c3c262b3131a61862f81f3c5ff714f7d5e9e6a1e3a78071cfcb1e3d5d6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/AppearanceOptions.swift",
+      "sourceSHA256": "a1b5c8eb99e1044d92a49101d9bcbd0fd50e64c636f741f1258a3e254721a78d",
+      "compiledSHA256": "a1b5c8eb99e1044d92a49101d9bcbd0fd50e64c636f741f1258a3e254721a78d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CanvasDiagram.swift",
+      "sourceSHA256": "40b552c629722f5407d0a653504fc09d56d2d60bd232d3f52695d2e44bd5b7cd",
+      "compiledSHA256": "40b552c629722f5407d0a653504fc09d56d2d60bd232d3f52695d2e44bd5b7cd",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/AppleChatConfiguration.swift",
+      "sourceSHA256": "c075c386a41b7b3484b75ab66659db9cec37d9ed778f642893241b6fc9e06145",
+      "compiledSHA256": "c075c386a41b7b3484b75ab66659db9cec37d9ed778f642893241b6fc9e06145",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Models/CanvasFlowParser.swift",
+      "sourceSHA256": "98960990e45a2f7d02ba5b5f2f63737c2967406749bf9d72218907ae0024ad6a",
+      "compiledSHA256": "98960990e45a2f7d02ba5b5f2f63737c2967406749bf9d72218907ae0024ad6a",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/FileQuickLookView.swift",
+      "sourceSHA256": "b0c696c896706275b177669a290592379194a7c916ba7b53f102bea0102b6937",
+      "compiledSHA256": "b0c696c896706275b177669a290592379194a7c916ba7b53f102bea0102b6937",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/UtilityControls.swift",
+      "sourceSHA256": "1d4fa6d3eceb43434e9ec652c301deefcc24bad5657c63b4f94961be7a55d596",
+      "compiledSHA256": "1d4fa6d3eceb43434e9ec652c301deefcc24bad5657c63b4f94961be7a55d596",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/TaskCardsView.swift",
+      "sourceSHA256": "4d3ffb5e872e3a44337db43f01c8aee80f5b7cb07ddbd2ff99ba17511eb9cdc3",
+      "compiledSHA256": "4d3ffb5e872e3a44337db43f01c8aee80f5b7cb07ddbd2ff99ba17511eb9cdc3",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/ProviderMark.swift",
+      "sourceSHA256": "dc291a09d3ea384936eab5b0db846f984e32a6ddcb3deedf5462f954acef66fc",
+      "compiledSHA256": "dc291a09d3ea384936eab5b0db846f984e32a6ddcb3deedf5462f954acef66fc",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/CompanionFileReceiver.swift",
+      "sourceSHA256": "41eb8c86cd13fc39b79e6dec760ebfcd418345c9aecd3c257b4ab5eebf77e85f",
+      "compiledSHA256": "41eb8c86cd13fc39b79e6dec760ebfcd418345c9aecd3c257b4ab5eebf77e85f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/AgentMarkdownView.swift",
+      "sourceSHA256": "c62d7a4fb73b9a3aa1197d1bc5a668b280330eebacea89af66371a81088fe955",
+      "compiledSHA256": "c62d7a4fb73b9a3aa1197d1bc5a668b280330eebacea89af66371a81088fe955",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/DesignSystem.swift",
+      "sourceSHA256": "7353e678a9fe89b9ac39969d49e3ea8a5e008acfa91ce8f74b3b844005b2144a",
+      "compiledSHA256": "51e343cb4cf9eba76b5bd71b65d4c981b66eae2ac594a6a0d6ff16c3fc4538ae",
+      "sameBytes": false,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/AgentChatStyle.swift",
+      "sourceSHA256": "78f16c0885333e003743f56f9917ee8c2c4406abb19b76b4e657e12d9db3a90d",
+      "compiledSHA256": "78f16c0885333e003743f56f9917ee8c2c4406abb19b76b4e657e12d9db3a90d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/TaskNotificationPreferences.swift",
+      "sourceSHA256": "d283ead940de395985d5b45c0e3024edbba33af92cf415b0231a4de8f1e0ce32",
+      "compiledSHA256": "d283ead940de395985d5b45c0e3024edbba33af92cf415b0231a4de8f1e0ce32",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/AgentMarkdown.swift",
+      "sourceSHA256": "432f01dd16fd89d28febc7e06a9fced93d67a512b8988f3616aabb378734ae1d",
+      "compiledSHA256": "432f01dd16fd89d28febc7e06a9fced93d67a512b8988f3616aabb378734ae1d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/AgentChatComposer.swift",
+      "sourceSHA256": "4af7b08c4ce5b17ca63bee581f2b2c73fbb6066f79ea5e7f57c70d3492469ea2",
+      "compiledSHA256": "4af7b08c4ce5b17ca63bee581f2b2c73fbb6066f79ea5e7f57c70d3492469ea2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/ShortcutRecorder.swift",
+      "sourceSHA256": "7ee46f7ce4e3e02e73bf5de77efbf2591c913b0a60c9b95ae4a4602265b906a8",
+      "compiledSHA256": "7ee46f7ce4e3e02e73bf5de77efbf2591c913b0a60c9b95ae4a4602265b906a8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Island/IslandChrome.swift",
+      "sourceSHA256": "95ec2429813f87670ed4e1748129238e16c9cbb7bef852895249bb299d9a34b6",
+      "compiledSHA256": "95ec2429813f87670ed4e1748129238e16c9cbb7bef852895249bb299d9a34b6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionRenderer.swift",
+      "sourceSHA256": "38fe9ee0888754401ed67f2d0cefde8995127a1d11228269fac00af711fe45f1",
+      "compiledSHA256": "38fe9ee0888754401ed67f2d0cefde8995127a1d11228269fac00af711fe45f1",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionAvatars.swift",
+      "sourceSHA256": "fd962b4bffa6dce0a221348b0f7c2750b14f94b3773d5ef9aae9b53c507bace7",
+      "compiledSHA256": "fd962b4bffa6dce0a221348b0f7c2750b14f94b3773d5ef9aae9b53c507bace7",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionRigGeometry.swift",
+      "sourceSHA256": "df7f34088ae92c79d8a3d7831a1a67c484d83c2fb33607cfcef1b5b512e37656",
+      "compiledSHA256": "df7f34088ae92c79d8a3d7831a1a67c484d83c2fb33607cfcef1b5b512e37656",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionIntroductionCopy.swift",
+      "sourceSHA256": "c6f91ce35b1053d5678c6142e6cce191dff14ba5726c84833b53aacc5beb0921",
+      "compiledSHA256": "c6f91ce35b1053d5678c6142e6cce191dff14ba5726c84833b53aacc5beb0921",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionAnimation.swift",
+      "sourceSHA256": "cd7f22300908b288dbe6d2b243b9fe0cb44792c8fef106f10338d5e5b0435d44",
+      "compiledSHA256": "cd7f22300908b288dbe6d2b243b9fe0cb44792c8fef106f10338d5e5b0435d44",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionWeatherCharacter.swift",
+      "sourceSHA256": "29be9de20bd196d171d0361e9b6e1edf7eaa12bc32b900b966d8e9aedc6c5df2",
+      "compiledSHA256": "29be9de20bd196d171d0361e9b6e1edf7eaa12bc32b900b966d8e9aedc6c5df2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionTeamArrival.swift",
+      "sourceSHA256": "8110cca2c0ae538d40c8d73fef4f4b3f0bbb4c231f4fc79b9a3d9edb5d3a76cb",
+      "compiledSHA256": "8110cca2c0ae538d40c8d73fef4f4b3f0bbb4c231f4fc79b9a3d9edb5d3a76cb",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionTaskCharacter.swift",
+      "sourceSHA256": "2e9bbbdabd1f8b465093795077a624c57dedf2fabd82c1a3ac54e9e4385fe2d7",
+      "compiledSHA256": "2e9bbbdabd1f8b465093795077a624c57dedf2fabd82c1a3ac54e9e4385fe2d7",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionTeamGallery.swift",
+      "sourceSHA256": "6bfd108fe050529fcae8d13222419ea2d7cc5e0a06e3b623712f3d99d8e4fc5c",
+      "compiledSHA256": "6bfd108fe050529fcae8d13222419ea2d7cc5e0a06e3b623712f3d99d8e4fc5c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionGreetingTiming.swift",
+      "sourceSHA256": "c7295e45580b94d89b34b7ad0b984fbc1105a5bc53a4208a662554c90db8b796",
+      "compiledSHA256": "c7295e45580b94d89b34b7ad0b984fbc1105a5bc53a4208a662554c90db8b796",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionArrival.swift",
+      "sourceSHA256": "6633cfbad2956643766d51c70a6d628de7bda68db89d22c425c1cb00fef5c963",
+      "compiledSHA256": "6633cfbad2956643766d51c70a6d628de7bda68db89d22c425c1cb00fef5c963",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionRigPose.swift",
+      "sourceSHA256": "25c0e3810f18228bd64d4771c65d3ac18f1b69f3af4709dc656836779d1be3da",
+      "compiledSHA256": "25c0e3810f18228bd64d4771c65d3ac18f1b69f3af4709dc656836779d1be3da",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionRigActor.swift",
+      "sourceSHA256": "1bb13faa4837d8617cbd2b70cd379e9c89dccce4f3f9725c67d0352185e47996",
+      "compiledSHA256": "1bb13faa4837d8617cbd2b70cd379e9c89dccce4f3f9725c67d0352185e47996",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Components/Companion/CompanionGreetingRig.swift",
+      "sourceSHA256": "d29601548adb49c984e1c8861f9a0245ccf7d21f5e171ff1c8839ca0575de161",
+      "compiledSHA256": "d29601548adb49c984e1c8861f9a0245ccf7d21f5e171ff1c8839ca0575de161",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Preferences/CompanionPreferences.swift",
+      "sourceSHA256": "324b85c651e84eeb9c6090bb40224af378547bf77a41524d140b8b09933a995b",
+      "compiledSHA256": "324b85c651e84eeb9c6090bb40224af378547bf77a41524d140b8b09933a995b",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Tasks/CompanionEventCenter.swift",
+      "sourceSHA256": "32444cee3c819dc6d3aa52f4401015ef10951f7094bed81b969a11cb03cb1917",
+      "compiledSHA256": "32444cee3c819dc6d3aa52f4401015ef10951f7094bed81b969a11cb03cb1917",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/MiddleClickController.swift",
+      "sourceSHA256": "8c8b031d562ffc50bfb1b88bbf5bfb8ca6e82dc86b9047039f07d516e84670b8",
+      "compiledSHA256": "8c8b031d562ffc50bfb1b88bbf5bfb8ca6e82dc86b9047039f07d516e84670b8",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/InputGuards.swift",
+      "sourceSHA256": "e3fb60a8ccf383007ee8be9e631fb2b2b5b4bcdfa2a6d50f0cb74e93a132b867",
+      "compiledSHA256": "e3fb60a8ccf383007ee8be9e631fb2b2b5b4bcdfa2a6d50f0cb74e93a132b867",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/MouseButtonActions.swift",
+      "sourceSHA256": "33094b5b1e622458c0b0b47ff5cc40d7849ac68646697ed84d5d687b4448a4d2",
+      "compiledSHA256": "33094b5b1e622458c0b0b47ff5cc40d7849ac68646697ed84d5d687b4448a4d2",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/InputGuardsController.swift",
+      "sourceSHA256": "051bb781e52f87c1aa5758bac1f9b7032cb7d302286807664b79e8ba1d030503",
+      "compiledSHA256": "051bb781e52f87c1aa5758bac1f9b7032cb7d302286807664b79e8ba1d030503",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/MouseButtonBackend.swift",
+      "sourceSHA256": "1c85c0bb998ca1132726c28949d23fe065962691a7e5bbd65b29ff50ec9ceefa",
+      "compiledSHA256": "1c85c0bb998ca1132726c28949d23fe065962691a7e5bbd65b29ff50ec9ceefa",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/ImpactGestureCoordinator.swift",
+      "sourceSHA256": "7b5eeb697f2b7b98a8204df0b200912d36fc30c6728c40753aed714c0900853b",
+      "compiledSHA256": "7b5eeb697f2b7b98a8204df0b200912d36fc30c6728c40753aed714c0900853b",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/MouseButtonController.swift",
+      "sourceSHA256": "99cdf30224830f711464e8d702731bd6e6a374ccb8f6d6f27537ee353f7cacb6",
+      "compiledSHA256": "99cdf30224830f711464e8d702731bd6e6a374ccb8f6d6f27537ee353f7cacb6",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Input/ScrollInput.swift",
+      "sourceSHA256": "476d04e9e4d60fbd69aa2127c27b1e60eb3e0bdddffffd92ce9054f3b376197d",
+      "compiledSHA256": "476d04e9e4d60fbd69aa2127c27b1e60eb3e0bdddffffd92ce9054f3b376197d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Activation/AccessibilityAccess.swift",
+      "sourceSHA256": "e11128fbcfaa31b269de2c77e86e26e8e3a0560f1f5d12c0260b6b14cc1afa1c",
+      "compiledSHA256": "e11128fbcfaa31b269de2c77e86e26e8e3a0560f1f5d12c0260b6b14cc1afa1c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Activation/ActivationController.swift",
+      "sourceSHA256": "52504009a6dc7eb42016393fc2763b5c2f8e3983f815b599e5efe1d0409d1041",
+      "compiledSHA256": "52504009a6dc7eb42016393fc2763b5c2f8e3983f815b599e5efe1d0409d1041",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Desktop/DesktopController.swift",
+      "sourceSHA256": "83462401ed28fb6bd4461590778aa71a3beec8519eeb6c9277b254c23f0901ff",
+      "compiledSHA256": "83462401ed28fb6bd4461590778aa71a3beec8519eeb6c9277b254c23f0901ff",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Desktop/DockSpacesController.swift",
+      "sourceSHA256": "676ad9cf36dbdd436f8265e318450086326ad01b64f622f72688841ffee679bb",
+      "compiledSHA256": "676ad9cf36dbdd436f8265e318450086326ad01b64f622f72688841ffee679bb",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Desktop/DesktopBackend.swift",
+      "sourceSHA256": "905c291f94cad757689e27f9db57e956f4467f3711f2320e851c2820fe0e461f",
+      "compiledSHA256": "905c291f94cad757689e27f9db57e956f4467f3711f2320e851c2820fe0e461f",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Desktop/PointerFocus.swift",
+      "sourceSHA256": "4e053fa23857a2517897e444e2dda80c307c9e99bba1694c47b379d36fe8232d",
+      "compiledSHA256": "4e053fa23857a2517897e444e2dda80c307c9e99bba1694c47b379d36fe8232d",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    },
+    {
+      "file": "Sieghart/Shared/Services/Desktop/WindowGeometry.swift",
+      "sourceSHA256": "280d7bd34a34c28e1b7f9d0e25017344f278c3849c2ca6a26793ffc864cdc80c",
+      "compiledSHA256": "280d7bd34a34c28e1b7f9d0e25017344f278c3849c2ca6a26793ffc864cdc80c",
+      "sameBytes": true,
+      "sameTextAfterLineEndingNormalization": true
+    }
+  ]
+}

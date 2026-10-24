@@ -17,8 +17,8 @@ struct CompanionTeamGallery: View {
                     VStack(spacing: 7) {
                         CompanionCharacter(size: compact ? 52 : 78, avatar: member, animates: animates)
                         Text(member.name).font(.callout.weight(.semibold))
-                        Text(member.subtitle).font(.system(size: compact ? 9 : 11)).foregroundStyle(CompanionStyle.muted).lineLimit(1).minimumScaleFactor(0.7)
-                        if !compact { Text(member == .sig ? "Main companion" : "Specialist").font(.caption2).foregroundStyle(member.tint) }
+                        Text(LocalizedStringKey(member.subtitle)).font(.system(size: compact ? 9 : 11)).foregroundStyle(CompanionStyle.muted).lineLimit(1).minimumScaleFactor(0.7)
+                        if !compact { Text(LocalizedStringKey(member == .sig ? "Main companion" : "Specialist")).font(.caption2).foregroundStyle(member.tint) }
                     }.frame(maxWidth: .infinity).padding(compact ? 9 : 16).modifier(WorkspaceSurface(radius: 18))
                 }.accessibilityLabel(member == .ada && onAda != nil ? "Ada. Open her room." : "\(member.name). \(member.subtitle). Explore movements.")
             }
@@ -30,11 +30,14 @@ struct CompanionTeamDock: View {
     var animates: Bool
     var events: CompanionEventCenter? = nil
     var onAda: (() -> Void)?
+    var onSelect: ((CompanionAvatar) -> Void)? = nil
     var body: some View {
         HStack(spacing: CompanionHomeLayout.dockSpacing) {
             ForEach(CompanionAvatar.specialists) { member in
                 Group {
-                    if member == .ada, let onAda {
+                    if let onSelect {
+                        Button { onSelect(member) } label: { portrait(member) }.buttonStyle(.plain).help(member.subtitle)
+                    } else if member == .ada, let onAda {
                         Button(action: onAda) { portrait(member) }.buttonStyle(.plain)
                             .accessibilityLabel("Ada. Open her room.").help("Open Ada’s room")
                     } else { portrait(member) }

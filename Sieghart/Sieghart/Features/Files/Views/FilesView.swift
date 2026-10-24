@@ -31,12 +31,12 @@ struct FilesView: View {
                 Spacer(minLength: 0)
             }
             if preview {
-                HStack(spacing: 14) { ForEach(FilesViewModel.Page.allCases, id: \.self) { Text($0.rawValue).font(.caption.weight(model.page == $0 ? .semibold : .regular)).foregroundStyle(model.page == $0 ? CompanionStyle.accentInk : CompanionStyle.muted) } }
+                HStack(spacing: 14) { ForEach(FilesViewModel.Page.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).font(.caption.weight(model.page == $0 ? .semibold : .regular)).foregroundStyle(model.page == $0 ? CompanionStyle.accentInk : CompanionStyle.muted) } }
             } else {
-                Picker("Files page", selection: $model.page) { ForEach(FilesViewModel.Page.allCases, id: \.self) { Text($0.rawValue).tag($0) } }.pickerStyle(.segmented)
+                Picker("Files page", selection: $model.page) { ForEach(FilesViewModel.Page.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) } }.pickerStyle(.segmented)
             }
             if model.needsReset {
-                Text(model.status).font(.callout).foregroundStyle(CompanionStyle.muted)
+                Text(LocalizedStringKey(model.status)).font(.callout).foregroundStyle(CompanionStyle.muted)
                 Button("Reset saved list") { confirmClear = true }.buttonStyle(CompanionButtonStyle(compact: compact))
             } else {
                 switch model.page {
@@ -46,7 +46,7 @@ struct FilesView: View {
                 }
             }
             HStack {
-                Text(model.status).font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(model.status)).font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 if model.isBusy { ProgressView().controlSize(.small); Button("Cancel") { model.cancelAction() }.buttonStyle(.plain).font(.caption) }
             }
@@ -197,7 +197,7 @@ struct FilesView: View {
                     Button("Use Finder selection") { model.cutFinderSelection() }
                 }.buttonStyle(CompanionButtonStyle(compact: compact))
                 if preview { Text("Existing destination file · \(conflict.rawValue)").font(.caption).foregroundStyle(CompanionStyle.muted) }
-                else { Picker("Existing destination file", selection: $conflict) { ForEach(FileConflictPolicy.allCases, id: \.self) { Text($0.rawValue).tag($0) } }.font(.caption) }
+                else { Picker("Existing destination file", selection: $conflict) { ForEach(FileConflictPolicy.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) } }.font(.caption) }
                 if !model.cutFiles.isEmpty {
                     Text(model.cutFiles.map(\.name).joined(separator: ", ")).font(.caption).foregroundStyle(CompanionStyle.muted)
                     HStack {
@@ -272,7 +272,7 @@ struct FilesView: View {
     }
     private func reviewCard(title: String, rows: [String], destination: String, confirm: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.headline)
+            Text(LocalizedStringKey(title)).font(.headline)
             ForEach(Array(rows.enumerated()), id: \.offset) { Text($0.element).font(.caption) }
             Text("Destination: " + destination).font(.caption).foregroundStyle(CompanionStyle.muted).textSelection(.enabled)
             HStack {

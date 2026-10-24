@@ -1,0 +1,8 @@
+{
+  "Sieghart/Shared/Components/Island/IslandChrome.swift": "bf0faf07bc29548fcb793fba82304178ea44b7c72355c74e4a0168898c3e7ae4",
+  "Sieghart/Features/Workspace/Views/WorkspaceView.swift": "5c509ec0da157d36a645b6711750a5c820011a951f436aae21be4f56f85d7d79",
+  "Sieghart/Shared/Components/DesignSystem.swift": "f014c3a43b8d49b2a61a752936b917ccbce1dfd64da0ee44509fb4bfbdcce91e",
+  "Sieghart/Features/DynamicIsland/Views/NotchWidgetView.swift": "a15aa9f8b043d86399fc9f683c08f3572f6096d447d8b4fb86f8b50db88081cb",
+  "Sieghart/Features/DynamicIsland/ViewModels/NotchWidgetViewModel.swift": "bd8d41d19b542d2e0c30de73535eeb01f532345c185be731e5944b8cafd2a7e0",
+  "Tests/SwiftTesting/Presentation/IslandFlowTests.swift": "7556aaf0666b35fb15e3a18069a6d6ad81b11a6e1591e26b379e7341fafbc848"
+}

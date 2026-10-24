@@ -52,10 +52,10 @@ struct IslandButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .brightness(hovering && enabled ? 0.06 : 0)
-            .scaleEffect(reduceMotion || preferenceReduceMotion ? 1 : configuration.isPressed ? 0.94 : hovering && enabled ? 1.045 : 1)
+            .scaleEffect(reduceMotion || preferenceReduceMotion ? 1 : configuration.isPressed ? 0.97 : 1)
             .opacity(enabled ? configuration.isPressed ? 0.8 : 1 : 0.4)
-            .animation(reduceMotion || preferenceReduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.78), value: configuration.isPressed)
-            .animation(reduceMotion || preferenceReduceMotion ? nil : .spring(response: 0.34, dampingFraction: 0.8), value: hovering)
+            .animation(reduceMotion || preferenceReduceMotion ? nil : InterfaceMotion.feedback, value: configuration.isPressed)
+            .animation(InterfaceMotion.feedback, value: hovering)
             .onHover { hovering = $0 }
     }
 }
@@ -112,13 +112,33 @@ private struct IslandBlur: NSViewRepresentable {
 
 // The native window reserves the whole transition. Only the silhouette moves:
 // the content is laid out once at its destination, then fades into the shell.
-struct IslandCanvasGeometry {
+struct IslandCanvasGeometry: Equatable {
     let size: CGSize
     let cutoutWidth: CGFloat
     let cutoutHeight: CGFloat
     let compact: Bool
     var width: CGFloat { size.width }
     var height: CGFloat { size.height }
+}
+
+struct IslandTransitionTiming {
+    let duration: Double
+    let contentDelay: Double
+    let contentDuration: Double
+    let arriving: Bool
+    let closing: Bool
+    init(from: CGSize, to: CGSize, closing: Bool, welcome: Bool = false) {
+        self.closing = closing
+        arriving = from.height <= 70 && to.height > 70 && !closing
+        duration = closing ? 0.24 : arriving ? (welcome ? 0.52 : 0.38) : 0.26
+        contentDelay = arriving ? duration * 0.32 : 0
+        contentDuration = closing ? 0.12 : arriving ? duration * 0.55 : 0.16
+    }
+    func progress(at fraction: Double) -> Double {
+        let t = min(1, max(0, fraction))
+        // No overshoot: text and camera edges keep a stable spatial reference.
+        return closing ? t * t * (3 - 2 * t) : 1 - pow(1 - t, 4)
+    }
 }
 
 // The island is a nonactivating overlay. Its first click must run the action
@@ -135,6 +155,10 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
     private let outline = CAShapeLayer()
     private let maskLayer = CAShapeLayer()
     private var surface: CGSize = .zero
+    private(set) var backdropIsCompact = true
+    private(set) var targetGeometry: IslandCanvasGeometry?
+    private(set) var transitionGeneration = 0
+    var isAnimating: Bool { completion != nil }
     private(set) var isDeparting = false
     private var completion: Task<Void, Never>?
     override var isFlipped: Bool { true }
@@ -159,60 +183,74 @@ final class IslandHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     func updateAppearance(compact: Bool, stripHeight: CGFloat, appearance: AppAppearance, glassEnabled: Bool) {
+        backdropIsCompact = compact
         backdrop.rootView = AnyView(IslandBackdrop(compact: compact, stripHeight: stripHeight, glassEnabled: glassEnabled).preferredColorScheme(appearance.colorScheme))
     }
 
     func prepare(target: IslandCanvasGeometry, reserved: CGSize, animated: Bool, closing: Bool, appearance: AppAppearance = .system, glassEnabled: Bool = false, welcome: Bool = false, settled: @escaping @MainActor () -> Void) {
-        completion?.cancel()
-        isDeparting = closing
+        let compactAppearance = closing ? backdropIsCompact : target.compact
+        // A second delivery of the same target keeps the existing presentation
+        // layer and completion. It cannot lengthen an animation indefinitely.
+        if animated, targetGeometry == target, isDeparting == closing, frame.size == reserved {
+            updateAppearance(compact: compactAppearance, stripHeight: target.cutoutHeight, appearance: appearance, glassEnabled: glassEnabled)
+            return
+        }
+        completion?.cancel(); completion = nil
+        transitionGeneration += 1
+        let generation = transitionGeneration
         let previous = surface == .zero ? CGSize(width: max(180, target.cutoutWidth), height: max(1, target.cutoutHeight)) : currentSurface
         let contentOpacity = host.layer?.presentation()?.opacity ?? Float(host.alphaValue)
-        surface = target.size
-        outline.isHidden = target.compact || closing
+        let previousCanvasWidth = bounds.width
+        var translation = CGAffineTransform(translationX: (reserved.width - previousCanvasWidth) / 2, y: 0)
+        let visiblePath = maskLayer.presentation()?.path?.copy(using: &translation)
+        isDeparting = closing; targetGeometry = target; surface = target.size
+        let timing = IslandTransitionTiming(from: previous, to: target.size, closing: closing, welcome: welcome)
         let gutter: CGFloat = target.compact ? 0 : 72
         let extra: CGFloat = target.compact ? 0 : 64
-        let previousCanvasWidth = bounds.width
+        let endPath = Self.path(size: target.size, canvasWidth: reserved.width)
+        CATransaction.begin(); CATransaction.setDisableActions(true)
         setFrameSize(reserved)
         backdrop.frame = bounds
         host.frame = CGRect(x: (reserved.width - target.width - gutter * 2) / 2, y: 0, width: target.width + gutter * 2, height: target.height + extra)
-        updateAppearance(compact: target.compact || closing, stripHeight: target.cutoutHeight, appearance: appearance, glassEnabled: glassEnabled)
-        let endPath = Self.path(size: target.size, canvasWidth: reserved.width)
-        var translation = CGAffineTransform(translationX: (reserved.width - previousCanvasWidth) / 2, y: 0)
-        let visiblePath = maskLayer.presentation()?.path?.copy(using: &translation)
-        CATransaction.begin(); CATransaction.setDisableActions(true)
         maskLayer.frame = bounds; outline.frame = bounds
         maskLayer.path = endPath; outline.path = endPath
+        outline.isHidden = target.compact || closing
+        maskLayer.removeAllAnimations(); outline.removeAllAnimations(); host.layer?.removeAllAnimations()
+        host.alphaValue = closing ? 0 : 1
         CATransaction.commit()
-        guard animated, previous != target.size else {
-            maskLayer.removeAllAnimations(); outline.removeAllAnimations(); host.layer?.removeAllAnimations()
-            host.alphaValue = closing ? 0 : 1; settled(); return
-        }
-        let duration = welcome && !closing ? 0.9 : target.height > previous.height ? 0.46 : 0.28
+        updateAppearance(compact: compactAppearance, stripHeight: target.cutoutHeight, appearance: appearance, glassEnabled: glassEnabled)
+        guard animated, previous != target.size else { settled(); return }
         let animation = CAKeyframeAnimation(keyPath: "path")
         // Sample the contour itself so corner radii stay circular while resizing.
         animation.values = (0...60).map { index -> CGPath in
             if index == 0, let visiblePath { return visiblePath }
-            let t = Double(index) / 60
-            let eased = welcome ? 1 - pow(1 - t, 3) : t * t * (3 - 2 * t)
+            let eased = timing.progress(at: Double(index) / 60)
             let size = CGSize(width: previous.width + (target.width - previous.width) * eased, height: previous.height + (target.height - previous.height) * eased)
             return Self.path(size: size, canvasWidth: reserved.width)
         }
-        animation.duration = duration; animation.calculationMode = .linear
+        animation.duration = timing.duration; animation.calculationMode = .linear
         maskLayer.add(animation, forKey: "island.contour"); outline.add(animation, forKey: "island.contour")
-        host.alphaValue = closing ? 0 : 1
-        if !closing {
-            let fade = CABasicAnimation(keyPath: "opacity")
-            fade.fromValue = previous.height < 70 ? 0 : contentOpacity; fade.toValue = 1
-            fade.beginTime = CACurrentMediaTime() + (previous.height < 70 ? duration * 0.55 : 0)
-            fade.fillMode = .backwards; fade.duration = duration * 0.45
-            host.layer?.add(fade, forKey: "island.content")
+        let fade = CABasicAnimation(keyPath: "opacity")
+        fade.fromValue = timing.arriving ? 0 : contentOpacity; fade.toValue = closing ? 0 : 1
+        fade.beginTime = CACurrentMediaTime() + timing.contentDelay
+        fade.fillMode = .backwards; fade.duration = timing.contentDuration
+        fade.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        host.layer?.add(fade, forKey: "island.content")
+        if timing.arriving {
+            let arrival = CABasicAnimation(keyPath: "transform.translation.y")
+            arrival.fromValue = -6; arrival.toValue = 0
+            arrival.beginTime = fade.beginTime; arrival.duration = timing.contentDuration
+            arrival.fillMode = .backwards; arrival.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            host.layer?.add(arrival, forKey: "island.arrival")
         }
         completion = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(duration))
-            guard !Task.isCancelled, self != nil else { return }
+            try? await Task.sleep(for: .seconds(timing.duration))
+            guard !Task.isCancelled, let self, self.transitionGeneration == generation else { return }
+            self.completion = nil
             settled()
         }
     }
+
     static func path(size: CGSize, canvasWidth: CGFloat) -> CGPath {
         NotchPanelShape().path(in: CGRect(x: (canvasWidth - size.width) / 2, y: 0, width: size.width, height: size.height)).cgPath
     }

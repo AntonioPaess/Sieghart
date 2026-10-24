@@ -51,6 +51,14 @@ final class NotchWidgetViewModel: ObservableObject {
     let monitor: SystemMonitorViewModel
     let keepAwake: KeepAwakeViewModel
     let displayPower: DisplayPowerViewModel
+    private var weatherObservationCancellable: AnyCancellable?
+    private var weatherShownAt: ContinuousClock.Instant?
+    private var weatherDismissTask: Task<Void, Never>?
+    private var responseObservationCancellable: AnyCancellable?
+    private var speechPhaseCancellable: AnyCancellable?
+    private var observedResponseHeight: CGFloat = 0
+    let spatialAssistant: SpatialAssistantCoordinator
+    private var spatialObservation: AnyCancellable?
     @Published private(set) var utilityReaction = UUID()
     private(set) var utilitySucceeded = true
     @Published private(set) var utilityMood = CompanionMood.idle
@@ -76,6 +84,7 @@ final class NotchWidgetViewModel: ObservableObject {
     private var pomodoroObservation: AnyCancellable?
     private var clockObservation: AnyCancellable?
     private var preferencesObservation: AnyCancellable?
+    private var speechPreferencesObservation: AnyCancellable?
     private var screenChangeObserver: AnyCancellable?
     private var workspaceObservation: AnyCancellable?
     private var menuObservation: AnyCancellable?
@@ -101,7 +110,7 @@ final class NotchWidgetViewModel: ObservableObject {
         }
     }
 
-    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioViewModel? = nil, monitor: SystemMonitorViewModel? = nil, keepAwake: KeepAwakeViewModel? = nil, displayPower: DisplayPowerViewModel? = nil, clipboard: ClipboardViewModel? = nil, calendar: CalendarViewModel? = nil, events: CompanionEventCenter? = nil, files: FilesViewModel? = nil, capture: CaptureViewModel? = nil, fileReception: FileReceptionViewModel? = nil, agentRoom: AgentRoomViewModel? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetViewModel.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetViewModel.keyboardRevealDelay) {
+    init(assistant: AssistantViewModel, preferences: CompanionPreferences, audio: AudioViewModel? = nil, monitor: SystemMonitorViewModel? = nil, keepAwake: KeepAwakeViewModel? = nil, displayPower: DisplayPowerViewModel? = nil, clipboard: ClipboardViewModel? = nil, calendar: CalendarViewModel? = nil, events: CompanionEventCenter? = nil, files: FilesViewModel? = nil, capture: CaptureViewModel? = nil, fileReception: FileReceptionViewModel? = nil, agentRoom: AgentRoomViewModel? = nil, voiceGenerator: (any LocalChatGenerating)? = nil, voiceWeather: any VoiceWeatherProviding = VoiceWeatherService(), spatialContent: (any SpatialContentGenerating)? = nil, managesWindows: Bool = true, announcementDelay: Duration = .seconds(5), pointerExitDelay: Duration = NotchWidgetViewModel.pointerExitDelay, keyboardRevealDelay: Duration = NotchWidgetViewModel.keyboardRevealDelay) {
         self.assistant = assistant
         self.agentRoom = agentRoom ?? AgentRoomViewModel(services: [:], defaults: preferences.featureDefaults,
             localChat: managesWindows ? .production(defaults: preferences.featureDefaults) : .isolated())
@@ -123,11 +132,85 @@ final class NotchWidgetViewModel: ObservableObject {
         self.fileReception = fileReception ?? FileReceptionViewModel(files: self.files, shouldAnimate: { preferences.characterMotion && !preferences.usesReducedMotion })
         self.capture = capture ?? CaptureViewModel(events: taskEvents, backend: managesWindows ? MacCaptureBackend() : OfflineCaptureBackend(),
                                                   sampler: managesWindows ? MacColorSampler() : InactiveColorSampler(), fileAccess: self.files.access)
+        self.spatialAssistant = SpatialAssistantCoordinator(events: taskEvents, localChat: self.agentRoom.localChat, voiceEngine: voiceGenerator, weather: voiceWeather, spatialContent: spatialContent, managesWindows: managesWindows)
         self.preferences = preferences
         self.managesWindows = managesWindows
         self.announcementDelay = announcementDelay
         self.pointerExitDelay = pointerExitDelay
         self.keyboardRevealDelay = keyboardRevealDelay
+        self.spatialAssistant.overlay.voiceSynthesizer.configuration = preferences.speechConfiguration.normalized
+        self.speechPreferencesObservation = preferences.$speechConfiguration
+            .map(\.normalized).removeDuplicates()
+            .sink { [weak spatialAssistant = self.spatialAssistant] configuration in
+                spatialAssistant?.overlay.voiceSynthesizer.configuration = configuration
+            }
+        self.spatialAssistant.appCommandHandler = { [weak self] command in
+            guard let self else { return ("O app está sendo encerrado.", false) }
+            return VoiceAppTools.execute(command, in: self, language: self.spatialAssistant.responseLanguage)
+        }
+        self.agentRoom.localChat.awakeStatusProvider = { [weak self] in self?.keepAwake }
+        self.spatialAssistant.screenInteraction.onOpenWeather = { [weak self] observation in
+            guard let self else { return }
+            self.spatialAssistant.reopenWeather(observation)
+            self.presentation = .home; self.reveal(approachGrace: false)
+            self.revealGraceDeadline = .now + .seconds(8); self.scheduleHide(delay: .seconds(8))
+        }
+        self.spatialAssistant.screenInteraction.onWeatherFinished = { [weak self] in
+            self?.scheduleWeatherCollapse()
+        }
+        self.spatialAssistant.appInformationProvider = { [weak self] question in
+            guard let self else { return nil }
+            return VoiceAppTools.informationReply(to: question, in: self, language: self.spatialAssistant.responseLanguage)
+        }
+        self.spatialAssistant.specialistContextProvider = { [weak self] persona in
+            guard let self else { return "App is shutting down." }
+            return CompanionSpecialistTools.context(persona, in: self, assistant: self.assistant)
+        }
+        self.spatialAssistant.specialistActionHandler = { [weak self] action in
+            guard let self else { return ("App is shutting down.", false) }
+            return CompanionSpecialistTools.execute(action, in: self, assistant: self.assistant, language: self.spatialAssistant.responseLanguage)
+        }
+        self.spatialAssistant.specialistFileReader = { [weak self] name, original in
+            guard let self else { return "App is shutting down." }
+            return await CompanionSpecialistTools.readChosenFile(name,request:original,in:self)
+        }
+        self.spatialAssistant.specialistDataProvider = { [weak self] persona, original in
+            guard let self else { return "App is shutting down." }
+            let snapshot = CompanionSpecialistTools.context(persona,in:self,assistant:self.assistant)
+            if persona == .toni {
+                let names = Set(self.files.shelf.filter{CompanionSpecialistTools.authorizedFile($0.name,request:original)}.map(\.name))
+                if names.count == 1, let name = names.first {
+                    let content = await CompanionSpecialistTools.readChosenFile(name,request:original,in:self)
+                    return content + "\n\n" + snapshot
+                }
+            }
+            return snapshot
+        }
+        self.weatherObservationCancellable = self.spatialAssistant.$weatherObservation
+            .dropFirst().receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
+                self?.screenDidChange()
+                guard let self else { return }
+                self.weatherDismissTask?.cancel(); self.weatherDismissTask = nil
+                if self.spatialAssistant.weatherObservation != nil {
+                    self.weatherShownAt = .now; self.presentation = .home
+                    self.reveal(approachGrace: false); self.hideTask?.cancel()
+                    if self.spatialAssistant.screenInteraction.phase == .idle {
+                        self.scheduleWeatherCollapse(reopened: self.spatialAssistant.screenInteraction.weatherReceipt == nil)
+                    }
+                } else { self.weatherShownAt = nil }
+            }
+        self.responseObservationCancellable = self.spatialAssistant.$response
+            .dropFirst().receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.objectWillChange.send()
+                let height = self.spatialAssistant.resultCardHeight
+                if height != self.observedResponseHeight { self.observedResponseHeight = height; self.screenDidChange() }
+            }
+        self.speechPhaseCancellable = self.spatialAssistant.screenInteraction.$phase
+            .dropFirst().receive(on: RunLoop.main).sink { [weak self] _ in self?.objectWillChange.send() }
         if managesWindows {
             if let screen = Self.selectedScreen() { geometry = NotchGeometry(screen: screen) }
             configureHoverZone()
@@ -252,6 +335,8 @@ final class NotchWidgetViewModel: ObservableObject {
     }
 
     func showWelcome() {
+        // A static 31-second stage is not an accessible alternative to motion.
+        guard preferences.characterMotion && !preferences.usesReducedMotion else { show(); return }
         finishWelcome()
         let start = Date().addingTimeInterval(0.35)
         welcomeStartedAt = start; presentation = .home; reveal()
@@ -373,8 +458,8 @@ final class NotchWidgetViewModel: ObservableObject {
             try? await Task.sleep(for: .seconds(2)); guard !Task.isCancelled else { return }; self?.utilityMood = .idle
         }
     }
-    func startUtilities() { if managesWindows { mouseButtons.start(); inputGuards.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; inputGuards.start(); desktop.start(); scrollInput.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; scrollInput.start() }; sessionIsActive = true; keepAwake.startLifecycle(); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
-    func stopUtilities() { mouseButtons.stop(); inputGuards.stop(); desktop.stop(); scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel() }
+    func startUtilities() { if managesWindows { spatialAssistant.routines.start(); mouseButtons.start(); inputGuards.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; inputGuards.start(); desktop.start(); scrollInput.shortcutChords = { [weak self] in self?.activation?.scrollConflictChords ?? [] }; scrollInput.start() }; sessionIsActive = true; keepAwake.startLifecycle(resumeForUpdate: managesWindows && ProcessInfo.processInfo.arguments.contains("--resume-keep-awake-session")); displayPower.startLifecycle(); audio.startLifecycle(); files.startLifecycle() }
+    func stopUtilities() { mouseButtons.stop(); inputGuards.stop(); desktop.stop(); scrollInput.stop(); agentRoom.shutdown(); sessionIsActive = false; keepAwake.shutdown(); displayPower.shutdown(); audio.shutdown(); files.stopLifecycle(); capture.cancel(); fileReception.cancel(); spatialAssistant.cancelVoiceResponse(); spatialAssistant.overlay.dismiss(); spatialAssistant.stopBackgroundWork() }
     private func beginCaptureSelection() {
         finishWelcome()
         captureWasVisible = isVisible; capturePreviousPage = presentation; captureHidesOverlay = true; capturePendingReveal = false
@@ -473,7 +558,7 @@ final class NotchWidgetViewModel: ObservableObject {
         guard let panel, panel.isVisible else { return }
         guard let canvas, let screen = notchScreen, !preferences.usesReducedMotion else { panel.orderOut(nil); return }
         let compact = NotchGeometry(screen: screen, compact: true)
-        canvas.prepare(target: compact.canvasGeometry, reserved: panel.frame.size, animated: true, closing: true) { [weak self, weak panel] in
+        canvas.prepare(target: compact.canvasGeometry, reserved: panel.frame.size, animated: true, closing: true, appearance: preferences.appearance, glassEnabled: preferences.islandGlass) { [weak self, weak panel] in
             guard self?.isVisible == false else { return }
             panel?.orderOut(nil)
         }
@@ -596,7 +681,15 @@ final class NotchWidgetViewModel: ObservableObject {
         guard let screen = notchScreen else { return }
         panel.appearance = preferences.appearance.nativeAppearance
         canvas.updateAppearance(compact: geometry.compact, stripHeight: geometry.cutoutHeight, appearance: preferences.appearance, glassEnabled: preferences.islandGlass)
-        guard canvas.currentSurface != geometry.size || canvas.isDeparting else { return }
+        // Repeated status/layout notifications must not restart the same morph.
+        // Still reanchor a settled or animating panel after a display change.
+        if canvas.targetGeometry == geometry.canvasGeometry && !canvas.isDeparting {
+            let size = panel.frame.size
+            panel.setFrame(NSRect(x: notchCenterX(on: screen) - size.width / 2,
+                                  y: screen.frame.maxY - size.height + 1 / screen.backingScaleFactor,
+                                  width: size.width, height: size.height), display: true)
+            return
+        }
         let margin: CGFloat = geometry.compact ? 0 : 144
         let bottom: CGFloat = geometry.compact ? 0 : 64
         let size = CGSize(width: max(canvas.currentSurface.width, geometry.width) + margin, height: max(canvas.currentSurface.height, geometry.height) + bottom)
@@ -710,7 +803,7 @@ final class NotchWidgetViewModel: ObservableObject {
         switch presentation {
         case .home:
             switch fileReceptionPhase {
-            case .idle: height = 318
+            case .idle: height = spatialAssistant.weatherObservation != nil ? 151 + CompanionWeatherScene.height : 318 + (spatialAssistant.resultCardHeight == 0 ? 0 : spatialAssistant.resultCardHeight + CompanionHomeLayout.rowSpacing)
             case .hovering, .receiving, .processing: height = 316
             case .ready, .failed: height = 380 // Additional space only for the attachment card.
             }
@@ -789,6 +882,19 @@ final class NotchWidgetViewModel: ObservableObject {
             if !self.pointerInsideInteractiveArea {
                 self.collapseAfterPointerExit()
             }
+        }
+    }
+    private func scheduleWeatherCollapse(reopened: Bool = false) {
+        weatherDismissTask?.cancel()
+        guard let observation = spatialAssistant.weatherObservation else { return }
+        let delay = reopened ? Duration.seconds(8) : max(Duration.seconds(2), weatherShownAt.map { ContinuousClock.now.duration(to: $0 + .seconds(6)) } ?? .zero)
+        // The result has its own deadline. Hover and generic panel hiding must
+        // never cancel it or leave the weather active when Home is opened again.
+        weatherDismissTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: delay) } catch { return }
+            guard let self, self.spatialAssistant.weatherObservation == observation,
+                  self.spatialAssistant.screenInteraction.phase == .idle else { return }
+            self.spatialAssistant.dismissWeather(keepingReceipt: true)
         }
     }
 }

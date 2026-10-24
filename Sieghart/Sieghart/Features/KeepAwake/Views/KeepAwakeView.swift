@@ -8,7 +8,7 @@ struct KeepAwakeView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Label(controller.status, systemImage: controller.holding ? "cup.and.saucer.fill" : "moon.zzz").font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
+                Label(LocalizedStringKey(controller.status), systemImage: controller.holding ? "cup.and.saucer.fill" : "moon.zzz").font(.callout.weight(.medium)).fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 Button(controller.enabled ? "Stop" : "Start") { if controller.enabled { controller.stop() } else { controller.start() } }.buttonStyle(CompanionButtonStyle(primary: true, compact: compact))
             }
@@ -39,6 +39,6 @@ struct KeepAwakeView: View {
                 }.padding(.top, 10).toggleStyle(WorkspaceSwitchStyle())
             }
             if let error = controller.error { Text(error).font(.caption).foregroundStyle(.orange) }
-        }.onChange(of: controller.request) { _, _ in controller.saveOptions() }
+        }
     }
 }

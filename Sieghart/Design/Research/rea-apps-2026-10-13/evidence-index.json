@@ -1,0 +1,446 @@
+{
+  "date": "2026-10-13",
+  "skill_version": "39",
+  "rea_version": "6.4.0",
+  "node_version": "24.19.0",
+  "target_execution": false,
+  "app_installation": false,
+  "microphone_activation": false,
+  "screen_capture": false,
+  "account_access": false,
+  "mcp_configuration_changed": false,
+  "scope": "19 previously unanalyzed inert Taby JavaScript members, existing Clicky evidence, official Minhas Financas docs",
+  "records": [
+    {
+      "file": "taby-context-evidence-complete.json.gz",
+      "evidence_id": "ev_a128248f8633b6f0f4871df9abaefb72882a083ac011aa53dfa55fc08bfa2a45",
+      "operation": "analyze_javascript_application",
+      "complete_operation": true,
+      "sha256_uncompressed": "2195117c6c30df7a44246208aab71b5b1d227d3a7563070c7c9f15c3b9ff8394",
+      "bytes_uncompressed": 10137220,
+      "sha256_compressed": "658c7cebacfc31d1abfe3d15fdea94227768b7317e15987b88a2d8123fbfa617",
+      "bytes_compressed": 1714573,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-context-summary.json.gz",
+      "evidence_id": "ev_f5cb9fbc237f00fafd68e2ade3d41ea4ccd5bd58c3923638b7738fa6f4029492",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "cb094e1466940f951e97940bb6093fcd65bc432f815ae1e9fd875fd48fa70171",
+      "bytes_uncompressed": 11559,
+      "sha256_compressed": "fc1c358812ab9395254a1b095cf30fc10cb3e42750af11f7f8445932747d281c",
+      "bytes_compressed": 2490,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-context-modules.json.gz",
+      "evidence_id": "ev_a61cf2d8f8f7bc61f60ead0b70d828df659e93ae4b797448acbd42247fe6714c",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "f3e1723e885fc8e6456b3bca37975f8e1baf11e8d31761efdc9ce86524ce3f12",
+      "bytes_uncompressed": 14146,
+      "sha256_compressed": "eea97b944eabfc0b225c170b180e68bb310778a79496c8d28f1321ae8751a7f3",
+      "bytes_compressed": 3568,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-context-modules-more.json.gz",
+      "evidence_id": "ev_664e0874859b8673892f4358315f08fecce517001c38a268d97c9499aaf1e625",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "2fde76c5fc22b07049134fa1062e99b9cb69d13b7ffac9ed08d8a3a15e3d7518",
+      "bytes_uncompressed": 31686,
+      "sha256_compressed": "80c5d709c53f85cca08930645f08fca503cf4c821f68f79597199a05e599b107",
+      "bytes_compressed": 8442,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-item-connections.json.gz",
+      "evidence_id": "ev_62d28d9d8f2fecbf614fcd02c87a91648fc91eca23886486e3f7a3d6c6d8fe26",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "789752d18cb489c066182cdeaf391a8c1937e7f921b9b5153320b54c87ae9c7c",
+      "bytes_uncompressed": 10831,
+      "sha256_compressed": "d987b14412ee793d922f7b57946ded486b328f429493a81a7d8a42d02e3ad882",
+      "bytes_compressed": 2503,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-item-local-brain-endpoint.json.gz",
+      "evidence_id": "ev_3435759f187623fc1f069920417fdb907fff348b7ac267d7038346e569420d1e",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "3c489d9351581c91b814fba31b882db606b8a54096d5dedca28ef44e9d6cf182",
+      "bytes_uncompressed": 10852,
+      "sha256_compressed": "7da3918443835dbb04f47acfa500ce5dbbc6ee9c77533c68e45182040ed2fb60",
+      "bytes_compressed": 2504,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-item-local-attachment-extractor.json.gz",
+      "evidence_id": "ev_290c539abec4a60606eef77fdfb0148d534cd3c7afe8733d7db58ae1cac3418d",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "20c4a6a7348bf91b88cffde62f72842d462b2233a3cd14a32106285446ae69fd",
+      "bytes_uncompressed": 10875,
+      "sha256_compressed": "47babc5c73054e043505bf060097f5574377b5107d3d1fd6352124fd7d70a6df",
+      "bytes_compressed": 2502,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-item-desktop-attachment-service.json.gz",
+      "evidence_id": "ev_8f3a1549ad8f75d98ab09eb493899b7c160bf0799cbf5a26ac8e624299643e50",
+      "operation": "inspect_analysis_view",
+      "complete_operation": true,
+      "sha256_uncompressed": "9903930cd2f3e1f63cdfbfba3042328eaaf219ccfcbaf781ef1bb814913c9933",
+      "bytes_uncompressed": 10876,
+      "sha256_compressed": "642f85d3b6d0dda37997dcc56eff2ddab37eb864fdb61f39419ac5fadd2cbbbb",
+      "bytes_compressed": 2510,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "Boundary extraction covers unshadowed JSON/global coercions plus parse and validation method candidates.",
+        "Child-process extraction covers asynchronous node:child_process creation, literal argv/env/stdio options, exit/error listeners, and kill signals.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Configuration extraction covers process.env, process.argv, node:fs reads, and direct logical defaults.",
+        "Electron API identity follows proven lexical module aliases. Reassigned bindings, dynamic selections, and visibly overwritten namespace members are unresolved; missing findings do not establish absence. Arbitrary call side effects and runtime registration are not evaluated.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Event extraction covers EventEmitter-style literal registrations, removals, and dispatch candidates; dynamic names remain unknown.",
+        "Function fingerprints are static candidates; equal digests can remain ambiguous and do not prove behavioral equivalence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Local data flow does not claim control-flow-sensitive reaching definitions or arbitrary dynamic property resolution.",
+        "Promise ownership covers explicit unshadowed Promise construction, static factories, aggregation, chaining, and await syntax only.",
+        "Request extraction covers fetch, WebSocket, node:http/node:https construction, direct option fields, and exact local response consumers.",
+        "Resource extraction covers built-in filesystem/network acquisition and exact local close/destroy/end handles.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "The semantic graph contains static syntax observations and conservative relationship candidates; it does not claim runtime execution.",
+        "Timer extraction covers global or node:timers scheduling and exact local-handle cancellation.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "file": "taby-context-evidence.json.gz",
+      "evidence_id": "ev_33e6301b3f0039a7992dbcbf1d9afbec25b775c7632d6e6116d721c92bbb975f",
+      "operation": "analyze_javascript_application",
+      "complete_operation": false,
+      "sha256_uncompressed": "d26905fd193a9727208f1640d4f4bfa59bc100ae762b37d470cdaf24172a1392",
+      "bytes_uncompressed": 366391,
+      "sha256_compressed": "85de1d20d253eb9ffe84ab4f42c2fd9d2da94a71f63acd2fc628dbe1520d8deb",
+      "bytes_compressed": 43407,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Source analysis was interrupted: Provider javascript-static-analysis adapter failed during analyze_javascript_application",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+        "dist/main/attachment-file-cache.js: Provider javascript-static-analysis adapter failed during analyze_javascript_application"
+      ]
+    },
+    {
+      "file": "taby-context-evidence-retry.json.gz",
+      "evidence_id": "ev_5a322cddbbdd3c6d9b46e295eea90550ffb59b970e5d3e6df3e196a45d1cb83c",
+      "operation": "analyze_javascript_application",
+      "complete_operation": false,
+      "sha256_uncompressed": "dbe85b2f2799c2446165a319dd8c51d6dfe586ee37ea7464d1eb6dc65fdb8f61",
+      "bytes_uncompressed": 366391,
+      "sha256_compressed": "6883c3f8511fd31408c50e9f8d9ae4301b2e6995338a537108df15fe840b5d2d",
+      "bytes_compressed": 43400,
+      "subject": {
+        "name": "taby-context",
+        "digest": {
+          "sha256": "5e54f198ea5123217ca397e6b9812d92d8544d3774e899fc0832fc40fda72d92"
+        },
+        "format": "directory",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-rea-apps-2026-10-13/taby-context"
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Source analysis was interrupted: Provider javascript-static-analysis adapter failed during analyze_javascript_application",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+        "dist/main/attachment-file-cache.js: Provider javascript-static-analysis adapter failed during analyze_javascript_application"
+      ]
+    }
+  ],
+  "root_artifacts": [
+    {
+      "file": "taby-artifact-evidence.json.gz",
+      "evidence_id": "ev_9544818a3a6fbe9dcc8668496c98ef8127cd7cd7735c0a5ac9a5655a3eeb4240",
+      "operation": "inspect_artifact",
+      "uncompressed_sha256": "9c6731e0071bb0d40dda40164211a89c5b68ce4b35d6766906f494b3d69d504b",
+      "uncompressed_bytes": 35682550,
+      "compressed_bytes": 8137344,
+      "subject": {
+        "name": "Taby-mac-arm64.dmg",
+        "digest": {
+          "sha256": "6aad13c73ae7ba117a743ec6ef48eb9883874937fa2fdd1857174cd766c98104"
+        },
+        "format": "dmg",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-app-study/Taby-mac-arm64.dmg"
+      },
+      "limitations": [
+        "15 integrity contradiction(s) were recorded; mismatched content is observed-untrusted.",
+        "Inspection derives bounded static hypotheses and next probes; it does not execute the artifact or claim format-specific semantics."
+      ]
+    },
+    {
+      "file": "clicky-artifact-evidence.json.gz",
+      "evidence_id": "ev_3a333548f4f20bce20085ec08e6005a0a2920fe63305a456630c1e83eccdd9df",
+      "operation": "inspect_artifact",
+      "uncompressed_sha256": "f841b7e11a8b1becba3391659a99bbdab12395b41308f182db82024913ff9b34",
+      "uncompressed_bytes": 364130,
+      "compressed_bytes": 86269,
+      "subject": {
+        "name": "HeyClicky.dmg",
+        "digest": {
+          "sha256": "a83c69ee8ec486d2cf9e257aaa39b612539f6b5544d52a4ef2caa652284bd31c"
+        },
+        "format": "dmg",
+        "architecture": null,
+        "local_path": "/private/tmp/sieg-app-study/HeyClicky.dmg"
+      },
+      "limitations": [
+        "Inspection derives bounded static hypotheses and next probes; it does not execute the artifact or claim format-specific semantics."
+      ]
+    },
+    {
+      "file": "clicky-macho-evidence.json.gz",
+      "evidence_id": "ev_4c6685854a0f21ae57deb850f8166d59ba58dd79f0e2271d3f3b46a3fd43ff9d",
+      "operation": "inspect_macho",
+      "uncompressed_sha256": "c6582b504b24f96c0ed4cc40f2f9e80f968a2075aa740495ee53d76187cca4ce",
+      "uncompressed_bytes": 568400,
+      "compressed_bytes": 56191,
+      "subject": {
+        "name": "HeyClicky",
+        "digest": {
+          "sha256": "970569210a71cf1f39790f7d0fc02af2a1d64bacf0259d4741f0fa63e53dbb31"
+        },
+        "format": "mach-o",
+        "architecture": "arm64",
+        "local_path": "/private/tmp/sieg-app-study/selected-clicky/Contents/MacOS/HeyClicky"
+      },
+      "limitations": [
+        "Imports and exports combine dyld_info and nm; stripped or toolchain-hidden symbols may be absent.",
+        "vtool output is retained as provenance but only otool build metadata is normalized."
+      ]
+    }
+  ]
+}

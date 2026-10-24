@@ -1,0 +1,103 @@
+{
+  "archive": "/private/tmp/sieg-app-study/selected-taby/Contents/Resources/app.asar",
+  "archive_sha256": "84f15b4b15675695f6ee3875178306a84bd98fed000f080dea7a651edea45c49",
+  "records": [
+    {
+      "member": "dist/main/attachment-file-cache.js",
+      "bytes": 4919,
+      "sha256": "6b7460dee117c630eecb5a0fc78d26f0b82a8621ee7949601e50f097dbc5110e"
+    },
+    {
+      "member": "dist/main/attachment-ipc.js",
+      "bytes": 3642,
+      "sha256": "0140f70b281922b11702a2b94298093e30bd67626abedd2267c0db03ece7dc42"
+    },
+    {
+      "member": "dist/main/desktop-attachment-images.js",
+      "bytes": 2540,
+      "sha256": "134d0d4fca5de86d9c6e88e74c94c21112f8eafa510ace6a2de62c443e17ba71"
+    },
+    {
+      "member": "dist/main/desktop-attachment-picker.js",
+      "bytes": 1024,
+      "sha256": "8a773d408075fb42dc6561fbfd8e9c79dd851193f8bdf644c1b542d6f553d4f4"
+    },
+    {
+      "member": "dist/main/desktop-attachment-service.js",
+      "bytes": 13729,
+      "sha256": "b675d459c8be3bf1fc8ae662d9c330feedecda8026f803ba3630a8e27234af44"
+    },
+    {
+      "member": "dist/main/desktop-attachments.js",
+      "bytes": 1677,
+      "sha256": "40059f845735351fde7b0ed390ecb5f5579f7c7cbf016e7911cb2c60702a6280"
+    },
+    {
+      "member": "dist/main/desktop-cloud-attachments.js",
+      "bytes": 733,
+      "sha256": "892e689a0b979163a7429ed05d51cbbdd258adbc52d8583c9d6c4c0884838c5d"
+    },
+    {
+      "member": "dist/main/desktop-entry-context.js",
+      "bytes": 1265,
+      "sha256": "bdb51faafa6aa38a6dd90c1c4aee5def7586b0987873d9266dfd8f1cf0b9063e"
+    },
+    {
+      "member": "dist/main/local-attachment-extractor.js",
+      "bytes": 4584,
+      "sha256": "075c57e2cdcba65ef82bac9584608312eadcba47e48960bb8d77ebaf726fdade"
+    },
+    {
+      "member": "dist/main/local-attachment-image.js",
+      "bytes": 794,
+      "sha256": "fa193016de147b51999e999f4fd0d86fec1a421ccc1e616ea7407d4ae50b2990"
+    },
+    {
+      "member": "dist/preload/attachment-bridge.js",
+      "bytes": 1740,
+      "sha256": "e1a6ee9b070f058f2ee9a0026ed291c33da63fbba3f03f429e614f1e46083a6a"
+    },
+    {
+      "member": "dist/main/mcp/connections.js",
+      "bytes": 6628,
+      "sha256": "1dda31b3e1fa7104f52c2dd885c369d7461d3a0ff1b02606aa3240f37f59280d"
+    },
+    {
+      "member": "dist/main/mcp/runtime.js",
+      "bytes": 4664,
+      "sha256": "52c46ed02c8b2573779923a237fb586a79e8ba5562181a1660c0977f64647973"
+    },
+    {
+      "member": "dist/main/mcp/product-engine.js",
+      "bytes": 3772,
+      "sha256": "54d4556ef6a21a8a33d53e3f46f6c31febc55c6d3492dd7759411017fc332652"
+    },
+    {
+      "member": "dist/main/mcp/presentations.js",
+      "bytes": 2036,
+      "sha256": "2c0ff3f5b4ff84e0ee1528f939678a08fdc4a9817e07f213abe3db533d95620c"
+    },
+    {
+      "member": "dist/main/mcp/note-input.js",
+      "bytes": 974,
+      "sha256": "826984d033a6cf6d065722f7a7484862b68d78f70b04ead7909788f2a25d3578"
+    },
+    {
+      "member": "dist/main/tool-classification.js",
+      "bytes": 1376,
+      "sha256": "adb345b57bc14a5f26eef9842d966b5bb71413ca29a4c5e23e8593b9604b9a88"
+    },
+    {
+      "member": "dist/main/tool-request-summary.js",
+      "bytes": 3184,
+      "sha256": "89513ac497b5a89f52e866a0961da1b13c80128c97312e384558ed1f97366d2c"
+    },
+    {
+      "member": "dist/main/local-brain-endpoint.js",
+      "bytes": 10073,
+      "sha256": "442396c793821cac279f25343e126815f4b11a90ad9a8e368b649d2fa66a1ed9"
+    }
+  ],
+  "executed": false,
+  "method": "@electron/asar.extractFile, inert byte copy only"
+}

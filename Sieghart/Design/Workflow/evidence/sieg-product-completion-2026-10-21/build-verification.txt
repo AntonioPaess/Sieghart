@@ -1,0 +1,8 @@
+Build 44: BUILD SUCCEEDED
+App: /private/tmp/sieghart-spatial-dd/Build/Products/Debug/Sieghart.app
+Architectures: x86_64 arm64
+Tests/verify-built-app.sh: PASS privacy descriptions, menu-bar metadata and signature.
+Running PID at inspection: 20180.
+UI inspected: Overview task shelf; Activation: Voice is off and Start conversation, no voice control activated.
+Keep Awake was inactive in final inspection before restart; its existing deadline and restore preference were preserved.
+No microphone, audio synthesis, playback or voice shortcut test was performed.

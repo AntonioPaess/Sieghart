@@ -104,7 +104,7 @@ struct AIUsageView: View {
         return VStack(alignment: .leading, spacing: dense ? 5 : 10) {
             HStack {
                 ProviderMark(provider: provider, size: dense ? 18 : 28)
-                Text(title).font(heading)
+                Text(LocalizedStringKey(title)).font(heading)
                 if let plan = report?.planType { Text(plan).font(.caption2.weight(.semibold)).foregroundStyle(CompanionStyle.accentInk) }
                 Spacer()
                 Button { Task { await usage.refresh(codexEnabled: codex.enabled) } } label: {

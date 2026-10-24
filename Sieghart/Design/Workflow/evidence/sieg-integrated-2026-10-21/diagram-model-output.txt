@@ -1,0 +1,11 @@
+Summary: O ciclo da água começa com a evaporação, onde a energia solar transforma a água superficial em vapor que sobe para a atmosfera. Esse vapor forma nuvens por condensação, levando à precipitação, que retorna à terra e inicia novamente o movimento físico da água.
+Generated: Ciclo da Água nodes: 4 links: 4 layout: cycle
+n1 Evaporação A energia solar transforma a água superficial em vapor
+n2 Condensação O vapor forma nuvens dependendo da temperatura e da umidade
+n3 Precipitação As partículas condensadas pesam e caem sobre a superfície terrestre
+n4 Fluxo e Infiltração A água flui por rios, infiltra-se no solo ou evapora novamente
+n1 -> n2 
+n2 -> n3 
+n3 -> n4 
+n4 -> n1 
+Rendered: /tmp/sieg-diagram-probe/ciclo-agua.png

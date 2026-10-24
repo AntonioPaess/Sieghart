@@ -1,0 +1,39 @@
+Actual generated algorithm:
+ ```python
+def binary_search(arr, target):
+    low = 0
+    high = len(arr) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if arr[mid] == target:
+            return True
+        elif arr[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return False
+```
+Summary: Este diagrama ilustra o algoritmo de busca binária, que verifica se um elemento alvo existe em uma sequência ordenada. O processo alterna entre comparar o elemento central com o alvo e ajustar os limites de busca conforme a relação com o alvo.
+Generated: Crie um fluxograma de busca binária mostrando claramente a comparação com o elemento central e os ca nodes: 10 links: 11 layout: flow
+n10 Entradas: arr, target  process
+n9 low = 0 high = len(arr) - 1 process
+n2 low <= high?  decision
+n8 mid = (low + high) // 2  process
+n1 return False  terminal
+n7 arr[mid] == target?  decision
+n3 return True  terminal
+n6 arr[mid] < target?  decision
+n4 low = mid + 1  process
+n5 high = mid - 1  process
+n4 -> n2 
+n5 -> n2 
+n6 -> n4 Sim
+n6 -> n5 Não
+n7 -> n3 Sim
+n7 -> n6 Não
+n8 -> n7 
+n2 -> n8 Sim
+n2 -> n1 Não
+n9 -> n2 
+n10 -> n9 
+Rendered: /tmp/sieg-product-diagram-probe/binary-search.png

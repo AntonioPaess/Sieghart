@@ -1,0 +1,343 @@
+{
+  "date": "2026-10-22",
+  "scope": "Two current production views compiled in an isolated module with preserved support copies; no full app build or installed-app execution",
+  "sources": {
+    "Sieghart/Features/DynamicIsland/Views/CompanionWeatherScene.swift": {
+      "before_sha256": "832b43ed5d96f00abc7689cb9b44188928ebb4b2ab7480c32d3903a5d80daa6a",
+      "after_sha256": "7d47a5cee5485cbf658f0b05eed87253ca29e7de23460f4fc65001acc56c49f0",
+      "compiled_source_matches": true,
+      "added_lines": 256,
+      "removed_lines": 87
+    },
+    "Sieghart/Shared/Components/Companion/CompanionWeatherCharacter.swift": {
+      "before_sha256": "75ce758c25b895b729a80c417e27374ebf59c5f7b0d61a02275352a3fb60ef15",
+      "after_sha256": "29be9de20bd196d171d0361e9b6e1edf7eaa12bc32b900b966d8e9aedc6c5df2",
+      "compiled_source_matches": true,
+      "added_lines": 94,
+      "removed_lines": 28
+    }
+  },
+  "mood_cases": 9,
+  "wmo_mapping_cases_passed": 16,
+  "hail_codes": [
+    96,
+    99
+  ],
+  "snow_codes": [
+    71,
+    73,
+    75,
+    77,
+    85,
+    86
+  ],
+  "temperature_and_precipitation_independent": true,
+  "freeze_seconds": 6.4,
+  "thaw_seconds": 2.6,
+  "native_freeze_thaw_hidden_gap_cache_and_detach_checks": "passed",
+  "real_window_visibility_and_system_reduce_motion": "not manually tested in the application",
+  "whole_app_cpu_ram": "not measured",
+  "snapshot_fixtures": "Synthetic data, labelled prévia ilustrativa; not a live Recife forecast",
+  "cloud_motion_empty_right_area_rgb_mean_difference": [
+    4.573812807881773,
+    5.203073891625616,
+    6.086768472906404
+  ],
+  "video": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1692,
+        "height": 972,
+        "r_frame_rate": "10/1",
+        "nb_frames": "70"
+      }
+    ],
+    "format": {
+      "duration": "7.000000"
+    }
+  },
+  "images": {
+    "frozen-full.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "native-thaw-half.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        59,
+        99,
+        557,
+        536
+      ]
+    },
+    "native-thaw-complete.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        55,
+        103,
+        562,
+        428
+      ]
+    },
+    "hot-night.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "freeze-recovery-board.png": {
+      "pixels": [
+        1540,
+        340
+      ]
+    },
+    "native-freeze-full.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        69,
+        153,
+        540,
+        525
+      ]
+    },
+    "comfortable-day.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "native-freeze-0.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        72,
+        164,
+        544,
+        538
+      ]
+    },
+    "cold-clear.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "heavy-hail.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "cloudy-night.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "snow.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "native-freeze-half.png": {
+      "pixels": [
+        616,
+        624
+      ],
+      "alpha_bounds": [
+        76,
+        151,
+        540,
+        530
+      ]
+    },
+    "hot-day.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "weather-finish-board.png": {
+      "pixels": [
+        1692,
+        648
+      ]
+    },
+    "cloudy.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "cloudy-later.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "frozen-growing.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "hail.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "frozen-start.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "cold-night.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    },
+    "reduced-narrow.png": {
+      "pixels": [
+        904,
+        648
+      ]
+    },
+    "rain.png": {
+      "pixels": [
+        1128,
+        648
+      ]
+    }
+  },
+  "evidence_files": {
+    "frozen-full.png": {
+      "bytes": 612599,
+      "sha256": "0fdea335972711476aa88dde598a5a5854f199c998e716af8486d1219f5158e2"
+    },
+    "native-thaw-half.png": {
+      "bytes": 174174,
+      "sha256": "1f3f8859ed1ab756a0107393d0a9e7f40fc8c8c9b925a31801b30f21737782af"
+    },
+    "native-thaw-complete.png": {
+      "bytes": 167219,
+      "sha256": "fdb7b6ddfe1ab95ae8cf39e21a7a5d8d0a3b20e591d1305c17355fc9383c8538"
+    },
+    "hot-night.png": {
+      "bytes": 593795,
+      "sha256": "f5f7c90490cf4dfd580de8de957d692d2406c65aef0dab83d3f14ff03321c043"
+    },
+    "render.log": {
+      "bytes": 561,
+      "sha256": "18de763c6a6c15c536c51e573f8dffbabd08829ce3eb6fa21d8afb5e57dd110c"
+    },
+    "freeze-recovery-board.png": {
+      "bytes": 183404,
+      "sha256": "ba0d911fd513de5b4b741212da15c4b92b7816507e7a03edec1b0c4f672af61b"
+    },
+    "native-freeze-full.png": {
+      "bytes": 112848,
+      "sha256": "f8bfa78039d8e40b9cfd4c0236e2546535363ccd92eab2a2d9f17c2de10a47a7"
+    },
+    "comfortable-day.png": {
+      "bytes": 566630,
+      "sha256": "2632cd4e570cf5e3e7273be49deadb147c1f7416e956a3d7cb52e233010a97e4"
+    },
+    "native-freeze-0.png": {
+      "bytes": 156739,
+      "sha256": "49a07ff7cc0f241e5cdb2c5ba4ef955fde90441d6511a0ce1f76e95047c1afd5"
+    },
+    "cold-clear.png": {
+      "bytes": 619306,
+      "sha256": "54f77a043c5e6d3ba14c4ba72903731cdd020d69cb2d5963d41e021d963c552e"
+    },
+    "heavy-hail.png": {
+      "bytes": 605608,
+      "sha256": "a819161ad4aa1cbb67e510f586db29669138af712f259714b9fa6327d5c9d966"
+    },
+    "cloudy-night.png": {
+      "bytes": 593173,
+      "sha256": "0a24aa24901e1135313bf8bf8555d62a784efa8400bfc298c9d8fe63d1b5fb1d"
+    },
+    "snow.png": {
+      "bytes": 651096,
+      "sha256": "949b6d1d0362cb4f1c0036bf882ae05a2c54c03eacaa20395cecf513ce3555bd"
+    },
+    "native-freeze-half.png": {
+      "bytes": 146496,
+      "sha256": "9fd5adc6f8e6d636408cd7eff7dd4ce64eb4b14bedca38c5c413021bafccbe0a"
+    },
+    "weather-finish-motion.mp4": {
+      "bytes": 931568,
+      "sha256": "545c9450211912fab4c5effd96fb24ec5c92493cfce75a8bd138dfca2e41c789"
+    },
+    "hot-day.png": {
+      "bytes": 596620,
+      "sha256": "526c52695aa676430e766b193241fba20d66d749b7d6d213f03d9799bf1b7ef9"
+    },
+    "weather-finish-board.png": {
+      "bytes": 709948,
+      "sha256": "6eb804c53b4f0e1b1707c4a64f969bcaf0a386f2c1b1cd13bda1c8db61cf24ee"
+    },
+    "compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cloudy.png": {
+      "bytes": 596338,
+      "sha256": "50034eb3dc9be914467f1e9c1524aa4cd01663d3315685f57d7951fd41d2a353"
+    },
+    "cloudy-later.png": {
+      "bytes": 604382,
+      "sha256": "6eaccafe83265fc33a29d2e28122182a2217afbd4410b3192a76056fc28377e8"
+    },
+    "frozen-growing.png": {
+      "bytes": 620697,
+      "sha256": "23f5f71da52f095268cf982dd1fd6aa4b6b188f8b47806f0527868108ac3f14d"
+    },
+    "hail.png": {
+      "bytes": 603827,
+      "sha256": "d63b9a3ba79e79c3eca7a2f2e1f9c936e748e3472835e34c489cdefd4a7d04e4"
+    },
+    "frozen-start.png": {
+      "bytes": 617432,
+      "sha256": "363004320bfa064f9dc16965d474d4110c70460bb4e9cc785a959cae103f818b"
+    },
+    "cold-night.png": {
+      "bytes": 615846,
+      "sha256": "d49fdcef708e18ea4c969a709cb90eeed8e65045fcf71dcdf25928075250264a"
+    },
+    "movie.log": {
+      "bytes": 125,
+      "sha256": "ceba898211499ae1862b544c20251de6d2657bcbe704898c15cb067832843b1b"
+    },
+    "reduced-narrow.png": {
+      "bytes": 491127,
+      "sha256": "38a425ce68193c258ac66ae66330e7edce7abd76ba17dca9c072d688861c7646"
+    },
+    "rain.png": {
+      "bytes": 600075,
+      "sha256": "49c1fd3533a4005674e1f970d8eb1b54157573e0b6c29e31669004a32ec31066"
+    }
+  },
+  "final_compile_log_empty": true
+}

@@ -36,13 +36,14 @@ struct NotchWidgetView: View {
         .tint(CompanionStyle.accent)
         .preferredColorScheme(compact ? .dark : preferences.appearance.colorScheme)
         .environment(\.surfaceGlassEnabled, preferences.islandGlass)
+        .environment(\.locale, Locale(identifier: activation.voiceLanguage))
         .environment(\.islandGlass, !compact)
         .environment(\.islandReduceMotion, preferences.usesReducedMotion)
         .environment(\.companionMotionEnabled, preferences.characterMotion)
         .onHover { notch.setPointerInsidePanel($0) }
         .overlay { if !staticPreview { IslandFileDropOverlay(notch: notch) } }
         .focusEffectDisabled()
-        .onExitCommand { notch.hide() }
+        .onExitCommand { if notch.welcomeStartedAt != nil { notch.finishWelcome() } else { notch.hide() } }
         .onChange(of: notch.utilityReaction) { _, _ in reactions.utility(notch.utilitySucceeded) }
         .onChange(of: preferences.avatar) { _, _ in reactions.reset() }
         .onChange(of: notch.presentation) { _, presentation in if presentation != .home { reactions.reset(); notch.finishWelcome(); notch.fileReceiverPageDidChange() } }
@@ -98,6 +99,11 @@ struct NotchWidgetView: View {
         HStack {
             Text(pageTitle).font(.system(size: 20, weight: .semibold))
             Spacer()
+            if notch.welcomeStartedAt != nil {
+                Button(activation.voiceLanguage.hasPrefix("en") ? "Skip introduction" : "Pular apresentação") { notch.finishWelcome() }
+                    .buttonStyle(CompanionButtonStyle(compact: true))
+                    .help(activation.voiceLanguage.hasPrefix("en") ? "Continue now. You can replay the introduction in settings." : "Continue agora. A apresentação pode ser revista nas preferências.")
+            }
             if staticPreview {
                 HStack(spacing: 5) { Image(systemName: "ellipsis"); Image(systemName: "chevron.down").font(.caption2.weight(.bold)) }
             } else { Menu {
@@ -124,11 +130,16 @@ struct NotchWidgetView: View {
     }
 
     private var pageTitle: String {
+        if activation.voiceLanguage.hasPrefix("en") { return englishPageTitle }
+        if notch.presentation == .agentRoom { return notch.agentRoom.page == .chat ? "Conversa com " + (notch.agentRoom.localChat.selected?.persona.title ?? "Sieg") : "Conversas" }
+        return ["Companion": "Sieg", "Timers": "Timers", "AI agents": "Uso de IA", "Your tools": "Suas ferramentas", "System": "Sistema", "Keep awake": "Keep Awake", "Display & power": "Tela e energia", "Audio": "Áudio", "Clipboard": "Área de transferência", "Calendar": "Agenda", "Files": "Arquivos", "Capture": "Captura", "Your team": "Sua equipe", "Session complete": "Sessão concluída"][englishPageTitle] ?? englishPageTitle
+    }
+    private var englishPageTitle: String {
         switch notch.presentation {
         case .home: "Companion"
         case .focusSetup, .timer: "Timers"
         case .aiLimits: "AI agents"
-        case .agentRoom: notch.agentRoom.page == .chat ? "Chat with Ada" : "Ada’s room"
+        case .agentRoom: notch.agentRoom.page == .chat ? "Chat with " + (notch.agentRoom.localChat.selected?.persona.title ?? "Sieg") : "Conversations"
         case .tools: "Your tools"
         case .system: "System"
         case .keepAwake: "Keep awake"
@@ -222,7 +233,13 @@ struct NotchWidgetView: View {
         } else { companionHome }
     }
 
-    private var companionHome: some View {
+    @ViewBuilder private var companionHome: some View {
+        if let observation = notch.spatialAssistant.weatherObservation {
+            CompanionWeatherScene(observation: observation, language: notch.spatialAssistant.responseLanguage, animates: animates,
+                stop: notch.spatialAssistant.overlay.voiceSynthesizer.isSpeaking ? { notch.spatialAssistant.overlay.voiceSynthesizer.stop(); notch.spatialAssistant.screenInteraction.finishResponse() } : nil)
+        } else { companionStandardHome }
+    }
+    private var companionStandardHome: some View {
         VStack(spacing: CompanionHomeLayout.rowSpacing) {
             HStack(spacing: 18) {
                 CompanionInteraction(action: reactToTouch) {
@@ -243,23 +260,69 @@ struct NotchWidgetView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(activation.voicePresented ? "YOUR COMPANION · VOICE" : assistant.hasActiveSession ? assistant.activityTitle.uppercased() : "YOUR COMPANION")
+                    Text(activation.voicePresented ? (activation.voiceLanguage.hasPrefix("en") ? "YOUR COMPANION · VOICE" : "SEU COMPANHEIRO · VOZ") : assistant.hasActiveSession ? assistant.activityTitle.uppercased() : (activation.voiceLanguage.hasPrefix("en") ? "YOUR COMPANION" : "SEU COMPANHEIRO"))
                         .font(.system(size: 10, weight: .semibold)).tracking(1).foregroundStyle(CompanionStyle.muted)
                     Text(homeHeadline).font(.system(size: 18, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.85)
-                    Text(homeMessage).font(.callout).foregroundStyle(CompanionStyle.muted).lineLimit(2)
+                    homeMessageText.font(.callout).foregroundStyle(CompanionStyle.muted).lineLimit(2)
                     HStack(spacing: 12) {
                         Button { if activation.voicePresented { activation.cancelVoiceCommand(keepCompanionVisible: true) } else { activation.toggleListening() } } label: {
-                            Label(activation.isVoiceBusy ? "Cancel" : activation.voicePresented ? "Back" : "Speak", systemImage: activation.isListening ? "waveform" : "mic")
+                            Label(activation.isVoiceBusy ? (activation.voiceLanguage.hasPrefix("en") ? "Cancel" : "Cancelar") : activation.voicePresented ? (activation.voiceLanguage.hasPrefix("en") ? "Back" : "Voltar") : (activation.voiceLanguage.hasPrefix("en") ? "Speak" : "Falar"), systemImage: activation.isListening ? "waveform" : "mic")
                         }.buttonStyle(.plain).focusEffectDisabled().accessibilityLabel(activation.voicePresented ? "Cancel voice and return to companion" : "Speak to your companion")
-                        if activation.isListening { Text("Finish speaking to run your command.") }
-                        else if activation.voicePresented { Text(activation.voiceStatus).lineLimit(1) }
-                        else { Label(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "\(assistant.focusMinutes) min focus", systemImage: "timer").monospacedDigit() }
+                        if activation.isConversing {
+                            Button(activation.voiceLanguage.hasPrefix("en") ? "Stop conversation" : "Encerrar conversa") { activation.cancelVoiceCommand(keepCompanionVisible: true) }
+                                .buttonStyle(.plain).foregroundStyle(.green)
+                        }
+                        else if activation.isListening { Text(activation.voiceLanguage.hasPrefix("en") ? "Speak or select an area." : "Fale ou marque uma região.") }
+                        else if activation.voicePresented && !activation.transcript.isEmpty { Text(LocalizedStringKey(activation.voiceStatus)).lineLimit(1) }
+                        else { Label(assistant.hasActiveSession ? assistant.pomodoroTimeLabel : "\(assistant.focusMinutes) min " + (activation.voiceLanguage.hasPrefix("en") ? "focus" : "de foco"), systemImage: "timer").monospacedDigit() }
+                        if let document = notch.spatialAssistant.overlay.generatedCanvas, document.isCode {
+                            Button {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(document.code, forType: .string)
+                            } label: {
+                                Label(activation.voiceLanguage.hasPrefix("en") ? "Copy code" : "Copiar código", systemImage: "doc.on.doc")
+                            }.buttonStyle(.plain)
+                        }
+                        if notch.spatialAssistant.overlay.isPresentingOverlay {
+                            Button { notch.spatialAssistant.overlay.dismiss() } label: {
+                                Label("Fechar desenho", systemImage: "xmark.circle.fill")
+                            }.buttonStyle(.plain).accessibilityLabel("Dismiss spatial overlay")
+                        }
+                        if notch.spatialAssistant.researchAgent.isResearching {
+                            CircularResearchWidgetView(agent: notch.spatialAssistant.researchAgent, size: 28) {
+                                notch.showAgentRoom()
+                            }
+                        }
+                        if let pending = notch.spatialAssistant.systemExecutor.pendingConfirmation {
+                            HStack(spacing: 6) {
+                                Text(pending.title).lineLimit(1)
+                                Button("Confirmar") { _ = notch.spatialAssistant.systemExecutor.confirmPendingAction() }.buttonStyle(.plain)
+                                Button("Cancelar") { _ = notch.spatialAssistant.systemExecutor.cancelPendingAction() }.buttonStyle(.plain)
+                            }
+                        }
                     }.font(.caption.weight(.medium)).foregroundStyle(CompanionStyle.accentInk)
                 }.frame(maxWidth: .infinity, alignment: .leading)
 
             }.frame(height: CompanionHomeLayout.heroSize)
-            CompanionTeamDock(animates: animates, events: notch.events, onAda: { notch.showAgentRoom() })
-        }.frame(height: CompanionHomeLayout.height, alignment: .top)
+            if let observation = notch.spatialAssistant.weatherObservation {
+                CompanionWeatherCard(observation: observation, language: notch.spatialAssistant.responseLanguage,
+                                     animates: animates, dismiss: { notch.spatialAssistant.dismissWeather() })
+            } else if let response = notch.spatialAssistant.response {
+                CompanionResponseCard(needsScreenPermission: notch.spatialAssistant.screenAccessIssue == .permission, retryScreen: { notch.spatialAssistant.retryScreenReading() }, response: response, language: notch.spatialAssistant.responseLanguage,
+                    speaks: notch.spatialAssistant.overlay.voiceSynthesizer.isSpeaking,
+                    stop: { notch.spatialAssistant.overlay.voiceSynthesizer.stop(); notch.spatialAssistant.screenInteraction.finishResponse() },
+                    dismiss: { notch.spatialAssistant.dismissResponse() },
+                    clearContext: { notch.spatialAssistant.clearConversationContext(); notch.spatialAssistant.dismissResponse() },
+                    reviewSummary: notch.spatialAssistant.screenControls.pendingReview?.summary,
+                    confirmReview: { notch.spatialAssistant.confirmScreenReview() },
+                    cancelReview: { notch.spatialAssistant.screenControls.cancelReview() })
+            }
+            CompanionTeamDock(animates: animates, events: notch.events, onAda: { notch.showAgentRoom() }, onSelect: { member in
+                Task { if await notch.agentRoom.localChat.openPersona(LocalChatPersona(rawValue: member.rawValue) ?? .sig) != nil {
+                    notch.showAgentRoom(); notch.agentRoom.page = .chat
+                } }
+            })
+        }.frame(height: CompanionHomeLayout.height + (notch.spatialAssistant.resultCardHeight == 0 ? 0 : notch.spatialAssistant.resultCardHeight + CompanionHomeLayout.rowSpacing), alignment: .top)
     }
 
     private var tools: some View {
@@ -299,8 +362,8 @@ struct NotchWidgetView: View {
                     if let avatar { CompanionCharacter(size: 34, avatar: avatar, animates: false) }
                     else { Image(systemName: symbol).font(.system(size: 26, weight: .regular)).foregroundStyle(CompanionStyle.accentInk) }
                 }.frame(height: 34)
-                Text(name).font(.callout.weight(.semibold)).lineLimit(1)
-                Text(subtitle).font(.system(size: 9)).foregroundStyle(CompanionStyle.muted).lineLimit(1)
+                Text(LocalizedStringKey(name)).font(.callout.weight(.semibold)).lineLimit(1)
+                Text(LocalizedStringKey(subtitle)).font(.system(size: 9)).foregroundStyle(CompanionStyle.muted).lineLimit(1)
             }.frame(maxWidth: .infinity).padding(.vertical, 15).modifier(IslandControlSurface())
         }.accessibilityLabel("\(name). \(subtitle)")
     }
@@ -310,37 +373,61 @@ struct NotchWidgetView: View {
     }
 
     private var homeHeadline: String {
-        if activation.isPreparing { return "Getting ready…" }
-        if activation.isListening { return "I’m listening." }
-        if activation.isFinalizing { return "Finishing your command…" }
-        if activation.isExecutingVoiceCommand || activation.isPresentingVoiceProcessing { return "On it." }
-        if activation.voicePresented && !activation.commandAcknowledged { return "Let’s try that again." }
-        if activation.commandAcknowledged { return "Got it." }
+        let en = activation.voiceLanguage.hasPrefix("en")
+        if activation.isPreparing { return en ? "Getting ready…" : "Preparando…" }
+        if activation.isListening { return en ? "I’m listening." : "Estou escutando." }
+        if activation.isFinalizing { return en ? "Finishing your command…" : "Finalizando seu pedido…" }
+        if notch.spatialAssistant.overlay.voiceSynthesizer.isPreparingAudio { return en ? "Preparing voice…" : "Preparando a voz…" }
+        if notch.spatialAssistant.overlay.voiceSynthesizer.isSpeaking { return en ? "Speaking…" : "Falando…" }
+        if activation.isExecutingVoiceCommand || activation.isPresentingVoiceProcessing { return en ? "On it." : "Cuidando disso." }
+        if activation.isConversing { return activation.conversation.isPreparing ? (en ? "Getting ready…" : "Preparando…") : (en ? "I’m listening." : "Estou escutando.") }
+        if let response = notch.spatialAssistant.response { return response.succeeded ? (en ? "Here you go." : "Aqui está.") : (en ? "Let’s try again." : "Vamos tentar de novo.") }
+        if activation.voicePresented && !activation.commandAcknowledged { return en ? "Let’s try that again." : "Vamos tentar de novo." }
+        if activation.commandAcknowledged { return en ? "Got it." : "Pronto." }
         switch reactions.mood {
-        case .happy: return "Hey, that tickles!"
-        case .annoyed: return "Okay, okay — I’m here!"
-        case .asleep: return "Tiny nap. Be right back."
-        case .waking: return "I’m awake! What’s next?"
-        case .startled: return "Oh! You surprised me."
-        case .understood: return "Got it."
-        case .celebrating: return "One thing done!"
+        case .happy: return en ? "Hey, that tickles!" : "Ei, faz cócegas!"
+        case .annoyed: return en ? "Okay, okay — I’m here!" : "Tá bom, tô aqui!"
+        case .asleep: return en ? "Tiny nap. Be right back." : "Um cochilo rápido. Já volto."
+        case .waking: return en ? "I’m awake! What’s next?" : "Acordei! Qual é a próxima?"
+        case .startled: return en ? "Oh! You surprised me." : "Opa! Você me surpreendeu."
+        case .understood: return en ? "Got it." : "Entendido."
+        case .celebrating: return en ? "One thing done!" : "Mais uma tarefa pronta!"
         case .idle:
-            if assistant.pomodoroPhase == .paused { return "Paused. Take your time." }
-            return assistant.hasActiveSession ? (assistant.interval == .focus ? "One thing at a time." : "A little room to breathe.") : "Ready when you are."
+            if assistant.pomodoroPhase == .paused { return en ? "Paused. Take your time." : "Pausado. Sem pressa." }
+            return assistant.hasActiveSession ? (assistant.interval == .focus ? (en ? "One thing at a time." : "Uma coisa de cada vez.") : (en ? "A little room to breathe." : "Um espaço para respirar.")) : (en ? "Ready when you are." : "Pronto quando você estiver.")
         }
     }
 
+    private var homeMessageText: Text {
+        // Translate fixed app statuses while keeping transcripts and replies as data.
+        if activation.voicePresented && activation.transcript.isEmpty {
+            return Text(LocalizedStringKey(homeMessage))
+        }
+        return Text(homeMessage)
+    }
+
     private var homeMessage: String {
+        let en = activation.voiceLanguage.hasPrefix("en")
+        if activation.isConversing {
+            if !activation.conversation.transcript.isEmpty { return "“\(activation.conversation.transcript)”" }
+            return activation.voiceLanguage.hasPrefix("en") ? "Microphone on. Speak to interrupt; Stop ends the conversation." : "Microfone ligado. Fale para interromper; Encerrar desliga a conversa."
+        }
+        if notch.spatialAssistant.overlay.voiceSynthesizer.isPreparingAudio { return activation.voiceLanguage.hasPrefix("en") ? "Preparing your spoken reply…" : "Preparando sua resposta em voz…" }
+        if notch.spatialAssistant.overlay.voiceSynthesizer.isSpeaking { return activation.voiceLanguage.hasPrefix("en") ? "Start another request to interrupt me." : "Comece outro pedido para interromper minha fala." }
         if activation.voicePresented { return activation.transcript.isEmpty ? activation.voiceStatus : "“\(activation.transcript)”" }
+        if let response = notch.spatialAssistant.response { return String(response.text.prefix(150)) }
         if activation.commandAcknowledged { return activation.voiceStatus }
         switch reactions.mood {
-        case .happy: return "Nice to see you. Easy on the pokes."
-        case .annoyed: return "Give me a second to catch my breath."
-        case .asleep: return "Tap once to wake me up."
-        case .waking: return "That was a very short nap."
+        case .happy: return en ? "Nice to see you. Easy on the pokes." : "Bom te ver. Pega leve nas cócegas."
+        case .annoyed: return en ? "Give me a second to catch my breath." : "Só um segundo para recuperar o fôlego."
+        case .asleep: return en ? "Tap once to wake me up." : "Um toque e eu acordo."
+        case .waking: return en ? "That was a very short nap." : "Esse cochilo foi rápido demais."
         default:
-            if assistant.pomodoroPhase == .paused { return "Resume whenever you’re ready." }
-            return assistant.hasActiveSession ? "\(assistant.pomodoroTimeLabel) left. \(assistant.interval == .focus ? "I’ll let you know when it’s time to rest." : "Enjoy your break — I’ll keep the time.")" : "Open Timers when you want to focus. I’ll keep you company."
+            if assistant.pomodoroPhase == .paused { return en ? "Resume whenever you’re ready." : "Continue quando você quiser." }
+            if assistant.hasActiveSession {
+                return en ? "\(assistant.pomodoroTimeLabel) left. \(assistant.interval == .focus ? "I’ll let you know when it’s time to rest." : "Enjoy your break — I’ll keep the time.")" : "Faltam \(assistant.pomodoroTimeLabel). \(assistant.interval == .focus ? "Eu aviso quando chegar a hora de descansar." : "Aproveite a pausa. Eu cuido do relógio.")"
+            }
+            return en ? "Open Timers when you want to focus. I’ll keep you company." : "Abra os Timers quando quiser focar. Eu fico por perto."
         }
     }
 
@@ -371,7 +458,7 @@ struct NotchWidgetView: View {
                         Color.clear.frame(width: notch.geometry.cutoutWidth + (notch.geometry.cutoutWidth > 0 ? 8 : 24))
                         VStack(spacing: 1) {
                             Image(systemName: activation.isListening ? "waveform" : activation.commandAcknowledged ? "checkmark" : "mic")
-                            Text(activation.isListening ? "Listening" : activation.isPreparing ? "Preparing" : activation.isFinalizing ? "Finishing" : "Voice")
+                            Text(LocalizedStringKey(activation.isListening ? "Listening" : activation.isPreparing ? "Preparing" : activation.isFinalizing ? "Finishing" : "Voice"))
                                 .font(.system(size: 8))
                         }.font(.system(size: 11)).foregroundStyle(CompanionStyle.accentInk).frame(maxWidth: .infinity)
                     }.padding(.horizontal, 8).frame(height: notch.geometry.bodyHeight).contentShape(Rectangle())

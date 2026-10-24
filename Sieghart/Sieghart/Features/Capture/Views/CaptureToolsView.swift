@@ -107,7 +107,7 @@ struct CaptureToolsView: View {
                 if model.isSamplingColor { Text("Click a color. Esc cancels.").font(.caption).foregroundStyle(CompanionStyle.muted) }
             }
             HStack {
-                Text(model.status).font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
+                Text(LocalizedStringKey(model.status)).font(.caption).foregroundStyle(CompanionStyle.muted).fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
                 if model.isBusy { ProgressView().controlSize(.small); Button("Cancel") { model.cancel() }.font(.caption).buttonStyle(.plain) }
             }
@@ -124,8 +124,8 @@ struct CaptureToolsView: View {
                     Text(tool.rawValue).font(.caption).padding(7).background(CompanionStyle.edge.opacity(0.08), in: RoundedRectangle(cornerRadius: 7))
                     Text(ink.rawValue).font(.caption).padding(7).background(CompanionStyle.edge.opacity(0.08), in: RoundedRectangle(cornerRadius: 7))
                 } else {
-                    Picker("Annotation", selection: $tool) { ForEach(CaptureAnnotationKind.allCases, id: \.self) { Text($0.rawValue).tag($0) } }.labelsHidden()
-                    Picker("Ink", selection: $ink) { ForEach(CaptureInk.allCases, id: \.self) { Text($0.rawValue).tag($0) } }.labelsHidden()
+                    Picker("Annotation", selection: $tool) { ForEach(CaptureAnnotationKind.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) } }.labelsHidden()
+                    Picker("Ink", selection: $ink) { ForEach(CaptureInk.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) } }.labelsHidden()
                 }
                 Button { model.undoAnnotation() } label: { Image(systemName: "arrow.uturn.backward") }.help("Undo annotation").accessibilityLabel("Undo annotation")
                 Button("Clear marks") { model.clearAnnotations() }.font(.caption)

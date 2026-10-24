@@ -4,6 +4,7 @@ import Foundation
 // pattern, plus its ServiceTool → configured GitHub integration. See notices.
 enum AdaAgentInstructions {
     static func make(persona: LocalChatPersona, githubConnected: Bool) -> String {
+        if persona != .ada { return CompanionSpecialistInstructions.make(persona) }
         let identity = persona == .ada
             ? "You are Ada, the user's resident senior software engineer, code reviewer and technical mentor inside Sieg. This is a direct conversation with Ada, not an anonymous general-purpose chatbot."
             : "You are Sig, Sieg's principal companion and coordinator. Help the user plan, resume work and choose a small next step. Ada is the coding and GitHub specialist."

@@ -16,9 +16,10 @@ enum LocalChatReadiness: Equatable, Sendable {
 }
 
 enum LocalChatPersona: String, Codable, CaseIterable, Sendable {
-    case ada, sig
+    case ada, sig, rita, gantt, elinor, toni
 
-    var title: String { self == .ada ? "Ada" : "Sig" }
+    var title: String { self == .sig ? "Sieg" : rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
+    var avatar: CompanionAvatar { CompanionAvatar(rawValue: rawValue) ?? .sig }
 }
 
 struct LocalChatMessage: Identifiable, Codable, Equatable, Sendable {
@@ -28,6 +29,9 @@ struct LocalChatMessage: Identifiable, Codable, Equatable, Sendable {
     var role: Role
     var text: String
     var date: Date
+    var attachedFiles: [String]? = nil
+    var handoff: LocalChatHandoff? = nil
+    var utilityReceipt: LocalChatUtilityReceipt? = nil
 
     init(id: String = UUID().uuidString, role: Role, text: String, date: Date = Date()) {
         self.id = id
@@ -44,6 +48,9 @@ struct LocalChatConversation: Identifiable, Codable, Equatable, Sendable {
     var createdAt: Date
     var updatedAt: Date
     var messages: [LocalChatMessage]
+    var pinned: Bool? = nil
+    var archived: Bool? = nil
+    var sourceConversationID: String? = nil
 
     init(id: String = UUID().uuidString, persona: LocalChatPersona, title: String,
          createdAt: Date = Date(), updatedAt: Date = Date(), messages: [LocalChatMessage] = []) {
@@ -60,12 +67,19 @@ struct LocalChatConversation: Identifiable, Codable, Equatable, Sendable {
     var readiness: LocalChatReadiness { get }
     var modelName: String { get }
     func configure(_ configuration: AppleChatConfiguration)
+    func generateVoice(history: [LocalChatMessage], language: String,
+                       onSnapshot: @escaping @MainActor (String) -> Void) async throws -> String
     /// Snapshots contain the complete response so far, rather than token deltas.
     func generate(history: [LocalChatMessage], persona: LocalChatPersona,
                   onSnapshot: @escaping @MainActor (String) -> Void) async throws -> String
 }
 
 extension LocalChatGenerating {
+    func generateVoice(history: [LocalChatMessage], language: String,
+                       onSnapshot: @escaping @MainActor (String) -> Void) async throws -> String {
+        try await generate(history: history, persona: .sig, onSnapshot: onSnapshot)
+    }
+
     var modelName: String { "Apple Foundation Models" }
     func configure(_ configuration: AppleChatConfiguration) {}
 }

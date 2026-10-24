@@ -5,6 +5,8 @@ enum FocusVoiceCommand: Equatable {
     case start(minutes: Int?), resume, pause, finish, reset, startBreak, show, hide, configure, aiLimits
     case openApp(name: String)
     case search(query: String)
+    case ask(question: String)
+    case appAction(VoiceAppCommand)
 }
 
 enum FocusVoiceParser {
@@ -32,16 +34,20 @@ enum FocusVoiceParser {
             guard !negatedRequest, !has(startVerbs + focusWords + ["pause", "stop", "resume", "finish", "reset", "hide", "close", "pausar", "retomar", "finalizar", "zerar", "esconder", "fechar"]) else { return nil }
             return .aiLimits
         }
+        if !SearchVoiceParser.hasNegatedIntent(text), VoiceAppCommand.targetsTool(text) {
+            return VoiceAppCommand.parse(text).map(FocusVoiceCommand.appAction)
+        }
         if SearchVoiceParser.hasQuestionIntent(original) {
             guard let query = SearchVoiceParser.question(in: original) else { return nil }
-            return .search(query: query)
+            return .ask(question: query)
         }
-        // Free topics are browser queries. Local verbs only act when the
+        // Questions and free topics belong to the local conversation. Only an
+        // explicit search request opens the browser. Local verbs only act when the
         // sentence requests an action; words inside a topic are not commands.
         if !SearchVoiceParser.hasLocalIntent(text) {
             guard !SearchVoiceParser.hasNegatedIntent(original), !SearchVoiceParser.hasUnsupportedAction(text),
                   let query = SearchVoiceParser.freeQuery(in: original) else { return nil }
-            return .search(query: query)
+            return .ask(question: query)
         }
         guard !negatedRequest else { return nil }
         if has(["open", "launch", "abrir", "abra", "abre"]) && !has(["sieghart", "companion", "widget", "companheiro"]) {
@@ -103,7 +109,7 @@ enum SearchVoiceParser {
     private static let verb = #"(?:search(?:\s+the\s+web)?|look\s+up|google|pesquis[ae]|pesquisar|bus(?:que|ca|car)|procur(?:e|a|ar)|(?:fa[çc]a|fazer)\s+uma\s+pesquisa)"#
     static func requestText(_ transcript: String) -> String {
         let text = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
-        return text.replacingOccurrences(of: #"^(?:hey\s+|oi\s+)?(?:sig|sieghart)[, :]+"#, with: "", options: [.regularExpression, .caseInsensitive])
+        return text.replacingOccurrences(of: #"^(?:hey\s+|oi\s+)?(?:sieg|sig|sieghart)[, :]+"#, with: "", options: [.regularExpression, .caseInsensitive])
     }
     static func hasNegatedIntent(_ text: String) -> Bool {
         text.range(of: #"^(?:please\s+|por favor\s+)?(?:n[ãa]o|don't|do not|never|not now)\b"#, options: [.regularExpression, .caseInsensitive]) != nil
@@ -128,7 +134,7 @@ enum SearchVoiceParser {
         transcript.range(of: "^" + prefix + verb + #"\b"#, options: [.regularExpression, .caseInsensitive]) != nil
     }
     static func hasQuestionIntent(_ transcript: String) -> Bool {
-        let pattern = #"^(?:o que|como|qual|quais|quem|onde|aonde|quando|quanto|quantos|quantas|por que|por quê|porque|ser[áa] que|what|who|where|when|why|how|is|are|does|should)\b"#
+        let pattern = #"^(?:o que|como|qual|quais|quem|onde|aonde|quando|quanto|quantos|quantas|por que|por quê|porque|ser[áa] que|(?:me\s+)?expli(?:ca|que)|fale sobre|fala sobre|conte|explain|tell me|what|who|where|when|why|how|is|are|does|should)\b"#
         return transcript.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
     }
     static func question(in transcript: String) -> String? {
