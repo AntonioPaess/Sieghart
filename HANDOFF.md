@@ -1,8 +1,8 @@
 # Comece aqui — Sieghart
 
-Estado de continuidade em **23/10/2026**, horário de Recife. Este repositório é a fonte principal; não é necessário ter o histórico do chat ou o Obsidian para retomar.
+Estado de continuidade em **24/10/2026**, horário de Recife. Este repositório é a fonte principal; não é necessário ter o histórico do chat ou o Obsidian para retomar.
 
-**Publicação GitHub pendente:** houve falta de espaço e timeouts do iCloud nos metadados Git. A branch existe localmente; consulte o bloqueio final em `CURRENT_WORK.md` antes de tentar publicar.
+**Snapshot publicado no GitHub:** [feature/sieghart-claude-handoff-2026-10-23](https://github.com/AntonioPaess/Sieghart/tree/feature/sieghart-claude-handoff-2026-10-23). O commit de código e pesquisa `cf9a118e97fe63d52340f9c9c76266da69e725dc` foi confirmado no remoto em 24/10/2026; este checkpoint documental complementa a entrega. O bloqueio anterior de disco/iCloud está registrado como histórico em `CURRENT_WORK.md`.
 
 ## Ordem de leitura
 

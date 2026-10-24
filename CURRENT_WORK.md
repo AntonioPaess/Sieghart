@@ -14,7 +14,7 @@ O usuário pediu uma branch no GitHub com o estado atual para continuar no Claud
 
 - Fonte ativa: esta pasta, `sieghart-spatial-assistant`. A pasta irmã `../Sieghart` é a original e deve ser preservada.
 - Branch de origem: `feature/sieghart-spatial-assistant`; último commit antes do snapshot: `e229194`.
-- App instalado e aberto: `/Applications/Sieghart.app`, build **106**, bundle `com.sieghart.app`, universal x86_64/arm64. SHA-256 do executável: `ce33c1cb340d35fda81fed732b7fad93925dc6aabde113adc38efbdb1fef522a`.
+- Última instalação/abertura confirmada em 23/10: `/Applications/Sieghart.app`, build **106**, bundle `com.sieghart.app`, universal x86_64/arm64. SHA-256 do executável: `ce33c1cb340d35fda81fed732b7fad93925dc6aabde113adc38efbdb1fef522a`. O app não foi reaberto nem testado novamente no lote documental de 24/10.
 - Último teste amplo: **371 funções / 1141 invocações aprovadas**, fontes estáveis, 195/195 arquivos de produção instrumentados. Oito testes Python do guard de atualização também passaram.
 - Sem microfone real, reprodução de áudio, AirPods ou atalho físico nesta etapa.
 - Keep Awake estava realmente ativo após a atualização, com proteção nativa de tela e mesmo prazo de término: **23/10/2026, 17:23:45 em Recife**. Isso é evidência histórica, não afirmação de que permanece ativo ao ler este documento. Nenhuma sessão foi iniciada/reiniciada para teste.
@@ -31,12 +31,14 @@ O usuário pediu uma branch no GitHub com o estado atual para continuar no Claud
 
 Detalhes: `Sieghart/Design/Workflow/sieg-intent-and-awake-recovery-2026-10-23.md`. Evidências portáteis: `Sieghart/Design/Workflow/evidence/sieg-intent-recovery-2026-10-23/`.
 
-## Em andamento neste exato checkpoint
+## Entrega de preservação concluída
 
 - Inventário concluído: documentação existente indexada; 59 arquivos de dossiês/evidências preservados da pasta original, com manifesto de origem/hash.
 - Criados `HANDOFF.md`, `KNOWN_ISSUES.md`, `RESEARCH_INDEX.md` e `CLAUDE.md`; README e AGENTS indicam a ordem de leitura e o checkpoint obrigatório.
-- Branch de snapshot criada: `feature/sieghart-claude-handoff-2026-10-23`. Em 24/10 o Git voltou a responder, com 6,9 GiB disponíveis no início da retomada. Os 1275 arquivos do snapshot foram lidos; 675 arquivos textuais/gzip passaram pela busca de padrões de credenciais sem ocorrências. Links dos documentos de entrada conferidos; 59 evidências de pesquisa conferidas, considerando a normalização CRLF/LF do README já existente. Commit e push ainda em andamento.
-- Ainda não registrar branch remota/commit como publicados: a publicação só estará concluída após confirmação do GitHub.
+- Branch publicada: `feature/sieghart-claude-handoff-2026-10-23`. Em 24/10 o Git voltou a responder, com 6,9 GiB disponíveis no início da retomada. Os 1275 arquivos do snapshot foram lidos; 675 arquivos textuais/gzip passaram pela busca de padrões de credenciais sem ocorrências. Links dos documentos de entrada conferidos; os 59 hashes de pesquisa foram conferidos também no conteúdo preparado pelo Git, após normalização de quebras de linha.
+- Commit de código/pesquisa: `cf9a118e97fe63d52340f9c9c76266da69e725dc`, com 363 arquivos alterados/adicionados. Push realizado e SHA confirmado por `git ls-remote` em 24/10. Este checkpoint documental complementa esse commit.
+- [Abrir a branch no GitHub](https://github.com/AntonioPaess/Sieghart/tree/feature/sieghart-claude-handoff-2026-10-23). Para retomar no Claude, começar por `CLAUDE.md` e `HANDOFF.md`.
+- A continuação local deve partir deste snapshot em `feature/sieghart-product-continuation-2026-10-23`. Não iniciar duas IAs no mesmo checkout. Nenhuma nova funcionalidade foi iniciada no lote de publicação.
 
 ## Próximo trabalho do produto
 
@@ -55,12 +57,12 @@ Detalhes: `Sieghart/Design/Workflow/sieg-intent-and-awake-recovery-2026-10-23.md
 
 ## Histórico do bloqueio da publicação — 23/10/2026
 
-A branch local `feature/sieghart-claude-handoff-2026-10-23` foi criada, mas **não há commit novo nem push confirmado**. O disco atingiu 100% e houve `ENOSPC`. Foram removidos somente caches de compilação deste chat; a disponibilidade continuou baixa enquanto outros projetos trabalhavam. O iCloud passou a retornar timeout para o arquivo `.git` e a metainformação do worktree; Git deixou temporariamente de reconhecer o repositório. Não reconstruir nem sobrescrever `.git`, não apagar trabalho de outros projetos e não declarar publicação concluída.
+Na tentativa de 23/10, a branch local `feature/sieghart-claude-handoff-2026-10-23` havia sido criada, mas ainda não havia commit novo nem push confirmado. O disco atingiu 100% e houve `ENOSPC`. Foram removidos somente caches de compilação deste chat; a disponibilidade continuou baixa enquanto outros projetos trabalhavam. O iCloud passou a retornar timeout para o arquivo `.git` e a metainformação do worktree; Git deixou temporariamente de reconhecer o repositório. Os metadados não foram reconstruídos nem sobrescritos, e trabalho de outros projetos não foi apagado.
 
-Próximo passo: liberar espaço suficiente no Mac, materializar a pasta do projeto e seus metadados Git e então conferir estado/arquivos, commitar e fazer push do snapshot autorizado. As fontes/relatórios não foram descartados. A cópia materializada de build continua em `/tmp/sieghart-spatial-dd/SourceWorkspace`, e o app instalado é o build 106. Um backup essencial dos seis documentos de entrada foi salvo e verificado em `/tmp/Sieghart-Handoff-ESSENCIAL-2026-10-23.zip`; é uma salvaguarda de contexto, não uma distribuição completa do app ou substituto do push. A tentativa de arquivo maior encontrou as mesmas limitações do iCloud e não conta como backup completo.
+A pendência daquela tentativa era recuperar espaço/acesso ao Git e então publicar; isso foi concluído na retomada abaixo. As fontes/relatórios não foram descartados. Na ocasião, a cópia materializada de build estava em `/tmp/sieghart-spatial-dd/SourceWorkspace`, e o app instalado era o build 106. Um backup essencial dos seis documentos de entrada foi salvo e verificado em `/tmp/Sieghart-Handoff-ESSENCIAL-2026-10-23.zip`; é uma salvaguarda de contexto, não uma distribuição completa do app ou substituto do push. A tentativa de arquivo maior encontrou as mesmas limitações do iCloud e não conta como backup completo.
 
-Para economizar cota, não iniciar novas funcionalidades ou agentes antes de concluir a preservação. Atualizar este checkpoint quando o GitHub confirmar o SHA remoto.
+Essa falha motivou priorizar a preservação, sem iniciar novas funcionalidades ou agentes. Não depender dos arquivos temporários para continuar: o snapshot do GitHub é a entrega portátil.
 
 ## Retomada de 24/10/2026
 
-O bloqueio de acesso ao Git não se repetiu na conferência atual. O objetivo deste lote é exclusivamente concluir o snapshot autorizado: commit, push e verificação do SHA remoto. Nenhum teste de áudio, nova funcionalidade, agente ou worktree foi iniciado. A varredura de padrões de credenciais é uma precaução de publicação, não uma auditoria de segurança completa. O produto permanece com os limites de `KNOWN_ISSUES.md`.
+O bloqueio de acesso ao Git não se repetiu na conferência atual. O lote concluiu o snapshot autorizado: commit, push e verificação do SHA remoto. Nenhum teste de áudio, nova funcionalidade, agente ou worktree foi iniciado. A varredura de padrões de credenciais é uma precaução de publicação, não uma auditoria de segurança completa. O produto permanece com os limites de `KNOWN_ISSUES.md`. Antes da próxima mudança de produto, registrar aqui o objetivo, os arquivos e o aceite correspondente.
